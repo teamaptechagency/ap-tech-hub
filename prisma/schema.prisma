@@ -1,0 +1,714 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USERS & ROLES
+// ============================================
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  CEO
+  TEAM_MEMBER
+  CLIENT
+  CLIENT_MANAGER
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  password        String
+  role            Role      @default(TEAM_MEMBER)
+  image           String?
+  timezone        String    @default("Asia/Dhaka")
+  // Client-side users (CLIENT / CLIENT_MANAGER) link to a Client company
+  clientId        String?
+  client          Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  // Worker payout info (set by the worker in their profile)
+  payoutMethod    String?
+  payoutDetails   String?
+  // Cached money (ledger = WorkerTxn)
+  balance         Decimal   @default(0) @db.Decimal(12, 2)
+  reserve         Decimal   @default(0) @db.Decimal(12, 2)
+  // First-login terms acceptance
+  termsAcceptedAt DateTime?
+  termsVersion    String?
+
+  skills             Skill[]
+  jobMemberships     JobMember[]
+  workSessions       WorkSession[]
+  applications       Application[]
+  assignedTasks      WeeklyTask[]  @relation("TaskAssignee")
+  completedTasks     WeeklyTask[]  @relation("TaskCompleter")
+  assignedMilestones Milestone[]   @relation("MilestoneAssignee")
+  sentMessages       Message[]
+  conversations      ConversationParticipant[]
+  workerTxns         WorkerTxn[]
+  withdrawRequests   WithdrawRequest[]
+  ratingsReceived    Rating[]      @relation("RatedWorker")
+  meetingsCreated    Meeting[]     @relation("MeetingCreator")
+  meetings           MeetingParticipant[]
+  notifications      Notification[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// ============================================
+// SKILLS (admin-managed master list)
+// ============================================
+
+model Skill {
+  id    String @id @default(cuid())
+  name  String @unique
+  users User[]
+  jobs  Job[]
+}
+
+// ============================================
+// CLIENTS (internal clients with portal access)
+// External (Fiverr/Upwork) clients live on Job
+// ============================================
+
+model Client {
+  id          String  @id @default(cuid())
+  companyName String
+  contactName String
+  email       String  @unique
+  phone       String?
+  country     String?
+  status      String  @default("ACTIVE")
+  currency    String  @default("USD")
+  timezone    String  @default("UTC")
+  // Cached wallet (ledgers = ClientTxn / PointTxn)
+  balance     Decimal @default(0) @db.Decimal(12, 2)
+  points      Int     @default(0)
+
+  users            User[]
+  jobs             Job[]
+  invoices         Invoice[]
+  walletTxns       ClientTxn[]
+  pointTxns        PointTxn[]
+  exchangeRequests PointExchangeRequest[]
+  ratings          Rating[]
+  jobRequests      JobRequest[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// ============================================
+// UNIFIED JOB (Monthly / Fixed / Hourly)
+// ============================================
+
+enum JobType {
+  MONTHLY
+  FIXED
+  HOURLY
+}
+
+enum JobStatus {
+  PENDING
+  OPEN
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Job {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  type        JobType
+  status      JobStatus     @default(PENDING)
+  publish     PublishStatus @default(DRAFT)
+
+  // Internal client OR external (Fiverr/Upwork) info
+  clientId        String?
+  client          Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  externalSource  String?
+  externalName    String?
+  externalCountry String?
+
+  // Client-side pricing (what the client sees)
+  // MONTHLY: per month | FIXED: total budget | HOURLY: per hour
+  clientValue    Decimal? @db.Decimal(12, 2)
+  clientCurrency String   @default("USD")
+  vatPercent    Decimal? @db.Decimal(5, 2)
+
+  // Type-specific fields
+  startDate       DateTime?
+  billingDay      Int?
+  deadline        DateTime?
+  weeklyHourLimit Int?
+  pausedAt        DateTime?
+
+  requiredSkills Skill[]
+  members        JobMember[]
+  weeks          Week[]
+  milestones     Milestone[]
+  checkItems     CheckItem[]
+  workSessions   WorkSession[]
+  conversation   Conversation?
+  applications   Application[]
+  invoices       Invoice[]
+  attachments    Attachment[]
+  ratings        Rating[]
+  extensions     ExtensionRequest[]
+  meetings       Meeting[]
+  workerTxns     WorkerTxn[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Assignment + per-worker payment (worker value)
+// MONTHLY: per month | FIXED: total | HOURLY: per hour
+model JobMember {
+  id             String  @id @default(cuid())
+  jobId          String
+  job            Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workerValue    Decimal @default(0) @db.Decimal(12, 2)
+  workerCurrency String  @default("BDT")
+  createdAt      DateTime @default(now())
+
+  @@unique([jobId, userId])
+}
+
+// ============================================
+// MONTHLY: WEEKS + TASKS + TEMPLATES
+// ============================================
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Week {
+  id         String       @id @default(cuid())
+  jobId      String
+  job        Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  weekNumber Int
+  startDate  DateTime
+  endDate    DateTime
+  tasks      WeeklyTask[]
+
+  @@unique([jobId, weekNumber])
+}
+
+model WeeklyTask {
+  id            String     @id @default(cuid())
+  weekId        String
+  week          Week       @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  title         String
+  priority      Priority   @default(MEDIUM)
+  status        TaskStatus @default(PENDING)
+  sortOrder     Int        @default(0)
+  assigneeId    String?
+  assignee      User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  completedById String?
+  completedBy   User?      @relation("TaskCompleter", fields: [completedById], references: [id])
+  completedAt   DateTime?
+  attachments   Attachment[]
+  createdAt     DateTime   @default(now())
+}
+
+model CommonTask {
+  id        String   @id @default(cuid())
+  title     String
+  priority  Priority @default(MEDIUM)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// FIXED: MILESTONES + CHECK ITEMS
+// ============================================
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Milestone {
+  id          String          @id @default(cuid())
+  jobId       String
+  job         Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  deadline    DateTime?
+  charge      Decimal?        @db.Decimal(12, 2)
+  status      MilestoneStatus @default(PENDING)
+  sortOrder   Int             @default(0)
+  assigneeId  String?
+  assignee    User?           @relation("MilestoneAssignee", fields: [assigneeId], references: [id])
+  completedAt DateTime?
+  attachments Attachment[]
+  createdAt   DateTime        @default(now())
+}
+
+model CheckItem {
+  id        String  @id @default(cuid())
+  jobId     String
+  job       Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  title     String
+  done      Boolean @default(false)
+  sortOrder Int     @default(0)
+}
+
+// ============================================
+// HOURLY: WORK SESSIONS
+// ============================================
+
+model WorkSession {
+  id          String    @id @default(cuid())
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  duration    Int?
+  note        String?
+  attachments Attachment[]
+  createdAt   DateTime  @default(now())
+}
+
+// ============================================
+// MARKETPLACE APPLICATIONS
+// ============================================
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  WITHDRAWN
+}
+
+model Application {
+  id               String            @id @default(cuid())
+  jobId            String
+  job              Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message          String?
+  deliveryEstimate String?
+  status           ApplicationStatus @default(PENDING)
+  createdAt        DateTime          @default(now())
+
+  @@unique([jobId, userId])
+}
+
+// ============================================
+// CHAT (job discussions + direct messages)
+// ============================================
+
+model Conversation {
+  id           String  @id @default(cuid())
+  jobId        String? @unique
+  job          Job?    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  isDirect     Boolean @default(false)
+  participants ConversationParticipant[]
+  messages     Message[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastSeenAt     DateTime?
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  body           String
+  seenAt         DateTime?
+  attachments    Attachment[]
+  createdAt      DateTime     @default(now())
+}
+
+// ============================================
+// ATTACHMENTS (files/images/video)
+// ============================================
+
+model Attachment {
+  id            String       @id @default(cuid())
+  url           String
+  name          String
+  size          Int?
+  mimeType      String?
+  uploadedById  String?
+  jobId         String?
+  job           Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  messageId     String?
+  message       Message?     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  milestoneId   String?
+  milestone     Milestone?   @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  taskId        String?
+  task          WeeklyTask?  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  workSessionId String?
+  workSession   WorkSession? @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now())
+}
+
+// ============================================
+// INVOICES (auto + custom, partial, VAT)
+// ============================================
+
+enum InvoiceType {
+  AUTO
+  CUSTOM
+}
+
+enum InvoiceStatus {
+  DUE
+  PARTIALLY_PAID
+  PAYMENT_SUBMITTED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  number         String        @unique
+  type           InvoiceType   @default(AUTO)
+  title          String?
+  jobId          String?
+  job            Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  clientId       String
+  client         Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  amount         Decimal       @db.Decimal(12, 2)
+  currency       String        @default("USD")
+  vatPercent     Decimal?      @db.Decimal(5, 2)
+  balanceApplied Decimal       @default(0) @db.Decimal(12, 2)
+  amountPaid     Decimal       @default(0) @db.Decimal(12, 2)
+  status         InvoiceStatus @default(DUE)
+  periodStart    DateTime?
+  periodEnd      DateTime?
+  dueDate        DateTime
+  paymentNote    String?
+  submittedAt    DateTime?
+  approvedById   String?
+  paidVia        String?
+  items          InvoiceItem[]
+  paymentMethods PaymentMethod[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([jobId, periodStart])
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  qty         Int     @default(1)
+  amount      Decimal @db.Decimal(12, 2)
+}
+
+model PaymentMethod {
+  id       String    @id @default(cuid())
+  label    String
+  details  String
+  active   Boolean   @default(true)
+  invoices Invoice[]
+}
+
+// ============================================
+// CLIENT WALLET & LOYALTY
+// ============================================
+
+enum ClientTxnKind {
+  INVOICE_PAYMENT
+  ADVANCE
+  ADJUSTMENT
+  POINT_EXCHANGE
+  INVOICE_DEDUCT
+  REFUND
+}
+
+model ClientTxn {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  amount      Decimal       @db.Decimal(12, 2)
+  kind        ClientTxnKind
+  note        String?
+  invoiceId   String?
+  createdById String?
+  createdAt   DateTime      @default(now())
+}
+
+enum PointTxnKind {
+  EARN
+  EXCHANGE
+  ADJUST
+}
+
+model PointTxn {
+  id        String       @id @default(cuid())
+  clientId  String
+  client    Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  points    Int
+  kind      PointTxnKind
+  note      String?
+  invoiceId String?
+  createdAt DateTime     @default(now())
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PointExchangeRequest {
+  id            String        @id @default(cuid())
+  clientId      String
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  points        Int
+  status        RequestStatus @default(PENDING)
+  processedById String?
+  createdAt     DateTime      @default(now())
+  processedAt   DateTime?
+}
+
+// ============================================
+// WORKER MONEY (balance + 10% reserve)
+// ============================================
+
+enum WorkerBucket {
+  BALANCE
+  RESERVE
+}
+
+enum WorkerTxnKind {
+  JOB_PAYOUT
+  MONTHLY_CREDIT
+  HOURLY_CREDIT
+  RESERVE_HOLD
+  RESERVE_RELEASE
+  WITHDRAWAL
+  ADJUSTMENT
+  PENALTY
+}
+
+model WorkerTxn {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Decimal       @db.Decimal(12, 2)
+  bucket      WorkerBucket  @default(BALANCE)
+  kind        WorkerTxnKind
+  jobId       String?
+  job         Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  note        String?
+  createdById String?
+  createdAt   DateTime      @default(now())
+}
+
+enum WithdrawStatus {
+  PENDING
+  PAID
+  REJECTED
+}
+
+model WithdrawRequest {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount        Decimal        @db.Decimal(12, 2)
+  method        String
+  details       String
+  fromReserve   Boolean        @default(false)
+  status        WithdrawStatus @default(PENDING)
+  reference     String?
+  processedById String?
+  createdAt     DateTime       @default(now())
+  processedAt   DateTime?
+}
+
+// ============================================
+// ACCOUNTING (earnings / expenses / rates)
+// ============================================
+
+enum EntrySource {
+  AUTO
+  CUSTOM
+}
+
+model Earning {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  amount      Decimal     @db.Decimal(12, 2)
+  currency    String      @default("BDT")
+  amountBdt   Decimal     @db.Decimal(12, 2)
+  source      EntrySource @default(CUSTOM)
+  invoiceId   String?     @unique
+  createdById String?
+  createdAt   DateTime    @default(now())
+}
+
+model Expense {
+  id           String      @id @default(cuid())
+  title        String
+  description  String?
+  amount       Decimal     @db.Decimal(12, 2)
+  currency     String      @default("BDT")
+  amountBdt    Decimal     @db.Decimal(12, 2)
+  category     String      @default("Other")
+  source       EntrySource @default(CUSTOM)
+  recurring    Boolean     @default(false)
+  recurringDay Int?
+  createdById  String?
+  createdAt    DateTime    @default(now())
+}
+
+model ExchangeRate {
+  code      String   @id
+  rateToBdt Decimal  @db.Decimal(12, 4)
+  updatedAt DateTime @updatedAt
+}
+
+// Key-value settings: loyalty rules, terms text, company info
+model Setting {
+  key   String @id
+  value String
+}
+
+// ============================================
+// CLIENT JOB REQUESTS
+// ============================================
+
+model JobRequest {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  budgetHint  String?
+  status      RequestStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+}
+
+// ============================================
+// MEETINGS (Jitsi, admin approval)
+// ============================================
+
+enum MeetingStatus {
+  PENDING_APPROVAL
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+model Meeting {
+  id           String        @id @default(cuid())
+  title        String
+  scheduledAt  DateTime
+  roomCode     String        @unique @default(cuid())
+  status       MeetingStatus @default(PENDING_APPROVAL)
+  jobId        String?
+  job          Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  createdById  String
+  createdBy    User          @relation("MeetingCreator", fields: [createdById], references: [id])
+  participants MeetingParticipant[]
+  createdAt    DateTime      @default(now())
+}
+
+model MeetingParticipant {
+  id        String  @id @default(cuid())
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+}
+
+// ============================================
+// RATINGS + EXTENSIONS + NOTIFICATIONS + AUDIT
+// ============================================
+
+model Rating {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  workerId  String
+  worker    User     @relation("RatedWorker", fields: [workerId], references: [id], onDelete: Cascade)
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  stars     Int
+  review    String?
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([jobId, workerId])
+}
+
+model ExtensionRequest {
+  id            String        @id @default(cuid())
+  jobId         String
+  job           Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  milestoneId   String?
+  requestedById String
+  newDate       DateTime
+  reason        String?
+  status        RequestStatus @default(PENDING)
+  processedById String?
+  createdAt     DateTime      @default(now())
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String?
+  entityId  String?
+  meta      String?
+  createdAt DateTime @default(now())
+}

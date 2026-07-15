@@ -1,0 +1,61 @@
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProfileForm } from "@/components/employee/profile-form";
+
+export default async function EmployeeProfilePage() {
+  const session = await auth();
+  if (!session?.user) notFound();
+
+  const me = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: { skills: { select: { name: true } } },
+  });
+  if (!me) notFound();
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Profile</h1>
+        <p className="text-sm text-muted-foreground">
+          {me.name} · {me.email}
+        </p>
+      </div>
+
+      {/* Skills — admin-managed */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">My skills</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-1.5">
+            {me.skills.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No skills set yet
+              </p>
+            )}
+            {me.skills.map((s) => (
+              <span
+                key={s.name}
+                className="rounded-full border bg-primary/5 px-3 py-1 text-sm"
+              >
+                {s.name}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Skills are managed by the admin — they control which open jobs
+            you can apply to. Ask the admin to add new ones.
+          </p>
+        </CardContent>
+      </Card>
+
+      <ProfileForm
+        payoutMethod={me.payoutMethod ?? ""}
+        payoutDetails={me.payoutDetails ?? ""}
+        timezone={me.timezone}
+      />
+    </div>
+  );
+}
