@@ -8,8 +8,13 @@ import { NextResponse } from "next/server";
 // Guards against double-crediting per month.
 // ============================================
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const authHeader = req.headers.get("authorization");
+  const url = new URL(req.url);
+  const key = url.searchParams.get("key");
+  const ok =
+    authHeader === `Bearer ${process.env.CRON_SECRET}` ||
+    key === process.env.CRON_SECRET;
+  if (!ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

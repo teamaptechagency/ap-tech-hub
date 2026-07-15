@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   MessageCircle,
   Users,
+  User,
   Briefcase,
   Receipt,
   Wallet,
