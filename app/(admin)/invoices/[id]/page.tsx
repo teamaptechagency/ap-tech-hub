@@ -37,9 +37,28 @@ export default async function InvoiceViewPage({
         client: true,
         job: { select: { title: true } },
         items: true,
+        paymentSubmissions: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          include: {
+            selectedBankAccount: true,
+            attachments: {
+              select: {
+                id: true,
+                name: true,
+                url: true,
+                mimeType: true,
+                size: true,
+              },
+            },
+          },
+        },
       },
     }),
-    prisma.paymentMethod.findMany({ where: { active: true } }),
+    prisma.paymentMethod.findMany({
+      where: { key: { not: null } },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
 
   if (!invoice) notFound();
@@ -321,6 +340,68 @@ export default async function InvoiceViewPage({
             remaining={remaining}
             paymentNote={invoice.paymentNote}
             submittedAt={invoice.submittedAt?.toISOString() ?? null}
+            latestSubmission={
+              invoice.paymentSubmissions[0]
+                ? {
+                    methodLabel:
+                      invoice.paymentSubmissions[0].methodLabel,
+                    amount: Number(
+                      invoice.paymentSubmissions[0].amount
+                    ),
+                    currency:
+                      invoice.paymentSubmissions[0].currency,
+                    paymentDate:
+                      invoice.paymentSubmissions[0].paymentDate.toISOString(),
+                    transactionId:
+                      invoice.paymentSubmissions[0].transactionId,
+                    secondaryReference:
+                      invoice.paymentSubmissions[0]
+                        .secondaryReference,
+                    senderNumber:
+                      invoice.paymentSubmissions[0].senderNumber,
+                    senderEmail:
+                      invoice.paymentSubmissions[0].senderEmail,
+                    senderName:
+                      invoice.paymentSubmissions[0].senderName,
+                    senderBankName:
+                      invoice.paymentSubmissions[0].senderBankName,
+                    senderBankAccount:
+                      invoice.paymentSubmissions[0].senderBankAccount,
+                    cardLast4:
+                      invoice.paymentSubmissions[0].cardLast4,
+                    paymentSource:
+                      invoice.paymentSubmissions[0].paymentSource,
+                    receiverName:
+                      invoice.paymentSubmissions[0].receiverName,
+                    note: invoice.paymentSubmissions[0].note,
+                    selectedBankAccount:
+                      invoice.paymentSubmissions[0]
+                        .selectedBankAccount
+                        ? {
+                            bankName:
+                              invoice.paymentSubmissions[0]
+                                .selectedBankAccount.bankName,
+                            accountName:
+                              invoice.paymentSubmissions[0]
+                                .selectedBankAccount.accountName,
+                            accountNumber:
+                              invoice.paymentSubmissions[0]
+                                .selectedBankAccount.accountNumber,
+                          }
+                        : null,
+                    attachments:
+                      invoice.paymentSubmissions[0].attachments.map(
+                        (attachment) => ({
+                          id: attachment.id,
+                          name: attachment.name,
+                          url: attachment.url,
+                          mimeType: attachment.mimeType,
+                          size: attachment.size,
+                        })
+                      ),
+                  }
+                : null
+            }
           />
         </div>
       </div>

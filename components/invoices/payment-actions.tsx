@@ -27,6 +27,36 @@ import {
 } from "@/components/ui/select";
 import { BadgeCheck, Ban } from "lucide-react";
 
+type LatestPaymentSubmission = {
+  methodLabel: string;
+  amount: number;
+  currency: string;
+  paymentDate: string;
+  transactionId: string | null;
+  secondaryReference: string | null;
+  senderNumber: string | null;
+  senderEmail: string | null;
+  senderName: string | null;
+  senderBankName: string | null;
+  senderBankAccount: string | null;
+  cardLast4: string | null;
+  paymentSource: string | null;
+  receiverName: string | null;
+  note: string | null;
+  selectedBankAccount: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+  } | null;
+  attachments: {
+    id: string;
+    name: string;
+    url: string;
+    mimeType: string | null;
+    size: number | null;
+  }[];
+};
+
 export function PaymentActions({
   invoiceId,
   status,
@@ -34,6 +64,7 @@ export function PaymentActions({
   remaining,
   paymentNote,
   submittedAt,
+  latestSubmission,
 }: {
   invoiceId: string;
   status: string;
@@ -41,6 +72,7 @@ export function PaymentActions({
   remaining: number;
   paymentNote: string | null;
   submittedAt: string | null;
+  latestSubmission: LatestPaymentSubmission | null;
 }) {
   const [approveOpen, setApproveOpen] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
@@ -101,6 +133,94 @@ export function PaymentActions({
                   minute: "2-digit",
                 })}
               </p>
+            )}
+
+            {latestSubmission && (
+              <div className="rounded-md bg-white/70 p-3 text-xs text-blue-950">
+                <p className="font-semibold">
+                  {latestSubmission.methodLabel} ·{" "}
+                  {latestSubmission.currency}{" "}
+                  {latestSubmission.amount.toFixed(2)}
+                </p>
+                <p>
+                  Payment date:{" "}
+                  {new Date(
+                    latestSubmission.paymentDate
+                  ).toLocaleDateString("en-GB")}
+                </p>
+                {latestSubmission.selectedBankAccount && (
+                  <p>
+                    Bank account:{" "}
+                    {
+                      latestSubmission.selectedBankAccount
+                        .bankName
+                    }{" "}
+                    (
+                    {
+                      latestSubmission.selectedBankAccount
+                        .accountNumber
+                    }
+                    )
+                  </p>
+                )}
+                {latestSubmission.transactionId && (
+                  <p>Reference: {latestSubmission.transactionId}</p>
+                )}
+                {latestSubmission.secondaryReference && (
+                  <p>
+                    Secondary reference:{" "}
+                    {latestSubmission.secondaryReference}
+                  </p>
+                )}
+                {latestSubmission.senderNumber && (
+                  <p>Sender number: {latestSubmission.senderNumber}</p>
+                )}
+                {latestSubmission.senderEmail && (
+                  <p>Sender email: {latestSubmission.senderEmail}</p>
+                )}
+                {latestSubmission.senderName && (
+                  <p>Sender name: {latestSubmission.senderName}</p>
+                )}
+                {latestSubmission.senderBankName && (
+                  <p>
+                    Sender bank: {latestSubmission.senderBankName}
+                  </p>
+                )}
+                {latestSubmission.senderBankAccount && (
+                  <p>
+                    Sender account:{" "}
+                    {latestSubmission.senderBankAccount}
+                  </p>
+                )}
+                {latestSubmission.cardLast4 && (
+                  <p>Card last 4: {latestSubmission.cardLast4}</p>
+                )}
+                {latestSubmission.paymentSource && (
+                  <p>Source: {latestSubmission.paymentSource}</p>
+                )}
+                {latestSubmission.receiverName && (
+                  <p>Receiver: {latestSubmission.receiverName}</p>
+                )}
+                {latestSubmission.note && (
+                  <p>Note: {latestSubmission.note}</p>
+                )}
+                {latestSubmission.attachments.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <p className="font-medium">Proof files</p>
+                    {latestSubmission.attachments.map((attachment) => (
+                      <a
+                        key={attachment.id}
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-blue-700 underline"
+                      >
+                        {attachment.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
             <div className="flex gap-2">
               <Button

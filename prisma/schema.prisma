@@ -69,6 +69,7 @@ model User {
   meetingsCreated     Meeting[]                 @relation("MeetingCreator")
   meetings            MeetingParticipant[]
   notifications       Notification[]
+  paymentSubmissions  PaymentSubmission[]
   createdAt           DateTime                  @default(now())
   updatedAt           DateTime                  @updatedAt
 }
@@ -112,16 +113,17 @@ model Client {
   balance     Decimal @default(0) @db.Decimal(12, 2)
   points      Int     @default(0)
 
-  users            User[]
-  jobs             Job[]
-  invoices         Invoice[]
-  walletTxns       ClientTxn[]
-  pointTxns        PointTxn[]
-  exchangeRequests PointExchangeRequest[]
-  ratings          Rating[]
-  jobRequests      JobRequest[]
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
+  users              User[]
+  jobs               Job[]
+  invoices           Invoice[]
+  walletTxns         ClientTxn[]
+  pointTxns          PointTxn[]
+  paymentSubmissions PaymentSubmission[]
+  exchangeRequests   PointExchangeRequest[]
+  ratings            Rating[]
+  jobRequests        JobRequest[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 }
 
 // ============================================
@@ -389,24 +391,26 @@ model Message {
 // ============================================
 
 model Attachment {
-  id            String       @id @default(cuid())
-  url           String
-  name          String
-  size          Int?
-  mimeType      String?
-  uploadedById  String?
-  uploadedBy    User?        @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
-  jobId         String?
-  job           Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  messageId     String?
-  message       Message?     @relation(fields: [messageId], references: [id], onDelete: SetNull)
-  milestoneId   String?
-  milestone     Milestone?   @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
-  taskId        String?
-  task          WeeklyTask?  @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  workSessionId String?
-  workSession   WorkSession? @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
-  createdAt     DateTime     @default(now())
+  id                  String             @id @default(cuid())
+  url                 String
+  name                String
+  size                Int?
+  mimeType            String?
+  uploadedById        String?
+  uploadedBy          User?              @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  jobId               String?
+  job                 Job?               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  messageId           String?
+  message             Message?           @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  milestoneId         String?
+  milestone           Milestone?         @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  taskId              String?
+  task                WeeklyTask?        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  workSessionId       String?
+  workSession         WorkSession?       @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
+  paymentSubmissionId String?
+  paymentSubmission   PaymentSubmission? @relation(fields: [paymentSubmissionId], references: [id], onDelete: SetNull)
+  createdAt           DateTime           @default(now())
 
   @@index([uploadedById])
   @@index([jobId])
@@ -414,6 +418,7 @@ model Attachment {
   @@index([milestoneId])
   @@index([taskId])
   @@index([workSessionId])
+  @@index([paymentSubmissionId])
 }
 
 // ============================================
@@ -435,31 +440,35 @@ enum InvoiceStatus {
 }
 
 model Invoice {
-  id             String          @id @default(cuid())
-  number         String          @unique
-  type           InvoiceType     @default(AUTO)
-  title          String?
-  jobId          String?
-  job            Job?            @relation(fields: [jobId], references: [id], onDelete: SetNull)
-  clientId       String
-  client         Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  amount         Decimal         @db.Decimal(12, 2)
-  currency       String          @default("USD")
-  vatPercent     Decimal?        @db.Decimal(5, 2)
-  balanceApplied Decimal         @default(0) @db.Decimal(12, 2)
-  amountPaid     Decimal         @default(0) @db.Decimal(12, 2)
-  status         InvoiceStatus   @default(DUE)
-  periodStart    DateTime?
-  periodEnd      DateTime?
-  dueDate        DateTime
-  paymentNote    String?
-  submittedAt    DateTime?
-  approvedById   String?
-  paidVia        String?
-  items          InvoiceItem[]
-  paymentMethods PaymentMethod[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id                         String              @id @default(cuid())
+  number                     String              @unique
+  type                       InvoiceType         @default(AUTO)
+  title                      String?
+  jobId                      String?
+  job                        Job?                @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  clientId                   String
+  client                     Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  amount                     Decimal             @db.Decimal(12, 2)
+  currency                   String              @default("USD")
+  vatPercent                 Decimal?            @db.Decimal(5, 2)
+  balanceApplied             Decimal             @default(0) @db.Decimal(12, 2)
+  amountPaid                 Decimal             @default(0) @db.Decimal(12, 2)
+  status                     InvoiceStatus       @default(DUE)
+  periodStart                DateTime?
+  periodEnd                  DateTime?
+  dueDate                    DateTime
+  paymentNote                String?
+  submittedAt                DateTime?
+  approvedById               String?
+  paidVia                    String?
+  payoneerInvoiceUrl         String?
+  payoneerInvoiceButtonLabel String?
+  payoneerInvoiceNote        String?
+  items                      InvoiceItem[]
+  paymentMethods             PaymentMethod[]
+  paymentSubmissions         PaymentSubmission[]
+  createdAt                  DateTime            @default(now())
+  updatedAt                  DateTime            @updatedAt
 
   @@unique([jobId, periodStart])
 }
@@ -474,11 +483,89 @@ model InvoiceItem {
 }
 
 model PaymentMethod {
-  id       String    @id @default(cuid())
-  label    String
-  details  String
-  active   Boolean   @default(true)
-  invoices Invoice[]
+  id                    String               @id @default(cuid())
+  key                   String?              @unique
+  label                 String
+  details               String
+  active                Boolean              @default(true)
+  instructions          String?
+  warning               String?
+  sortOrder             Int                  @default(0)
+  receiverNumber        String?
+  accountType           String?
+  wiseEmail             String?
+  wiseAccountName       String?
+  wisePaymentUrl        String?
+  wiseTransferDetails   String?
+  cashReceiverInfo      String?
+  payoneerDirectEnabled Boolean              @default(false)
+  payoneerMode          String?
+  payoneerMerchantId    String?
+  payoneerButtonLabel   String?
+  invoices              Invoice[]
+  bankAccounts          BankPaymentAccount[]
+  submissions           PaymentSubmission[]
+}
+
+model BankPaymentAccount {
+  id              String              @id @default(cuid())
+  paymentMethodId String
+  paymentMethod   PaymentMethod       @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
+  bankName        String
+  accountName     String
+  accountNumber   String
+  branchName      String?
+  routingNumber   String?
+  swiftCode       String?
+  currency        String              @default("USD")
+  instructions    String?
+  active          Boolean             @default(true)
+  sortOrder       Int                 @default(0)
+  submissions     PaymentSubmission[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([paymentMethodId])
+}
+
+model PaymentSubmission {
+  id                    String              @id @default(cuid())
+  invoiceId             String
+  invoice               Invoice             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  clientId              String
+  client                Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  paymentMethodId       String?
+  paymentMethod         PaymentMethod?      @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  methodKey             String
+  methodLabel           String
+  amount                Decimal             @db.Decimal(12, 2)
+  currency              String              @default("USD")
+  paymentDate           DateTime
+  selectedBankAccountId String?
+  selectedBankAccount   BankPaymentAccount? @relation(fields: [selectedBankAccountId], references: [id], onDelete: SetNull)
+  transactionId         String?
+  secondaryReference    String?
+  senderNumber          String?
+  senderEmail           String?
+  senderName            String?
+  senderBankName        String?
+  senderBankAccount     String?
+  cardLast4             String?
+  paymentSource         String?
+  receiverName          String?
+  note                  String?
+  status                String              @default("PENDING")
+  attachments           Attachment[]
+  submittedById         String?
+  submittedBy           User?               @relation(fields: [submittedById], references: [id], onDelete: SetNull)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([invoiceId])
+  @@index([clientId])
+  @@index([paymentMethodId])
+  @@index([selectedBankAccountId])
+  @@index([submittedById])
 }
 
 // ============================================

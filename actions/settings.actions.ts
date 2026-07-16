@@ -25,6 +25,239 @@ async function audit(
   });
 }
 
+export type FixedPaymentMethodKey =
+  | "BANK_TRANSFER"
+  | "BKASH"
+  | "NAGAD"
+  | "WISE"
+  | "CASH"
+  | "PAYONEER";
+
+const FIXED_PAYMENT_METHODS: {
+  key: FixedPaymentMethodKey;
+  label: string;
+  sortOrder: number;
+}[] = [
+  { key: "BANK_TRANSFER", label: "Bank Transfer", sortOrder: 10 },
+  { key: "BKASH", label: "bKash", sortOrder: 20 },
+  { key: "NAGAD", label: "Nagad", sortOrder: 30 },
+  { key: "WISE", label: "Wise", sortOrder: 40 },
+  { key: "CASH", label: "Cash", sortOrder: 50 },
+  { key: "PAYONEER", label: "Payoneer", sortOrder: 60 },
+];
+
+export type PaymentMethodSettingsInput = {
+  key: FixedPaymentMethodKey;
+  active: boolean;
+  details?: string;
+  instructions?: string;
+  warning?: string;
+  receiverNumber?: string;
+  accountType?: string;
+  wiseEmail?: string;
+  wiseAccountName?: string;
+  wisePaymentUrl?: string;
+  wiseTransferDetails?: string;
+  cashReceiverInfo?: string;
+  payoneerDirectEnabled?: boolean;
+  payoneerMode?: string;
+  payoneerMerchantId?: string;
+  payoneerButtonLabel?: string;
+};
+
+export type BankAccountSettingsInput = {
+  id?: string;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  branchName?: string;
+  routingNumber?: string;
+  swiftCode?: string;
+  currency: string;
+  instructions?: string;
+  active: boolean;
+  sortOrder: number;
+};
+
+function cleanOptional(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+export async function ensureFixedPaymentMethods() {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  for (const method of FIXED_PAYMENT_METHODS) {
+    await prisma.paymentMethod.upsert({
+      where: { key: method.key },
+      update: {
+        label: method.label,
+        sortOrder: method.sortOrder,
+      },
+      create: {
+        key: method.key,
+        label: method.label,
+        details: "",
+        active: false,
+        sortOrder: method.sortOrder,
+      },
+    });
+  }
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
+export async function updatePaymentMethodSettings(
+  input: PaymentMethodSettingsInput
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const fixedMethod = FIXED_PAYMENT_METHODS.find(
+    (method) => method.key === input.key
+  );
+
+  if (!fixedMethod) return { error: "Unknown payment method" };
+
+  await prisma.paymentMethod.upsert({
+    where: { key: input.key },
+    update: {
+      active: input.active,
+      details: cleanOptional(input.details) ?? "",
+      instructions: cleanOptional(input.instructions),
+      warning: cleanOptional(input.warning),
+      receiverNumber: cleanOptional(input.receiverNumber),
+      accountType: cleanOptional(input.accountType),
+      wiseEmail: cleanOptional(input.wiseEmail),
+      wiseAccountName: cleanOptional(input.wiseAccountName),
+      wisePaymentUrl: cleanOptional(input.wisePaymentUrl),
+      wiseTransferDetails: cleanOptional(input.wiseTransferDetails),
+      cashReceiverInfo: cleanOptional(input.cashReceiverInfo),
+      payoneerDirectEnabled: input.payoneerDirectEnabled ?? false,
+      payoneerMode: cleanOptional(input.payoneerMode),
+      payoneerMerchantId: cleanOptional(input.payoneerMerchantId),
+      payoneerButtonLabel: cleanOptional(input.payoneerButtonLabel),
+    },
+    create: {
+      key: fixedMethod.key,
+      label: fixedMethod.label,
+      sortOrder: fixedMethod.sortOrder,
+      active: input.active,
+      details: cleanOptional(input.details) ?? "",
+      instructions: cleanOptional(input.instructions),
+      warning: cleanOptional(input.warning),
+      receiverNumber: cleanOptional(input.receiverNumber),
+      accountType: cleanOptional(input.accountType),
+      wiseEmail: cleanOptional(input.wiseEmail),
+      wiseAccountName: cleanOptional(input.wiseAccountName),
+      wisePaymentUrl: cleanOptional(input.wisePaymentUrl),
+      wiseTransferDetails: cleanOptional(input.wiseTransferDetails),
+      cashReceiverInfo: cleanOptional(input.cashReceiverInfo),
+      payoneerDirectEnabled: input.payoneerDirectEnabled ?? false,
+      payoneerMode: cleanOptional(input.payoneerMode),
+      payoneerMerchantId: cleanOptional(input.payoneerMerchantId),
+      payoneerButtonLabel: cleanOptional(input.payoneerButtonLabel),
+    },
+  });
+
+  await audit(
+    session.user.id,
+    "PAYMENT_METHOD_UPDATED",
+    "PaymentMethod",
+    input.key
+  );
+
+  revalidatePath("/settings");
+  revalidatePath("/c/invoices");
+  return { success: true };
+}
+
+export async function saveBankAccounts(
+  accounts: BankAccountSettingsInput[]
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  if (accounts.length > 3) {
+    return { error: "Bank Transfer supports a maximum of 3 bank accounts" };
+  }
+
+  const bankMethod = await prisma.paymentMethod.upsert({
+    where: { key: "BANK_TRANSFER" },
+    update: {},
+    create: {
+      key: "BANK_TRANSFER",
+      label: "Bank Transfer",
+      details: "",
+      active: false,
+      sortOrder: 10,
+    },
+  });
+
+  for (const account of accounts) {
+    if (!account.bankName.trim()) return { error: "Bank name is required" };
+    if (!account.accountName.trim()) return { error: "Account name is required" };
+    if (!account.accountNumber.trim()) {
+      return { error: "Account number is required" };
+    }
+  }
+
+  const keepIds = accounts
+    .map((account) => account.id)
+    .filter(
+      (id): id is string =>
+        typeof id === "string" && !id.startsWith("new-")
+    );
+
+  await prisma.$transaction(async (tx) => {
+    await tx.bankPaymentAccount.deleteMany({
+      where: {
+        paymentMethodId: bankMethod.id,
+        id: { notIn: keepIds },
+      },
+    });
+
+    for (const account of accounts) {
+      const data = {
+        paymentMethodId: bankMethod.id,
+        bankName: account.bankName.trim(),
+        accountName: account.accountName.trim(),
+        accountNumber: account.accountNumber.trim(),
+        branchName: cleanOptional(account.branchName),
+        routingNumber: cleanOptional(account.routingNumber),
+        swiftCode: cleanOptional(account.swiftCode),
+        currency: account.currency.trim() || "USD",
+        instructions: cleanOptional(account.instructions),
+        active: account.active,
+        sortOrder: account.sortOrder,
+      };
+
+      if (account.id && !account.id.startsWith("new-")) {
+        await tx.bankPaymentAccount.update({
+          where: { id: account.id },
+          data,
+        });
+      } else {
+        await tx.bankPaymentAccount.create({ data });
+      }
+    }
+  });
+
+  await audit(
+    session.user.id,
+    "BANK_ACCOUNTS_UPDATED",
+    "PaymentMethod",
+    bankMethod.id,
+    `${accounts.length} accounts`
+  );
+
+  revalidatePath("/settings");
+  revalidatePath("/c/invoices");
+  return { success: true };
+}
+
 // ============================================
 // EXCHANGE RATES
 // ============================================
@@ -209,6 +442,11 @@ export async function addPaymentMethod(formData: {
 export async function deletePaymentMethod(id: string) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
+
+  const method = await prisma.paymentMethod.findUnique({ where: { id } });
+  if (method?.key) {
+    return { error: "Fixed payment methods cannot be deleted" };
+  }
 
   await prisma.paymentMethod.delete({ where: { id } });
 

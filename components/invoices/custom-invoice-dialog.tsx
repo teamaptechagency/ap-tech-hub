@@ -56,6 +56,10 @@ export function CustomInvoiceDialog({
   const [currency, setCurrency] = useState<string | null>("USD");
   const [vatPercent, setVatPercent] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [payoneerInvoiceUrl, setPayoneerInvoiceUrl] = useState("");
+  const [payoneerInvoiceButtonLabel, setPayoneerInvoiceButtonLabel] =
+    useState("Pay with Payoneer");
+  const [payoneerInvoiceNote, setPayoneerInvoiceNote] = useState("");
   const [deduct, setDeduct] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -90,6 +94,10 @@ export function CustomInvoiceDialog({
       vatPercent: vatPercent || undefined,
       dueDate,
       deductFromBalance: deduct,
+      payoneerInvoiceUrl: payoneerInvoiceUrl || undefined,
+      payoneerInvoiceButtonLabel:
+        payoneerInvoiceButtonLabel || undefined,
+      payoneerInvoiceNote: payoneerInvoiceNote || undefined,
     });
 
     setBusy(false);
@@ -269,6 +277,43 @@ export function CustomInvoiceDialog({
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-3 rounded-lg border p-3">
+            <div>
+              <p className="text-sm font-medium">
+                Payoneer invoice link
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Optional. This link is unique to this invoice.
+              </p>
+            </div>
+
+            <Input
+              value={payoneerInvoiceUrl}
+              onChange={(event) =>
+                setPayoneerInvoiceUrl(event.target.value)
+              }
+              placeholder="https://..."
+            />
+
+            <Input
+              value={payoneerInvoiceButtonLabel}
+              onChange={(event) =>
+                setPayoneerInvoiceButtonLabel(
+                  event.target.value
+                )
+              }
+              placeholder="Button label"
+            />
+
+            <Input
+              value={payoneerInvoiceNote}
+              onChange={(event) =>
+                setPayoneerInvoiceNote(event.target.value)
+              }
+              placeholder="Optional Payoneer note"
+            />
           </div>
 
           {/* Total + balance deduct */}

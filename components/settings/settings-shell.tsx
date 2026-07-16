@@ -17,6 +17,10 @@ import {
   updateSettings,
 } from "@/actions/settings.actions";
 
+import {
+  PaymentMethodSettings,
+  type FixedPaymentMethodRow,
+} from "@/components/settings/payment-method-settings";
 import { TermsEditor } from "@/components/settings/terms-editor";
 
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +73,7 @@ export type TeamRow = {
 export type PaymentMethodRow = {
   id: string;
   label: string;
-  details: string;
+  details?: string;
 };
 
 export type TemplateRow = {
@@ -83,7 +87,7 @@ type SettingsShellProps = {
   settings: Record<string, string>;
   skills: SkillRow[];
   team: TeamRow[];
-  paymentMethods: PaymentMethodRow[];
+  paymentMethods: FixedPaymentMethodRow[];
   templates: TemplateRow[];
 };
 
@@ -185,7 +189,8 @@ export function SettingsShell({
     useState<string[]>([]);
 
   // ============================================
-  // PAYMENT METHODS
+  // LEGACY PAYMENT METHODS
+  // Hidden below; fixed payment methods are managed by PaymentMethodSettings.
   // ============================================
   const [pmLabel, setPmLabel] = useState("");
   const [pmDetails, setPmDetails] = useState("");
@@ -467,7 +472,7 @@ export function SettingsShell({
   }
 
   // ============================================
-  // ADD PAYMENT METHOD
+  // ADD LEGACY PAYMENT METHOD
   // ============================================
   async function handleAddPaymentMethod(
     event: React.FormEvent<HTMLFormElement>
@@ -512,7 +517,7 @@ export function SettingsShell({
   }
 
   // ============================================
-  // DELETE PAYMENT METHOD
+  // DELETE LEGACY PAYMENT METHOD
   // ============================================
   async function handleDeletePaymentMethod(
     paymentMethod: PaymentMethodRow
@@ -1032,10 +1037,14 @@ export function SettingsShell({
         </CardContent>
       </Card>
 
+      <PaymentMethodSettings
+        paymentMethods={paymentMethods}
+      />
+
       {/* Payment methods and templates */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Payment methods */}
-        <Card>
+        <Card className="hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">
               Default payment methods

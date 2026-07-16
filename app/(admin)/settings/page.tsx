@@ -1,6 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { SettingsShell } from "@/components/settings/settings-shell";
 
+const fixedPaymentMethods = [
+  { key: "BANK_TRANSFER", label: "Bank Transfer", sortOrder: 10 },
+  { key: "BKASH", label: "bKash", sortOrder: 20 },
+  { key: "NAGAD", label: "Nagad", sortOrder: 30 },
+  { key: "WISE", label: "Wise", sortOrder: 40 },
+  { key: "CASH", label: "Cash", sortOrder: 50 },
+  { key: "PAYONEER", label: "Payoneer", sortOrder: 60 },
+] as const;
+
 export default async function SettingsPage() {
   const [rates, settings, skills, team, paymentMethods, templates] =
     await Promise.all([
@@ -15,7 +24,11 @@ export default async function SettingsPage() {
         orderBy: { name: "asc" },
         include: { skills: { select: { id: true, name: true } } },
       }),
-      prisma.paymentMethod.findMany({ where: { active: true } }),
+      prisma.paymentMethod.findMany({
+        where: { key: { not: null } },
+        orderBy: { sortOrder: "asc" },
+        include: { bankAccounts: { orderBy: { sortOrder: "asc" } } },
+      }),
       prisma.commonTask.findMany({ orderBy: { sortOrder: "asc" } }),
     ]);
 
@@ -43,11 +56,51 @@ export default async function SettingsPage() {
         skillIds: u.skills.map((s) => s.id),
         skillNames: u.skills.map((s) => s.name),
       }))}
-      paymentMethods={paymentMethods.map((p) => ({
-        id: p.id,
-        label: p.label,
-        details: p.details,
-      }))}
+      paymentMethods={fixedPaymentMethods.map((method) => {
+        const saved = paymentMethods.find(
+          (paymentMethod) => paymentMethod.key === method.key
+        );
+
+        return {
+          id: saved?.id ?? method.key,
+          key: method.key,
+          label: saved?.label ?? method.label,
+          active: saved?.active ?? false,
+          details: saved?.details ?? "",
+          instructions: saved?.instructions ?? undefined,
+          warning: saved?.warning ?? undefined,
+          receiverNumber: saved?.receiverNumber ?? undefined,
+          accountType: saved?.accountType ?? undefined,
+          wiseEmail: saved?.wiseEmail ?? undefined,
+          wiseAccountName: saved?.wiseAccountName ?? undefined,
+          wisePaymentUrl: saved?.wisePaymentUrl ?? undefined,
+          wiseTransferDetails:
+            saved?.wiseTransferDetails ?? undefined,
+          cashReceiverInfo: saved?.cashReceiverInfo ?? undefined,
+          payoneerDirectEnabled:
+            saved?.payoneerDirectEnabled ?? false,
+          payoneerMode: saved?.payoneerMode ?? undefined,
+          payoneerMerchantId:
+            saved?.payoneerMerchantId ?? undefined,
+          payoneerButtonLabel:
+            saved?.payoneerButtonLabel ?? undefined,
+          sortOrder: saved?.sortOrder ?? method.sortOrder,
+          bankAccounts:
+            saved?.bankAccounts.map((account) => ({
+              id: account.id,
+              bankName: account.bankName,
+              accountName: account.accountName,
+              accountNumber: account.accountNumber,
+              branchName: account.branchName ?? undefined,
+              routingNumber: account.routingNumber ?? undefined,
+              swiftCode: account.swiftCode ?? undefined,
+              currency: account.currency,
+              instructions: account.instructions ?? undefined,
+              active: account.active,
+              sortOrder: account.sortOrder,
+            })) ?? [],
+        };
+      })}
       templates={templates.map((t) => ({
         id: t.id,
         title: t.title,
