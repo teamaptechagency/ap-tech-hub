@@ -1,48 +1,139 @@
+import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import { ClientSidebar } from "@/components/layout/client-sidebar";
-import { TermsGate } from "@/components/terms-gate";
 import { getTermsForRole } from "@/lib/terms";
+
+import { ClientSidebar } from "@/components/layout/client-sidebar";
+import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
+import {
+  BottomNav,
+  type BottomNavItem,
+} from "@/components/layout/bottom-nav";
+import { TermsGate } from "@/components/terms-gate";
+
+type ClientLayoutProps = {
+  children: ReactNode;
+};
 
 export default async function ClientLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: ClientLayoutProps) {
   const session = await auth();
-  if (!session?.user) redirect("/login");
-  if (!session.user.clientId) redirect("/login");
 
-  const [client, me] = await Promise.all([
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const clientId = session.user.clientId;
+
+  if (!clientId) {
+    redirect("/login");
+  }
+
+  const [client, currentUser] = await Promise.all([
     prisma.client.findUnique({
-      where: { id: session.user.clientId },
-      select: { companyName: true },
+      where: {
+        id: clientId,
+      },
+      select: {
+        companyName: true,
+      },
     }),
+
     prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { termsAcceptedAt: true },
+      where: {
+        id: session.user.id,
+      },
+      select: {
+        termsAcceptedAt: true,
+      },
     }),
   ]);
 
-  let gate = null;
-  if (!me?.termsAcceptedAt) {
-    const t = await getTermsForRole(session.user.role);
-    if (t) gate = <TermsGate terms={t.terms} version={t.version} />;
+  if (!client || !currentUser) {
+    redirect("/login");
   }
 
+  let termsGate: ReactNode = null;
+
+  if (!currentUser.termsAcceptedAt) {
+    const termsData = await getTermsForRole(
+      session.user.role
+    );
+
+    if (termsData) {
+      termsGate = (
+        <TermsGate
+          terms={termsData.terms}
+          version={termsData.version}
+        />
+      );
+    }
+  }
+
+  const userName =
+    session.user.name?.trim() || "Client";
+
+  const companyName =
+    client.companyName?.trim() || "Client Account";
+
+  const bottomItems: BottomNavItem[] = [
+    {
+      label: "Dashboard",
+      href: "/c/dashboard",
+      icon: "dashboard",
+    },
+    {
+      label: "My jobs",
+      href: "/c/jobs",
+      icon: "jobs",
+    },
+    {
+      label: "Messages",
+      href: "/c/messages",
+      icon: "messages",
+    },
+    {
+      label: "Invoices",
+      href: "/c/invoices",
+      icon: "invoices",
+    },
+    {
+      label: "Meetings",
+      href: "/c/meetings",
+      icon: "meetings",
+    },
+  ];
+
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col md:flex-row">
+      {/* Mobile top navigation and drawer */}
+      <PortalMobileNav
+        portal="client"
+        userName={userName}
+        userSub={companyName}
+      />
+
+      {/* Desktop sidebar */}
       <ClientSidebar
         user={{
-          name: session.user.name ?? "",
-          companyName: client?.companyName ?? "",
+          name: userName,
+          companyName,
         }}
       />
-      <main className="flex-1 overflow-y-auto bg-muted/20 p-6 md:p-8">
-        {gate}
-        {children}
+
+      {/* Main content */}
+      <main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-4 pb-20 md:p-8 md:pb-8">
+        <div className="mx-auto w-full max-w-[1600px]">
+          {termsGate}
+          {children}
+        </div>
       </main>
+
+      {/* Mobile bottom navigation */}
+      <BottomNav items={bottomItems} />
     </div>
   );
 }

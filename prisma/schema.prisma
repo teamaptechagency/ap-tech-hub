@@ -41,23 +41,24 @@ model User {
   termsAcceptedAt DateTime?
   termsVersion    String?
 
-  skills             Skill[]
-  jobMemberships     JobMember[]
-  workSessions       WorkSession[]
-  applications       Application[]
-  assignedTasks      WeeklyTask[]  @relation("TaskAssignee")
-  completedTasks     WeeklyTask[]  @relation("TaskCompleter")
-  assignedMilestones Milestone[]   @relation("MilestoneAssignee")
-  sentMessages       Message[]
-  conversations      ConversationParticipant[]
-  workerTxns         WorkerTxn[]
-  withdrawRequests   WithdrawRequest[]
-  ratingsReceived    Rating[]      @relation("RatedWorker")
-  meetingsCreated    Meeting[]     @relation("MeetingCreator")
-  meetings           MeetingParticipant[]
-  notifications      Notification[]
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  skills              Skill[]
+  jobMemberships      JobMember[]
+  workSessions        WorkSession[]
+  applications        Application[]
+  assignedTasks       WeeklyTask[]              @relation("TaskAssignee")
+  completedTasks      WeeklyTask[]              @relation("TaskCompleter")
+  assignedMilestones  Milestone[]               @relation("MilestoneAssignee")
+  sentMessages        Message[]
+  uploadedAttachments Attachment[]              @relation("AttachmentUploader")
+  conversations       ConversationParticipant[]
+  workerTxns          WorkerTxn[]
+  withdrawRequests    WithdrawRequest[]
+  ratingsReceived     Rating[]                  @relation("RatedWorker")
+  meetingsCreated     Meeting[]                 @relation("MeetingCreator")
+  meetings            MeetingParticipant[]
+  notifications       Notification[]
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
 }
 
 // ============================================
@@ -98,8 +99,8 @@ model Client {
   exchangeRequests PointExchangeRequest[]
   ratings          Rating[]
   jobRequests      JobRequest[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
 }
 
 // ============================================
@@ -145,7 +146,7 @@ model Job {
   // MONTHLY: per month | FIXED: total budget | HOURLY: per hour
   clientValue    Decimal? @db.Decimal(12, 2)
   clientCurrency String   @default("USD")
-  vatPercent    Decimal? @db.Decimal(5, 2)
+  vatPercent     Decimal? @db.Decimal(5, 2)
 
   // Type-specific fields
   startDate       DateTime?
@@ -168,20 +169,20 @@ model Job {
   extensions     ExtensionRequest[]
   meetings       Meeting[]
   workerTxns     WorkerTxn[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 }
 
 // Assignment + per-worker payment (worker value)
 // MONTHLY: per month | FIXED: total | HOURLY: per hour
 model JobMember {
-  id             String  @id @default(cuid())
+  id             String   @id @default(cuid())
   jobId          String
-  job            Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job            Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
   userId         String
-  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workerValue    Decimal @default(0) @db.Decimal(12, 2)
-  workerCurrency String  @default("BDT")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workerValue    Decimal  @default(0) @db.Decimal(12, 2)
+  workerCurrency String   @default("BDT")
   createdAt      DateTime @default(now())
 
   @@unique([jobId, userId])
@@ -216,20 +217,20 @@ model Week {
 }
 
 model WeeklyTask {
-  id            String     @id @default(cuid())
+  id            String       @id @default(cuid())
   weekId        String
-  week          Week       @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  week          Week         @relation(fields: [weekId], references: [id], onDelete: Cascade)
   title         String
-  priority      Priority   @default(MEDIUM)
-  status        TaskStatus @default(PENDING)
-  sortOrder     Int        @default(0)
+  priority      Priority     @default(MEDIUM)
+  status        TaskStatus   @default(PENDING)
+  sortOrder     Int          @default(0)
   assigneeId    String?
-  assignee      User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assignee      User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
   completedById String?
-  completedBy   User?      @relation("TaskCompleter", fields: [completedById], references: [id])
+  completedBy   User?        @relation("TaskCompleter", fields: [completedById], references: [id])
   completedAt   DateTime?
   attachments   Attachment[]
-  createdAt     DateTime   @default(now())
+  createdAt     DateTime     @default(now())
 }
 
 model CommonTask {
@@ -281,17 +282,17 @@ model CheckItem {
 // ============================================
 
 model WorkSession {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   jobId       String
-  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job         Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
   userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  startedAt   DateTime  @default(now())
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt   DateTime     @default(now())
   endedAt     DateTime?
   duration    Int?
   note        String?
   attachments Attachment[]
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime     @default(now())
 }
 
 // ============================================
@@ -324,14 +325,14 @@ model Application {
 // ============================================
 
 model Conversation {
-  id           String  @id @default(cuid())
-  jobId        String? @unique
-  job          Job?    @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  isDirect     Boolean @default(false)
+  id           String                    @id @default(cuid())
+  jobId        String?                   @unique
+  job          Job?                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  isDirect     Boolean                   @default(false)
   participants ConversationParticipant[]
   messages     Message[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @default(now()) @updatedAt
 }
 
 model ConversationParticipant {
@@ -353,8 +354,13 @@ model Message {
   sender         User         @relation(fields: [senderId], references: [id])
   body           String
   seenAt         DateTime?
+  pinned         Boolean      @default(false)
+  pinnedAt       DateTime?
   attachments    Attachment[]
   createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([conversationId, pinned])
 }
 
 // ============================================
@@ -368,10 +374,11 @@ model Attachment {
   size          Int?
   mimeType      String?
   uploadedById  String?
+  uploadedBy    User?        @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
   jobId         String?
   job           Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade)
   messageId     String?
-  message       Message?     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  message       Message?     @relation(fields: [messageId], references: [id], onDelete: SetNull)
   milestoneId   String?
   milestone     Milestone?   @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
   taskId        String?
@@ -379,6 +386,13 @@ model Attachment {
   workSessionId String?
   workSession   WorkSession? @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
   createdAt     DateTime     @default(now())
+
+  @@index([uploadedById])
+  @@index([jobId])
+  @@index([messageId])
+  @@index([milestoneId])
+  @@index([taskId])
+  @@index([workSessionId])
 }
 
 // ============================================
@@ -400,20 +414,20 @@ enum InvoiceStatus {
 }
 
 model Invoice {
-  id             String        @id @default(cuid())
-  number         String        @unique
-  type           InvoiceType   @default(AUTO)
+  id             String          @id @default(cuid())
+  number         String          @unique
+  type           InvoiceType     @default(AUTO)
   title          String?
   jobId          String?
-  job            Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  job            Job?            @relation(fields: [jobId], references: [id], onDelete: SetNull)
   clientId       String
-  client         Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  amount         Decimal       @db.Decimal(12, 2)
-  currency       String        @default("USD")
-  vatPercent     Decimal?      @db.Decimal(5, 2)
-  balanceApplied Decimal       @default(0) @db.Decimal(12, 2)
-  amountPaid     Decimal       @default(0) @db.Decimal(12, 2)
-  status         InvoiceStatus @default(DUE)
+  client         Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  amount         Decimal         @db.Decimal(12, 2)
+  currency       String          @default("USD")
+  vatPercent     Decimal?        @db.Decimal(5, 2)
+  balanceApplied Decimal         @default(0) @db.Decimal(12, 2)
+  amountPaid     Decimal         @default(0) @db.Decimal(12, 2)
+  status         InvoiceStatus   @default(DUE)
   periodStart    DateTime?
   periodEnd      DateTime?
   dueDate        DateTime
@@ -423,8 +437,8 @@ model Invoice {
   paidVia        String?
   items          InvoiceItem[]
   paymentMethods PaymentMethod[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@unique([jobId, periodStart])
 }
@@ -636,17 +650,17 @@ enum MeetingStatus {
 }
 
 model Meeting {
-  id           String        @id @default(cuid())
+  id           String               @id @default(cuid())
   title        String
   scheduledAt  DateTime
-  roomCode     String        @unique @default(cuid())
-  status       MeetingStatus @default(PENDING_APPROVAL)
+  roomCode     String               @unique @default(cuid())
+  status       MeetingStatus        @default(PENDING_APPROVAL)
   jobId        String?
-  job          Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  job          Job?                 @relation(fields: [jobId], references: [id], onDelete: SetNull)
   createdById  String
-  createdBy    User          @relation("MeetingCreator", fields: [createdById], references: [id])
+  createdBy    User                 @relation("MeetingCreator", fields: [createdById], references: [id])
   participants MeetingParticipant[]
-  createdAt    DateTime      @default(now())
+  createdAt    DateTime             @default(now())
 }
 
 model MeetingParticipant {

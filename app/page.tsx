@@ -2,8 +2,12 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { homeFor } from "@/lib/roles";
 
-export default async function HomePage() {
+export default async function RootPage() {
   const session = await auth();
-  if (session?.user) redirect(homeFor(session.user.role));
-  redirect("/login");
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  redirect(homeFor(session.user.role));
 }
