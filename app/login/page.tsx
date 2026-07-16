@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LoginForm } from "@/components/auth/login-form";
 
 export default function LoginPage() {
@@ -12,7 +13,20 @@ export default function LoginPage() {
             Sign in to your portal
           </p>
         </div>
+
         <LoginForm />
+
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <Link
+            href="/forgot-password"
+            className="text-muted-foreground hover:text-primary hover:underline"
+          >
+            Forgot password?
+          </Link>
+          <Link href="/register" className="text-primary hover:underline">
+            Create account
+          </Link>
+        </div>
       </div>
     </div>
   );

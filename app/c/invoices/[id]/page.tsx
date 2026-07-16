@@ -62,7 +62,7 @@ export default async function ClientInvoiceViewPage({
           <ArrowLeft className="h-4 w-4" />
           Invoices
         </Link>
-        <PrintButton />
+        <PrintButton title={invoice.number} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[3fr_2fr]">

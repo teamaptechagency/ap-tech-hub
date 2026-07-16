@@ -2,14 +2,28 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { homeFor, ADMIN_ROLES, WORKER_ROLES, CLIENT_ROLES } from "@/lib/roles";
 
+// Routes anyone can visit without logging in
+const PUBLIC_PATHS = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/api/auth",
+  "/api/register-upload",
+  "/api/cron",
+];
+
 export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
   const user = req.auth?.user;
 
   // Public routes
-  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth")) {
-    // Logged-in users skip the login page
-    if (user && pathname.startsWith("/login")) {
+  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+    // Logged-in users skip login/register pages
+    if (
+      user &&
+      (pathname.startsWith("/login") || pathname.startsWith("/register"))
+    ) {
       return NextResponse.redirect(new URL(homeFor(user.role), req.url));
     }
     return NextResponse.next();

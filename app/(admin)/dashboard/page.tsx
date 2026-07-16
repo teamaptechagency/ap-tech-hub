@@ -3,6 +3,10 @@ import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  PendingApprovals,
+  type PendingUser,
+} from "@/components/pending-approvals";
 
 export default async function AdminDashboard() {
   const session = await auth();
@@ -21,6 +25,7 @@ export default async function AdminDashboard() {
     pendingApplications,
     jobRequests,
     recentJobs,
+    pendingUsers,
   ] = await Promise.all([
     prisma.job.count({
       where: { status: { in: ["PENDING", "IN_PROGRESS"] } },
@@ -53,12 +58,23 @@ export default async function AdminDashboard() {
         externalName: true,
       },
     }),
+    prisma.user.findMany({
+      where: { accountStatus: "PENDING_APPROVAL" },
+      orderBy: { createdAt: "asc" },
+      include: {
+        skills: { select: { name: true } },
+        client: { select: { companyName: true } },
+      },
+    }),
   ]);
 
   const earnings = Number(earnAgg._sum.amountBdt ?? 0);
   const needsAction =
-    submittedInvoices + pendingWithdrawals + pendingApplications +
-    jobRequests.length;
+    submittedInvoices +
+    pendingWithdrawals +
+    pendingApplications +
+    jobRequests.length +
+    pendingUsers.length;
 
   const typeBadge: Record<string, string> = {
     MONTHLY: "bg-blue-100 text-blue-700",
@@ -143,6 +159,26 @@ export default async function AdminDashboard() {
           </Card>
         </Link>
       </div>
+
+      {/* Pending registrations (approve/reject) */}
+      <PendingApprovals
+        users={pendingUsers.map(
+          (u): PendingUser => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone,
+            role: u.role,
+            companyName: u.client?.companyName ?? null,
+            profession: u.profession,
+            gender: u.gender,
+            skills: u.skills.map((s) => s.name),
+            nidUrl: u.nidUrl,
+            photoUrl: u.photoUrl,
+            createdAt: u.createdAt.toISOString(),
+          })
+        )}
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Job requests from clients */}

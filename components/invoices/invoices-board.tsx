@@ -6,15 +6,7 @@ import { CustomInvoiceDialog } from "@/components/invoices/custom-invoice-dialog
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Plus, Receipt } from "lucide-react";
+import { Plus, Receipt, ChevronRight } from "lucide-react";
 
 type InvoiceRow = {
   id: string;
@@ -95,14 +87,6 @@ export function InvoicesBoard({
       ? invoices.length
       : invoices.filter((i) => i.status === key).length;
 
-  const outstanding = invoices
-    .filter((i) =>
-      ["DUE", "PARTIALLY_PAID", "PAYMENT_SUBMITTED", "OVERDUE"].includes(
-        i.status
-      )
-    )
-    .reduce((s, i) => s + (i.amount - i.amountPaid), 0);
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -110,8 +94,9 @@ export function InvoicesBoard({
         <div>
           <h1 className="text-2xl font-bold">Invoices</h1>
           <p className="text-sm text-muted-foreground">
-            {countFor("PAID")} paid · ~{outstanding.toFixed(0)} outstanding
-            (mixed currencies)
+            {countFor("PAID")} paid ·{" "}
+            {countFor("DUE") + countFor("PARTIALLY_PAID") + countFor("OVERDUE")}{" "}
+            awaiting payment
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
@@ -139,7 +124,7 @@ export function InvoicesBoard({
         ))}
       </div>
 
-      {/* Table */}
+      {/* List */}
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -152,45 +137,22 @@ export function InvoicesBoard({
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((inv) => {
-                  const sym = currencySymbol[inv.currency] ?? "";
-                  const remaining = inv.amount - inv.amountPaid;
-                  return (
-                    <TableRow key={inv.id}>
-                      <TableCell>
-                        <Link
-                          href={`/invoices/${inv.id}`}
-                          className="font-mono text-sm font-medium text-primary hover:underline"
-                        >
+        <div className="space-y-2">
+          {filtered.map((inv) => {
+            const sym = currencySymbol[inv.currency] ?? "";
+            const remaining = inv.amount - inv.amountPaid;
+            return (
+              <Link key={inv.id} href={`/invoices/${inv.id}`} className="block">
+                <Card className="transition-colors hover:border-primary/40">
+                  <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                      <p className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-sm font-medium">
                           {inv.number}
-                        </Link>
-                        <p className="text-xs text-muted-foreground">
-                          {inv.title ?? inv.jobTitle ?? "—"} · due{" "}
-                          {new Date(inv.dueDate).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </p>
-                      </TableCell>
-                      <TableCell>{inv.clientName}</TableCell>
-                      <TableCell>
+                        </span>
                         <Badge
                           variant="secondary"
-                          className={`text-xs ${
+                          className={`text-[10px] ${
                             inv.type === "AUTO"
                               ? "bg-blue-100 text-blue-700"
                               : "bg-violet-100 text-violet-700"
@@ -198,42 +160,46 @@ export function InvoicesBoard({
                         >
                           {inv.type === "AUTO" ? "Auto" : "Custom"}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className="font-medium">
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {inv.clientName}
+                        {" · "}
+                        {inv.title ?? inv.jobTitle ?? "Services"}
+                        {" · due "}
+                        {new Date(inv.dueDate).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-3">
+                      <div className="text-right">
+                        <p className="font-semibold">
                           {sym}
                           {inv.amount.toFixed(2)}
-                        </span>
+                        </p>
                         {inv.status === "PARTIALLY_PAID" && (
                           <p className="text-[10px] text-muted-foreground">
                             {sym}
                             {remaining.toFixed(2)} remaining
                           </p>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs ${statusBadge[inv.status]}`}
-                        >
-                          {statusLabel[inv.status] ?? inv.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Link
-                          href={`/invoices/${inv.id}`}
-                          className="text-sm text-primary hover:underline"
-                        >
-                          View
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className={`text-xs ${statusBadge[inv.status]}`}
+                      >
+                        {statusLabel[inv.status] ?? inv.status}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
       )}
 
       {createOpen && (

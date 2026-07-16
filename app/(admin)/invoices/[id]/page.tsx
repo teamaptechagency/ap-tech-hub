@@ -2,9 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PaymentActions } from "@/components/invoices/payment-actions";
+import { PrintButton } from "@/components/agreement/print-button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
+
 
 const currencySymbol: Record<string, string> = {
   USD: "$",
@@ -29,14 +30,17 @@ export default async function InvoiceViewPage({
 }) {
   const { id } = await params;
 
-  const invoice = await prisma.invoice.findUnique({
-    where: { id },
-    include: {
-      client: true,
-      job: { select: { title: true } },
-      items: true,
-    },
-  });
+  const [invoice, paymentMethods] = await Promise.all([
+    prisma.invoice.findUnique({
+      where: { id },
+      include: {
+        client: true,
+        job: { select: { title: true } },
+        items: true,
+      },
+    }),
+    prisma.paymentMethod.findMany({ where: { active: true } }),
+  ]);
 
   if (!invoice) notFound();
 
@@ -53,17 +57,43 @@ export default async function InvoiceViewPage({
       ? "OVERDUE"
       : invoice.status;
 
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+  const rows =
+    invoice.items.length > 0
+      ? invoice.items.map((i) => ({
+          id: i.id,
+          description: i.description,
+          qty: i.qty,
+          rate: Number(i.amount),
+          total: i.qty * Number(i.amount),
+        }))
+      : [
+          {
+            id: "single",
+            description: invoice.title ?? "Services",
+            qty: 1,
+            rate: subtotal,
+            total: subtotal,
+          },
+        ];
+
   return (
     <div className="space-y-6">
       <Link
         href="/invoices"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground print:hidden"
       >
         <ArrowLeft className="h-4 w-4" />
         Invoices
       </Link>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
           {invoice.number}
           <Badge
@@ -73,123 +103,144 @@ export default async function InvoiceViewPage({
             {displayStatus.replace("_", " ").toLowerCase()}
           </Badge>
         </h1>
+        <PrintButton title={invoice.number} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[3fr_2fr]">
-        {/* ============ INVOICE SHEET ============ */}
-        <Card className="bg-white">
-          <CardContent className="p-8">
-            {/* Letterhead */}
-            <div className="mb-8 flex items-start justify-between">
-              <div>
-                <p className="text-xl font-bold">
-                  AP Tech <span className="text-primary">Agency</span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Dhaka, Bangladesh · aptechagency.com
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-bold tracking-wide">INVOICE</p>
-                <p className="font-mono text-sm">{invoice.number}</p>
-                <p className="text-xs text-muted-foreground">
-                  Issued{" "}
-                  {invoice.createdAt.toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}{" "}
-                  · Due{" "}
-                  {invoice.dueDate.toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
+      <div className="grid gap-4 lg:grid-cols-[3fr_2fr] print:block">
+        {/* ================= INVOICE SHEET ================= */}
+        {/* All colors explicit — readable in dark theme & print */}
+        <div className="overflow-hidden rounded-xl bg-white shadow-sm print:rounded-none print:shadow-none">
+          {/* Dark header band */}
+          <div className="flex items-start justify-between bg-slate-900 px-8 py-6">
+            <div>
+              <p className="text-xl font-bold tracking-wide text-white">
+                AP TECH <span className="text-amber-400">AGENCY</span>
+              </p>
+              <p className="mt-1 text-[11px] text-slate-300">
+                Dhaka, Bangladesh · aptechagency.com
+              </p>
             </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold tracking-[0.2em] text-amber-400">
+                INVOICE
+              </p>
+              <p className="mt-1 font-mono text-sm text-slate-200">
+                {invoice.number}
+              </p>
+            </div>
+          </div>
+          <div className="h-1 bg-amber-400" />
 
-            {/* Bill to */}
-            <div className="mb-8 flex justify-between text-sm">
+          <div className="px-8 py-6">
+            {/* Meta + Bill to */}
+            <div className="mb-8 flex flex-wrap justify-between gap-6">
               <div>
-                <p className="mb-1 text-[10px] font-semibold tracking-wide text-muted-foreground">
-                  BILL TO
+                <p className="mb-1.5 text-[10px] font-bold tracking-widest text-slate-400">
+                  BILLED TO
                 </p>
-                <p className="font-semibold">{invoice.client.companyName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {invoice.client.contactName} · {invoice.client.email}
-                  {invoice.client.country && ` · ${invoice.client.country}`}
+                <p className="text-base font-bold text-slate-900">
+                  {invoice.client.companyName}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {invoice.client.contactName}
+                  <br />
+                  {invoice.client.email}
+                  {invoice.client.country && (
+                    <>
+                      <br />
+                      {invoice.client.country}
+                    </>
+                  )}
                 </p>
               </div>
-              {invoice.job && (
-                <div className="text-right">
-                  <p className="mb-1 text-[10px] font-semibold tracking-wide text-muted-foreground">
-                    RELATED JOB
-                  </p>
-                  <p className="text-xs">{invoice.job.title}</p>
+              <div className="text-right text-xs">
+                <div className="mb-1.5 flex justify-end gap-6">
+                  <span className="text-slate-400">Issue date</span>
+                  <span className="w-24 font-medium text-slate-800">
+                    {fmt(invoice.createdAt)}
+                  </span>
                 </div>
-              )}
+                <div className="mb-1.5 flex justify-end gap-6">
+                  <span className="text-slate-400">Due date</span>
+                  <span className="w-24 font-medium text-slate-800">
+                    {fmt(invoice.dueDate)}
+                  </span>
+                </div>
+                {invoice.job && (
+                  <div className="flex justify-end gap-6">
+                    <span className="text-slate-400">Project</span>
+                    <span className="w-24 font-medium text-slate-800">
+                      {invoice.job.title}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Items */}
+            {/* Items table */}
             <table className="mb-6 w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-[10px] tracking-wide text-muted-foreground">
-                  <th className="pb-2 font-semibold">DESCRIPTION</th>
-                  <th className="pb-2 text-center font-semibold">QTY</th>
-                  <th className="pb-2 text-right font-semibold">AMOUNT</th>
+                <tr className="bg-slate-900 text-[10px] tracking-widest text-white">
+                  <th className="rounded-l-md px-3 py-2.5 text-left font-semibold">
+                    DESCRIPTION
+                  </th>
+                  <th className="px-3 py-2.5 text-center font-semibold">
+                    QTY
+                  </th>
+                  <th className="px-3 py-2.5 text-right font-semibold">
+                    RATE
+                  </th>
+                  <th className="rounded-r-md px-3 py-2.5 text-right font-semibold">
+                    AMOUNT
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {invoice.items.length === 0 ? (
-                  <tr className="border-b">
-                    <td className="py-2.5">
-                      {invoice.title ?? "Services"}
+                {rows.map((row, i) => (
+                  <tr
+                    key={row.id}
+                    className={i % 2 === 1 ? "bg-slate-50" : ""}
+                  >
+                    <td className="px-3 py-2.5 text-slate-800">
+                      {row.description}
                     </td>
-                    <td className="py-2.5 text-center">1</td>
-                    <td className="py-2.5 text-right">
+                    <td className="px-3 py-2.5 text-center text-slate-600">
+                      {row.qty}
+                    </td>
+                    <td className="px-3 py-2.5 text-right text-slate-600">
                       {sym}
-                      {subtotal.toFixed(2)}
+                      {row.rate.toFixed(2)}
+                    </td>
+                    <td className="px-3 py-2.5 text-right font-medium text-slate-900">
+                      {sym}
+                      {row.total.toFixed(2)}
                     </td>
                   </tr>
-                ) : (
-                  invoice.items.map((item) => (
-                    <tr key={item.id} className="border-b">
-                      <td className="py-2.5">{item.description}</td>
-                      <td className="py-2.5 text-center">{item.qty}</td>
-                      <td className="py-2.5 text-right">
-                        {sym}
-                        {(item.qty * Number(item.amount)).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
 
             {/* Totals */}
-            <div className="flex justify-end">
-              <div className="w-56 space-y-1.5 text-sm">
+            <div className="mb-8 flex justify-end">
+              <div className="w-64 space-y-1.5 text-sm">
+                <div className="flex justify-between text-slate-500">
+                  <span>Subtotal</span>
+                  <span>
+                    {sym}
+                    {subtotal.toFixed(2)}
+                  </span>
+                </div>
                 {vat !== null && (
-                  <>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Subtotal</span>
-                      <span>
-                        {sym}
-                        {subtotal.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>VAT {vat}%</span>
-                      <span>
-                        {sym}
-                        {(amount - subtotal).toFixed(2)}
-                      </span>
-                    </div>
-                  </>
+                  <div className="flex justify-between text-slate-500">
+                    <span>VAT ({vat}%)</span>
+                    <span>
+                      {sym}
+                      {(amount - subtotal).toFixed(2)}
+                    </span>
+                  </div>
                 )}
                 {balanceApplied > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-emerald-600">
                     <span>Balance applied</span>
                     <span>
                       −{sym}
@@ -198,17 +249,19 @@ export default async function InvoiceViewPage({
                   </div>
                 )}
                 {amountPaid > balanceApplied && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Paid so far</span>
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Paid</span>
                     <span>
                       −{sym}
                       {(amountPaid - balanceApplied).toFixed(2)}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between border-t pt-1.5 text-base font-bold">
-                  <span>Total due</span>
-                  <span>
+                <div className="mt-2 flex items-center justify-between rounded-md bg-slate-900 px-3 py-2.5">
+                  <span className="text-[11px] font-bold tracking-widest text-slate-300">
+                    TOTAL DUE
+                  </span>
+                  <span className="text-lg font-bold text-amber-400">
                     {sym}
                     {Math.max(0, remaining).toFixed(2)}
                   </span>
@@ -216,23 +269,60 @@ export default async function InvoiceViewPage({
               </div>
             </div>
 
+            {/* Payment details */}
+            {remaining > 0 && paymentMethods.length > 0 && (
+              <div className="mb-6">
+                <p className="mb-2 text-[10px] font-bold tracking-widest text-slate-400">
+                  PAYMENT DETAILS
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {paymentMethods.map((pm) => (
+                    <div
+                      key={pm.id}
+                      className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2"
+                    >
+                      <p className="text-xs font-semibold text-slate-800">
+                        {pm.label}
+                      </p>
+                      <p className="font-mono text-[11px] text-slate-500">
+                        {pm.details}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {invoice.paidVia && (
-              <p className="mt-6 text-xs text-muted-foreground">
-                Payment: {invoice.paidVia}
+              <p className="mb-4 text-xs text-slate-500">
+                Payment received via: {invoice.paidVia}
               </p>
             )}
-          </CardContent>
-        </Card>
 
-        {/* ============ RIGHT PANEL ============ */}
-        <PaymentActions
-          invoiceId={invoice.id}
-          status={displayStatus}
-          currencySym={sym}
-          remaining={remaining}
-          paymentNote={invoice.paymentNote}
-          submittedAt={invoice.submittedAt?.toISOString() ?? null}
-        />
+            {/* Footer */}
+            <div className="border-t border-slate-200 pt-4 text-center">
+              <p className="text-xs font-medium text-slate-700">
+                Thank you for your business!
+              </p>
+              <p className="mt-0.5 text-[10px] text-slate-400">
+                Questions about this invoice? Message us in your client
+                portal or email nazmulha30@gmail.com
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ============ RIGHT PANEL (hidden in print) ============ */}
+        <div className="print:hidden">
+          <PaymentActions
+            invoiceId={invoice.id}
+            status={displayStatus}
+            currencySym={sym}
+            remaining={remaining}
+            paymentNote={invoice.paymentNote}
+            submittedAt={invoice.submittedAt?.toISOString() ?? null}
+          />
+        </div>
       </div>
     </div>
   );
