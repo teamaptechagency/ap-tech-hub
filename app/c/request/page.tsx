@@ -4,15 +4,32 @@ import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { JobRequestForm } from "@/components/client-portal/job-request-form";
+import { getLandingPageData } from "@/lib/landing-data";
 
 export default async function ClientRequestPage() {
   const session = await auth();
   if (!session?.user?.clientId) notFound();
 
-  const requests = await prisma.jobRequest.findMany({
-    where: { clientId: session.user.clientId },
-    orderBy: { createdAt: "desc" },
-  });
+  const [requests, landingData] = await Promise.all([
+    prisma.jobRequest.findMany({
+      where: { clientId: session.user.clientId },
+      orderBy: { createdAt: "desc" },
+    }),
+    getLandingPageData(),
+  ]);
+
+  const categoryNameBySlug = new Map(
+    landingData.categories.map((category) => [category.slug, category.name])
+  );
+  const services = landingData.services
+    .filter((service) => !service.hidden)
+    .map((service) => ({
+      id: service.id,
+      title: service.title,
+      category:
+        categoryNameBySlug.get(service.categorySlug) ?? service.categorySlug,
+      description: service.description,
+    }));
 
   return (
     <div className="space-y-6">
@@ -23,7 +40,7 @@ export default async function ClientRequestPage() {
         </p>
       </div>
 
-      <JobRequestForm />
+      <JobRequestForm services={services} />
 
       {requests.length > 0 && (
         <Card>

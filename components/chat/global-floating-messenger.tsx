@@ -9,9 +9,20 @@ import { Button } from "@/components/ui/button";
 import type { FloatingConversationRow } from "@/actions/message.actions";
 import { getPusherClient } from "@/lib/pusher-client";
 import { playWaterDropMessageSound } from "@/lib/message-sound";
+import {
+  getLandingChatMessages,
+  sendLandingChatAdminReply,
+} from "@/actions/landing.actions";
 
 type IncomingMessage = {
   sender: { id: string };
+};
+
+type LandingChatMessage = {
+  id: string;
+  body: string;
+  sender: string;
+  createdAt: string;
 };
 
 export function GlobalFloatingMessenger({
@@ -58,7 +69,9 @@ export function GlobalFloatingMessenger({
     if (hiddenOnMessagesPage || conversations.length === 0) return;
 
     const pusher = getPusherClient();
-    const subscribedChannels = conversations.map((conversation) => {
+    const subscribedChannels = conversations
+      .filter((conversation) => conversation.kind !== "landing-chat")
+      .map((conversation) => {
       const channelName = `conversation-${conversation.id}`;
       const channel = pusher.subscribe(channelName);
       channel.bind("new-message", (message: IncomingMessage) => {
@@ -158,14 +171,18 @@ export function GlobalFloatingMessenger({
             </div>
 
             {active ? (
-              <ChatPanel
-                key={active.id}
-                conversationId={active.id}
-                currentUserId={currentUserId}
-                title={active.name}
-                heightClass="h-[480px] max-h-[58vh]"
-                playIncomingSound={false}
-              />
+              active.kind === "landing-chat" ? (
+                <LandingChatPanel key={active.id} chat={active} />
+              ) : (
+                <ChatPanel
+                  key={active.id}
+                  conversationId={active.id}
+                  currentUserId={currentUserId}
+                  title={active.name}
+                  heightClass="h-[480px] max-h-[58vh]"
+                  playIncomingSound={false}
+                />
+              )
             ) : (
               <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
                 No conversation selected
@@ -189,6 +206,109 @@ export function GlobalFloatingMessenger({
         )}
       </button>
     </>
+  );
+}
+
+function LandingChatPanel({ chat }: { chat: FloatingConversationRow }) {
+  const [messages, setMessages] = useState<LandingChatMessage[]>([]);
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+
+    getLandingChatMessages(chat.id).then((result) => {
+      if (!alive) return;
+      if ("messages" in result && Array.isArray(result.messages)) {
+        setMessages(result.messages);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [chat.id]);
+
+  const send = async () => {
+    const body = text.trim();
+    if (!body || sending) return;
+
+    setSending(true);
+    const result = await sendLandingChatAdminReply(chat.id, body);
+    if (!result.error) {
+      setMessages((current) => [
+        ...current,
+        {
+          id: `local-${Date.now()}`,
+          body,
+          sender: "ADMIN",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+      setText("");
+    }
+    setSending(false);
+  };
+
+  return (
+    <div className="flex h-[480px] max-h-[58vh] flex-col">
+      <div className="border-b px-4 py-3">
+        <p className="font-semibold">{chat.avatarName}</p>
+        <p className="text-xs text-muted-foreground">{chat.subtitle}</p>
+      </div>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+        {loading ? (
+          <p className="grid h-full place-items-center text-sm text-muted-foreground">
+            Loading live chat...
+          </p>
+        ) : messages.length ? (
+          messages.map((message) => {
+            const mine = message.sender === "ADMIN";
+            return (
+              <div
+                key={message.id}
+                className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm ${
+                  mine
+                    ? "ml-auto bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground"
+                }`}
+              >
+                <p className="mb-1 text-[10px] font-semibold opacity-70">
+                  {mine ? "Admin" : chat.avatarName}
+                </p>
+                {message.body}
+              </div>
+            );
+          })
+        ) : (
+          <p className="grid h-full place-items-center text-sm text-muted-foreground">
+            Chat started. No message yet.
+          </p>
+        )}
+      </div>
+      <div className="border-t p-3">
+        <div className="flex gap-2">
+          <input
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void send();
+              }
+            }}
+            placeholder="Reply to visitor..."
+            className="min-w-0 flex-1 rounded-full border bg-background px-4 py-2 text-sm outline-none focus:border-primary"
+          />
+          <Button type="button" onClick={() => void send()} disabled={sending}>
+            Send
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

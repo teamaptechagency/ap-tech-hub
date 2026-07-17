@@ -335,6 +335,203 @@ export async function updateJob(
 }
 
 // ============================================
+// UPDATE JOB PRICING
+// Admin can fix a wrong client budget or employee payout after create.
+// Client value is USD; employee payout is BDT and must keep at least 20% profit.
+// ============================================
+export async function updateJobPricing(
+  id: string,
+  formData: {
+    clientValue: string;
+    workerValue: string;
+  }
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const clientValue = parseFloat(formData.clientValue);
+  const workerValue = parseFloat(formData.workerValue);
+
+  if (!Number.isFinite(clientValue) || clientValue <= 0) {
+    return { error: "Enter a valid client budget in USD" };
+  }
+
+  if (!Number.isFinite(workerValue) || workerValue <= 0) {
+    return { error: "Enter a valid employee payout in BDT" };
+  }
+
+  const job = await prisma.job.findUnique({
+    where: { id },
+    include: {
+      members: { select: { id: true, userId: true } },
+    },
+  });
+
+  if (!job) return { error: "Job not found" };
+
+  const memberCount = Math.max(job.members.length, 1);
+  const totalWorkerCost = workerValue * memberCount;
+  const clientValueBdt = await getClientValueBdt(clientValue, "USD");
+  const maxWorkerCost = Math.floor(clientValueBdt * 0.8 * 100) / 100;
+
+  if (totalWorkerCost > maxWorkerCost) {
+    return {
+      error: `Employee payout must stay within 80% of client budget. Max payout is BDT ${maxWorkerCost.toLocaleString()}.`,
+    };
+  }
+
+  await prisma.$transaction([
+    prisma.job.update({
+      where: { id },
+      data: {
+        clientValue,
+        clientCurrency: "USD",
+        workerValue,
+        workerCurrency: "BDT",
+      },
+    }),
+    prisma.jobMember.updateMany({
+      where: { jobId: id },
+      data: {
+        workerValue,
+        workerCurrency: "BDT",
+      },
+    }),
+  ]);
+
+  if (job.type === "FIXED" && job.status === "COMPLETED") {
+    const reserveSetting = await prisma.setting.findUnique({
+      where: { key: "reserve.percent" },
+      select: { value: true },
+    });
+    const reservePercent = parseInt(reserveSetting?.value ?? "10", 10);
+    const reserveRate =
+      Number.isFinite(reservePercent) && reservePercent > 0
+        ? reservePercent / 100
+        : 0.1;
+    const desiredReserve =
+      Math.round(workerValue * reserveRate * 100) / 100;
+    const desiredBalance = workerValue - desiredReserve;
+    const correctionOps = [];
+
+    for (const member of job.members) {
+      const txns = await prisma.workerTxn.findMany({
+        where: { jobId: id, userId: member.userId },
+        select: { amount: true, bucket: true },
+      });
+      const currentBalance = txns
+        .filter((txn) => txn.bucket === "BALANCE")
+        .reduce((sum, txn) => sum + Number(txn.amount), 0);
+      const currentReserve = txns
+        .filter((txn) => txn.bucket === "RESERVE")
+        .reduce((sum, txn) => sum + Number(txn.amount), 0);
+      const balanceDelta =
+        Math.round((desiredBalance - currentBalance) * 100) / 100;
+      const reserveDelta =
+        Math.round((desiredReserve - currentReserve) * 100) / 100;
+
+      if (Math.abs(balanceDelta) >= 0.01) {
+        correctionOps.push(
+          prisma.workerTxn.create({
+            data: {
+              userId: member.userId,
+              jobId: id,
+              amount: balanceDelta,
+              bucket: "BALANCE",
+              kind: "ADJUSTMENT",
+              note: `Pricing correction - ${job.title}`,
+              createdById: session.user.id,
+            },
+          }),
+          prisma.user.update({
+            where: { id: member.userId },
+            data: { balance: { increment: balanceDelta } },
+          })
+        );
+      }
+
+      if (Math.abs(reserveDelta) >= 0.01) {
+        correctionOps.push(
+          prisma.workerTxn.create({
+            data: {
+              userId: member.userId,
+              jobId: id,
+              amount: reserveDelta,
+              bucket: "RESERVE",
+              kind: "ADJUSTMENT",
+              note: `Reserve correction - ${job.title}`,
+              createdById: session.user.id,
+            },
+          }),
+          prisma.user.update({
+            where: { id: member.userId },
+            data: { reserve: { increment: reserveDelta } },
+          })
+        );
+      }
+    }
+
+    if (correctionOps.length > 0) {
+      await prisma.$transaction(correctionOps);
+    }
+
+    const profitBdt =
+      Math.round((clientValueBdt - totalWorkerCost) * 100) / 100;
+    const earningDescription = `[job:${id}] Client USD ${clientValue.toLocaleString()} - worker BDT ${totalWorkerCost.toLocaleString()}`;
+    const existingEarning = await prisma.earning.findFirst({
+      where: {
+        source: "AUTO",
+        category: "Project Income",
+        description: { contains: `[job:${id}]` },
+      },
+      select: { id: true },
+    });
+
+    if (profitBdt > 0 && existingEarning) {
+      await prisma.earning.update({
+        where: { id: existingEarning.id },
+        data: {
+          title: `Job profit - ${job.title}`,
+          description: earningDescription,
+          amount: profitBdt,
+          currency: "BDT",
+          amountBdt: profitBdt,
+        },
+      });
+    } else if (profitBdt > 0) {
+      await prisma.earning.create({
+        data: {
+          title: `Job profit - ${job.title}`,
+          description: earningDescription,
+          amount: profitBdt,
+          currency: "BDT",
+          amountBdt: profitBdt,
+          source: "AUTO",
+          category: "Project Income",
+          createdById: session.user.id,
+        },
+      });
+    } else if (existingEarning) {
+      await prisma.earning.delete({ where: { id: existingEarning.id } });
+    }
+  }
+
+  await audit(
+    session.user.id,
+    "JOB_PRICING_UPDATED",
+    "Job",
+    id,
+    `USD ${clientValue} / BDT ${workerValue}`
+  );
+
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${id}`);
+  revalidatePath("/accounts");
+  revalidatePath("/reports");
+  return { success: true };
+}
+
+// ============================================
 // DELETE JOB
 // ============================================
 export async function deleteJob(id: string) {

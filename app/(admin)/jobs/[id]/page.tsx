@@ -16,6 +16,7 @@ import {
 } from "@/components/jobs/timer-section";
 import { CompleteJobButton } from "@/components/jobs/complete-job-button";
 import { PublishToggle } from "@/components/jobs/publish-toggle";
+import { JobPricingEditor } from "@/components/jobs/job-pricing-editor";
 import { ChatPanel } from "@/components/chat/chat-panel";
 
 import { hoursThisWeek } from "@/actions/session.actions";
@@ -310,6 +311,19 @@ export default async function JobDetailsPage({
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {isManager && (
+            <JobPricingEditor
+              jobId={job.id}
+              clientValue={
+                job.clientValue !== null ? Number(job.clientValue) : null
+              }
+              workerValue={
+                job.workerValue !== null ? Number(job.workerValue) : null
+              }
+              memberCount={job.members.length}
+            />
+          )}
+
           {isManager && job.clientId && (
             <PublishToggle
               jobId={job.id}

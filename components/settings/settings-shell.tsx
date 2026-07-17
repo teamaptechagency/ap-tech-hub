@@ -15,6 +15,7 @@ import {
   saveUserPermission,
   setUserSkills,
   updateExchangeRate,
+  updateBrandingSettings,
   updateSettings,
   updateSystemUpgradeSettings,
 } from "@/actions/settings.actions";
@@ -210,6 +211,14 @@ export function SettingsShell({
   );
   const [upgradeNote, setUpgradeNote] = useState("");
 
+  const [siteName, setSiteName] = useState(
+    settings["brand.siteName"] ?? "AP Tech Hub"
+  );
+  const [logoUrl, setLogoUrl] = useState(settings["brand.logoUrl"] ?? "");
+  const [faviconUrl, setFaviconUrl] = useState(
+    settings["brand.faviconUrl"] ?? ""
+  );
+
   // ============================================
   // SKILLS
   // ============================================
@@ -250,6 +259,90 @@ export function SettingsShell({
     useState<TaskPriority>("MEDIUM");
 
   const [busy, setBusy] = useState(false);
+  const [uploadingBrandAsset, setUploadingBrandAsset] = useState<
+    "logo" | "favicon" | null
+  >(null);
+
+  async function uploadBrandAsset(file: File, type: "logo" | "favicon") {
+    const fileName = file.name.toLowerCase();
+    const isLogoPng = type === "logo" && file.type === "image/png";
+    const isFavicon =
+      type === "favicon" &&
+      (file.type === "image/png" ||
+        file.type === "image/svg+xml" ||
+        file.type === "image/webp" ||
+        fileName.endsWith(".ico"));
+
+    if (!isLogoPng && !isFavicon) {
+      toast.error(
+        type === "logo"
+          ? "Logo must be a PNG file"
+          : "Favicon must be ICO, PNG, SVG or WebP"
+      );
+      return;
+    }
+
+    setUploadingBrandAsset(type);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.attachment?.fileUrl) {
+        toast.error(data.error ?? "Image could not be uploaded");
+        return;
+      }
+
+      if (type === "logo") {
+        setLogoUrl(data.attachment.fileUrl);
+      } else {
+        setFaviconUrl(data.attachment.fileUrl);
+      }
+
+      toast.success(
+        `${type === "logo" ? "Logo" : "Favicon"} uploaded. Click Save branding to apply it.`
+      );
+    } catch (error) {
+      console.error("Brand asset upload failed:", error);
+      toast.error("Image could not be uploaded");
+    } finally {
+      setUploadingBrandAsset(null);
+    }
+  }
+
+  async function saveBranding(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+
+    setBusy(true);
+
+    try {
+      const result = await updateBrandingSettings({
+        siteName,
+        logoUrl,
+        faviconUrl,
+      });
+
+      const error = getActionError(result);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      toast.success("Branding saved");
+    } catch (error) {
+      console.error("Failed to save branding:", error);
+      toast.error("Branding could not be saved");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   // ============================================
   // SAVE EXCHANGE RATES
@@ -880,6 +973,176 @@ export function SettingsShell({
           settings.
         </p>
       </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">
+            Branding
+          </CardTitle>
+
+          <p className="text-xs text-muted-foreground">
+            Set the site name, sidebar logo and browser favicon.
+          </p>
+        </CardHeader>
+
+        <CardContent>
+          <form onSubmit={saveBranding} className="grid gap-4 lg:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="brand-site-name">
+                Site name
+              </Label>
+              <Input
+                id="brand-site-name"
+                value={siteName}
+                onChange={(event) =>
+                  setSiteName(event.target.value)
+                }
+                placeholder="AP Tech Hub"
+                disabled={busy}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Logo</Label>
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border bg-background">
+                    {logoUrl.trim() ? (
+                      <img
+                        src={logoUrl}
+                        alt=""
+                        className="h-10 w-10 rounded object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        Logo
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <Label
+                      htmlFor="brand-logo-file"
+                      className="inline-flex cursor-pointer rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+                    >
+                      {uploadingBrandAsset === "logo"
+                        ? "Uploading..."
+                        : logoUrl.trim()
+                          ? "Change logo"
+                          : "Upload logo"}
+                    </Label>
+                    <Input
+                      id="brand-logo-file"
+                      type="file"
+                      accept="image/png,.png"
+                      className="hidden"
+                      disabled={busy || uploadingBrandAsset !== null}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void uploadBrandAsset(file, "logo");
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                    {logoUrl.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setLogoUrl("")}
+                        className="ml-2 text-xs text-muted-foreground hover:text-red-500"
+                        disabled={busy}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Attach PNG only. Leave empty to use text only.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Favicon</Label>
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border bg-background">
+                    {faviconUrl.trim() ? (
+                      <img
+                        src={faviconUrl}
+                        alt=""
+                        className="h-8 w-8 rounded object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        Icon
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <Label
+                      htmlFor="brand-favicon-file"
+                      className="inline-flex cursor-pointer rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+                    >
+                      {uploadingBrandAsset === "favicon"
+                        ? "Uploading..."
+                        : faviconUrl.trim()
+                          ? "Change favicon"
+                          : "Upload favicon"}
+                    </Label>
+                    <Input
+                      id="brand-favicon-file"
+                      type="file"
+                      accept="image/png,image/svg+xml,image/webp,.ico,.png,.svg,.webp"
+                      className="hidden"
+                      disabled={busy || uploadingBrandAsset !== null}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void uploadBrandAsset(file, "favicon");
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                    {faviconUrl.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setFaviconUrl("")}
+                        className="ml-2 text-xs text-muted-foreground hover:text-red-500"
+                        disabled={busy}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Browser tab icon. ICO, PNG, SVG or WebP works.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 lg:col-span-3">
+              <div className="flex max-w-md items-center gap-2 rounded-md border bg-muted/30 p-2">
+                {logoUrl.trim() ? (
+                  <img
+                    src={logoUrl}
+                    alt=""
+                    className="h-8 w-8 rounded object-contain"
+                  />
+                ) : null}
+                <span className="min-w-0 truncate text-sm font-semibold">
+                  {siteName || "AP Tech Hub"}
+                </span>
+              </div>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={busy || uploadingBrandAsset !== null}
+                className="w-fit"
+              >
+                {busy ? "Saving..." : "Save branding"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Exchange rates and loyalty */}
       <div className="grid gap-4 lg:grid-cols-2">

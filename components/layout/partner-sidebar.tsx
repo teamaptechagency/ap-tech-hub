@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/actions/auth.actions";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { BrandMark } from "@/components/layout/brand-mark";
 import { cn } from "@/lib/utils";
+import type { BrandingSettings } from "@/lib/branding";
 import {
   LayoutDashboard,
   LogOut,
@@ -35,8 +37,10 @@ function formatRole(role: string) {
 
 export function PartnerSidebar({
   user,
+  branding,
 }: {
   user: { name: string; role: string };
+  branding?: BrandingSettings;
 }) {
   const pathname = usePathname();
   const initials = user.name
@@ -49,9 +53,7 @@ export function PartnerSidebar({
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
       <div className="flex h-16 shrink-0 items-center border-b px-6">
-        <Link href="/p/dashboard" className="text-lg font-bold tracking-tight">
-          AP Tech <span className="text-primary">Partner</span>
-        </Link>
+        <BrandMark href="/p/dashboard" branding={branding} suffix="Partner" />
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">

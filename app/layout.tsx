@@ -1,12 +1,26 @@
 import type { Metadata } from "next";
 import { CookieConsent } from "@/components/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
+import { getBrandingSettings } from "@/lib/branding";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "AP Tech Hub",
-  description: "AP Tech Agency management and client portal",
-};
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getBrandingSettings();
+
+  return {
+    title: branding.siteName,
+    description: "AP Tech Agency management and client portal",
+    icons: branding.faviconUrl
+      ? {
+          icon: branding.faviconUrl,
+          shortcut: branding.faviconUrl,
+          apple: branding.faviconUrl,
+        }
+      : undefined,
+  };
+}
 
 export default function RootLayout({
   children,

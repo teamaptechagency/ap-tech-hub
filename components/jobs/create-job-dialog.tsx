@@ -60,6 +60,7 @@ type CreateJobDialogProps = {
   clients: Option[];
   teamMembers: Option[];
   skills: Option[];
+  receivedUsdRate: number;
 };
 
 const JOB_TYPES: JobTypeOption[] = [
@@ -89,6 +90,7 @@ export function CreateJobDialog({
   clients,
   teamMembers,
   skills,
+  receivedUsdRate,
 }: CreateJobDialogProps) {
   const router = useRouter();
 
@@ -123,6 +125,45 @@ export function CreateJobDialog({
   // Form state
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const safeUsdRate =
+    Number.isFinite(receivedUsdRate) && receivedUsdRate > 0
+      ? receivedUsdRate
+      : 118;
+  const numericClientValue = Number(clientValue);
+  const defaultWorkerValue = Number(workerValue);
+  const memberWorkerCosts =
+    members.length > 0
+      ? members.map((member) => {
+          const memberValue = Number(member.workerValue);
+          return Number.isFinite(memberValue) && memberValue > 0
+            ? memberValue
+            : defaultWorkerValue;
+        })
+      : [defaultWorkerValue];
+  const totalEmployeePayout = memberWorkerCosts.reduce(
+    (sum, value) => sum + (Number.isFinite(value) ? value : 0),
+    0
+  );
+  const clientBudgetBdt =
+    Number.isFinite(numericClientValue) && numericClientValue > 0
+      ? numericClientValue * safeUsdRate
+      : 0;
+  const maxEmployeePayout =
+    Math.floor(clientBudgetBdt * 0.8 * 100) / 100;
+  const minimumClientBudgetUsd =
+    totalEmployeePayout > 0
+      ? Math.ceil((totalEmployeePayout / 0.8 / safeUsdRate) * 100) / 100
+      : 0;
+  const estimatedProfit = clientBudgetBdt - totalEmployeePayout;
+  const estimatedProfitPercent =
+    clientBudgetBdt > 0
+      ? Math.round((estimatedProfit / clientBudgetBdt) * 1000) / 10
+      : 0;
+  const budgetHasProfit =
+    clientBudgetBdt > 0 &&
+    totalEmployeePayout > 0 &&
+    totalEmployeePayout <= maxEmployeePayout;
 
   function toggleSkill(skillId: string) {
     setSkillIds((currentSkills) =>
@@ -231,7 +272,6 @@ export function CreateJobDialog({
       return;
     }
 
-    const numericClientValue = Number(clientValue);
     if (
       !clientValue ||
       !Number.isFinite(numericClientValue) ||
@@ -241,7 +281,6 @@ export function CreateJobDialog({
       return;
     }
 
-    const defaultWorkerValue = Number(workerValue);
     if (
       !workerValue ||
       !Number.isFinite(defaultWorkerValue) ||
@@ -264,6 +303,13 @@ export function CreateJobDialog({
     if (invalidMemberValue) {
       setError(
         "Please enter a valid worker value for selected members, or leave it empty to use the default employee payout."
+      );
+      return;
+    }
+
+    if (!budgetHasProfit) {
+      setError(
+        `Minimum 20% company profit required. For this employee payout, client budget must be at least USD ${minimumClientBudgetUsd.toLocaleString()}.`
       );
       return;
     }
@@ -741,6 +787,53 @@ export function CreateJobDialog({
                 BDT.
               </p>
             </div>
+
+            <div
+              className={`sm:col-span-2 rounded-lg border p-3 text-xs ${
+                totalEmployeePayout > 0 && clientBudgetBdt > 0 && !budgetHasProfit
+                  ? "border-red-500/40 bg-red-500/10 text-red-200"
+                  : "border-primary/20 bg-primary/5 text-muted-foreground"
+              }`}
+            >
+              <div className="grid gap-2 sm:grid-cols-2">
+                <p>
+                  Received USD rate:{" "}
+                  <span className="font-medium text-foreground">
+                    1 USD = BDT {safeUsdRate.toLocaleString()}
+                  </span>
+                </p>
+                <p>
+                  Minimum client budget:{" "}
+                  <span className="font-medium text-foreground">
+                    USD {minimumClientBudgetUsd.toLocaleString()}
+                  </span>
+                </p>
+                <p>
+                  Max employee payout:{" "}
+                  <span className="font-medium text-foreground">
+                    BDT {maxEmployeePayout.toLocaleString()}
+                  </span>
+                </p>
+                <p>
+                  Estimated profit:{" "}
+                  <span
+                    className={
+                      budgetHasProfit
+                        ? "font-medium text-green-500"
+                        : "font-medium text-red-500"
+                    }
+                  >
+                    BDT {Math.max(0, estimatedProfit).toLocaleString()}{" "}
+                    ({Math.max(0, estimatedProfitPercent).toLocaleString()}%)
+                  </span>
+                </p>
+              </div>
+              {totalEmployeePayout > 0 && clientBudgetBdt > 0 && !budgetHasProfit && (
+                <p className="mt-2 font-medium text-red-400">
+                  Increase client budget or reduce employee payout before posting.
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Required skills */}
@@ -874,7 +967,7 @@ export function CreateJobDialog({
           <Button
             type="submit"
             className="w-full"
-            disabled={loading}
+            disabled={loading || (totalEmployeePayout > 0 && clientBudgetBdt > 0 && !budgetHasProfit)}
           >
             {loading ? "Creating job..." : "Create job"}
           </Button>

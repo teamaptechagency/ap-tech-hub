@@ -113,6 +113,7 @@ export async function login(formData: {
     await signIn("credentials", {
       email,
       password: formData.password,
+      code: formData.code?.trim() ?? "",
       redirect: false,
     });
   } catch (error) {

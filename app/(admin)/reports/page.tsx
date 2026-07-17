@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FinanceBoard } from "@/components/accounts/finance-board";
+import { getVirtualCompletedJobEarnings } from "@/lib/finance-summary";
 
 export default async function ReportsPage() {
   const now = new Date();
@@ -21,7 +22,14 @@ export default async function ReportsPage() {
     });
   }
 
-  const [earnings, expenses, workers, clients, jobs] = await Promise.all([
+  const [
+    earnings,
+    expenses,
+    workers,
+    clients,
+    jobs,
+    virtualJobEarnings,
+  ] = await Promise.all([
     prisma.earning.findMany({
       where: { createdAt: { gte: months[5].start } },
       orderBy: { createdAt: "desc" },
@@ -95,11 +103,16 @@ export default async function ReportsPage() {
       by: ["status"],
       _count: true,
     }),
+    getVirtualCompletedJobEarnings(months[5].start),
   ]);
+
+  const reportEarnings = [...earnings, ...virtualJobEarnings].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+  );
 
   // Monthly P&L rows
   const rows = months.map((m) => {
-    const earn = earnings
+    const earn = reportEarnings
       .filter((e) => e.createdAt >= m.start && e.createdAt < m.end)
       .reduce((s, e) => s + Number(e.amountBdt), 0);
     const exp = expenses
@@ -168,7 +181,7 @@ export default async function ReportsPage() {
           Earnings & expenses
         </h2>
         <FinanceBoard
-          earnings={earnings.slice(0, 8).map((earning) => ({
+          earnings={reportEarnings.slice(0, 8).map((earning) => ({
             id: earning.id,
             title: earning.title,
             description: earning.description,

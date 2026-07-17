@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth.actions";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { BrandMark } from "@/components/layout/brand-mark";
+import type { BrandingSettings } from "@/lib/branding";
 import { Menu, X, LogOut, type LucideIcon } from "lucide-react";
 
 export type MobileNavItem = {
@@ -18,10 +20,12 @@ export function MobileNav({
   items,
   userName,
   userSub,
+  branding,
 }: {
   items: MobileNavItem[];
   userName: string;
   userSub: string;
+  branding?: BrandingSettings;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -50,9 +54,7 @@ export function MobileNav({
         >
           <Menu className="h-5 w-5" />
         </button>
-        <span className="text-base font-bold">
-          AP Tech <span className="text-primary">Hub</span>
-        </span>
+        <BrandMark href="/" branding={branding} />
         <NotificationBell />
       </header>
 
@@ -72,9 +74,7 @@ export function MobileNav({
         )}
       >
         <div className="flex h-14 items-center justify-between border-b px-4">
-          <span className="text-base font-bold">
-            AP Tech <span className="text-primary">Hub</span>
-          </span>
+          <BrandMark href="/" branding={branding} />
           <button
             onClick={() => setOpen(false)}
             className="rounded-md p-2 hover:bg-muted"

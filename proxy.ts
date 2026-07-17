@@ -19,12 +19,17 @@ const PUBLIC_PATHS = [
   "/api/cron",
 ];
 
+const PUBLIC_EXACT_PATHS = ["/", "/landing"];
+
 export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
   const user = req.auth?.user;
 
   // Public routes
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  if (
+    PUBLIC_EXACT_PATHS.includes(pathname) ||
+    PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+  ) {
     // Logged-in users skip login/register pages
     if (
       user &&
@@ -69,5 +74,7 @@ export const proxy = auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|gif|svg|ico|css|js|map|txt|xml)$).*)",
+  ],
 };

@@ -107,6 +107,7 @@ export type FloatingConversationRow = {
   lastBody: string | null;
   lastAt: string | null;
   unread: boolean;
+  kind?: "conversation" | "landing-chat";
 };
 
 type FloatingConversationRecord = Prisma.ConversationGetPayload<{
@@ -160,6 +161,99 @@ type MessageDelegateCompat = {
 
 const messageModel =
   prisma.message as unknown as MessageDelegateCompat;
+
+type FloatingLandingChatLead = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  updatedAt: Date;
+  messages: { body: string; createdAt: Date; sender: string }[];
+};
+
+async function getFloatingLandingChats(): Promise<FloatingConversationRow[]> {
+  const db = prisma as typeof prisma & {
+    landingChatLead?: {
+      findMany: (args: unknown) => Promise<FloatingLandingChatLead[]>;
+    };
+  };
+
+  const realChats = db.landingChatLead
+    ? await db.landingChatLead
+        .findMany({
+          where: { status: "OPEN" },
+          orderBy: { updatedAt: "desc" },
+          take: 12,
+          include: {
+            messages: {
+              orderBy: { createdAt: "desc" },
+              take: 1,
+              select: { body: true, createdAt: true, sender: true },
+            },
+          },
+        })
+        .catch(() => [])
+    : [];
+
+  const fallbackSetting = await prisma.setting
+    .findUnique({
+      where: { key: "landing.chat.fallback" },
+      select: { value: true },
+    })
+    .catch(() => null);
+
+  let fallbackChats: Array<{
+    id: string;
+    name: string;
+    email: string;
+    subject: string;
+    updatedAt: string;
+    messages?: { body: string; createdAt: string; sender?: string }[];
+  }> = [];
+
+  try {
+    const parsed = JSON.parse(fallbackSetting?.value ?? "[]");
+    fallbackChats = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    fallbackChats = [];
+  }
+
+  return [
+    ...realChats.map((chat) => {
+      const last = chat.messages[0];
+      return {
+        id: `landing:${chat.id}`,
+        name: chat.subject || "Website live chat",
+        subtitle: `${chat.name} . ${chat.email}`,
+        avatarUserId: null,
+        avatarName: chat.name,
+        avatarUrl: null,
+        lastBody: last?.body ?? "Chat started from public portal",
+        lastAt: (last?.createdAt ?? chat.updatedAt).toISOString(),
+        unread: last?.sender !== "ADMIN",
+        kind: "landing-chat" as const,
+      };
+    }),
+    ...fallbackChats.map((chat) => {
+      const last = chat.messages?.at(-1);
+      return {
+        id: `fallback:${chat.id}`,
+        name: chat.subject || "Website live chat",
+        subtitle: `${chat.name} . ${chat.email}`,
+        avatarUserId: null,
+        avatarName: chat.name,
+        avatarUrl: null,
+        lastBody: last?.body ?? "Chat started from public portal",
+        lastAt: last?.createdAt ?? chat.updatedAt,
+        unread: last?.sender !== "ADMIN",
+        kind: "landing-chat" as const,
+      };
+    }),
+  ].sort(
+    (a, b) =>
+      new Date(b.lastAt ?? 0).getTime() - new Date(a.lastAt ?? 0).getTime()
+  );
+}
 
 // ============================================
 // HELPERS
@@ -360,7 +454,19 @@ export async function getFloatingConversations() {
 
   rows.sort((a, b) => Number(b.unread) - Number(a.unread));
 
-  return { conversations: rows, currentUserId: myId };
+  const landingChats = isAdmin ? await getFloatingLandingChats() : [];
+  const mergedRows = [...landingChats, ...rows]
+    .sort((a, b) => {
+      const unreadDiff = Number(b.unread) - Number(a.unread);
+      if (unreadDiff) return unreadDiff;
+      return (
+        new Date(b.lastAt ?? 0).getTime() -
+        new Date(a.lastAt ?? 0).getTime()
+      );
+    })
+    .slice(0, 24);
+
+  return { conversations: mergedRows, currentUserId: myId };
 }
 
 async function triggerPusher(

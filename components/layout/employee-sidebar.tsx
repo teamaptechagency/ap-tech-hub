@@ -7,6 +7,8 @@ import { logout } from "@/actions/auth.actions";
 import { cn } from "@/lib/utils";
 
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { BrandMark } from "@/components/layout/brand-mark";
+import type { BrandingSettings } from "@/lib/branding";
 
 import {
   Briefcase,
@@ -33,6 +35,7 @@ type EmployeeSidebarProps = {
     name: string;
     role: string;
   };
+  branding?: BrandingSettings;
 };
 
 export const employeeNavItems: EmployeeNavItem[] = [
@@ -102,6 +105,7 @@ function getInitials(name: string) {
 
 export function EmployeeSidebar({
   user,
+  branding,
 }: EmployeeSidebarProps) {
   const pathname = usePathname();
 
@@ -112,12 +116,7 @@ export function EmployeeSidebar({
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center border-b px-6">
-        <Link
-          href="/e/dashboard"
-          className="text-lg font-bold tracking-tight"
-        >
-          AP Tech <span className="text-primary">Hub</span>
-        </Link>
+        <BrandMark href="/e/dashboard" branding={branding} />
       </div>
 
       {/* Navigation */}

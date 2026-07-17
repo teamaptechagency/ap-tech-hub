@@ -7,6 +7,7 @@ import {
   PendingApprovals,
   type PendingUser,
 } from "@/components/pending-approvals";
+import { getVirtualCompletedJobEarnings, sumBdt } from "@/lib/finance-summary";
 
 function money(amount: number) {
   return `BDT ${Math.round(amount).toLocaleString()}`;
@@ -63,12 +64,14 @@ export default async function AdminDashboard() {
     jobRequests,
     recentJobs,
     pendingUsers,
-    earningsHistory,
+    savedEarningsHistory,
     expensesHistory,
     projectRows,
     specialOrderRows,
     recentEmployeePayments,
     recentPartnerPayments,
+    virtualJobEarnings,
+    visitorCounter,
   ] = await Promise.all([
     prisma.earning.aggregate({ _sum: { amountBdt: true } }),
     prisma.expense.aggregate({ _sum: { amountBdt: true } }),
@@ -156,14 +159,26 @@ export default async function AdminDashboard() {
       take: 5,
       include: { user: { select: { name: true } } },
     }),
+    getVirtualCompletedJobEarnings(),
+    prisma.setting
+      .findUnique({
+        where: { key: "landing.visitor.count" },
+        select: { value: true },
+      })
+      .catch(() => null),
   ]);
 
-  const totalEarnings = safeNumber(totalEarningsAgg._sum.amountBdt);
+  const earningsHistory = [...savedEarningsHistory, ...virtualJobEarnings]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 6);
+  const totalEarnings =
+    safeNumber(totalEarningsAgg._sum.amountBdt) + sumBdt(virtualJobEarnings);
   const totalExpenses = safeNumber(totalExpensesAgg._sum.amountBdt);
   const netEarnings = totalEarnings - totalExpenses;
   const employeeDue = safeNumber(employeeBalanceAgg._sum.balance);
   const partnerDue = safeNumber(partnerBalanceAgg._sum.balance);
   const specialOrderEarnings = safeNumber(specialOrderProfitAgg._sum.profitBdt);
+  const websiteVisitors = safeNumber(visitorCounter?.value);
   const needsAction =
     submittedInvoices +
     pendingWithdrawals +
@@ -238,6 +253,12 @@ export default async function AdminDashboard() {
           value={money(specialOrderEarnings)}
           href="/special-orders"
           hint={`${specialOrdersCompleted} completed SP orders`}
+        />
+        <StatCard
+          label="Website visitors"
+          value={websiteVisitors.toLocaleString()}
+          href="/leads"
+          hint="Public portal visits"
         />
       </div>
 

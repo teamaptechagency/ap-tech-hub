@@ -8,10 +8,14 @@ import { cn } from "@/lib/utils";
 
 import { GlobalSearch } from "@/components/layout/global-search";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { BrandMark } from "@/components/layout/brand-mark";
+import type { BrandingSettings } from "@/lib/branding";
 
 import {
   BarChart3,
   Briefcase,
+  ContactRound,
+  GalleryHorizontalEnd,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -37,6 +41,7 @@ type AdminSidebarProps = {
     name: string;
     role: string;
   };
+  branding?: BrandingSettings;
 };
 
 export const adminNavItems: AdminNavItem[] = [
@@ -49,6 +54,16 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Clients",
     href: "/clients",
     icon: Users,
+  },
+  {
+    label: "Leads",
+    href: "/leads",
+    icon: ContactRound,
+  },
+  {
+    label: "Public Portal",
+    href: "/landing-manager",
+    icon: GalleryHorizontalEnd,
   },
   {
     label: "Jobs",
@@ -114,7 +129,7 @@ function getInitials(name: string) {
     .join("");
 }
 
-export function AdminSidebar({ user }: AdminSidebarProps) {
+export function AdminSidebar({ user, branding }: AdminSidebarProps) {
   const pathname = usePathname();
 
   const userName = user.name.trim() || "Admin User";
@@ -125,12 +140,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center border-b px-6">
-        <Link
-          href="/dashboard"
-          className="text-lg font-bold tracking-tight"
-        >
-          AP Tech <span className="text-primary">Hub</span>
-        </Link>
+        <BrandMark href="/dashboard" branding={branding} />
       </div>
 
       {/* Global search */}

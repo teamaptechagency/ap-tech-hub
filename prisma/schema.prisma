@@ -979,6 +979,223 @@ model Setting {
 }
 
 // ============================================
+// PUBLIC LANDING PAGE CMS
+// ============================================
+
+model LandingHeroSlide {
+  id             String   @id @default(cuid())
+  badge          String?
+  title          String
+  description    String
+  imageUrl       String?
+  primaryLabel   String?
+  primaryTarget  String?
+  secondaryLabel String?
+  secondaryTarget String?
+  sortOrder      Int      @default(0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model LandingServiceCategory {
+  id        String           @id @default(cuid())
+  name      String
+  slug      String           @unique
+  sortOrder Int              @default(0)
+  active    Boolean          @default(true)
+  services  LandingService[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model LandingService {
+  id          String                 @id @default(cuid())
+  categoryId  String?
+  category    LandingServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  title       String
+  description String
+  details     String?
+  icon        String?
+  imageUrl    String?
+  sortOrder   Int                    @default(0)
+  active      Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+}
+
+model LandingProject {
+  id          String   @id @default(cuid())
+  title       String
+  category    String?
+  description String
+  details     String?
+  imageUrl    String?
+  projectUrl  String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LandingTeamMember {
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  bio         String?
+  photoUrl    String?
+  skills      Json?
+  socialLinks Json?
+  jobs        Json?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LandingReview {
+  id         String   @id @default(cuid())
+  clientName String
+  clientRole String?
+  company    String?
+  avatarUrl  String?
+  rating     Int      @default(5)
+  quote      String
+  details    String?
+  verified   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model LandingPageContent {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model LandingContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+}
+
+model LandingChatLead {
+  id        String               @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  status    String               @default("OPEN")
+  messages  LandingChatMessage[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+}
+
+model LandingChatMessage {
+  id        String          @id @default(cuid())
+  leadId    String
+  lead      LandingChatLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  sender    String          @default("GUEST")
+  body      String
+  createdAt DateTime        @default(now())
+}
+
+// ============================================
+// LEAD COLLECTIONS + FOLLOW-UP CRM
+// ============================================
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  FOLLOW_UP
+  QUALIFIED
+  PROPOSAL
+  WON
+  LOST
+  ARCHIVED
+}
+
+enum LeadSource {
+  MANUAL
+  WEBSITE
+  IMPORT
+  FACEBOOK
+  LINKEDIN
+  FIVERR
+  UPWORK
+  OTHER
+}
+
+enum LeadActivityType {
+  NOTE
+  EMAIL
+  CALL
+  FOLLOW_UP
+  STATUS_CHANGE
+  IMPORT
+}
+
+model LeadCollection {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  leads       Lead[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Lead {
+  id             String         @id @default(cuid())
+  collectionId   String?
+  collection     LeadCollection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  name           String
+  company        String?
+  email          String?
+  phone          String?
+  source         LeadSource      @default(MANUAL)
+  status         LeadStatus      @default(NEW)
+  value          Decimal?        @db.Decimal(12, 2)
+  currency       String          @default("USD")
+  tags           String?
+  notes          String?
+  nextFollowUpAt DateTime?
+  lastContactedAt DateTime?
+  createdById    String?
+  activities     LeadActivity[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([collectionId])
+  @@index([status])
+  @@index([source])
+  @@index([nextFollowUpAt])
+}
+
+model LeadActivity {
+  id            String           @id @default(cuid())
+  leadId        String
+  lead          Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type          LeadActivityType
+  subject       String?
+  body          String
+  status        String           @default("DONE")
+  scheduledAt   DateTime?
+  completedAt   DateTime?
+  createdById   String?
+  createdAt     DateTime         @default(now())
+
+  @@index([leadId])
+  @@index([type])
+  @@index([scheduledAt])
+}
+
+// ============================================
 // CLIENT JOB REQUESTS
 // ============================================
 

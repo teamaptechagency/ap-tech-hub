@@ -1,5 +1,6 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
@@ -414,6 +415,117 @@ export async function updateSettings(
   );
 
   revalidatePath("/settings");
+  return { success: true };
+}
+
+export async function updateBrandingSettings(input: {
+  siteName: string;
+  logoUrl?: string;
+  faviconUrl?: string;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const siteName = input.siteName.trim();
+  const logoUrl = input.logoUrl?.trim() ?? "";
+  const faviconUrl = input.faviconUrl?.trim() ?? "";
+
+  if (siteName.length < 2) {
+    return { error: "Site name must be at least 2 characters" };
+  }
+
+  const urlFields = [
+    { label: "Logo URL", value: logoUrl },
+    { label: "Favicon URL", value: faviconUrl },
+  ];
+
+  for (const field of urlFields) {
+    if (!field.value) continue;
+    try {
+      new URL(field.value);
+    } catch {
+      return { error: `${field.label} must be a valid URL` };
+    }
+  }
+
+  await prisma.$transaction([
+    prisma.setting.upsert({
+      where: { key: "brand.siteName" },
+      update: { value: siteName },
+      create: { key: "brand.siteName", value: siteName },
+    }),
+    prisma.setting.upsert({
+      where: { key: "brand.logoUrl" },
+      update: { value: logoUrl },
+      create: { key: "brand.logoUrl", value: logoUrl },
+    }),
+    prisma.setting.upsert({
+      where: { key: "brand.faviconUrl" },
+      update: { value: faviconUrl },
+      create: { key: "brand.faviconUrl", value: faviconUrl },
+    }),
+  ]);
+
+  await audit(
+    session.user.id,
+    "BRANDING_UPDATED",
+    "Setting",
+    "brand",
+    siteName
+  );
+
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+export async function updateLandingContent(jsonText: string) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    return { error: "Landing content must be valid JSON" };
+  }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return { error: "Landing content must be a JSON object" };
+  }
+
+  const db = prisma as typeof prisma & {
+    landingPageContent?: {
+      upsert: (args: unknown) => Promise<unknown>;
+    };
+  };
+
+  if (db.landingPageContent) {
+    await db.landingPageContent.upsert({
+      where: { key: "landing.page" },
+      update: { value: parsed as Prisma.InputJsonValue },
+      create: { key: "landing.page", value: parsed as Prisma.InputJsonValue },
+    });
+  } else {
+    await prisma.setting.upsert({
+      where: { key: "landing.page" },
+      update: { value: JSON.stringify(parsed) },
+      create: { key: "landing.page", value: JSON.stringify(parsed) },
+    });
+  }
+
+  await audit(
+    session.user.id,
+    "LANDING_CONTENT_UPDATED",
+    "LandingPageContent",
+    "landing.page"
+  );
+
+  revalidatePath("/");
+  revalidatePath("/landing");
+  revalidatePath("/landing-manager");
+  revalidatePath("/settings");
+
   return { success: true };
 }
 

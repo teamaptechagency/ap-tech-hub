@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { JobsBoard } from "@/components/jobs/jobs-board";
 
 export default async function JobsPage() {
-  const [jobs, clients, teamMembers, skills] = await Promise.all([
+  const [jobs, clients, teamMembers, skills, receivedUsdRate] = await Promise.all([
     prisma.job.findMany({
       orderBy: { updatedAt: "desc" },
       include: {
@@ -32,6 +32,10 @@ export default async function JobsPage() {
     prisma.skill.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
+    }),
+    prisma.setting.findUnique({
+      where: { key: "finance.receivedUsdRate" },
+      select: { value: true },
     }),
   ]);
 
@@ -95,6 +99,7 @@ export default async function JobsPage() {
       clients={clients.map((c) => ({ id: c.id, name: c.companyName }))}
       teamMembers={teamMembers}
       skills={skills}
+      receivedUsdRate={Number(receivedUsdRate?.value ?? 118)}
     />
   );
 }

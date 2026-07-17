@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES, CLIENT_ROLES, PARTNER_ROLES } from "@/lib/roles";
 import { getTermsForRole } from "@/lib/terms";
 import { getFloatingConversations } from "@/actions/message.actions";
+import { getBrandingSettings } from "@/lib/branding";
 import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
 import { TermsGate } from "@/components/terms-gate";
 import { PartnerSidebar } from "@/components/layout/partner-sidebar";
@@ -48,7 +49,10 @@ export default async function PartnerLayout({
 
   const userName = session.user.name?.trim() || "Partner";
   const userRole = session.user.role.replaceAll("_", " ").toLowerCase();
-  const floatingMessages = await getFloatingConversations();
+  const [floatingMessages, branding] = await Promise.all([
+    getFloatingConversations(),
+    getBrandingSettings(),
+  ]);
 
   const bottomItems: BottomNavItem[] = [
     { label: "Dashboard", href: "/p/dashboard", icon: "dashboard" },
@@ -64,9 +68,13 @@ export default async function PartnerLayout({
         portal="partner"
         userName={userName}
         userSub={userRole}
+        branding={branding}
       />
 
-      <PartnerSidebar user={{ name: userName, role: session.user.role }} />
+      <PartnerSidebar
+        user={{ name: userName, role: session.user.role }}
+        branding={branding}
+      />
 
       <main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-4 pb-20 md:p-8 md:pb-8">
         <div className="mx-auto w-full max-w-[1600px]">

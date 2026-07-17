@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES, CLIENT_ROLES, PARTNER_ROLES } from "@/lib/roles";
 import { getFloatingConversations } from "@/actions/message.actions";
+import { getBrandingSettings } from "@/lib/branding";
 
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
@@ -43,7 +44,10 @@ export default async function AdminLayout({
 
   const userName =
     session.user.name?.trim() || "Admin User";
-  const floatingMessages = await getFloatingConversations();
+  const [floatingMessages, branding] = await Promise.all([
+    getFloatingConversations(),
+    getBrandingSettings(),
+  ]);
 
   const userRole = role
     .replaceAll("_", " ")
@@ -84,6 +88,7 @@ export default async function AdminLayout({
         portal="admin"
         userName={userName}
         userSub={userRole}
+        branding={branding}
       />
 
       {/* Desktop sidebar */}
@@ -92,6 +97,7 @@ export default async function AdminLayout({
           name: userName,
           role,
         }}
+        branding={branding}
       />
 
       {/* Main content */}

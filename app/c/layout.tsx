@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getTermsForRole } from "@/lib/terms";
 import { getFloatingConversations } from "@/actions/message.actions";
+import { getBrandingSettings } from "@/lib/branding";
 
 import { ClientSidebar } from "@/components/layout/client-sidebar";
 import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
@@ -80,7 +81,10 @@ export default async function ClientLayout({
 
   const companyName =
     client.companyName?.trim() || "Client Account";
-  const floatingMessages = await getFloatingConversations();
+  const [floatingMessages, branding] = await Promise.all([
+    getFloatingConversations(),
+    getBrandingSettings(),
+  ]);
 
   const bottomItems: BottomNavItem[] = [
     {
@@ -117,6 +121,7 @@ export default async function ClientLayout({
         portal="client"
         userName={userName}
         userSub={companyName}
+        branding={branding}
       />
 
       {/* Desktop sidebar */}
@@ -125,6 +130,7 @@ export default async function ClientLayout({
           name: userName,
           companyName,
         }}
+        branding={branding}
       />
 
       {/* Main content */}

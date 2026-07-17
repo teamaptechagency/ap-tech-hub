@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { PARTNER_ROLES } from "@/lib/roles";
 import { getTermsForRole } from "@/lib/terms";
 import { getFloatingConversations } from "@/actions/message.actions";
+import { getBrandingSettings } from "@/lib/branding";
 
 import { EmployeeSidebar } from "@/components/layout/employee-sidebar";
 import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
@@ -65,7 +66,10 @@ export default async function EmployeeLayout({
 
   const userName =
     session.user.name?.trim() || "Team Member";
-  const floatingMessages = await getFloatingConversations();
+  const [floatingMessages, branding] = await Promise.all([
+    getFloatingConversations(),
+    getBrandingSettings(),
+  ]);
 
   const bottomItems: BottomNavItem[] = [
     {
@@ -102,6 +106,7 @@ export default async function EmployeeLayout({
         portal="employee"
         userName={userName}
         userSub="team member"
+        branding={branding}
       />
 
       {/* Desktop sidebar */}
@@ -110,6 +115,7 @@ export default async function EmployeeLayout({
           name: userName,
           role: session.user.role,
         }}
+        branding={branding}
       />
 
       {/* Main content */}

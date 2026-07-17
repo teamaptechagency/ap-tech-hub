@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CreateJobDialog } from "@/components/jobs/create-job-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,12 +72,15 @@ export function JobsBoard({
   clients,
   teamMembers,
   skills,
+  receivedUsdRate,
 }: {
   jobs: JobRow[];
   clients: Option[];
   teamMembers: Option[];
   skills: Option[];
+  receivedUsdRate: number;
 }) {
+  const router = useRouter();
   const [filter, setFilter] = useState("ALL");
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -153,8 +157,19 @@ export function JobsBoard({
           {filtered.map((job) => (
             <Card
               key={job.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => router.push(`/jobs/${job.id}`)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  router.push(`/jobs/${job.id}`);
+                }
+              }}
               className={
-                job.status === "OPEN" ? "border-2 border-amber-300" : ""
+                `cursor-pointer transition-colors hover:border-primary/60 hover:bg-muted/30 ${
+                  job.status === "OPEN" ? "border-2 border-amber-300" : ""
+                }`
               }
             >
               <CardContent className="space-y-3 p-4">
@@ -246,6 +261,7 @@ export function JobsBoard({
                       )}
                       <Link
                         href={`/jobs/${job.id}/applications`}
+                        onClick={(event) => event.stopPropagation()}
                         className="text-xs font-medium text-primary hover:underline"
                       >
                         Review applications →
@@ -289,6 +305,7 @@ export function JobsBoard({
           clients={clients}
           teamMembers={teamMembers}
           skills={skills}
+          receivedUsdRate={receivedUsdRate}
         />
       )}
     </div>

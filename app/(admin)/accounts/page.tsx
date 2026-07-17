@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
+import { getVirtualCompletedJobEarnings } from "@/lib/finance-summary";
 
 function bdt(amount: number) {
   return `BDT ${Math.round(amount).toLocaleString()}`;
@@ -19,13 +20,20 @@ export default async function AccountsOverviewPage() {
     pendingWithdrawals,
     pendingExchanges,
     pendingProfileChanges,
-    recentEarnings,
     recentExpenses,
     rates,
+    virtualJobEarnings,
   ] = await Promise.all([
-    prisma.earning.aggregate({
+    prisma.earning.findMany({
       where: { createdAt: { gte: monthStart } },
-      _sum: { amountBdt: true },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        amountBdt: true,
+        createdAt: true,
+      },
     }),
     prisma.expense.aggregate({
       where: { createdAt: { gte: monthStart } },
@@ -49,12 +57,18 @@ export default async function AccountsOverviewPage() {
       include: { user: { select: { name: true } } },
       orderBy: { createdAt: "asc" },
     }),
-    prisma.earning.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
     prisma.expense.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
     prisma.exchangeRate.findMany(),
+    getVirtualCompletedJobEarnings(monthStart),
   ]);
 
-  const earnings = Number(earnAgg._sum.amountBdt ?? 0);
+  const accountEarnings = [...earnAgg, ...virtualJobEarnings].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+  );
+  const earnings = accountEarnings.reduce(
+    (sum, earning) => sum + Number(earning.amountBdt),
+    0
+  );
   const expenses = Number(expAgg._sum.amountBdt ?? 0);
   const net = earnings - expenses;
   const payables = workers.reduce((sum, worker) => sum + Number(worker.balance), 0);
@@ -71,7 +85,7 @@ export default async function AccountsOverviewPage() {
   });
 
   const ledger = [
-    ...recentEarnings.map((earning) => ({
+    ...accountEarnings.slice(0, 4).map((earning) => ({
       id: earning.id,
       label: earning.title,
       amount: Number(earning.amountBdt),

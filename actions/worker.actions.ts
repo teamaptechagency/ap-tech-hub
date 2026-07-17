@@ -184,6 +184,58 @@ export async function completeJob(jobId: string, confirm: boolean) {
   // FIXED → payout now; monthly/hourly are cron-paid
   const payouts: string[] = [];
   if (job.type === "FIXED") {
+    const totalWorkerCost = job.members.reduce(
+      (sum, member) => sum + Number(member.workerValue),
+      0
+    );
+    const clientValue = Number(job.clientValue ?? 0);
+    const clientCurrency = job.clientCurrency || "USD";
+    const existingJobEarning = await prisma.earning.findFirst({
+      where: {
+        source: "AUTO",
+        category: "Project Income",
+        description: { contains: `[job:${jobId}]` },
+      },
+      select: { id: true },
+    });
+
+    if (clientValue > 0 && !existingJobEarning) {
+      const rate =
+        clientCurrency === "BDT"
+          ? 1
+          : Number(
+              (
+                await prisma.exchangeRate.findUnique({
+                  where: { code: clientCurrency },
+                })
+              )?.rateToBdt ?? 120
+            );
+      const receivedUsdRate = await prisma.setting.findUnique({
+        where: { key: "finance.receivedUsdRate" },
+      });
+      const usdRate = Number(receivedUsdRate?.value ?? rate);
+      const clientValueBdt =
+        clientCurrency === "USD"
+          ? clientValue * (Number.isFinite(usdRate) && usdRate > 0 ? usdRate : 120)
+          : clientValue * rate;
+      const profitBdt = Math.round((clientValueBdt - totalWorkerCost) * 100) / 100;
+
+      if (profitBdt > 0) {
+        await prisma.earning.create({
+          data: {
+            title: `Job profit - ${job.title}`,
+            description: `[job:${jobId}] Client ${clientCurrency} ${clientValue.toLocaleString()} - worker BDT ${totalWorkerCost.toLocaleString()}`,
+            amount: profitBdt,
+            currency: "BDT",
+            amountBdt: profitBdt,
+            source: "AUTO",
+            category: "Project Income",
+            createdById: session.user.id,
+          },
+        });
+      }
+    }
+
     for (const member of job.members) {
       const value = Number(member.workerValue);
       if (value > 0) {
@@ -220,6 +272,7 @@ export async function completeJob(jobId: string, confirm: boolean) {
   revalidatePath("/jobs");
   revalidatePath(`/jobs/${jobId}`);
   revalidatePath("/accounts");
+  revalidatePath("/reports");
   return { success: true };
 }
 
