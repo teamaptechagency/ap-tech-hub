@@ -419,7 +419,7 @@ export default async function JobDetailsPage({
                 id: member.user.id,
                 name: member.user.name,
               }))}
-              currencySym={currency}
+              currencySym="BDT "
               isManager={isManager}
               canWork={canToggle}
             />

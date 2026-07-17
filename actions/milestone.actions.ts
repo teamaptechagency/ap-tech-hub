@@ -51,6 +51,41 @@ export async function addMilestone(
     return { error: "Charge must be a valid amount" };
   }
 
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: {
+      milestones: { select: { charge: true } },
+      members: { select: { workerValue: true } },
+    },
+  });
+
+  if (!job) return { error: "Job not found" };
+
+  const payoutBudget =
+    job.members.length > 0
+      ? job.members.reduce(
+          (sum, member) => sum + Number(member.workerValue),
+          0
+        )
+      : Number(job.workerValue ?? 0);
+  const existingMilestoneTotal = job.milestones.reduce(
+    (sum, milestone) => sum + Number(milestone.charge ?? 0),
+    0
+  );
+
+  if (
+    charge !== null &&
+    payoutBudget > 0 &&
+    existingMilestoneTotal + charge > payoutBudget + 0.01
+  ) {
+    return {
+      error: `Milestone payouts cannot exceed employee budget. Remaining BDT ${Math.max(
+        payoutBudget - existingMilestoneTotal,
+        0
+      ).toLocaleString()}.`,
+    };
+  }
+
   const last = await prisma.milestone.findFirst({
     where: { jobId },
     orderBy: { sortOrder: "desc" },

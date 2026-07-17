@@ -120,7 +120,7 @@ export function MilestonesSection({
         </Card>
         <Card>
           <CardContent className="p-3">
-            <p className="text-xs text-muted-foreground">Delivered value</p>
+            <p className="text-xs text-muted-foreground">Delivered payout</p>
             <p className="text-xl font-bold">
               {currencySym}
               {deliveredCharge.toLocaleString()}
@@ -243,7 +243,7 @@ export function MilestonesSection({
           <DialogHeader>
             <DialogTitle>Add milestone</DialogTitle>
             <DialogDescription>
-              A deliverable step with its own deadline and charge
+              A deliverable step with its own deadline and BDT payout
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAdd} className="space-y-4">
@@ -277,14 +277,14 @@ export function MilestonesSection({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="mCharge">Charge (optional)</Label>
+                <Label htmlFor="mCharge">Payout BDT (optional)</Label>
                 <Input
                   id="mCharge"
                   type="number"
                   step="0.01"
                   value={charge}
                   onChange={(e) => setCharge(e.target.value)}
-                  placeholder="500.00"
+                  placeholder="8000"
                 />
               </div>
             </div>

@@ -29,6 +29,31 @@ async function audit(
   });
 }
 
+async function getCurrencyRateToBdt(currency: string) {
+  if (currency === "BDT") return 1;
+
+  if (currency === "USD") {
+    const receivedUsdRate = await prisma.setting.findUnique({
+      where: { key: "finance.receivedUsdRate" },
+    });
+    const value = Number(receivedUsdRate?.value ?? 0);
+    if (Number.isFinite(value) && value > 0) return value;
+  }
+
+  const rate = await prisma.exchangeRate.findUnique({
+    where: { code: currency },
+  });
+
+  return Number(rate?.rateToBdt ?? 120);
+}
+
+async function getClientValueBdt(
+  amount: number,
+  currency: string
+) {
+  return amount * (await getCurrencyRateToBdt(currency));
+}
+
 // ============================================
 // VALIDATION
 // ============================================
@@ -160,8 +185,35 @@ export async function createJob(formData: CreateJobInput) {
   const clientValue = data.clientValue ? parseFloat(data.clientValue) : null;
   const workerValue = data.workerValue ? parseFloat(data.workerValue) : null;
 
+  if (!clientValue || isNaN(clientValue) || clientValue <= 0) {
+    return { error: "Enter the client budget in USD" };
+  }
+
+  if (data.clientCurrency !== "USD") {
+    return { error: "Client budget must be in USD" };
+  }
+
   if (!workerValue || isNaN(workerValue) || workerValue <= 0) {
     return { error: "Enter how much the employee will receive for this job" };
+  }
+
+  const workerCosts =
+    data.members.length > 0
+      ? data.members.map((member) => {
+          const memberValue = parseFloat(member.workerValue);
+          return Number.isFinite(memberValue) && memberValue > 0
+            ? memberValue
+            : workerValue;
+        })
+      : [workerValue];
+  const totalWorkerCost = workerCosts.reduce((sum, value) => sum + value, 0);
+  const clientValueBdt = await getClientValueBdt(clientValue, data.clientCurrency);
+  const maxWorkerCost = Math.floor(clientValueBdt * 0.8 * 100) / 100;
+
+  if (totalWorkerCost > maxWorkerCost) {
+    return {
+      error: `Employee payout must stay within 80% of client budget. Max payout is BDT ${maxWorkerCost.toLocaleString()}.`,
+    };
   }
 
   const job = await prisma.job.create({

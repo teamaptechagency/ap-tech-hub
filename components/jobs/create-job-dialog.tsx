@@ -107,8 +107,7 @@ export function CreateJobDialog({
 
   // Pricing
   const [clientValue, setClientValue] = useState("");
-  const [clientCurrency, setClientCurrency] =
-    useState<Currency>("USD");
+  const [clientCurrency] = useState<Currency>("USD");
   const [workerValue, setWorkerValue] = useState("");
 
   // Type-specific fields
@@ -229,6 +228,16 @@ export function CreateJobDialog({
 
     if (type === "MONTHLY" && !startDate) {
       setError("Please select the monthly job start date.");
+      return;
+    }
+
+    const numericClientValue = Number(clientValue);
+    if (
+      !clientValue ||
+      !Number.isFinite(numericClientValue) ||
+      numericClientValue <= 0
+    ) {
+      setError("Please enter the client budget in USD.");
       return;
     }
 
@@ -682,13 +691,7 @@ export function CreateJobDialog({
             <div className="space-y-2">
               <Label>Currency</Label>
 
-              <Select
-                value={clientCurrency}
-                onValueChange={(value) =>
-                  setClientCurrency(value as Currency)
-                }
-                disabled={loading}
-              >
+              <Select value={clientCurrency} disabled>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -733,7 +736,9 @@ export function CreateJobDialog({
               />
               <p className="text-[10px] text-muted-foreground">
                 This is what employees see before applying. Assigned members
-                can still have a different payout below if needed.
+                can still have a different payout below if needed. Total payout
+                must leave at least 20% company profit after USD converts to
+                BDT.
               </p>
             </div>
           </div>
