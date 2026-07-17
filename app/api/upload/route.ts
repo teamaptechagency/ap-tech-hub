@@ -286,7 +286,7 @@ export async function POST(request: Request) {
       `attachments/${session.user.id}/${Date.now()}-${safeFileName}`,
       file,
       {
-        access: "public",
+        access: "private",
         addRandomSuffix: true,
       }
     );
