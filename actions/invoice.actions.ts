@@ -40,13 +40,34 @@ async function nextInvoiceNumber() {
 }
 
 // Convert any supported currency amount → BDT + USD
-async function convert(amount: number, currency: string) {
+async function convert(
+  amount: number,
+  currency: string,
+  options?: { useReceivedUsdRate?: boolean }
+) {
   const rates = await prisma.exchangeRate.findMany();
   const map = new Map(rates.map((r) => [r.code, Number(r.rateToBdt)]));
   const usdRate = map.get("USD") ?? 120;
+  const receivedUsdSetting = options?.useReceivedUsdRate
+    ? await prisma.setting.findUnique({
+        where: { key: "finance.receivedUsdRate" },
+      })
+    : null;
+  const receivedUsdRate = Number(receivedUsdSetting?.value ?? 0);
+  const effectiveUsdRate =
+    options?.useReceivedUsdRate &&
+    Number.isFinite(receivedUsdRate) &&
+    receivedUsdRate > 0
+      ? receivedUsdRate
+      : usdRate;
 
   const toBdt =
-    currency === "BDT" ? amount : amount * (map.get(currency) ?? usdRate);
+    currency === "BDT"
+      ? amount
+      : amount *
+        (currency === "USD"
+          ? effectiveUsdRate
+          : map.get(currency) ?? usdRate);
   const toUsd = currency === "USD" ? amount : toBdt / usdRate;
 
   return { toBdt, toUsd };
@@ -72,7 +93,10 @@ async function applyPaidEffects(
   });
   if (!invoice) return;
 
-  const { toBdt, toUsd } = await convert(paidAmount, invoice.currency);
+  const { toUsd } = await convert(paidAmount, invoice.currency);
+  const { toBdt } = await convert(paidAmount, invoice.currency, {
+    useReceivedUsdRate: invoice.currency === "USD",
+  });
 
   // Loyalty: X points per $Y paid (from Settings)
   const settings = await prisma.setting.findMany({

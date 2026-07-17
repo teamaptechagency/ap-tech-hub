@@ -191,6 +191,10 @@ export function SettingsShell({
     settings["loyalty.pointsPerDollar"] ?? "100"
   );
 
+  const [receivedUsdRate, setReceivedUsdRate] = useState(
+    settings["finance.receivedUsdRate"] ?? "118"
+  );
+
   const [specialUsdRate, setSpecialUsdRate] = useState(
     settings["specialOrder.usdRate"] ?? "125"
   );
@@ -253,6 +257,15 @@ export function SettingsShell({
   async function saveRates() {
     if (busy) return;
 
+    const parsedReceivedUsdRate = Number(receivedUsdRate);
+    if (
+      !Number.isFinite(parsedReceivedUsdRate) ||
+      parsedReceivedUsdRate <= 0
+    ) {
+      toast.error("Enter a valid received USD rate");
+      return;
+    }
+
     setBusy(true);
 
     try {
@@ -268,6 +281,19 @@ export function SettingsShell({
           toast.error(error);
           return;
         }
+      }
+
+      const result = await updateSettings([
+        {
+          key: "finance.receivedUsdRate",
+          value: receivedUsdRate,
+        },
+      ]);
+
+      const error = getActionError(result);
+      if (error) {
+        toast.error(error);
+        return;
       }
 
       toast.success("Exchange rates saved");
@@ -921,6 +947,34 @@ export function SettingsShell({
             >
               {busy ? "Saving..." : "Save rates"}
             </Button>
+
+            <div className="mt-4 rounded-md border bg-muted/20 p-3">
+              <p className="text-sm font-medium">
+                Received USD rate
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Used only when recording USD invoice earnings. Example:
+                Payoneer/Fiverr/Upwork USD received at BDT 118.
+              </p>
+              <div className="mt-3 flex max-w-md items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  1 USD =
+                </span>
+                <Input
+                  type="number"
+                  min={0.01}
+                  step="0.01"
+                  value={receivedUsdRate}
+                  onChange={(event) =>
+                    setReceivedUsdRate(event.target.value)
+                  }
+                  disabled={busy}
+                />
+                <span className="text-sm text-muted-foreground">
+                  BDT
+                </span>
+              </div>
+            </div>
 
             <div className="mt-4 border-t pt-4">
               <p className="text-sm font-medium">
