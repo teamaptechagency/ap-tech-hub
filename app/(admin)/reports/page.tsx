@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FinanceBoard } from "@/components/accounts/finance-board";
 
 export default async function ReportsPage() {
   const now = new Date();
@@ -23,14 +24,38 @@ export default async function ReportsPage() {
   const [earnings, expenses, workers, clients, jobs] = await Promise.all([
     prisma.earning.findMany({
       where: { createdAt: { gte: months[5].start } },
-      select: { amountBdt: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        amount: true,
+        currency: true,
+        amountBdt: true,
+        source: true,
+        category: true,
+        createdAt: true,
+      },
     }),
     prisma.expense.findMany({
       where: { createdAt: { gte: months[5].start } },
-      select: { amountBdt: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        amount: true,
+        currency: true,
+        amountBdt: true,
+        source: true,
+        category: true,
+        recurring: true,
+        recurringDay: true,
+        createdAt: true,
+      },
     }),
     prisma.user.findMany({
-      where: { role: "TEAM_MEMBER" },
+      where: { role: { in: ["TEAM_MEMBER", "BUSINESS_PARTNER"] } },
       select: {
         name: true,
         balance: true,
@@ -137,6 +162,38 @@ export default async function ReportsPage() {
           ))}
         </CardContent>
       </Card>
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">
+          Earnings & expenses
+        </h2>
+        <FinanceBoard
+          earnings={earnings.slice(0, 8).map((earning) => ({
+            id: earning.id,
+            title: earning.title,
+            description: earning.description,
+            amount: Number(earning.amount),
+            currency: earning.currency,
+            amountBdt: Number(earning.amountBdt),
+            source: earning.source,
+            category: earning.category,
+            createdAt: earning.createdAt.toISOString(),
+          }))}
+          expenses={expenses.slice(0, 8).map((expense) => ({
+            id: expense.id,
+            title: expense.title,
+            description: expense.description,
+            amount: Number(expense.amount),
+            currency: expense.currency,
+            amountBdt: Number(expense.amountBdt),
+            source: expense.source,
+            category: expense.category,
+            recurring: expense.recurring,
+            recurringDay: expense.recurringDay,
+            createdAt: expense.createdAt.toISOString(),
+          }))}
+        />
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Per member */}

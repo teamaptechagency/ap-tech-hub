@@ -35,6 +35,8 @@ export default async function FindWorkPage() {
       title: job.title,
       description: job.description,
       type: job.type,
+      workerValue: job.workerValue ? Number(job.workerValue) : null,
+      workerCurrency: job.workerCurrency,
       skills: job.requiredSkills.map((s) => ({
         name: s.name,
         matched: mySkillIds.has(s.id),

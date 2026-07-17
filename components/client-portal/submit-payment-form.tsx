@@ -35,6 +35,7 @@ export type ClientPaymentMethod = {
   id: string;
   key: string;
   label: string;
+  details: string;
   active: boolean;
   instructions: string | null;
   warning: string | null;
@@ -55,6 +56,27 @@ type UploadedProof = {
   id: string;
   fileName: string;
 };
+
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null | undefined;
+}) {
+  if (!value) return null;
+
+  return (
+    <div className="grid gap-1 rounded-md bg-background px-3 py-2 sm:grid-cols-[8rem_1fr]">
+      <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <span className="break-words font-mono text-xs text-foreground">
+        {value}
+      </span>
+    </div>
+  );
+}
 
 function getAvailability(
   method: ClientPaymentMethod,
@@ -296,7 +318,26 @@ export function SubmitPaymentForm({
         {selectedMethod && (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="rounded-md border bg-muted/40 p-3 text-sm">
-              <p className="font-medium">{selectedMethod.label} details</p>
+              <div className="mb-3">
+                <p className="font-medium">
+                  {selectedMethod.label} payment details
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Use these details to send the payment, then submit your
+                  reference below.
+                </p>
+              </div>
+
+              {selectedMethod.details && (
+                <div className="mb-3 rounded-md bg-background px-3 py-2">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    General details
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap break-words font-mono text-xs">
+                    {selectedMethod.details}
+                  </p>
+                </div>
+              )}
 
               {selectedMethod.key === "BANK_TRANSFER" && (
                 <div className="mt-2 space-y-2">
@@ -318,13 +359,15 @@ export function SubmitPaymentForm({
                     </SelectContent>
                   </Select>
                   {selectedBankAccount && (
-                    <div className="rounded-md bg-background p-2 text-xs">
-                      <p>{selectedBankAccount.bankName}</p>
-                      <p>Account name: {selectedBankAccount.accountName}</p>
-                      <p>Account number: {selectedBankAccount.accountNumber}</p>
-                      {selectedBankAccount.branchName && <p>Branch: {selectedBankAccount.branchName}</p>}
-                      {selectedBankAccount.routingNumber && <p>Routing: {selectedBankAccount.routingNumber}</p>}
-                      {selectedBankAccount.swiftCode && <p>SWIFT: {selectedBankAccount.swiftCode}</p>}
+                    <div className="space-y-2">
+                      <DetailRow label="Bank" value={selectedBankAccount.bankName} />
+                      <DetailRow label="Account name" value={selectedBankAccount.accountName} />
+                      <DetailRow label="Account no." value={selectedBankAccount.accountNumber} />
+                      <DetailRow label="Currency" value={selectedBankAccount.currency} />
+                      <DetailRow label="Branch" value={selectedBankAccount.branchName} />
+                      <DetailRow label="Routing" value={selectedBankAccount.routingNumber} />
+                      <DetailRow label="SWIFT" value={selectedBankAccount.swiftCode} />
+                      <DetailRow label="Instructions" value={selectedBankAccount.instructions} />
                     </div>
                   )}
                 </div>
@@ -354,6 +397,59 @@ export function SubmitPaymentForm({
                   {payoneerInvoiceButtonLabel || "Open Payoneer invoice"}
                 </a>
               )}
+
+              <div className="mt-3 space-y-2 rounded-md border border-dashed p-3">
+                <p className="text-xs font-semibold">
+                  Payment details to use
+                </p>
+
+                <DetailRow label="Method" value={selectedMethod.label} />
+                <DetailRow label="Details" value={selectedMethod.details} />
+
+                {selectedMethod.key === "BANK_TRANSFER" && selectedBankAccount && (
+                  <>
+                    <DetailRow label="Bank" value={selectedBankAccount.bankName} />
+                    <DetailRow label="Account name" value={selectedBankAccount.accountName} />
+                    <DetailRow label="Account no." value={selectedBankAccount.accountNumber} />
+                    <DetailRow label="Currency" value={selectedBankAccount.currency} />
+                    <DetailRow label="Branch" value={selectedBankAccount.branchName} />
+                    <DetailRow label="Routing" value={selectedBankAccount.routingNumber} />
+                    <DetailRow label="SWIFT" value={selectedBankAccount.swiftCode} />
+                    <DetailRow label="Bank note" value={selectedBankAccount.instructions} />
+                  </>
+                )}
+
+                {(selectedMethod.key === "BKASH" || selectedMethod.key === "NAGAD") && (
+                  <>
+                    <DetailRow label="Receiver" value={selectedMethod.receiverNumber} />
+                    <DetailRow label="Account type" value={selectedMethod.accountType} />
+                  </>
+                )}
+
+                {selectedMethod.key === "WISE" && (
+                  <>
+                    <DetailRow label="Wise email" value={selectedMethod.wiseEmail} />
+                    <DetailRow label="Wise name" value={selectedMethod.wiseAccountName} />
+                    <DetailRow label="Transfer" value={selectedMethod.wiseTransferDetails} />
+                  </>
+                )}
+
+                {selectedMethod.key === "CASH" && (
+                  <DetailRow label="Receiver info" value={selectedMethod.cashReceiverInfo} />
+                )}
+
+                {selectedMethod.key === "PAYONEER" && (
+                  <DetailRow
+                    label="Payoneer"
+                    value={
+                      payoneerInvoiceUrl
+                        ? "Use the Payoneer invoice link shown above."
+                        : selectedMethod.payoneerButtonLabel ||
+                          "Use Payoneer direct payment when available."
+                    }
+                  />
+                )}
+              </div>
 
               {selectedMethod.instructions && (
                 <p className="mt-2 text-xs text-muted-foreground">{selectedMethod.instructions}</p>

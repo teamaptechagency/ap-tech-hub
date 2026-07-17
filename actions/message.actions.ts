@@ -1,11 +1,12 @@
 "use server";
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { ADMIN_ROLES } from "@/lib/roles";
+import { ADMIN_ROLES, PARTNER_ROLES } from "@/lib/roles";
 import { pusherServer } from "@/lib/pusher-server";
 
 // ============================================
@@ -28,6 +29,14 @@ type ConversationAccessRow = {
     id: string;
     clientId: string | null;
     members: JobMemberRow[];
+  } | null;
+  specialOrderClient: {
+    id: string;
+    clientId: string;
+  } | null;
+  specialOrderPartner: {
+    id: string;
+    partnerId: string | null;
   } | null;
 };
 
@@ -88,6 +97,59 @@ type PinnedMessageRow = {
   attachments: AttachmentPublicRow[];
 };
 
+export type FloatingConversationRow = {
+  id: string;
+  name: string;
+  subtitle: string;
+  avatarUserId: string | null;
+  avatarName: string;
+  avatarUrl: string | null;
+  lastBody: string | null;
+  lastAt: string | null;
+  unread: boolean;
+};
+
+type FloatingConversationRecord = Prisma.ConversationGetPayload<{
+  include: {
+    job: {
+      select: {
+        title: true;
+        clientId: true;
+        client: { select: { companyName: true } };
+        externalName: true;
+      };
+    };
+    specialOrderClient: {
+      select: {
+        title: true;
+        client: { select: { companyName: true } };
+      };
+    };
+    specialOrderPartner: {
+      select: {
+        title: true;
+        partner: { select: { name: true; image: true; photoUrl: true } };
+      };
+    };
+    participants: {
+      include: {
+        user: {
+          select: {
+            id: true;
+            name: true;
+            role: true;
+            image: true;
+            photoUrl: true;
+          };
+        };
+      };
+    };
+    messages: {
+      select: { body: true; createdAt: true; senderId: true };
+    };
+  };
+}>;
+
 // Compatibility wrapper for recently added Message fields.
 type MessageDelegateCompat = {
   findUnique<T>(args: unknown): Promise<T | null>;
@@ -107,6 +169,198 @@ function revalidateMessagePaths() {
   revalidatePath("/messages");
   revalidatePath("/e/messages");
   revalidatePath("/c/messages");
+  revalidatePath("/p/messages");
+}
+
+export async function getFloatingConversations() {
+  const session = await auth();
+  if (!session?.user) {
+    return { conversations: [], currentUserId: "" };
+  }
+
+  const myId = session.user.id;
+  const isAdmin = ADMIN_ROLES.includes(session.user.role);
+  const isPartner = PARTNER_ROLES.includes(session.user.role);
+  const partnerSupportRoles = [...ADMIN_ROLES, "PARTNER_MANAGER"] as Role[];
+  const partnerSupportParticipant: Prisma.ConversationParticipantWhereInput = {
+    userId: { not: myId },
+    user: { role: { in: partnerSupportRoles } },
+  };
+  const isPartnerManager =
+    session.user.role === "PARTNER_MANAGER" &&
+    (await hasPermission({
+      userId: myId,
+      role: session.user.role,
+      resource: "partnerOrders",
+      action: "read",
+    }));
+
+  const where: Prisma.ConversationWhereInput = isAdmin
+    ? {
+        OR: [
+          { jobId: { not: null } },
+          { specialOrderClientId: { not: null } },
+          { specialOrderPartnerId: { not: null } },
+          { isDirect: true, participants: { some: { userId: myId } } },
+        ],
+      }
+    : session.user.clientId
+      ? {
+          OR: [
+            {
+              job: {
+                clientId: session.user.clientId,
+                publish: "PUBLISHED" as const,
+              },
+            },
+            {
+              specialOrderClient: {
+                clientId: session.user.clientId,
+              },
+            },
+            { isDirect: true, participants: { some: { userId: myId } } },
+          ],
+        }
+      : isPartner
+        ? {
+            OR: [
+              isPartnerManager
+                ? {
+                    specialOrderPartnerId: { not: null },
+                    participants: { some: partnerSupportParticipant },
+                  }
+                : {
+                    specialOrderPartner: { partnerId: myId },
+                    participants: { some: partnerSupportParticipant },
+                  },
+              {
+                isDirect: true,
+                participants: {
+                  some: { userId: myId },
+                },
+                AND: [{ participants: { some: partnerSupportParticipant } }],
+              },
+            ],
+          }
+        : {
+            OR: [
+              { participants: { some: { userId: myId } } },
+              { job: { members: { some: { userId: myId } } } },
+            ],
+          };
+
+  const conversations: FloatingConversationRecord[] =
+    await prisma.conversation.findMany({
+    where,
+    orderBy: { updatedAt: "desc" },
+    take: 20,
+    include: {
+      job: {
+        select: {
+          title: true,
+          clientId: true,
+          client: { select: { companyName: true } },
+          externalName: true,
+        },
+      },
+      specialOrderClient: {
+        select: {
+          title: true,
+          client: { select: { companyName: true } },
+        },
+      },
+      specialOrderPartner: {
+        select: {
+          title: true,
+          partner: { select: { name: true, image: true, photoUrl: true } },
+        },
+      },
+      participants: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+              image: true,
+              photoUrl: true,
+            },
+          },
+        },
+      },
+      messages: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { body: true, createdAt: true, senderId: true },
+      },
+    },
+    });
+
+  const rows: FloatingConversationRow[] = conversations.map((conversation) => {
+    const last = conversation.messages[0];
+    const myPart = conversation.participants.find((p) => p.userId === myId);
+    const supportParticipant = isPartner
+      ? conversation.participants.find(
+          (p) =>
+            p.userId !== myId &&
+            partnerSupportRoles.includes(p.user.role)
+        )
+      : null;
+    const other =
+      supportParticipant ??
+      conversation.participants.find((p) => p.userId !== myId);
+    const unread =
+      !!last &&
+      last.senderId !== myId &&
+      (!myPart?.lastSeenAt || last.createdAt > myPart.lastSeenAt);
+
+    const name =
+      conversation.job?.title ??
+      conversation.specialOrderClient?.title ??
+      conversation.specialOrderPartner?.title ??
+      other?.user.name ??
+      "Conversation";
+
+    const subtitle = conversation.job
+      ? (conversation.job.client?.companyName ??
+        conversation.job.externalName ??
+        "Job discussion")
+      : conversation.specialOrderClient
+        ? `Special order . ${conversation.specialOrderClient.client.companyName}`
+        : conversation.specialOrderPartner
+          ? `Special order . ${
+              conversation.specialOrderPartner.partner?.name ?? "Partner"
+            }`
+          : other?.user.role.replaceAll("_", " ").toLowerCase() ??
+            "Direct message";
+
+    const avatarName =
+      other?.user.name ??
+      conversation.specialOrderPartner?.partner?.name ??
+      name;
+    const avatarUrl =
+      other?.user.photoUrl ??
+      other?.user.image ??
+      conversation.specialOrderPartner?.partner?.photoUrl ??
+      conversation.specialOrderPartner?.partner?.image ??
+      null;
+
+    return {
+      id: conversation.id,
+      name,
+      subtitle,
+      avatarUserId: other?.user.id ?? null,
+      avatarName,
+      avatarUrl,
+      lastBody: last?.body ?? null,
+      lastAt: last?.createdAt.toISOString() ?? null,
+      unread,
+    };
+  });
+
+  rows.sort((a, b) => Number(b.unread) - Number(a.unread));
+
+  return { conversations: rows, currentUserId: myId };
 }
 
 async function triggerPusher(
@@ -179,6 +433,18 @@ async function canAccessConversation(
             },
           },
         },
+        specialOrderClient: {
+          select: {
+            id: true,
+            clientId: true,
+          },
+        },
+        specialOrderPartner: {
+          select: {
+            id: true,
+            partnerId: true,
+          },
+        },
       },
     })) as ConversationAccessRow | null;
 
@@ -190,6 +456,14 @@ async function canAccessConversation(
   const isAdmin = ADMIN_ROLES.includes(
     session.user.role
   );
+  const isPartnerManager =
+    session.user.role === "PARTNER_MANAGER" &&
+    (await hasPermission({
+      userId,
+      role: session.user.role,
+      resource: "partnerOrders",
+      action: "read",
+    }));
 
   // Direct conversation access
   if (conversation.isDirect) {
@@ -239,6 +513,29 @@ async function canAccessConversation(
       session.user.clientId;
 
   if (isClientUser) {
+    return {
+      session,
+      conversation,
+    };
+  }
+
+  const isSpecialOrderClientUser =
+    Boolean(session.user.clientId) &&
+    conversation.specialOrderClient?.clientId ===
+      session.user.clientId;
+
+  if (isSpecialOrderClientUser) {
+    return {
+      session,
+      conversation,
+    };
+  }
+
+  const isSpecialOrderPartner =
+    conversation.specialOrderPartner?.partnerId ===
+    userId;
+
+  if (isSpecialOrderPartner || isPartnerManager) {
     return {
       session,
       conversation,
@@ -447,6 +744,31 @@ export async function sendMessage(
       error: "Message could not be sent",
     };
   }
+}
+
+export async function sendTypingStatus(
+  conversationId: string,
+  isTyping: boolean
+) {
+  const cleanConversationId = conversationId.trim();
+  if (!cleanConversationId) return { error: "Conversation ID is required" };
+
+  const access = await canAccessConversation(cleanConversationId);
+  if (!access) {
+    return { error: "You don't have access to this conversation" };
+  }
+
+  await triggerPusher(
+    `conversation-${cleanConversationId}`,
+    "typing",
+    {
+      userId: access.session.user.id,
+      name: access.session.user.name,
+      isTyping,
+    }
+  );
+
+  return { success: true };
 }
 
 // ============================================

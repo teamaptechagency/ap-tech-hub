@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { WORKER_ROLES, CLIENT_ROLES } from "@/lib/roles";
+import { CLIENT_ROLES, PARTNER_ROLES, WORKER_ROLES } from "@/lib/roles";
 
 // Defaults — admin can override via Settings keys
 const EMPLOYEE_DEFAULTS = [
@@ -18,7 +18,8 @@ const CLIENT_DEFAULTS = [
 ];
 
 export async function getTermsForRole(role: string) {
-  const isWorker = WORKER_ROLES.includes(role);
+  const isWorker =
+    WORKER_ROLES.includes(role) || PARTNER_ROLES.includes(role);
   const isClient = CLIENT_ROLES.includes(role);
   if (!isWorker && !isClient) return null; // admins skip the gate
 

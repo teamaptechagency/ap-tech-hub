@@ -13,8 +13,8 @@ import { isEmailVerified } from "@/actions/otp.actions";
 // WORKER: + gender, profession, skills (max 5),
 //   NID/passport + photo (uploaded first via
 //   /api/register-upload)
-// Both require verified email OTP.
-// Account lands as PENDING_APPROVAL.
+// Workers require verified email OTP. Clients can verify later from profile.
+// Worker accounts land as PENDING_APPROVAL; clients can sign in immediately.
 // ============================================
 export async function registerAccount(formData: {
   kind: "CLIENT" | "WORKER";
@@ -39,13 +39,9 @@ export async function registerAccount(formData: {
     return { error: "Password must be at least 8 characters" };
   }
 
-  // OTP gate
-  if (!(await isEmailVerified(email))) {
+  // OTP gate for workers only
+  if (kind === "WORKER" && !(await isEmailVerified(email))) {
     return { error: "Please verify your email with the OTP code first" };
-  }
-
-  if (kind === "CLIENT" && !formData.companyName) {
-    return { error: "Enter your company name" };
   }
 
   if (kind === "WORKER") {
@@ -73,7 +69,7 @@ export async function registerAccount(formData: {
   if (kind === "CLIENT") {
     await prisma.client.create({
       data: {
-        companyName: formData.companyName!,
+        companyName: formData.companyName || name,
         contactName: name,
         email,
         phone: formData.phone || null,
@@ -86,7 +82,7 @@ export async function registerAccount(formData: {
             phone: formData.phone || null,
             password: hashed,
             role: "CLIENT",
-            accountStatus: "PENDING_APPROVAL",
+            accountStatus: "ACTIVE",
           },
         },
       },
@@ -111,8 +107,9 @@ export async function registerAccount(formData: {
     });
   }
 
-  // Consume the OTP
-  await prisma.emailOtp.delete({ where: { email } }).catch(() => {});
+  if (kind === "WORKER") {
+    await prisma.emailOtp.delete({ where: { email } }).catch(() => {});
+  }
 
   await notifyAdmins({
     title: `New ${kind === "CLIENT" ? "client" : "team member"} registration`,
@@ -152,7 +149,10 @@ export async function processRegistration(
 
   await prisma.user.update({
     where: { id: userId },
-    data: { accountStatus: action === "APPROVE" ? "ACTIVE" : "REJECTED" },
+    data: {
+      accountStatus: action === "APPROVE" ? "ACTIVE" : "REJECTED",
+      identityStatus: action === "APPROVE" ? "VERIFIED" : "REJECTED",
+    },
   });
 
   const { notify } = await import("@/lib/notify");

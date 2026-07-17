@@ -15,6 +15,7 @@ import {
   MessageCircle,
   PlusCircle,
   Receipt,
+  ShoppingBag,
   User,
   Video,
   Wallet,
@@ -61,6 +62,11 @@ export const clientNavItems: ClientNavItem[] = [
     icon: Receipt,
   },
   {
+    label: "Special orders",
+    href: "/c/special-orders",
+    icon: ShoppingBag,
+  },
+  {
     label: "Wallet & points",
     href: "/c/wallet",
     icon: Wallet,
@@ -99,7 +105,7 @@ export function ClientSidebar({
   const initials = getInitials(userName);
 
   return (
-    <aside className="hidden min-h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center border-b px-6">
         <Link

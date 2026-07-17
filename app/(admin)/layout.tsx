@@ -2,9 +2,11 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
-import { ADMIN_ROLES, CLIENT_ROLES } from "@/lib/roles";
+import { ADMIN_ROLES, CLIENT_ROLES, PARTNER_ROLES } from "@/lib/roles";
+import { getFloatingConversations } from "@/actions/message.actions";
 
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
+import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
 import {
   BottomNav,
@@ -32,11 +34,16 @@ export default async function AdminLayout({
       redirect("/c/dashboard");
     }
 
+    if (PARTNER_ROLES.includes(role)) {
+      redirect("/p/dashboard");
+    }
+
     redirect("/e/dashboard");
   }
 
   const userName =
     session.user.name?.trim() || "Admin User";
+  const floatingMessages = await getFloatingConversations();
 
   const userRole = role
     .replaceAll("_", " ")
@@ -57,6 +64,11 @@ export default async function AdminLayout({
       label: "Jobs",
       href: "/jobs",
       icon: "jobs",
+    },
+    {
+      label: "Special",
+      href: "/special-orders",
+      icon: "special",
     },
     {
       label: "Profile",
@@ -88,6 +100,11 @@ export default async function AdminLayout({
           {children}
         </div>
       </main>
+
+      <GlobalFloatingMessenger
+        conversations={floatingMessages.conversations}
+        currentUserId={floatingMessages.currentUserId}
+      />
 
       {/* Mobile bottom navigation */}
       <BottomNav items={bottomItems} />

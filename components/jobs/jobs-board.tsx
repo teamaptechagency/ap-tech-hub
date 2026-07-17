@@ -18,6 +18,8 @@ type JobRow = {
   isExternal: boolean;
   clientValue: number | null;
   clientCurrency: string;
+  workerValue: number | null;
+  workerCurrency: string;
   members: { name: string; workerValue: number }[];
   skills: string[];
   pendingApplications: number;
@@ -232,6 +234,16 @@ export function JobsBoard({
                         {job.pendingApplications} applicant
                         {job.pendingApplications !== 1 && "s"}
                       </Badge>
+                      {job.workerValue !== null && (
+                        <Badge
+                          variant="secondary"
+                          className="bg-green-100 text-xs text-green-700"
+                        >
+                          Employee BDT {job.workerValue.toLocaleString()}
+                          {job.type === "MONTHLY" && "/mo"}
+                          {job.type === "HOURLY" && "/hr"}
+                        </Badge>
+                      )}
                       <Link
                         href={`/jobs/${job.id}/applications`}
                         className="text-xs font-medium text-primary hover:underline"

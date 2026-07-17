@@ -18,6 +18,7 @@ import {
   Receipt,
   Settings,
   ShieldCheck,
+  ShoppingBag,
   UserCircle,
   Users,
   Video,
@@ -63,6 +64,11 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Invoices",
     href: "/invoices",
     icon: Receipt,
+  },
+  {
+    label: "Special orders",
+    href: "/special-orders",
+    icon: ShoppingBag,
   },
   {
     label: "HR / Accounts",
@@ -116,7 +122,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
   const initials = getInitials(userName);
 
   return (
-    <aside className="hidden min-h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center border-b px-6">
         <Link

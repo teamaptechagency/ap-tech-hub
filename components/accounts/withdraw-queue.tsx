@@ -107,7 +107,7 @@ export function WithdrawQueue({ requests }: { requests: RequestRow[] }) {
                   <p className="text-[10px] text-muted-foreground">
                     {r.fromReserve ? "Reserve" : "Balance"} after payout: ৳
                     {r.balanceAfter.toLocaleString()} · transfer fees are the
-                    worker's
+                    employee's
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-2">
@@ -185,7 +185,7 @@ export function WithdrawQueue({ requests }: { requests: RequestRow[] }) {
             </DialogTitle>
             <DialogDescription>
               Send via {paying?.method} ({paying?.details}), then record the
-              reference here. Amount is deducted from the worker's{" "}
+              reference here. Amount is deducted from the employee's{" "}
               {paying?.fromReserve ? "reserve" : "balance"}.
             </DialogDescription>
           </DialogHeader>

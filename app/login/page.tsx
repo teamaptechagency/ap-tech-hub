@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { LoginForm } from "@/components/auth/login-form";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ reason?: string; next?: string }>;
+}) {
+  const params = await searchParams;
+  const initialMessage =
+    params?.reason === "auth"
+      ? "Please sign in first, then we will open your portal."
+      : "";
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <div className="w-full max-w-sm">
@@ -14,7 +24,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <LoginForm />
+        <LoginForm initialMessage={initialMessage} nextPath={params?.next ?? ""} />
 
         <div className="mt-4 flex items-center justify-between text-sm">
           <Link

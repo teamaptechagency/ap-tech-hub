@@ -109,7 +109,7 @@ export function EmployeeSidebar({
   const formattedRole = formatRole(user.role);
 
   return (
-    <aside className="hidden min-h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center border-b px-6">
         <Link

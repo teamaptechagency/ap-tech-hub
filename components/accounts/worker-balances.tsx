@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  adjustWorkerBalance,
-  applyPenalty,
-} from "@/actions/worker.actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+  inviteTeamMember,
+  resetTeamMemberPassword,
+  updateTeamMemberIdentityStatus,
+  updateTeamMemberStatus,
+} from "@/actions/settings.actions";
+import { adjustWorkerBalance, applyPenalty } from "@/actions/worker.actions";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +20,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Txn = {
   id: string;
@@ -32,11 +43,27 @@ type Txn = {
 type WorkerRow = {
   id: string;
   name: string;
+  role?: string;
+  email?: string;
+  phone?: string | null;
+  profession?: string | null;
+  accountStatus: string;
+  identityStatus: string;
+  nidNumber?: string | null;
+  nidUrl?: string | null;
+  photoUrl?: string | null;
   balance: number;
   reserve: number;
   activeJobs: number;
   pendingWithdraw: number;
   txns: Txn[];
+};
+
+type CreateRole = "TEAM_MEMBER" | "BUSINESS_PARTNER" | "PARTNER_MANAGER";
+
+type CreateOption = {
+  label: string;
+  role: CreateRole;
 };
 
 const kindLabel: Record<string, string> = {
@@ -50,11 +77,40 @@ const kindLabel: Record<string, string> = {
   PENALTY: "Penalty",
 };
 
-export function WorkerBalances({ workers }: { workers: WorkerRow[] }) {
+function bdt(amount: number) {
+  return `BDT ${Math.round(amount).toLocaleString()}`;
+}
+
+export function WorkerBalances({
+  workers,
+  title = "HR / Accounts",
+  subtitle = "Employees",
+  overviewHref = "/accounts",
+  emptyLabel = "No employees yet",
+  createLabel,
+  createRoles,
+}: {
+  workers: WorkerRow[];
+  title?: string;
+  subtitle?: string;
+  overviewHref?: string;
+  emptyLabel?: string;
+  createLabel?: string;
+  createRoles?: CreateOption[];
+}) {
+  const router = useRouter();
   const [selected, setSelected] = useState<WorkerRow | null>(
     workers[0] ?? null
   );
   const [dialog, setDialog] = useState<"adjust" | "penalty" | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createRole, setCreateRole] = useState<CreateRole>(
+    createRoles?.[0]?.role ?? "TEAM_MEMBER"
+  );
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [resetPassword, setResetPassword] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -76,73 +132,154 @@ export function WorkerBalances({ workers }: { workers: WorkerRow[] }) {
     setNote("");
   }
 
+  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    setBusy(true);
+    const result = await inviteTeamMember({
+      name: createName.trim(),
+      email: createEmail.trim(),
+      role: createRole,
+    });
+    setBusy(false);
+    if (result.error) return setError(result.error);
+    setTempPassword(result.password ?? null);
+    router.refresh();
+  }
+
+  function resetCreateDialog(open: boolean) {
+    if (busy) return;
+    setCreateOpen(open);
+    if (!open) {
+      setCreateName("");
+      setCreateEmail("");
+      setCreateRole(createRoles?.[0]?.role ?? "TEAM_MEMBER");
+      setTempPassword(null);
+      setError("");
+    }
+  }
+
+  async function changeStatus(status: "ACTIVE" | "HOLD" | "LOCKED" | "SUSPENDED") {
+    if (!selected) return;
+    setError("");
+    setBusy(true);
+    const result = await updateTeamMemberStatus(selected.id, status);
+    setBusy(false);
+    if (result.error) return setError(result.error);
+    router.refresh();
+  }
+
+  async function resetPasswordForSelected() {
+    if (!selected) return;
+    setError("");
+    setBusy(true);
+    const result = await resetTeamMemberPassword(selected.id);
+    setBusy(false);
+    if (result.error) return setError(result.error);
+    setResetPassword(result.password ?? null);
+  }
+
+  async function changeIdentityStatus(status: "VERIFIED" | "REJECTED" | "PENDING") {
+    if (!selected) return;
+    setError("");
+    setBusy(true);
+    const result = await updateTeamMemberIdentityStatus(selected.id, status);
+    setBusy(false);
+    if (result.error) return setError(result.error);
+    router.refresh();
+  }
+
+  function statusButtonClass(status: "ACTIVE" | "HOLD" | "LOCKED" | "SUSPENDED") {
+    if (selected?.accountStatus !== status) return "";
+    if (status === "ACTIVE") return "border-green-500 bg-green-500 text-white hover:bg-green-600";
+    if (status === "HOLD") return "border-amber-500 bg-amber-500 text-white hover:bg-amber-600";
+    if (status === "LOCKED") return "border-slate-500 bg-slate-500 text-white hover:bg-slate-600";
+    return "border-red-500 bg-red-500 text-white hover:bg-red-600";
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">
-            HR / Accounts{" "}
+            {title}{" "}
             <span className="text-sm font-normal text-muted-foreground">
-              → Workers
+              / {subtitle}
             </span>
           </h1>
         </div>
-        <Link
-          href="/accounts"
-          className="text-sm text-primary hover:underline"
-        >
-          ← Overview
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {createLabel && createRoles && createRoles.length > 0 && (
+            <Button type="button" onClick={() => setCreateOpen(true)}>
+              {createLabel}
+            </Button>
+          )}
+          <Link
+            href={overviewHref}
+            className="text-sm text-primary hover:underline"
+          >
+            Back to overview
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
-        {/* Worker list */}
         <div className="space-y-2">
           {workers.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                No team members yet
+                {emptyLabel}
               </CardContent>
             </Card>
           )}
-          {workers.map((w) => (
+          {workers.map((worker) => (
             <button
-              key={w.id}
-              onClick={() => setSelected(w)}
+              key={worker.id}
+              type="button"
+              onClick={() => setSelected(worker)}
               className="w-full text-left"
             >
               <Card
                 className={
-                  selected?.id === w.id ? "border-2 border-primary" : ""
+                  selected?.id === worker.id ? "border-2 border-primary" : ""
                 }
               >
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                      {w.name
+                <CardContent className="flex items-center justify-between gap-3 p-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                      {worker.name
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((part) => part[0])
                         .slice(0, 2)
                         .join("")}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{w.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {w.activeJobs} active job{w.activeJobs !== 1 && "s"}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {worker.name}
                       </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {worker.email ??
+                          `${worker.activeJobs} active job${
+                            worker.activeJobs !== 1 ? "s" : ""
+                          }`}
+                      </p>
+                      {(worker.phone || worker.profession || worker.role) && (
+                        <p className="truncate text-[10px] text-muted-foreground">
+                          {[worker.phone, worker.profession, worker.role]
+                            .filter(Boolean)
+                            .join(" / ")}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      ৳{w.balance.toLocaleString()}
-                    </p>
+                  <div className="shrink-0 text-right">
+                    <p className="font-semibold">{bdt(worker.balance)}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      reserve ৳{w.reserve.toLocaleString()}
+                      reserve {bdt(worker.reserve)}
                     </p>
-                    {w.pendingWithdraw > 0 && (
+                    {worker.pendingWithdraw > 0 && (
                       <p className="text-[10px] text-amber-600">
-                        withdraw pending ৳
-                        {w.pendingWithdraw.toLocaleString()}
+                        withdraw pending {bdt(worker.pendingWithdraw)}
                       </p>
                     )}
                   </div>
@@ -152,15 +289,20 @@ export function WorkerBalances({ workers }: { workers: WorkerRow[] }) {
           ))}
         </div>
 
-        {/* History */}
         {selected ? (
           <Card className="h-fit">
             <CardContent className="p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold">
-                  {selected.name} — balance history
+                  {selected.name} - balance history
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="text-[10px]">
+                    {selected.accountStatus.toLowerCase()}
+                  </Badge>
+                  <Badge variant="secondary" className="text-[10px]">
+                    ID {selected.identityStatus.toLowerCase()}
+                  </Badge>
                   <Button
                     size="sm"
                     variant="outline"
@@ -170,7 +312,7 @@ export function WorkerBalances({ workers }: { workers: WorkerRow[] }) {
                       setDialog("adjust");
                     }}
                   >
-                    ± Adjust
+                    Adjust
                   </Button>
                   <Button
                     size="sm"
@@ -187,21 +329,74 @@ export function WorkerBalances({ workers }: { workers: WorkerRow[] }) {
                 </div>
               </div>
 
+              <div className="mb-3 flex flex-wrap gap-2 rounded-md border bg-muted/30 p-2">
+                <Button size="sm" variant="outline" className={statusButtonClass("ACTIVE")} onClick={() => changeStatus("ACTIVE")} disabled={busy}>
+                  {selected.accountStatus === "ACTIVE" ? "Active now" : "Activate"}
+                </Button>
+                <Button size="sm" variant="outline" className={statusButtonClass("HOLD")} onClick={() => changeStatus("HOLD")} disabled={busy}>
+                  {selected.accountStatus === "HOLD" ? "On hold" : "Hold"}
+                </Button>
+                <Button size="sm" variant="outline" className={statusButtonClass("LOCKED")} onClick={() => changeStatus("LOCKED")} disabled={busy}>
+                  {selected.accountStatus === "LOCKED" ? "Locked" : "Lock"}
+                </Button>
+                <Button size="sm" variant="outline" className={statusButtonClass("SUSPENDED") || "text-red-500 hover:text-red-600"} onClick={() => changeStatus("SUSPENDED")} disabled={busy}>
+                  {selected.accountStatus === "SUSPENDED" ? "Suspended" : "Suspend"}
+                </Button>
+                <Button size="sm" variant="outline" onClick={resetPasswordForSelected} disabled={busy}>
+                  Reset password
+                </Button>
+              </div>
+              {resetPassword && (
+                <div className="mb-3 rounded-md border bg-muted/50 p-3 text-sm">
+                  <p className="text-xs text-muted-foreground">
+                    Temporary password for {selected.name}
+                  </p>
+                  <p className="break-all font-mono font-semibold">{resetPassword}</p>
+                </div>
+              )}
+              <div className="mb-3 rounded-md border bg-muted/30 p-3 text-xs">
+                <p className="font-medium">Identity documents</p>
+                <p className="text-muted-foreground">
+                  NID: {selected.nidNumber || "Not added"}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selected.photoUrl && (
+                    <Button size="sm" variant="outline" onClick={() => window.open(selected.photoUrl ?? "", "_blank")}>
+                      Open photo
+                    </Button>
+                  )}
+                  {selected.nidUrl && (
+                    <Button size="sm" variant="outline" onClick={() => window.open(selected.nidUrl ?? "", "_blank")}>
+                      Open NID
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => changeIdentityStatus("VERIFIED")} disabled={busy}>
+                    Verify ID
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => changeIdentityStatus("PENDING")} disabled={busy}>
+                    Mark pending
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-red-500 hover:text-red-600" onClick={() => changeIdentityStatus("REJECTED")} disabled={busy}>
+                    Reject ID
+                  </Button>
+                </div>
+              </div>
+
               <div className="divide-y">
                 {selected.txns.length === 0 && (
                   <p className="py-8 text-center text-sm text-muted-foreground">
                     No transactions yet
                   </p>
                 )}
-                {selected.txns.map((t) => (
+                {selected.txns.map((txn) => (
                   <div
-                    key={t.id}
+                    key={txn.id}
                     className="flex items-start justify-between py-2.5"
                   >
                     <div className="min-w-0 pr-3">
                       <p className="text-sm">
-                        {t.jobTitle ?? kindLabel[t.kind] ?? t.kind}
-                        {t.bucket === "RESERVE" && (
+                        {txn.jobTitle ?? kindLabel[txn.kind] ?? txn.kind}
+                        {txn.bucket === "RESERVE" && (
                           <Badge
                             variant="secondary"
                             className="ml-2 bg-amber-100 text-[10px] text-amber-700"
@@ -211,89 +406,80 @@ export function WorkerBalances({ workers }: { workers: WorkerRow[] }) {
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(t.createdAt).toLocaleDateString("en-GB", {
+                        {new Date(txn.createdAt).toLocaleDateString("en-GB", {
                           day: "numeric",
                           month: "short",
                         })}
-                        {" · "}
-                        {kindLabel[t.kind] ?? t.kind}
-                        {t.note && ` · ${t.note}`}
+                        {" / "}
+                        {kindLabel[txn.kind] ?? txn.kind}
+                        {txn.note && ` / ${txn.note}`}
                       </p>
                     </div>
                     <span
                       className={`shrink-0 text-sm font-medium ${
-                        t.amount >= 0 ? "text-green-600" : "text-red-500"
+                        txn.amount >= 0 ? "text-green-600" : "text-red-500"
                       }`}
                     >
-                      {t.amount >= 0 ? "+" : "−"}৳
-                      {Math.abs(t.amount).toLocaleString()}
+                      {txn.amount >= 0 ? "+" : "-"}
+                      {bdt(Math.abs(txn.amount))}
                     </span>
                   </div>
                 ))}
               </div>
 
               <p className="mt-3 rounded-md bg-muted/60 p-2.5 text-[11px] text-muted-foreground">
-                Payout rule: fixed jobs credit on completion · monthly &
-                hourly credit at month end · every credit holds 10% in the
-                security reserve · penalties deduct balance first, then
-                reserve.
+                Payout rule: fixed jobs credit on completion. Monthly and
+                hourly jobs credit at month end. Each credit keeps the reserve
+                policy, and penalties deduct balance first.
               </p>
             </CardContent>
           </Card>
         ) : (
           <Card>
             <CardContent className="py-16 text-center text-sm text-muted-foreground">
-              Select a worker
+              Select an employee
             </CardContent>
           </Card>
         )}
       </div>
 
-      {/* Adjust / Penalty dialog */}
-      <Dialog
-        open={dialog !== null}
-        onOpenChange={(o) => !o && setDialog(null)}
-      >
+      <Dialog open={dialog !== null} onOpenChange={(open) => !open && setDialog(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {dialog === "adjust" ? "Adjust balance" : "Apply penalty"} —{" "}
+              {dialog === "adjust" ? "Adjust balance" : "Apply penalty"} -{" "}
               {selected?.name}
             </DialogTitle>
             <DialogDescription>
               {dialog === "adjust"
-                ? "Positive = bonus/credit · negative = deduction. Balance bucket only."
-                : "Deducted from balance first, then the security reserve (your policy)."}
+                ? "Positive means bonus or credit. Negative means deduction."
+                : "Deducted from balance first, then the security reserve."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="wAmount">Amount (৳)</Label>
+              <Label htmlFor="worker-amount">Amount (BDT)</Label>
               <Input
-                id="wAmount"
+                id="worker-amount"
                 type="number"
                 step="0.01"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(event) => setAmount(event.target.value)}
                 placeholder={dialog === "adjust" ? "e.g. 5000 or -2000" : "e.g. 3000"}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="wNote">Note (required for audit)</Label>
+              <Label htmlFor="worker-note">Note (required for audit)</Label>
               <Input
-                id="wNote"
+                id="worker-note"
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder={
-                  dialog === "adjust" ? "e.g. Eid bonus" : "e.g. Job cancel fine — 30%"
-                }
+                onChange={(event) => setNote(event.target.value)}
+                placeholder={dialog === "adjust" ? "e.g. Eid bonus" : "e.g. Job cancel fine"}
                 required
               />
             </div>
-            {error && (
-              <p className="text-center text-sm text-red-500">{error}</p>
-            )}
+            {error && <p className="text-center text-sm text-red-500">{error}</p>}
             <Button
               type="submit"
               className="w-full"
@@ -307,6 +493,98 @@ export function WorkerBalances({ workers }: { workers: WorkerRow[] }) {
                   : "Apply penalty"}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={createOpen} onOpenChange={resetCreateDialog}>
+        <DialogContent>
+          {tempPassword ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{createLabel?.replace("Add", "New")} created</DialogTitle>
+                <DialogDescription>
+                  Share these credentials securely. The temporary password is
+                  shown only once.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 rounded-md border bg-muted/50 p-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="break-all font-mono text-sm">{createEmail}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Temporary password
+                  </p>
+                  <p className="break-all font-mono text-sm font-semibold">
+                    {tempPassword}
+                  </p>
+                </div>
+              </div>
+              <Button type="button" onClick={() => resetCreateDialog(false)}>
+                Done
+              </Button>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>{createLabel}</DialogTitle>
+                <DialogDescription>
+                  A temporary password will be generated and displayed once.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleCreate} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="create-worker-name">Name</Label>
+                  <Input
+                    id="create-worker-name"
+                    value={createName}
+                    onChange={(event) => setCreateName(event.target.value)}
+                    disabled={busy}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="create-worker-email">Email</Label>
+                  <Input
+                    id="create-worker-email"
+                    type="email"
+                    value={createEmail}
+                    onChange={(event) => setCreateEmail(event.target.value)}
+                    disabled={busy}
+                    required
+                  />
+                </div>
+                {createRoles && createRoles.length > 1 && (
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <Select
+                      value={createRole}
+                      onValueChange={(value) => setCreateRole(value as CreateRole)}
+                      disabled={busy}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {createRoles.map((option) => (
+                          <SelectItem key={option.role} value={option.role}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {error && (
+                  <p className="text-center text-sm text-red-500">{error}</p>
+                )}
+                <Button type="submit" className="w-full" disabled={busy}>
+                  {busy ? "Creating..." : "Create"}
+                </Button>
+              </form>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

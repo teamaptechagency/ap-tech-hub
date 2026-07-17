@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { createMeeting, processMeeting } from "@/actions/meeting.actions";
+import {
+  completeMeeting,
+  createMeeting,
+  processMeeting,
+} from "@/actions/meeting.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Video, AlertTriangle } from "lucide-react";
+import { CheckCircle2, Copy, Plus, Video, AlertTriangle } from "lucide-react";
 
 export type MeetingRow = {
   id: string;
@@ -70,6 +74,27 @@ export function MeetingsBoard({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  function meetingUrl(roomCode: string) {
+    return `https://meet.jit.si/APTechHub-${roomCode}`;
+  }
+
+  async function copyGuestLink(roomCode: string) {
+    await navigator.clipboard?.writeText(meetingUrl(roomCode));
+  }
+
+  async function updateMeetingStatus(
+    meetingId: string,
+    status: "SCHEDULED" | "CANCELLED" | "COMPLETED"
+  ) {
+    setBusy(true);
+    if (status === "COMPLETED") {
+      await completeMeeting(meetingId);
+    } else {
+      await processMeeting(meetingId, status);
+    }
+    setBusy(false);
+  }
+
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -94,20 +119,34 @@ export function MeetingsBoard({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="font-semibold">{inRoom.title}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setInRoom(null)}
-          >
-            Leave meeting
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => copyGuestLink(inRoom.roomCode)}>
+              <Copy className="mr-2 h-4 w-4" />
+              Guest link
+            </Button>
+            {isAdmin && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  updateMeetingStatus(inRoom.id, "COMPLETED");
+                  setInRoom(null);
+                }}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Stop meeting
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={() => setInRoom(null)}>
+              Leave meeting
+            </Button>
+          </div>
         </div>
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           {WARNING}
         </div>
         <iframe
-          src={`https://meet.jit.si/APTechHub-${inRoom.roomCode}`}
+          src={meetingUrl(inRoom.roomCode)}
           allow="camera; microphone; fullscreen; display-capture"
           className="h-[70vh] w-full rounded-lg border"
         />
@@ -153,7 +192,9 @@ export function MeetingsBoard({
                       variant="secondary"
                       className={`text-xs ${statusBadge[m.status]}`}
                     >
-                      {m.status.replace("_", " ").toLowerCase()}
+                      {m.status === "CANCELLED"
+                        ? "suspended"
+                        : m.status.replace("_", " ").toLowerCase()}
                     </Badge>
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -173,24 +214,52 @@ export function MeetingsBoard({
                     <>
                       <Button
                         size="sm"
-                        onClick={() => processMeeting(m.id, "SCHEDULED")}
+                        onClick={() => updateMeetingStatus(m.id, "SCHEDULED")}
+                        disabled={busy}
                       >
                         Approve
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => processMeeting(m.id, "CANCELLED")}
+                        onClick={() => updateMeetingStatus(m.id, "CANCELLED")}
+                        disabled={busy}
                       >
                         Decline
                       </Button>
                     </>
                   )}
                   {m.status === "SCHEDULED" && (
-                    <Button size="sm" onClick={() => setJoining(m)}>
-                      <Video className="mr-2 h-4 w-4" />
-                      Join
-                    </Button>
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => copyGuestLink(m.roomCode)}>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Guest link
+                      </Button>
+                      {isAdmin && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateMeetingStatus(m.id, "CANCELLED")}
+                            disabled={busy}
+                          >
+                            Suspend
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateMeetingStatus(m.id, "COMPLETED")}
+                            disabled={busy}
+                          >
+                            Complete
+                          </Button>
+                        </>
+                      )}
+                      <Button size="sm" onClick={() => setJoining(m)}>
+                        <Video className="mr-2 h-4 w-4" />
+                        Join
+                      </Button>
+                    </>
                   )}
                 </div>
               </CardContent>

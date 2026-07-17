@@ -76,6 +76,8 @@ export default async function JobsPage() {
       isExternal: !job.clientId,
       clientValue: job.clientValue ? Number(job.clientValue) : null,
       clientCurrency: job.clientCurrency,
+      workerValue: job.workerValue ? Number(job.workerValue) : null,
+      workerCurrency: job.workerCurrency,
       members: job.members.map((m) => ({
         name: m.user.name,
         workerValue: Number(m.workerValue),

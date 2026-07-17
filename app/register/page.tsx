@@ -126,16 +126,34 @@ export default function RegisterPage() {
     setDone(true);
   }
 
+  async function handleClientRegister(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    setBusy(true);
+    const result = await registerAccount({
+      kind: "CLIENT",
+      name,
+      email,
+      password,
+    });
+    setBusy(false);
+    if (result.error) return setError(result.error);
+    setDone(true);
+  }
+
   if (done) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
         <Card className="w-full max-w-md">
           <CardContent className="space-y-3 py-10 text-center">
             <p className="text-2xl">✅</p>
-            <p className="font-semibold">Registration received!</p>
+            <p className="font-semibold">
+              {kind === "CLIENT" ? "Account created!" : "Registration received!"}
+            </p>
             <p className="text-sm text-muted-foreground">
-              The AP Tech team will review and approve your account — you'll
-              get an email once it's ready.
+              {kind === "CLIENT"
+                ? "Your client account is ready. Sign in now and complete the rest from profile."
+                : "The AP Tech team will review and approve your account. You'll get an email once it's ready."}
             </p>
             <Link href="/login" className="text-sm text-primary underline">
               Back to sign in
@@ -154,7 +172,8 @@ export default function RegisterPage() {
             Create an account
           </CardTitle>
           <p className="text-center text-sm text-muted-foreground">
-            AP Tech <span className="text-primary">Hub</span> · step {step} of 3
+            AP Tech <span className="text-primary">Hub</span>
+            {kind === "WORKER" ? ` - step ${step} of 3` : ""}
           </p>
         </CardHeader>
         <CardContent>
@@ -192,8 +211,52 @@ export default function RegisterPage() {
             </p>
           ) : null}
 
+          {kind === "CLIENT" ? (
+            <form onSubmit={handleClientRegister} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="clientName">Name</Label>
+                <Input
+                  id="clientName"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="clientEmail">Email</Label>
+                <Input
+                  id="clientEmail"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="clientPass">Password (min 8)</Label>
+                <Input
+                  id="clientPass"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              {error ? (
+                <p className="text-center text-sm text-red-500">{error}</p>
+              ) : null}
+              <Button type="submit" className="w-full" disabled={busy}>
+                {busy ? "Creating..." : "Create client account"}
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Email verification and company documents can be completed later
+                from profile.
+              </p>
+            </form>
+          ) : null}
+
           {/* STEP 1 — email */}
-          {step === 1 ? (
+          {kind === "WORKER" && step === 1 ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="rgEmail">Email</Label>
@@ -216,7 +279,7 @@ export default function RegisterPage() {
           ) : null}
 
           {/* STEP 2 — OTP */}
-          {step === 2 ? (
+          {kind === "WORKER" && step === 2 ? (
             <form onSubmit={handleVerify} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="rgCode">6-digit code</Label>
@@ -253,23 +316,11 @@ export default function RegisterPage() {
           ) : null}
 
           {/* STEP 3 — details */}
-          {step === 3 ? (
+          {kind === "WORKER" && step === 3 ? (
             <form onSubmit={handleRegister} className="space-y-4">
               <p className="rounded-md bg-green-50 px-3 py-1.5 text-xs text-green-700">
                 ✓ {email} verified
               </p>
-
-              {kind === "CLIENT" ? (
-                <div className="space-y-2">
-                  <Label htmlFor="rgCompany">Company name</Label>
-                  <Input
-                    id="rgCompany"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    required
-                  />
-                </div>
-              ) : null}
 
               <div className="space-y-2">
                 <Label htmlFor="rgName">Your name</Label>
@@ -308,24 +359,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {kind === "CLIENT" ? (
-                <div className="space-y-2">
-                  <Label htmlFor="rgCountry">
-                    Country{" "}
-                    <span className="text-[10px] text-muted-foreground">
-                      (optional)
-                    </span>
-                  </Label>
-                  <Input
-                    id="rgCountry"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                  />
-                </div>
-              ) : null}
-
-              {kind === "WORKER" ? (
-                <>
+              <>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label>Gender</Label>
@@ -431,8 +465,7 @@ export default function RegisterPage() {
                       </label>
                     </div>
                   </div>
-                </>
-              ) : null}
+              </>
 
               {error ? (
                 <p className="text-center text-sm text-red-500">{error}</p>

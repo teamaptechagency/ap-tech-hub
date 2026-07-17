@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChangePasswordForm } from "@/components/change-password-form";
+import { ProfileForm } from "@/components/employee/profile-form";
 
 export default async function ClientProfilePage() {
   const session = await auth();
@@ -19,6 +19,18 @@ export default async function ClientProfilePage() {
     },
   });
   if (!client) notFound();
+  const me = client.users.find((user) => user.id === session.user.id);
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: {
+      profileChangeRequests: {
+        where: { status: "PENDING" },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, type: true, newValue: true, createdAt: true },
+      },
+    },
+  });
+  if (!currentUser || !me) notFound();
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -97,7 +109,32 @@ export default async function ClientProfilePage() {
         </CardContent>
       </Card>
 
-      <ChangePasswordForm />
+      <ProfileForm
+        name={currentUser.name}
+        email={currentUser.email}
+        phone={currentUser.phone ?? ""}
+        address={currentUser.address ?? ""}
+        dateOfBirth={currentUser.dateOfBirth?.toISOString().slice(0, 10) ?? ""}
+        nidNumber={currentUser.nidNumber ?? ""}
+        nidUrl={currentUser.nidUrl ?? ""}
+        photoUrl={currentUser.photoUrl ?? ""}
+        identityStatus={currentUser.identityStatus}
+        emergencyContact={currentUser.emergencyContact ?? ""}
+        bio={currentUser.bio ?? ""}
+        gender={currentUser.gender ?? ""}
+        profession={currentUser.profession ?? ""}
+        payoutMethod={currentUser.payoutMethod ?? ""}
+        payoutDetails={currentUser.payoutDetails ?? ""}
+        timezone={currentUser.timezone}
+        twoFactorEnabled={currentUser.twoFactorEnabled}
+        withdrawBlockedUntil={currentUser.withdrawBlockedUntil?.toISOString() ?? null}
+        pendingChanges={currentUser.profileChangeRequests.map((change) => ({
+          id: change.id,
+          type: change.type,
+          newValue: change.newValue,
+          createdAt: change.createdAt.toISOString(),
+        }))}
+      />
     </div>
   );
 }

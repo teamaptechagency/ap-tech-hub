@@ -22,6 +22,8 @@ type OpenJob = {
   title: string;
   description: string | null;
   type: string;
+  workerValue: number | null;
+  workerCurrency: string;
   skills: { name: string; matched: boolean }[];
   canApply: boolean;
   missingSkills: string[];
@@ -33,6 +35,13 @@ const typeBadge: Record<string, string> = {
   FIXED: "bg-violet-100 text-violet-700",
   HOURLY: "bg-teal-100 text-teal-700",
 };
+
+function payoutLabel(job: OpenJob) {
+  if (job.workerValue === null) return "Payout not set";
+  const suffix =
+    job.type === "MONTHLY" ? "/mo" : job.type === "HOURLY" ? "/hr" : "";
+  return `${job.workerCurrency} ${job.workerValue.toLocaleString()}${suffix}`;
+}
 
 export function FindWorkBoard({ jobs }: { jobs: OpenJob[] }) {
   const [applying, setApplying] = useState<OpenJob | null>(null);
@@ -123,6 +132,15 @@ export function FindWorkBoard({ jobs }: { jobs: OpenJob[] }) {
                     {job.description}
                   </p>
                 )}
+
+                <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">
+                    You will receive
+                  </p>
+                  <p className="text-lg font-semibold text-primary">
+                    {payoutLabel(job)}
+                  </p>
+                </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap gap-1.5">

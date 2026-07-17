@@ -130,6 +130,31 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  .dark .bg-blue-50 {
+    background-color: color-mix(in oklch, var(--color-blue-950) 42%, transparent) !important;
+  }
+  .dark .bg-amber-50 {
+    background-color: color-mix(in oklch, var(--color-amber-950) 42%, transparent) !important;
+  }
+  .dark .bg-green-50,
+  .dark .bg-emerald-50 {
+    background-color: color-mix(in oklch, var(--color-emerald-950) 42%, transparent) !important;
+  }
+  .dark .bg-red-50 {
+    background-color: color-mix(in oklch, var(--color-red-950) 42%, transparent) !important;
+  }
+  .dark .bg-orange-50 {
+    background-color: color-mix(in oklch, var(--color-orange-950) 42%, transparent) !important;
+  }
+  .dark .bg-violet-50 {
+    background-color: color-mix(in oklch, var(--color-violet-950) 42%, transparent) !important;
+  }
+  .dark .bg-slate-50 {
+    background-color: color-mix(in oklch, var(--card) 82%, white 6%) !important;
+  }
+}
 @media print {
   aside,
   nav,

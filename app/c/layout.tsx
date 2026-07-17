@@ -4,8 +4,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getTermsForRole } from "@/lib/terms";
+import { getFloatingConversations } from "@/actions/message.actions";
 
 import { ClientSidebar } from "@/components/layout/client-sidebar";
+import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
 import {
   BottomNav,
@@ -78,6 +80,7 @@ export default async function ClientLayout({
 
   const companyName =
     client.companyName?.trim() || "Client Account";
+  const floatingMessages = await getFloatingConversations();
 
   const bottomItems: BottomNavItem[] = [
     {
@@ -101,9 +104,9 @@ export default async function ClientLayout({
       icon: "invoices",
     },
     {
-      label: "Meetings",
-      href: "/c/meetings",
-      icon: "meetings",
+      label: "Special",
+      href: "/c/special-orders",
+      icon: "special",
     },
   ];
 
@@ -131,6 +134,11 @@ export default async function ClientLayout({
           {children}
         </div>
       </main>
+
+      <GlobalFloatingMessenger
+        conversations={floatingMessages.conversations}
+        currentUserId={floatingMessages.currentUserId}
+      />
 
       {/* Mobile bottom navigation */}
       <BottomNav items={bottomItems} />

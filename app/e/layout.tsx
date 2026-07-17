@@ -3,9 +3,12 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PARTNER_ROLES } from "@/lib/roles";
 import { getTermsForRole } from "@/lib/terms";
+import { getFloatingConversations } from "@/actions/message.actions";
 
 import { EmployeeSidebar } from "@/components/layout/employee-sidebar";
+import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
 import {
   BottomNav,
@@ -24,6 +27,10 @@ export default async function EmployeeLayout({
 
   if (!session?.user) {
     redirect("/login");
+  }
+
+  if (PARTNER_ROLES.includes(session.user.role)) {
+    redirect("/p/dashboard");
   }
 
   const currentUser = await prisma.user.findUnique({
@@ -58,6 +65,7 @@ export default async function EmployeeLayout({
 
   const userName =
     session.user.name?.trim() || "Team Member";
+  const floatingMessages = await getFloatingConversations();
 
   const bottomItems: BottomNavItem[] = [
     {
@@ -111,6 +119,11 @@ export default async function EmployeeLayout({
           {children}
         </div>
       </main>
+
+      <GlobalFloatingMessenger
+        conversations={floatingMessages.conversations}
+        currentUserId={floatingMessages.currentUserId}
+      />
 
       {/* Mobile bottom navigation */}
       <BottomNav items={bottomItems} />

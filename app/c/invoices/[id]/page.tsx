@@ -560,6 +560,7 @@ export default async function ClientInvoiceViewPage({
                 id: method.id,
                 key: method.key ?? "",
                 label: method.label,
+                details: method.details,
                 active: method.active,
                 instructions: method.instructions,
                 warning: method.warning,

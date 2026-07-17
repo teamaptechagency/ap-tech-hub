@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChangePasswordForm } from "@/components/change-password-form";
+import { ProfileForm } from "@/components/employee/profile-form";
 
 export default async function AdminProfilePage() {
   const session = await auth();
@@ -11,12 +11,12 @@ export default async function AdminProfilePage() {
 
   const me = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: {
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      termsAcceptedAt: true,
+    include: {
+      profileChangeRequests: {
+        where: { status: "PENDING" },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, type: true, newValue: true, createdAt: true },
+      },
     },
   });
   if (!me) notFound();
@@ -56,7 +56,32 @@ export default async function AdminProfilePage() {
         </CardContent>
       </Card>
 
-      <ChangePasswordForm />
+      <ProfileForm
+        name={me.name}
+        email={me.email}
+        phone={me.phone ?? ""}
+        address={me.address ?? ""}
+        dateOfBirth={me.dateOfBirth?.toISOString().slice(0, 10) ?? ""}
+        nidNumber={me.nidNumber ?? ""}
+        nidUrl={me.nidUrl ?? ""}
+        photoUrl={me.photoUrl ?? ""}
+        identityStatus={me.identityStatus}
+        emergencyContact={me.emergencyContact ?? ""}
+        bio={me.bio ?? ""}
+        gender={me.gender ?? ""}
+        profession={me.profession ?? ""}
+        payoutMethod={me.payoutMethod ?? ""}
+        payoutDetails={me.payoutDetails ?? ""}
+        timezone={me.timezone}
+        twoFactorEnabled={me.twoFactorEnabled}
+        withdrawBlockedUntil={me.withdrawBlockedUntil?.toISOString() ?? null}
+        pendingChanges={me.profileChangeRequests.map((change) => ({
+          id: change.id,
+          type: change.type,
+          newValue: change.newValue,
+          createdAt: change.createdAt.toISOString(),
+        }))}
+      />
     </div>
   );
 }

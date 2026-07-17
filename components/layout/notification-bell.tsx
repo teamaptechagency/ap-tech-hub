@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   getMyNotifications,
   markAllRead,
@@ -24,9 +23,9 @@ type Note = {
 };
 
 export function NotificationBell() {
-  const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [unread, setUnread] = useState(0);
+  const [open, setOpen] = useState(false);
 
   async function load() {
     const r = await getMyNotifications();
@@ -36,13 +35,19 @@ export function NotificationBell() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 60_000); // refresh every minute
-    return () => clearInterval(t);
+    const t = setInterval(load, 10_000);
+    window.addEventListener("focus", load);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("focus", load);
+    };
   }, []);
 
   return (
     <DropdownMenu
+      open={open}
       onOpenChange={(open) => {
+        setOpen(open);
         if (open && unread > 0) {
           markAllRead().then(load);
         }
@@ -71,10 +76,17 @@ export function NotificationBell() {
           {notes.map((n) => (
             <button
               key={n.id}
-              onClick={() => n.href && router.push(n.href)}
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (!n.href) return;
+                setOpen(false);
+                window.location.href = n.href;
+              }}
               className={`block w-full border-t px-3 py-2.5 text-left hover:bg-muted ${
                 !n.read ? "bg-primary/5" : ""
-              }`}
+              } ${n.href ? "cursor-pointer" : "cursor-default opacity-70"}`}
             >
               <p className="text-sm font-medium">{n.title}</p>
               {n.body && (

@@ -58,6 +58,10 @@ export async function sendOtp(email: string) {
   } catch (e) {
     console.error("OTP email failed:", e);
     console.log(`[FALLBACK] OTP for ${email}: ${code}`);
+    return {
+      error:
+        "OTP email could not be sent. Check RESEND_API_KEY / EMAIL_FROM, or use the fallback code from the server console in development.",
+    };
   }
 
   return { success: true };

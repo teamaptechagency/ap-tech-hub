@@ -1,50 +1,103 @@
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   PendingApprovals,
   type PendingUser,
 } from "@/components/pending-approvals";
 
+function money(amount: number) {
+  return `BDT ${Math.round(amount).toLocaleString()}`;
+}
+
+function safeNumber(value: unknown) {
+  return Number(value ?? 0);
+}
+
+function StatCard({
+  label,
+  value,
+  href,
+  hint,
+}: {
+  label: string;
+  value: string | number;
+  href: string;
+  hint?: string;
+}) {
+  return (
+    <Link href={href} className="block">
+      <Card className="h-full min-h-28 transition-colors hover:border-primary/40">
+        <CardContent className="flex h-full flex-col justify-between p-4">
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <div>
+            <p className="text-2xl font-bold leading-tight">{value}</p>
+            <p className="min-h-4 text-[10px] text-muted-foreground">
+              {hint ?? ""}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 export default async function AdminDashboard() {
   const session = await auth();
 
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
-
   const [
-    activeJobs,
-    openJobs,
+    totalEarningsAgg,
+    totalExpensesAgg,
+    employeeBalanceAgg,
+    partnerBalanceAgg,
+    activeProjects,
+    completedProjects,
+    specialOrdersCompleted,
+    specialOrderProfitAgg,
     dueInvoices,
     submittedInvoices,
-    earnAgg,
     pendingWithdrawals,
     pendingApplications,
     jobRequests,
     recentJobs,
     pendingUsers,
+    earningsHistory,
+    expensesHistory,
+    projectRows,
+    specialOrderRows,
+    recentEmployeePayments,
+    recentPartnerPayments,
   ] = await Promise.all([
-    prisma.job.count({
-      where: { status: { in: ["PENDING", "IN_PROGRESS"] } },
+    prisma.earning.aggregate({ _sum: { amountBdt: true } }),
+    prisma.expense.aggregate({ _sum: { amountBdt: true } }),
+    prisma.user.aggregate({
+      where: { role: "TEAM_MEMBER" },
+      _sum: { balance: true },
     }),
-    prisma.job.count({ where: { status: "OPEN" } }),
+    prisma.user.aggregate({
+      where: { role: "BUSINESS_PARTNER" },
+      _sum: { balance: true },
+    }),
+    prisma.job.count({ where: { status: { in: ["PENDING", "IN_PROGRESS"] } } }),
+    prisma.job.count({ where: { status: "COMPLETED" } }),
+    prisma.specialOrder.count({ where: { status: "COMPLETED" } }),
+    prisma.specialOrder.aggregate({
+      where: { status: "COMPLETED" },
+      _sum: { profitBdt: true },
+    }),
     prisma.invoice.count({
       where: { status: { in: ["DUE", "PARTIALLY_PAID", "OVERDUE"] } },
     }),
     prisma.invoice.count({ where: { status: "PAYMENT_SUBMITTED" } }),
-    prisma.earning.aggregate({
-      where: { createdAt: { gte: monthStart } },
-      _sum: { amountBdt: true },
-    }),
     prisma.withdrawRequest.count({ where: { status: "PENDING" } }),
     prisma.application.count({ where: { status: "PENDING" } }),
     prisma.jobRequest.findMany({
       where: { status: "PENDING" },
       include: { client: { select: { companyName: true } } },
       orderBy: { createdAt: "asc" },
+      take: 5,
     }),
     prisma.job.findMany({
       orderBy: { updatedAt: "desc" },
@@ -66,9 +119,51 @@ export default async function AdminDashboard() {
         client: { select: { companyName: true } },
       },
     }),
+    prisma.earning.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
+    prisma.expense.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
+    prisma.job.findMany({
+      orderBy: { updatedAt: "desc" },
+      take: 6,
+      include: {
+        client: { select: { companyName: true } },
+        invoices: { select: { amountPaid: true, amount: true, status: true } },
+        members: { select: { workerValue: true } },
+      },
+    }),
+    prisma.specialOrder.findMany({
+      orderBy: { updatedAt: "desc" },
+      take: 6,
+      include: {
+        client: { select: { companyName: true } },
+        partner: { select: { name: true } },
+      },
+    }),
+    prisma.workerTxn.findMany({
+      where: { kind: "WITHDRAWAL", user: { role: "TEAM_MEMBER" } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: { user: { select: { name: true } } },
+    }),
+    prisma.workerTxn.findMany({
+      where: { kind: "WITHDRAWAL", user: { role: "BUSINESS_PARTNER" } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: { user: { select: { name: true } } },
+    }),
   ]);
 
-  const earnings = Number(earnAgg._sum.amountBdt ?? 0);
+  const totalEarnings = safeNumber(totalEarningsAgg._sum.amountBdt);
+  const totalExpenses = safeNumber(totalExpensesAgg._sum.amountBdt);
+  const netEarnings = totalEarnings - totalExpenses;
+  const employeeDue = safeNumber(employeeBalanceAgg._sum.balance);
+  const partnerDue = safeNumber(partnerBalanceAgg._sum.balance);
+  const specialOrderEarnings = safeNumber(specialOrderProfitAgg._sum.profitBdt);
   const needsAction =
     submittedInvoices +
     pendingWithdrawals +
@@ -86,81 +181,66 @@ export default async function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">
-          Welcome, {session?.user.name?.split(" ")[0]} 👋
+          Welcome, {session?.user.name?.split(" ")[0] ?? "Admin"}
         </h1>
         <p className="text-sm text-muted-foreground">
           {needsAction > 0
             ? `${needsAction} item${needsAction !== 1 ? "s" : ""} need your attention`
-            : "All caught up 🎉"}
+            : "All caught up"}
         </p>
       </div>
 
-      {/* Stat cards — clickable */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/jobs">
-          <Card className="transition-colors hover:border-primary/40">
-            <CardContent className="pt-6">
-              <p className="text-xs text-muted-foreground">Active jobs</p>
-              <p className="text-2xl font-bold">{activeJobs}</p>
-              {openJobs > 0 && (
-                <p className="text-[10px] text-amber-600">
-                  + {openJobs} open in marketplace
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/invoices">
-          <Card
-            className={
-              submittedInvoices > 0
-                ? "border-blue-300 bg-blue-50"
-                : "transition-colors hover:border-primary/40"
-            }
-          >
-            <CardContent className="pt-6">
-              <p className="text-xs text-muted-foreground">Invoices due</p>
-              <p className="text-2xl font-bold">{dueInvoices}</p>
-              {submittedInvoices > 0 && (
-                <p className="text-[10px] text-blue-600">
-                  {submittedInvoices} payment{submittedInvoices !== 1 && "s"}{" "}
-                  to review
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/accounts">
-          <Card className="transition-colors hover:border-primary/40">
-            <CardContent className="pt-6">
-              <p className="text-xs text-muted-foreground">
-                Earnings this month
-              </p>
-              <p className="text-2xl font-bold">
-                ৳{earnings.toLocaleString()}
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/accounts/withdrawals">
-          <Card
-            className={
-              pendingWithdrawals > 0
-                ? "border-amber-300 bg-amber-50"
-                : "transition-colors hover:border-primary/40"
-            }
-          >
-            <CardContent className="pt-6">
-              <p className="text-xs text-muted-foreground">
-                Pending withdrawals
-              </p>
-              <p className="text-2xl font-bold">{pendingWithdrawals}</p>
-            </CardContent>
-          </Card>
-        </Link>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Total earnings"
+          value={money(totalEarnings)}
+          href="/accounts/earnings"
+          hint={`${earningsHistory.length} recent records`}
+        />
+        <StatCard
+          label="Total expenses"
+          value={money(totalExpenses)}
+          href="/accounts/earnings"
+          hint={`${expensesHistory.length} recent records`}
+        />
+        <StatCard
+          label="Net earnings"
+          value={money(netEarnings)}
+          href="/reports"
+          hint="Earnings minus expenses"
+        />
+        <StatCard
+          label="Employee due balance"
+          value={money(employeeDue)}
+          href="/accounts/employees"
+          hint="Current employee payable"
+        />
+        <StatCard
+          label="Partner due balance"
+          value={money(partnerDue)}
+          href="/accounts/partners"
+          hint="Current partner payable"
+        />
+        <StatCard
+          label="Active projects"
+          value={activeProjects}
+          href="/jobs"
+          hint={`${dueInvoices} invoices due`}
+        />
+        <StatCard
+          label="Completed projects"
+          value={completedProjects}
+          href="/jobs"
+          hint={`${submittedInvoices} payments to review`}
+        />
+        <StatCard
+          label="Special order earnings"
+          value={money(specialOrderEarnings)}
+          href="/special-orders"
+          hint={`${specialOrdersCompleted} completed SP orders`}
+        />
       </div>
 
-      {/* Pending registrations (approve/reject) */}
       <PendingApprovals
         users={pendingUsers.map(
           (u): PendingUser => ({
@@ -180,8 +260,89 @@ export default async function AdminDashboard() {
         )}
       />
 
+      <div className="grid gap-4 xl:grid-cols-2">
+        <HistoryCard
+          title="Earnings history"
+          empty="No earnings yet"
+          rows={earningsHistory.map((item) => ({
+            id: item.id,
+            title: item.title,
+            meta: `${item.source.toLowerCase()} · ${item.category ?? "Other"}`,
+            amount: `+${money(safeNumber(item.amountBdt))}`,
+            tone: "green",
+          }))}
+        />
+        <HistoryCard
+          title="Expenses history"
+          empty="No expenses yet"
+          rows={expensesHistory.map((item) => ({
+            id: item.id,
+            title: item.title,
+            meta: `${item.category} · ${item.source.toLowerCase()}`,
+            amount: `-${money(safeNumber(item.amountBdt))}`,
+            tone: "red",
+          }))}
+        />
+        <HistoryCard
+          title="Project-wise earnings"
+          empty="No project earnings yet"
+          rows={projectRows.map((job) => {
+            const income = job.invoices.reduce(
+              (sum, invoice) =>
+                sum + safeNumber(invoice.amountPaid || invoice.amount),
+              0
+            );
+            const employeeCost = job.members.reduce(
+              (sum, member) => sum + safeNumber(member.workerValue),
+              0
+            );
+            return {
+              id: job.id,
+              title: job.title,
+              meta: `${job.client?.companyName ?? job.externalName ?? "No client"} · cost ${money(employeeCost)}`,
+              amount: money(income - employeeCost),
+              href: `/jobs/${job.id}`,
+              tone: income - employeeCost >= 0 ? "green" : "red",
+            };
+          })}
+        />
+        <HistoryCard
+          title="Special order earnings"
+          empty="No special orders yet"
+          rows={specialOrderRows.map((order) => ({
+            id: order.id,
+            title: order.title,
+            meta: `${order.client.companyName} · ${order.partner?.name ?? "No partner"}`,
+            amount: money(safeNumber(order.profitBdt)),
+            href: `/special-orders/${order.id}`,
+            tone: safeNumber(order.profitBdt) >= 0 ? "green" : "red",
+          }))}
+        />
+        <HistoryCard
+          title="Recent employee payments"
+          empty="No employee payments yet"
+          rows={recentEmployeePayments.map((payment) => ({
+            id: payment.id,
+            title: payment.user.name,
+            meta: payment.note ?? "Withdrawal",
+            amount: money(Math.abs(safeNumber(payment.amount))),
+            tone: "red",
+          }))}
+        />
+        <HistoryCard
+          title="Recent partner payments"
+          empty="No partner payments yet"
+          rows={recentPartnerPayments.map((payment) => ({
+            id: payment.id,
+            title: payment.user.name,
+            meta: payment.note ?? "Withdrawal",
+            amount: money(Math.abs(safeNumber(payment.amount))),
+            tone: "red",
+          }))}
+        />
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Job requests from clients */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">
@@ -199,28 +360,23 @@ export default async function AdminDashboard() {
                 No pending requests
               </p>
             )}
-            {jobRequests.map((r) => (
-              <div key={r.id} className="py-2.5">
+            {jobRequests.map((request) => (
+              <div key={request.id} className="py-2.5">
                 <p className="text-sm font-medium">
-                  {r.title}{" "}
+                  {request.title}{" "}
                   <span className="text-xs font-normal text-muted-foreground">
-                    — {r.client.companyName}
+                    - {request.client.companyName}
                   </span>
                 </p>
                 <p className="line-clamp-2 text-xs text-muted-foreground">
-                  {r.description}
-                  {r.budgetHint && ` · budget: ${r.budgetHint}`}
-                </p>
-                <p className="mt-1 text-[10px] text-muted-foreground">
-                  Create the job in Jobs → New job, then message the client
-                  with your quote
+                  {request.description}
+                  {request.budgetHint && ` · budget: ${request.budgetHint}`}
                 </p>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        {/* Recent jobs */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Recent jobs</CardTitle>
@@ -232,21 +388,21 @@ export default async function AdminDashboard() {
                 href={`/jobs/${job.id}`}
                 className="flex items-center justify-between py-2.5 hover:bg-muted/40"
               >
-                <div className="min-w-0 pr-3">
-                  <p className="truncate text-sm font-medium">{job.title}</p>
+                <div>
+                  <p className="text-sm font-medium">{job.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {job.client?.companyName ?? job.externalName ?? "—"}
+                    {job.client?.companyName ?? job.externalName ?? "Internal"}
                   </p>
                 </div>
-                <div className="flex shrink-0 gap-1.5">
+                <div className="flex gap-1">
                   <Badge
                     variant="secondary"
                     className={`text-[10px] ${typeBadge[job.type]}`}
                   >
-                    {job.type.charAt(0) + job.type.slice(1).toLowerCase()}
+                    {job.type.toLowerCase()}
                   </Badge>
                   <Badge variant="secondary" className="text-[10px]">
-                    {job.status.replace("_", " ").toLowerCase()}
+                    {job.status.toLowerCase()}
                   </Badge>
                 </div>
               </Link>
@@ -255,5 +411,75 @@ export default async function AdminDashboard() {
         </Card>
       </div>
     </div>
+  );
+}
+
+type HistoryRow = {
+  id: string;
+  title: string;
+  meta: string;
+  amount: string;
+  href?: string;
+  tone: "green" | "red";
+};
+
+function HistoryCard({
+  title,
+  rows,
+  empty,
+}: {
+  title: string;
+  rows: HistoryRow[];
+  empty: string;
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="divide-y">
+        {rows.length === 0 && (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            {empty}
+          </p>
+        )}
+        {rows.map((row) => {
+          const content = (
+            <>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{row.title}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {row.meta}
+                </p>
+              </div>
+              <p
+                className={`shrink-0 text-sm font-semibold ${
+                  row.tone === "green" ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {row.amount}
+              </p>
+            </>
+          );
+
+          return row.href ? (
+            <Link
+              key={row.id}
+              href={row.href}
+              className="flex items-center justify-between gap-3 py-2.5 hover:bg-muted/40"
+            >
+              {content}
+            </Link>
+          ) : (
+            <div
+              key={row.id}
+              className="flex items-center justify-between gap-3 py-2.5"
+            >
+              {content}
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }

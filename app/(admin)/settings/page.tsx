@@ -20,9 +20,23 @@ export default async function SettingsPage() {
         include: { _count: { select: { users: true } } },
       }),
       prisma.user.findMany({
-        where: { role: { in: ["SUPER_ADMIN", "ADMIN", "CEO", "TEAM_MEMBER"] } },
+        where: {
+          role: {
+            in: [
+              "SUPER_ADMIN",
+              "ADMIN",
+              "CEO",
+              "TEAM_MEMBER",
+              "BUSINESS_PARTNER",
+              "PARTNER_MANAGER",
+            ],
+          },
+        },
         orderBy: { name: "asc" },
-        include: { skills: { select: { id: true, name: true } } },
+        include: {
+          skills: { select: { id: true, name: true } },
+          permissions: { orderBy: { resource: "asc" } },
+        },
       }),
       prisma.paymentMethod.findMany({
         where: { key: { not: null } },
@@ -55,6 +69,13 @@ export default async function SettingsPage() {
         payoutSet: !!u.payoutMethod,
         skillIds: u.skills.map((s) => s.id),
         skillNames: u.skills.map((s) => s.name),
+        permissions: u.permissions.map((permission) => ({
+          resource: permission.resource,
+          canCreate: permission.canCreate,
+          canRead: permission.canRead,
+          canUpdate: permission.canUpdate,
+          canDelete: permission.canDelete,
+        })),
       }))}
       paymentMethods={fixedPaymentMethods.map((method) => {
         const saved = paymentMethods.find(

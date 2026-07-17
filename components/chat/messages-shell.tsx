@@ -19,7 +19,7 @@ import { Plus, Search, Briefcase, User } from "lucide-react";
 
 type ConvoRow = {
   id: string;
-  kind: "JOB" | "DIRECT";
+  kind: "JOB" | "DIRECT" | "SPECIAL_CLIENT" | "SPECIAL_PARTNER";
   name: string;
   subtitle: string;
   isClientRelated: boolean;
@@ -33,6 +33,7 @@ type Person = { id: string; name: string; role: string };
 const FILTERS = [
   { key: "ALL", label: "All" },
   { key: "JOBS", label: "Job discussions" },
+  { key: "SPECIAL", label: "Special orders" },
   { key: "DIRECT", label: "Direct" },
 ];
 
@@ -56,6 +57,7 @@ export function MessagesShell({
 
   const filtered = conversations.filter((c) => {
     if (filter === "JOBS" && c.kind !== "JOB") return false;
+    if (filter === "SPECIAL" && !c.kind.startsWith("SPECIAL")) return false;
     if (filter === "DIRECT" && c.kind !== "DIRECT") return false;
     if (
       search &&
@@ -153,7 +155,7 @@ export function MessagesShell({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex min-w-0 items-center gap-1.5">
-                      {c.kind === "JOB" ? (
+                      {c.kind === "JOB" || c.kind.startsWith("SPECIAL") ? (
                         <Briefcase className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       ) : (
                         <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -191,6 +193,7 @@ export function MessagesShell({
             currentUserId={currentUserId}
             title={selected.name}
             heightClass="h-[460px]"
+            playIncomingSound
           />
         ) : (
           <Card>

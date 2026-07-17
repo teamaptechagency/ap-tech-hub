@@ -5,8 +5,9 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { adminNavItems } from "@/components/layout/admin-sidebar";
 import { employeeNavItems } from "@/components/layout/employee-sidebar";
 import { clientNavItems } from "@/components/layout/client-sidebar";
+import { partnerNavItems } from "@/components/layout/partner-sidebar";
 
-type PortalType = "admin" | "employee" | "client";
+type PortalType = "admin" | "employee" | "client" | "partner";
 
 type PortalMobileNavProps = {
   portal: PortalType;
@@ -24,7 +25,9 @@ export function PortalMobileNav({
       ? adminNavItems
       : portal === "employee"
         ? employeeNavItems
-        : clientNavItems;
+        : portal === "partner"
+          ? partnerNavItems
+          : clientNavItems;
 
   return (
     <MobileNav

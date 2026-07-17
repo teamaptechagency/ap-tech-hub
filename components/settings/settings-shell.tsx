@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, X } from "lucide-react";
 
@@ -12,19 +12,23 @@ import {
   deleteSkill,
   deleteTemplate,
   inviteTeamMember,
+  saveUserPermission,
   setUserSkills,
   updateExchangeRate,
   updateSettings,
+  updateSystemUpgradeSettings,
 } from "@/actions/settings.actions";
 
 import {
   PaymentMethodSettings,
   type FixedPaymentMethodRow,
 } from "@/components/settings/payment-method-settings";
+import { BackupUpload } from "@/components/settings/backup-upload";
 import { TermsEditor } from "@/components/settings/terms-editor";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -68,6 +72,13 @@ export type TeamRow = {
   payoutSet: boolean;
   skillIds: string[];
   skillNames: string[];
+  permissions: {
+    resource: string;
+    canCreate: boolean;
+    canRead: boolean;
+    canUpdate: boolean;
+    canDelete: boolean;
+  }[];
 };
 
 export type PaymentMethodRow = {
@@ -91,7 +102,12 @@ type SettingsShellProps = {
   templates: TemplateRow[];
 };
 
-type TeamRole = "ADMIN" | "CEO" | "TEAM_MEMBER";
+type TeamRole =
+  | "ADMIN"
+  | "CEO"
+  | "TEAM_MEMBER"
+  | "BUSINESS_PARTNER"
+  | "PARTNER_MANAGER";
 
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
@@ -101,6 +117,16 @@ const priorityBadge: Record<string, string> = {
   HIGH: "bg-amber-100 text-amber-700",
   URGENT: "bg-red-100 text-red-600",
 };
+
+const permissionResources = [
+  { key: "specialOrders", label: "Special orders" },
+  { key: "partnerOrders", label: "Partner orders" },
+  { key: "invoices", label: "Invoices" },
+  { key: "clients", label: "Clients" },
+  { key: "jobs", label: "Jobs" },
+  { key: "finance", label: "Finance" },
+  { key: "settings", label: "Settings" },
+];
 
 function getActionError(result: unknown): string | null {
   if (
@@ -165,6 +191,21 @@ export function SettingsShell({
     settings["loyalty.pointsPerDollar"] ?? "100"
   );
 
+  const [specialUsdRate, setSpecialUsdRate] = useState(
+    settings["specialOrder.usdRate"] ?? "125"
+  );
+  const [specialPartnerUsdRate, setSpecialPartnerUsdRate] = useState(
+    settings["specialOrder.partnerUsdRate"] ?? "145"
+  );
+
+  const [systemVersion, setSystemVersion] = useState(
+    settings["system.version"] ?? "1.0.0"
+  );
+  const [rollbackRetentionMonths, setRollbackRetentionMonths] = useState(
+    settings["system.rollbackRetentionMonths"] ?? "2"
+  );
+  const [upgradeNote, setUpgradeNote] = useState("");
+
   // ============================================
   // SKILLS
   // ============================================
@@ -187,6 +228,8 @@ export function SettingsShell({
 
   const [selectedSkills, setSelectedSkills] =
     useState<string[]>([]);
+  const [permissionFor, setPermissionFor] =
+    useState<TeamRow | null>(null);
 
   // ============================================
   // LEGACY PAYMENT METHODS
@@ -390,7 +433,7 @@ export function SettingsShell({
     const email = invEmail.trim().toLowerCase();
 
     if (name.length < 2) {
-      toast.error("Enter the team member's name");
+      toast.error("Enter the employee's name");
       return;
     }
 
@@ -427,10 +470,10 @@ export function SettingsShell({
       setInvName("");
       setTempPassword(password);
 
-      toast.success("Team member invited");
+      toast.success("Employee invited");
     } catch (error) {
-      console.error("Failed to invite team member:", error);
-      toast.error("Team member could not be invited");
+      console.error("Failed to invite employee:", error);
+      toast.error("Employee could not be invited");
     } finally {
       setBusy(false);
     }
@@ -464,8 +507,8 @@ export function SettingsShell({
         "Skills updated — find-work matching refreshed"
       );
     } catch (error) {
-      console.error("Failed to update worker skills:", error);
-      toast.error("Worker skills could not be updated");
+      console.error("Failed to update employee skills:", error);
+      toast.error("Employee skills could not be updated");
     } finally {
       setBusy(false);
     }
@@ -511,6 +554,153 @@ export function SettingsShell({
     } catch (error) {
       console.error("Failed to add payment method:", error);
       toast.error("Payment method could not be added");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveSpecialUsdRate() {
+    if (busy) return;
+
+    const rate = Number(specialUsdRate);
+    const partnerRate = Number(specialPartnerUsdRate);
+    if (
+      !Number.isFinite(rate) ||
+      rate <= 0 ||
+      !Number.isFinite(partnerRate) ||
+      partnerRate <= 0
+    ) {
+      toast.error("Enter valid special USD rates");
+      return;
+    }
+
+    setBusy(true);
+
+    try {
+      const result = await updateSettings([
+        {
+          key: "specialOrder.usdRate",
+          value: specialUsdRate,
+        },
+        {
+          key: "specialOrder.partnerUsdRate",
+          value: specialPartnerUsdRate,
+        },
+      ]);
+
+      const error = getActionError(result);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      toast.success("Special order USD rate saved");
+    } catch (error) {
+      console.error("Failed to save special USD rate:", error);
+      toast.error("Special USD rate could not be saved");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveSystemUpgrade(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+
+    setBusy(true);
+
+    try {
+      const result = await updateSystemUpgradeSettings({
+        targetVersion: systemVersion,
+        retentionMonths: rollbackRetentionMonths,
+        note: upgradeNote,
+      });
+
+      const error = getActionError(result);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      setUpgradeNote("");
+      toast.success("System upgrade record saved");
+    } catch (error) {
+      console.error("Failed to save system upgrade settings:", error);
+      toast.error("System upgrade record could not be saved");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function savePermissionFor(
+    member: TeamRow,
+    resource: string,
+    patch: {
+      canCreate?: boolean;
+      canRead?: boolean;
+      canUpdate?: boolean;
+      canDelete?: boolean;
+    }
+  ) {
+    if (busy) return;
+
+    const current =
+      member.permissions.find(
+        (permission) => permission.resource === resource
+      ) ?? {
+        resource,
+        canCreate: false,
+        canRead: true,
+        canUpdate: false,
+        canDelete: false,
+      };
+
+    setBusy(true);
+
+    try {
+      const result = await saveUserPermission({
+        userId: member.id,
+        resource,
+        canCreate: patch.canCreate ?? current.canCreate,
+        canRead: patch.canRead ?? current.canRead,
+        canUpdate: patch.canUpdate ?? current.canUpdate,
+        canDelete: patch.canDelete ?? current.canDelete,
+      });
+
+      const error = getActionError(result);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      setPermissionFor((currentMember) => {
+        if (!currentMember || currentMember.id !== member.id) {
+          return currentMember;
+        }
+
+        const updatedPermission = {
+          resource,
+          canCreate: patch.canCreate ?? current.canCreate,
+          canRead: patch.canRead ?? current.canRead,
+          canUpdate: patch.canUpdate ?? current.canUpdate,
+          canDelete: patch.canDelete ?? current.canDelete,
+        };
+
+        return {
+          ...currentMember,
+          permissions: [
+            ...currentMember.permissions.filter(
+              (permission) => permission.resource !== resource
+            ),
+            updatedPermission,
+          ],
+        };
+      });
+
+      toast.success("Permission saved");
+    } catch (error) {
+      console.error("Failed to save permission:", error);
+      toast.error("Permission could not be saved");
     } finally {
       setBusy(false);
     }
@@ -731,6 +921,74 @@ export function SettingsShell({
             >
               {busy ? "Saving..." : "Save rates"}
             </Button>
+
+            <div className="mt-4 border-t pt-4">
+              <p className="text-sm font-medium">
+                Special order USD rates
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Client rate is used on the invoice. Partner rate is used for
+                the business partner payout cost.
+              </p>
+              <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+                <div className="space-y-1">
+                  <Label className="text-xs">Client invoice rate</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      1 USD =
+                    </span>
+                    <Input
+                      type="number"
+                      min={0.01}
+                      step="0.01"
+                      value={specialUsdRate}
+                      onChange={(event) =>
+                        setSpecialUsdRate(event.target.value)
+                      }
+                      disabled={busy}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      BDT
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Partner payout rate</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      1 USD =
+                    </span>
+                    <Input
+                      type="number"
+                      min={0.01}
+                      step="0.01"
+                      value={specialPartnerUsdRate}
+                      onChange={(event) =>
+                        setSpecialPartnerUsdRate(event.target.value)
+                      }
+                      disabled={busy}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      BDT
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={saveSpecialUsdRate}
+                  disabled={
+                    busy ||
+                    !specialUsdRate.trim() ||
+                    !specialPartnerUsdRate.trim()
+                  }
+                  className="self-end"
+                >
+                  Save special rates
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -840,7 +1098,7 @@ export function SettingsShell({
           </CardTitle>
 
           <p className="text-xs text-muted-foreground">
-            Workers receive skills from this master list.
+            Employees receive skills from this master list.
             Open jobs use the skills for marketplace
             matching.
           </p>
@@ -905,6 +1163,109 @@ export function SettingsShell({
         </CardContent>
       </Card>
 
+      {/* System upgrade */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">
+            System upgrade
+          </CardTitle>
+
+          <p className="text-xs text-muted-foreground">
+            Record app upgrades, block downgrades, and keep rollback
+            points before adding new features.
+          </p>
+        </CardHeader>
+
+        <CardContent>
+          <form
+            onSubmit={saveSystemUpgrade}
+            className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="system-version">
+                Current / next version
+              </Label>
+              <Input
+                id="system-version"
+                value={systemVersion}
+                onChange={(event) =>
+                  setSystemVersion(event.target.value)
+                }
+                placeholder="1.0.0"
+                disabled={busy}
+              />
+              <p className="text-xs text-muted-foreground">
+                Same version can be recorded again. Downgrade is blocked.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Rollback data retention</Label>
+              <Select
+                value={rollbackRetentionMonths}
+                onValueChange={(value) => {
+                  if (value) setRollbackRetentionMonths(value);
+                }}
+                disabled={busy}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 month</SelectItem>
+                  <SelectItem value="2">2 months</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Old rollback files are not removed automatically here.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 lg:min-w-48">
+              <a href="/api/backup?type=rollback" download>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                >
+                  Download rollback point
+                </Button>
+              </a>
+              <Button type="submit" size="sm" disabled={busy}>
+                Save upgrade record
+              </Button>
+            </div>
+
+            <div className="space-y-2 lg:col-span-3">
+              <Label htmlFor="upgrade-note">
+                Upgrade note
+              </Label>
+              <Input
+                id="upgrade-note"
+                value={upgradeNote}
+                onChange={(event) =>
+                  setUpgradeNote(event.target.value)
+                }
+                placeholder="What changed in this update?"
+                disabled={busy}
+              />
+              <p className="text-xs text-muted-foreground">
+                Last update:{" "}
+                {settings["system.lastUpgradeAt"]
+                  ? new Date(
+                      settings["system.lastUpgradeAt"]
+                    ).toLocaleString()
+                  : "not recorded"}{" "}
+                {settings["system.lastUpgradeBy"]
+                  ? `by ${settings["system.lastUpgradeBy"]}`
+                  : ""}
+              </p>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Backup */}
       <Card>
         <CardHeader className="pb-3">
@@ -920,6 +1281,7 @@ export function SettingsShell({
         </CardHeader>
 
         <CardContent>
+          <div className="space-y-4">
           <a href="/api/backup" download>
             <Button
               type="button"
@@ -929,6 +1291,8 @@ export function SettingsShell({
               Download full backup
             </Button>
           </a>
+          <BackupUpload />
+          </div>
         </CardContent>
       </Card>
 
@@ -952,7 +1316,7 @@ export function SettingsShell({
             </CardTitle>
 
             <p className="text-xs text-muted-foreground">
-              Worker skills set here control marketplace
+              Employee skills set here control marketplace
               application matching.
             </p>
           </div>
@@ -970,7 +1334,7 @@ export function SettingsShell({
         <CardContent className="divide-y px-4 pb-2 pt-0">
           {team.length === 0 && (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              No team members found.
+              No employees found.
             </p>
           )}
 
@@ -995,7 +1359,8 @@ export function SettingsShell({
                 <p className="text-xs text-muted-foreground">
                   {member.email}
 
-                  {member.role === "TEAM_MEMBER" && (
+                  {(member.role === "TEAM_MEMBER" ||
+                    member.role === "BUSINESS_PARTNER") && (
                     <>
                       {" · skills: "}
                       {member.skillNames.length > 0
@@ -1018,20 +1383,40 @@ export function SettingsShell({
                 </p>
               </div>
 
-              {member.role === "TEAM_MEMBER" && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => {
-                    setSkillsFor(member);
-                    setSelectedSkills(member.skillIds);
-                  }}
-                >
-                  Edit skills
-                </Button>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {(member.role === "TEAM_MEMBER" ||
+                  member.role === "BUSINESS_PARTNER") && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => {
+                      setSkillsFor(member);
+                      setSelectedSkills(member.skillIds);
+                    }}
+                  >
+                    Edit skills
+                  </Button>
+                )}
+
+                {[
+                  "ADMIN",
+                  "CEO",
+                  "CLIENT_MANAGER",
+                  "PARTNER_MANAGER",
+                ].includes(member.role) && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => setPermissionFor(member)}
+                  >
+                    Permissions
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </CardContent>
@@ -1042,7 +1427,7 @@ export function SettingsShell({
       />
 
       {/* Payment methods and templates */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="hidden grid gap-4 lg:grid-cols-2">
         {/* Payment methods */}
         <Card className="hidden">
           <CardHeader className="pb-3">
@@ -1313,7 +1698,7 @@ export function SettingsShell({
             <>
               <DialogHeader>
                 <DialogTitle>
-                  Invite team member
+                  Invite employee
                 </DialogTitle>
 
                 <DialogDescription>
@@ -1377,7 +1762,15 @@ export function SettingsShell({
 
                     <SelectContent>
                       <SelectItem value="TEAM_MEMBER">
-                        Team member
+                        Employee
+                      </SelectItem>
+
+                      <SelectItem value="BUSINESS_PARTNER">
+                        Business partner
+                      </SelectItem>
+
+                      <SelectItem value="PARTNER_MANAGER">
+                        Partner manager
                       </SelectItem>
 
                       <SelectItem value="ADMIN">
@@ -1404,7 +1797,7 @@ export function SettingsShell({
         </DialogContent>
       </Dialog>
 
-      {/* Worker skills dialog */}
+      {/* Employee skills dialog */}
       <Dialog
         open={skillsFor !== null}
         onOpenChange={(open) => {
@@ -1475,6 +1868,77 @@ export function SettingsShell({
           >
             {busy ? "Saving..." : "Save skills"}
           </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={permissionFor !== null}
+        onOpenChange={(open) => {
+          if (!open && !busy) {
+            setPermissionFor(null);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Permissions - {permissionFor?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Main admins can set module-wise CRUD access for managers.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            {permissionResources.map((resource) => {
+              const permission =
+                permissionFor?.permissions.find(
+                  (item) => item.resource === resource.key
+                ) ?? {
+                  resource: resource.key,
+                  canCreate: false,
+                  canRead: true,
+                  canUpdate: false,
+                  canDelete: false,
+                };
+
+              return (
+                <div
+                  key={resource.key}
+                  className="grid gap-3 rounded-md border p-3 text-sm sm:grid-cols-[1fr_repeat(4,auto)]"
+                >
+                  <p className="font-medium">{resource.label}</p>
+                  {(
+                    [
+                      ["canCreate", "Create"],
+                      ["canRead", "Read"],
+                      ["canUpdate", "Update"],
+                      ["canDelete", "Delete"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-2 text-xs"
+                    >
+                      <Checkbox
+                        checked={permission[key]}
+                        disabled={!permissionFor || busy}
+                        onCheckedChange={(checked) => {
+                          if (!permissionFor) return;
+                          void savePermissionFor(
+                            permissionFor,
+                            resource.key,
+                            { [key]: checked === true }
+                          );
+                        }}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

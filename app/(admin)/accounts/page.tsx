@@ -1,7 +1,11 @@
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { prisma } from "@/lib/prisma";
+
+function bdt(amount: number) {
+  return `BDT ${Math.round(amount).toLocaleString()}`;
+}
 
 export default async function AccountsOverviewPage() {
   const monthStart = new Date();
@@ -14,6 +18,7 @@ export default async function AccountsOverviewPage() {
     workers,
     pendingWithdrawals,
     pendingExchanges,
+    pendingProfileChanges,
     recentEarnings,
     recentExpenses,
     rates,
@@ -27,7 +32,7 @@ export default async function AccountsOverviewPage() {
       _sum: { amountBdt: true },
     }),
     prisma.user.findMany({
-      where: { role: "TEAM_MEMBER" },
+      where: { role: { in: ["TEAM_MEMBER", "BUSINESS_PARTNER", "PARTNER_MANAGER"] } },
       select: { balance: true, reserve: true },
     }),
     prisma.withdrawRequest.findMany({
@@ -39,45 +44,44 @@ export default async function AccountsOverviewPage() {
       where: { status: "PENDING" },
       include: { client: { select: { companyName: true, id: true } } },
     }),
-    prisma.earning.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 4,
+    prisma.userProfileChangeRequest.findMany({
+      where: { status: "PENDING" },
+      include: { user: { select: { name: true } } },
+      orderBy: { createdAt: "asc" },
     }),
-    prisma.expense.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 4,
-    }),
+    prisma.earning.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
+    prisma.expense.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
     prisma.exchangeRate.findMany(),
   ]);
 
   const earnings = Number(earnAgg._sum.amountBdt ?? 0);
   const expenses = Number(expAgg._sum.amountBdt ?? 0);
   const net = earnings - expenses;
-  const payables = workers.reduce((s, w) => s + Number(w.balance), 0);
-  const reserves = workers.reduce((s, w) => s + Number(w.reserve), 0);
-
-  const rateLabel = rates
-    .map((r) => `${r.code === "USD" ? "$1" : r.code === "EUR" ? "€1" : "£1"} = ৳${Number(r.rateToBdt)}`)
-    .join(" · ");
-
+  const payables = workers.reduce((sum, worker) => sum + Number(worker.balance), 0);
+  const reserves = workers.reduce((sum, worker) => sum + Number(worker.reserve), 0);
+  const rateLabel =
+    rates.length > 0
+      ? rates
+          .map((rate) => `${rate.code} 1 = BDT ${Number(rate.rateToBdt)}`)
+          .join(" / ")
+      : "No exchange rates set";
   const monthLabel = new Date().toLocaleDateString("en-GB", {
     month: "long",
     year: "numeric",
   });
 
-  // Recent ledger (mixed, sorted by date)
   const ledger = [
-    ...recentEarnings.map((e) => ({
-      id: e.id,
-      label: e.title,
-      amount: Number(e.amountBdt),
-      at: e.createdAt,
+    ...recentEarnings.map((earning) => ({
+      id: earning.id,
+      label: earning.title,
+      amount: Number(earning.amountBdt),
+      at: earning.createdAt,
     })),
-    ...recentExpenses.map((e) => ({
-      id: e.id,
-      label: e.title,
-      amount: -Number(e.amountBdt),
-      at: e.createdAt,
+    ...recentExpenses.map((expense) => ({
+      id: expense.id,
+      label: expense.title,
+      amount: -Number(expense.amountBdt),
+      at: expense.createdAt,
     })),
   ]
     .sort((a, b) => b.at.getTime() - a.at.getTime())
@@ -85,10 +89,19 @@ export default async function AccountsOverviewPage() {
 
   const tabs = [
     { label: "Overview", href: "/accounts", active: true },
-    { label: "Workers", href: "/accounts/workers" },
+    { label: "Employees", href: "/accounts/employees" },
+    { label: "Partners", href: "/accounts/partners" },
+    {
+      label: `Profile reviews${
+        pendingProfileChanges.length ? ` (${pendingProfileChanges.length})` : ""
+      }`,
+      href: "/accounts/profile-reviews",
+    },
     { label: "Earnings & Expenses", href: "/accounts/earnings" },
     {
-      label: `Withdrawals${pendingWithdrawals.length ? ` (${pendingWithdrawals.length})` : ""}`,
+      label: `Withdrawals${
+        pendingWithdrawals.length ? ` (${pendingWithdrawals.length})` : ""
+      }`,
       href: "/accounts/withdrawals",
     },
   ];
@@ -98,91 +111,66 @@ export default async function AccountsOverviewPage() {
       <div>
         <h1 className="text-2xl font-bold">HR / Accounts</h1>
         <p className="text-sm text-muted-foreground">
-          {monthLabel} · all amounts in BDT · rates: {rateLabel}{" "}
+          {monthLabel} / all amounts in BDT / rates: {rateLabel}{" "}
           <Link href="/settings" className="text-primary hover:underline">
             edit in Settings
           </Link>
         </p>
       </div>
 
-      {/* Tabs */}
       <div className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
+        {tabs.map((tab) => (
           <Link
-            key={t.href}
-            href={t.href}
+            key={tab.href}
+            href={tab.href}
             className={`rounded-full px-3 py-1 text-sm ${
-              t.active
+              tab.active
                 ? "bg-primary/10 font-medium text-primary"
                 : "border text-muted-foreground hover:bg-muted"
             }`}
           >
-            {t.label}
+            {tab.label}
           </Link>
         ))}
       </div>
 
-      {/* Stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="pt-6">
-            <p className="text-xs text-green-700">Earnings ({monthLabel.split(" ")[0]})</p>
-            <p className="text-2xl font-bold text-green-800">
-              ৳{earnings.toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <p className="text-xs text-red-700">Expenses</p>
-            <p className="text-2xl font-bold text-red-700">
-              ৳{expenses.toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-xs text-muted-foreground">Net profit</p>
-            <p
-              className={`text-2xl font-bold ${net < 0 ? "text-red-600" : ""}`}
-            >
-              ৳{net.toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-xs text-muted-foreground">Worker payables</p>
-            <p className="text-2xl font-bold">৳{payables.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">
-              + ৳{reserves.toLocaleString()} held in reserves
-            </p>
-          </CardContent>
-        </Card>
+        <SummaryCard label={`Earnings (${monthLabel.split(" ")[0]})`} value={bdt(earnings)} />
+        <SummaryCard label="Expenses" value={bdt(expenses)} />
+        <SummaryCard
+          label="Net profit"
+          value={bdt(net)}
+          tone={net < 0 ? "red" : "green"}
+        />
+        <SummaryCard
+          label="Employee & partner payables"
+          value={bdt(payables)}
+          hint={`+ ${bdt(reserves)} held in reserves`}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Needs action */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Needs your action</CardTitle>
           </CardHeader>
           <CardContent className="divide-y">
             {pendingWithdrawals.length === 0 &&
-              pendingExchanges.length === 0 && (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  Nothing pending 🎉
-                </p>
-              )}
-            {pendingWithdrawals.map((w) => (
+              pendingExchanges.length === 0 &&
+              pendingProfileChanges.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Nothing pending
+              </p>
+            )}
+            {pendingWithdrawals.map((withdrawal) => (
               <div
-                key={w.id}
-                className="flex items-center justify-between py-2.5"
+                key={withdrawal.id}
+                className="flex items-center justify-between gap-3 py-2.5"
               >
                 <p className="text-sm">
-                  Withdraw ৳{Number(w.amount).toLocaleString()} —{" "}
-                  {w.user.name} ({w.method})
-                  {w.fromReserve && (
+                  Withdraw {bdt(Number(withdrawal.amount))} -{" "}
+                  {withdrawal.user.name} ({withdrawal.method})
+                  {withdrawal.fromReserve && (
                     <Badge
                       variant="secondary"
                       className="ml-2 bg-amber-100 text-[10px] text-amber-700"
@@ -195,31 +183,47 @@ export default async function AccountsOverviewPage() {
                   href="/accounts/withdrawals"
                   className="text-xs text-primary hover:underline"
                 >
-                  Review →
+                  Review
                 </Link>
               </div>
             ))}
-            {pendingExchanges.map((ex) => (
+            {pendingExchanges.map((exchange) => (
               <div
-                key={ex.id}
-                className="flex items-center justify-between py-2.5"
+                key={exchange.id}
+                className="flex items-center justify-between gap-3 py-2.5"
               >
                 <p className="text-sm">
-                  Point exchange {ex.points.toLocaleString()} pts —{" "}
-                  {ex.client.companyName}
+                  Point exchange {exchange.points.toLocaleString()} pts -{" "}
+                  {exchange.client.companyName}
                 </p>
                 <Link
-                  href={`/clients/${ex.client.id}`}
+                  href={`/clients/${exchange.client.id}`}
                   className="text-xs text-primary hover:underline"
                 >
-                  Review →
+                  Review
+                </Link>
+              </div>
+            ))}
+            {pendingProfileChanges.map((request) => (
+              <div
+                key={request.id}
+                className="flex items-center justify-between gap-3 py-2.5"
+              >
+                <p className="text-sm">
+                  Profile {request.type.toLowerCase()} change -{" "}
+                  {request.user.name}
+                </p>
+                <Link
+                  href="/accounts/profile-reviews"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Review
                 </Link>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        {/* Recent ledger */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Recent ledger</CardTitle>
@@ -233,16 +237,16 @@ export default async function AccountsOverviewPage() {
             {ledger.map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center justify-between py-2.5"
+                className="flex items-center justify-between gap-3 py-2.5"
               >
-                <p className="truncate pr-4 text-sm">{entry.label}</p>
+                <p className="truncate text-sm">{entry.label}</p>
                 <span
                   className={`shrink-0 text-sm font-medium ${
                     entry.amount >= 0 ? "text-green-600" : "text-red-500"
                   }`}
                 >
-                  {entry.amount >= 0 ? "+" : "−"}৳
-                  {Math.abs(entry.amount).toLocaleString()}
+                  {entry.amount >= 0 ? "+" : "-"}
+                  {bdt(Math.abs(entry.amount))}
                 </span>
               </div>
             ))}
@@ -250,5 +254,41 @@ export default async function AccountsOverviewPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "green" | "red";
+}) {
+  return (
+    <Card className="h-full min-h-28">
+      <CardContent className="flex h-full flex-col justify-between p-4">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <div>
+          <p
+            className={`text-2xl font-bold leading-tight ${
+              tone === "green"
+                ? "text-green-600"
+                : tone === "red"
+                  ? "text-red-500"
+                  : ""
+            }`}
+          >
+            {value}
+          </p>
+          <p className="min-h-4 text-[10px] text-muted-foreground">
+            {hint ?? ""}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

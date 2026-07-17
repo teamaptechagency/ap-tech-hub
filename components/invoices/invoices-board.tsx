@@ -59,6 +59,18 @@ const statusLabel: Record<string, string> = {
   CANCELLED: "Cancelled",
 };
 
+const typeLabel: Record<string, string> = {
+  AUTO: "Auto",
+  CUSTOM: "Custom",
+  SPECIAL_ORDER: "Special",
+};
+
+const typeClass: Record<string, string> = {
+  AUTO: "bg-blue-100 text-blue-700",
+  CUSTOM: "bg-violet-100 text-violet-700",
+  SPECIAL_ORDER: "bg-emerald-100 text-emerald-700",
+};
+
 const currencySymbol: Record<string, string> = {
   USD: "$",
   EUR: "€",
@@ -152,13 +164,9 @@ export function InvoicesBoard({
                         </span>
                         <Badge
                           variant="secondary"
-                          className={`text-[10px] ${
-                            inv.type === "AUTO"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-violet-100 text-violet-700"
-                          }`}
+                          className={`text-[10px] ${typeClass[inv.type]}`}
                         >
-                          {inv.type === "AUTO" ? "Auto" : "Custom"}
+                          {typeLabel[inv.type] ?? inv.type}
                         </Badge>
                       </p>
                       <p className="truncate text-xs text-muted-foreground">

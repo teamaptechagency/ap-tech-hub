@@ -40,9 +40,11 @@ const statusBadge: Record<string, string> = {
 export function ApplicationsList({
   applications,
   jobStatus,
+  defaultWorkerValue,
 }: {
   applications: AppRow[];
   jobStatus: string;
+  defaultWorkerValue: number | null;
 }) {
   const [approving, setApproving] = useState<AppRow | null>(null);
   const [workerValue, setWorkerValue] = useState("");
@@ -124,7 +126,14 @@ export function ApplicationsList({
                   <div className="flex shrink-0 gap-2">
                     <Button
                       size="sm"
-                      onClick={() => setApproving(app)}
+                      onClick={() => {
+                        setWorkerValue(
+                          defaultWorkerValue
+                            ? String(defaultWorkerValue)
+                            : ""
+                        );
+                        setApproving(app);
+                      }}
                     >
                       Approve & assign
                     </Button>

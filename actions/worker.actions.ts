@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { ADMIN_ROLES, WORKER_ROLES } from "@/lib/roles";
+import { ADMIN_ROLES, PARTNER_ROLES, WORKER_ROLES } from "@/lib/roles";
 import { revalidatePath } from "next/cache";
 import { notify, notifyAdmins } from "@/lib/notify";
 
@@ -32,6 +32,61 @@ async function audit(
 async function getSetting(key: string, fallback: string) {
   const s = await prisma.setting.findUnique({ where: { key } });
   return s?.value ?? fallback;
+}
+
+function isConfiguredPayoutMethod(method: {
+  key: string | null;
+  details: string;
+  receiverNumber: string | null;
+  accountType: string | null;
+  wiseEmail: string | null;
+  wisePaymentUrl: string | null;
+  wiseTransferDetails: string | null;
+  cashReceiverInfo: string | null;
+  payoneerMerchantId: string | null;
+  payoneerMode: string | null;
+  bankAccounts: Array<{
+    active: boolean;
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+  }>;
+}) {
+  if (method.key === "BANK_TRANSFER") {
+    return method.bankAccounts.some(
+      (account) =>
+        account.active &&
+        account.bankName.trim() &&
+        account.accountName.trim() &&
+        account.accountNumber.trim()
+    );
+  }
+
+  if (method.key === "BKASH" || method.key === "NAGAD") {
+    return Boolean(method.receiverNumber?.trim() && method.accountType?.trim());
+  }
+
+  if (method.key === "WISE") {
+    return Boolean(
+      method.wiseEmail?.trim() ||
+        method.wisePaymentUrl?.trim() ||
+        method.wiseTransferDetails?.trim()
+    );
+  }
+
+  if (method.key === "CASH") {
+    return Boolean(method.cashReceiverInfo?.trim() || method.details?.trim());
+  }
+
+  if (method.key === "PAYONEER") {
+    return Boolean(
+      method.payoneerMerchantId?.trim() ||
+        method.payoneerMode?.trim() ||
+        method.details?.trim()
+    );
+  }
+
+  return Boolean(method.details?.trim());
 }
 
 // ============================================
@@ -218,7 +273,8 @@ export async function adjustWorkerBalance(
     href: `/e/balance`,
   });
 
-  revalidatePath("/accounts/workers");
+  revalidatePath("/accounts/employees");
+  revalidatePath("/accounts/partners");
   return { success: true };
 }
 
@@ -239,7 +295,7 @@ export async function applyPenalty(
   }
 
   const worker = await prisma.user.findUnique({ where: { id: userId } });
-  if (!worker) return { error: "Worker not found" };
+  if (!worker) return { error: "Employee not found" };
 
   const balance = Number(worker.balance);
   const reserve = Number(worker.reserve);
@@ -308,7 +364,8 @@ export async function applyPenalty(
     href: `/e/balance`,
   });
 
-  revalidatePath("/accounts/workers");
+  revalidatePath("/accounts/employees");
+  revalidatePath("/accounts/partners");
   return { success: true };
 }
 
@@ -325,8 +382,13 @@ export async function requestWithdraw(formData: {
   fromReserve: boolean;
 }) {
   const session = await auth();
-  if (!session?.user || !WORKER_ROLES.includes(session.user.role)) {
-    return { error: "Only team members can request withdrawals" };
+  const canRequest =
+    session?.user &&
+    (WORKER_ROLES.includes(session.user.role) ||
+      PARTNER_ROLES.includes(session.user.role));
+
+  if (!canRequest) {
+    return { error: "Only employees or partners can request withdrawals" };
   }
   const userId = session.user.id;
 
@@ -334,8 +396,20 @@ export async function requestWithdraw(formData: {
   if (isNaN(amount) || amount <= 0) {
     return { error: "Enter the amount to withdraw" };
   }
-  if (!formData.method || !formData.details) {
-    return { error: "Add your payout method and account details" };
+  if (!formData.method) {
+    return { error: "Select a payout method" };
+  }
+
+  const paymentMethod = await prisma.paymentMethod.findFirst({
+    where: {
+      active: true,
+      OR: [{ key: formData.method }, { label: formData.method }],
+    },
+    include: { bankAccounts: { where: { active: true } } },
+  });
+
+  if (!paymentMethod || !isConfiguredPayoutMethod(paymentMethod)) {
+    return { error: "Select an active payment method from settings" };
   }
 
   // One pending request at a time
@@ -349,6 +423,19 @@ export async function requestWithdraw(formData: {
   const me = await prisma.user.findUnique({ where: { id: userId } });
   const balance = Number(me?.balance ?? 0);
   const reserve = Number(me?.reserve ?? 0);
+  const savedPayoutDetails = me?.payoutDetails?.trim() ?? "";
+
+  if (!savedPayoutDetails) {
+    return {
+      error:
+        "Set your payout method and receiving details from profile first. Manual details are not accepted here.",
+    };
+  }
+
+  const verificationWaitUntil =
+    me?.withdrawBlockedUntil && me.withdrawBlockedUntil > new Date()
+      ? me.withdrawBlockedUntil
+      : null;
 
   if (formData.fromReserve) {
     const maxPercent = parseInt(
@@ -366,12 +453,18 @@ export async function requestWithdraw(formData: {
     };
   }
 
+  const detailsForAdmin = verificationWaitUntil
+    ? `${savedPayoutDetails}\n\nVerification wait until ${verificationWaitUntil.toLocaleString(
+        "en-GB"
+      )} because email, phone or payout details changed recently. Admin can approve payment anytime.`
+    : savedPayoutDetails;
+
   await prisma.withdrawRequest.create({
     data: {
       userId,
       amount,
-      method: formData.method,
-      details: formData.details,
+      method: paymentMethod.label,
+      details: detailsForAdmin,
       fromReserve: formData.fromReserve,
     },
   });
@@ -380,7 +473,7 @@ export async function requestWithdraw(formData: {
     title: `Withdrawal request — ৳${amount.toLocaleString()}${
       formData.fromReserve ? " (EMERGENCY · reserve)" : ""
     }`,
-    body: `${me?.name ?? "A team member"} · ${formData.method} · ${formData.details}`,
+    body: `${me?.name ?? "An employee"} · ${paymentMethod.label} · ${detailsForAdmin}`,
     href: `/accounts/withdrawals`,
   });
 
@@ -391,7 +484,7 @@ export async function requestWithdraw(formData: {
 
 // ============================================
 // PROCESS WITHDRAW (admin) — pay or reject
-// Fees are the worker's (your rule) — admin
+// Fees are the employee's (your rule) — admin
 // simply records what was sent
 // ============================================
 export async function processWithdraw(
@@ -447,7 +540,7 @@ export async function processWithdraw(
 
   if (amount > available) {
     return {
-      error: `Worker's ${bucket.toLowerCase()} is now only ৳${available.toLocaleString()} — reject and ask them to re-request`,
+      error: `Employee's ${bucket.toLowerCase()} is now only ৳${available.toLocaleString()} — reject and ask them to re-request`,
     };
   }
 
@@ -499,7 +592,8 @@ export async function processWithdraw(
   });
 
   revalidatePath("/accounts/withdrawals");
-  revalidatePath("/accounts/workers");
+  revalidatePath("/accounts/employees");
+  revalidatePath("/accounts/partners");
   revalidatePath("/e/balance");
   return { success: true };
 }

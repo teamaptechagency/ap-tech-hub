@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   MessageCircle,
   Receipt,
+  ShoppingBag,
   User,
   Video,
   Wallet,
@@ -29,6 +30,7 @@ export type BottomNavIcon =
   | "invoices"
   | "meetings"
   | "wallet"
+  | "special"
   | "files";
 
 export type BottomNavItem = {
@@ -51,6 +53,7 @@ const iconMap: Record<BottomNavIcon, LucideIcon> = {
   invoices: Receipt,
   meetings: Video,
   wallet: Wallet,
+  special: ShoppingBag,
   files: FileText,
 };
 

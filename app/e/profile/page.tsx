@@ -10,7 +10,14 @@ export default async function EmployeeProfilePage() {
 
   const me = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: { skills: { select: { name: true } } },
+    include: {
+      skills: { select: { name: true } },
+      profileChangeRequests: {
+        where: { status: "PENDING" },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, type: true, newValue: true, createdAt: true },
+      },
+    },
   });
   if (!me) notFound();
 
@@ -52,9 +59,30 @@ export default async function EmployeeProfilePage() {
       </Card>
 
       <ProfileForm
+        name={me.name}
+        email={me.email}
+        phone={me.phone ?? ""}
+        address={me.address ?? ""}
+        dateOfBirth={me.dateOfBirth?.toISOString().slice(0, 10) ?? ""}
+        nidNumber={me.nidNumber ?? ""}
+        nidUrl={me.nidUrl ?? ""}
+        photoUrl={me.photoUrl ?? ""}
+        identityStatus={me.identityStatus}
+        emergencyContact={me.emergencyContact ?? ""}
+        bio={me.bio ?? ""}
+        gender={me.gender ?? ""}
+        profession={me.profession ?? ""}
         payoutMethod={me.payoutMethod ?? ""}
         payoutDetails={me.payoutDetails ?? ""}
         timezone={me.timezone}
+        twoFactorEnabled={me.twoFactorEnabled}
+        withdrawBlockedUntil={me.withdrawBlockedUntil?.toISOString() ?? null}
+        pendingChanges={me.profileChangeRequests.map((change) => ({
+          id: change.id,
+          type: change.type,
+          newValue: change.newValue,
+          createdAt: change.createdAt.toISOString(),
+        }))}
       />
     </div>
   );

@@ -84,6 +84,110 @@ function cleanOptional(value: string | undefined) {
   return trimmed ? trimmed : null;
 }
 
+function normalizeVersion(value: string) {
+  return value
+    .trim()
+    .replace(/^v/i, "")
+    .split(".")
+    .map((part) => Number.parseInt(part.replace(/\D.*$/, ""), 10) || 0);
+}
+
+function compareVersions(nextVersion: string, currentVersion: string) {
+  const next = normalizeVersion(nextVersion);
+  const current = normalizeVersion(currentVersion);
+  const maxLength = Math.max(next.length, current.length, 3);
+
+  for (let index = 0; index < maxLength; index += 1) {
+    const nextPart = next[index] ?? 0;
+    const currentPart = current[index] ?? 0;
+
+    if (nextPart > currentPart) return 1;
+    if (nextPart < currentPart) return -1;
+  }
+
+  return 0;
+}
+
+export async function updateSystemUpgradeSettings(input: {
+  targetVersion: string;
+  retentionMonths: string;
+  note?: string;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const targetVersion = input.targetVersion.trim().replace(/^v/i, "");
+  if (!/^\d+(?:\.\d+){0,3}$/.test(targetVersion)) {
+    return { error: "Enter a valid version, for example 1.0.0" };
+  }
+
+  const retentionMonths = Number.parseInt(input.retentionMonths, 10);
+  if (![1, 2].includes(retentionMonths)) {
+    return { error: "Rollback retention must be 1 or 2 months" };
+  }
+
+  const currentSetting = await prisma.setting.findUnique({
+    where: { key: "system.version" },
+  });
+  const currentVersion = currentSetting?.value ?? "1.0.0";
+
+  if (compareVersions(targetVersion, currentVersion) < 0) {
+    return {
+      error: `Downgrade is not allowed. Current version is ${currentVersion}.`,
+    };
+  }
+
+  const now = new Date().toISOString();
+  const note = cleanOptional(input.note);
+
+  await prisma.$transaction([
+    prisma.setting.upsert({
+      where: { key: "system.version" },
+      update: { value: targetVersion },
+      create: { key: "system.version", value: targetVersion },
+    }),
+    prisma.setting.upsert({
+      where: { key: "system.rollbackRetentionMonths" },
+      update: { value: String(retentionMonths) },
+      create: {
+        key: "system.rollbackRetentionMonths",
+        value: String(retentionMonths),
+      },
+    }),
+    prisma.setting.upsert({
+      where: { key: "system.lastUpgradeAt" },
+      update: { value: now },
+      create: { key: "system.lastUpgradeAt", value: now },
+    }),
+    prisma.setting.upsert({
+      where: { key: "system.lastUpgradeBy" },
+      update: { value: session.user.email ?? session.user.id },
+      create: {
+        key: "system.lastUpgradeBy",
+        value: session.user.email ?? session.user.id,
+      },
+    }),
+    prisma.setting.upsert({
+      where: { key: "system.lastUpgradeNote" },
+      update: { value: note ?? "" },
+      create: { key: "system.lastUpgradeNote", value: note ?? "" },
+    }),
+  ]);
+
+  await audit(
+    session.user.id,
+    compareVersions(targetVersion, currentVersion) === 0
+      ? "SYSTEM_VERSION_RECORDED"
+      : "SYSTEM_VERSION_UPDATED",
+    "System",
+    targetVersion,
+    note ?? undefined
+  );
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
 export async function ensureFixedPaymentMethods() {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
@@ -375,7 +479,12 @@ export async function setUserSkills(userId: string, skillIds: string[]) {
 export async function inviteTeamMember(formData: {
   name: string;
   email: string;
-  role: "ADMIN" | "CEO" | "TEAM_MEMBER";
+  role:
+    | "ADMIN"
+    | "CEO"
+    | "TEAM_MEMBER"
+    | "BUSINESS_PARTNER"
+    | "PARTNER_MANAGER";
 }) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
@@ -414,7 +523,123 @@ export async function inviteTeamMember(formData: {
   );
 
   revalidatePath("/settings");
+  revalidatePath("/accounts");
+  revalidatePath("/accounts/employees");
+  revalidatePath("/accounts/partners");
+  revalidatePath("/dashboard");
   return { success: true, password };
+}
+
+export async function updateTeamMemberStatus(
+  userId: string,
+  status: "ACTIVE" | "HOLD" | "LOCKED" | "SUSPENDED"
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { accountStatus: status },
+  });
+
+  await audit(session.user.id, "USER_STATUS_UPDATED", "User", userId, status);
+
+  revalidatePath("/accounts/employees");
+  revalidatePath("/accounts/partners");
+  revalidatePath("/settings");
+  return { success: true };
+}
+
+export async function resetTeamMemberPassword(userId: string) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const bcrypt = (await import("bcryptjs")).default;
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let password = "";
+  for (let i = 0; i < 10; i++) {
+    password += chars[Math.floor(Math.random() * chars.length)];
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: await bcrypt.hash(password, 10) },
+  });
+
+  await audit(session.user.id, "USER_PASSWORD_RESET", "User", userId);
+
+  return { success: true, password };
+}
+
+export async function updateTeamMemberIdentityStatus(
+  userId: string,
+  status: "VERIFIED" | "REJECTED" | "PENDING"
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { identityStatus: status },
+  });
+
+  await audit(session.user.id, "USER_IDENTITY_UPDATED", "User", userId, status);
+
+  revalidatePath("/accounts/employees");
+  revalidatePath("/accounts/partners");
+  return { success: true };
+}
+
+export async function saveUserPermission(formData: {
+  userId: string;
+  resource: string;
+  canCreate: boolean;
+  canRead: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  if (!formData.userId || !formData.resource) {
+    return { error: "Select a user and module" };
+  }
+
+  await prisma.userPermission.upsert({
+    where: {
+      userId_resource: {
+        userId: formData.userId,
+        resource: formData.resource,
+      },
+    },
+    update: {
+      canCreate: formData.canCreate,
+      canRead: formData.canRead,
+      canUpdate: formData.canUpdate,
+      canDelete: formData.canDelete,
+    },
+    create: {
+      userId: formData.userId,
+      resource: formData.resource,
+      canCreate: formData.canCreate,
+      canRead: formData.canRead,
+      canUpdate: formData.canUpdate,
+      canDelete: formData.canDelete,
+    },
+  });
+
+  await audit(
+    session.user.id,
+    "USER_PERMISSION_UPDATED",
+    "User",
+    formData.userId,
+    `${formData.resource}: C${Number(formData.canCreate)} R${Number(
+      formData.canRead
+    )} U${Number(formData.canUpdate)} D${Number(formData.canDelete)}`
+  );
+
+  revalidatePath("/settings");
+  return { success: true };
 }
 
 // ============================================

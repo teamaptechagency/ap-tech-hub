@@ -14,6 +14,8 @@ export default async function MessagesPage() {
     where: {
       OR: [
         { jobId: { not: null } },
+        { specialOrderClientId: { not: null } },
+        { specialOrderPartnerId: { not: null } },
         { isDirect: true, participants: { some: { userId: myId } } },
       ],
     },
@@ -25,6 +27,18 @@ export default async function MessagesPage() {
           clientId: true,
           client: { select: { companyName: true } },
           externalName: true,
+        },
+      },
+      specialOrderClient: {
+        select: {
+          title: true,
+          client: { select: { companyName: true } },
+        },
+      },
+      specialOrderPartner: {
+        select: {
+          title: true,
+          partner: { select: { name: true } },
         },
       },
       participants: {
@@ -48,10 +62,16 @@ export default async function MessagesPage() {
 
     // Naming
     let name: string;
-    let kind: "JOB" | "DIRECT";
+    let kind: "JOB" | "DIRECT" | "SPECIAL_CLIENT" | "SPECIAL_PARTNER";
     if (c.job) {
       kind = "JOB";
       name = c.job.title;
+    } else if (c.specialOrderClient) {
+      kind = "SPECIAL_CLIENT";
+      name = c.specialOrderClient.title;
+    } else if (c.specialOrderPartner) {
+      kind = "SPECIAL_PARTNER";
+      name = c.specialOrderPartner.title;
     } else {
       kind = "DIRECT";
       const other = c.participants.find((p) => p.userId !== myId);
@@ -64,6 +84,12 @@ export default async function MessagesPage() {
       name,
       subtitle: c.job
         ? (c.job.client?.companyName ?? c.job.externalName ?? "Internal")
+        : c.specialOrderClient
+          ? `Special order client · ${c.specialOrderClient.client.companyName}`
+          : c.specialOrderPartner
+            ? `Special order partner · ${
+                c.specialOrderPartner.partner?.name ?? "Unassigned"
+              }`
         : "Direct message",
       isClientRelated: !!c.job?.clientId,
       lastBody: last?.body ?? null,

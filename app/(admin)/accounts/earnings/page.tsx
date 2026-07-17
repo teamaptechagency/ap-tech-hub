@@ -41,6 +41,7 @@ export default async function EarningsExpensesPage() {
           currency: e.currency,
           amountBdt: Number(e.amountBdt),
           source: e.source,
+          category: e.category,
           createdAt: e.createdAt.toISOString(),
         }))}
         expenses={expenses.map((e) => ({

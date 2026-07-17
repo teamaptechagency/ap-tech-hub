@@ -17,12 +17,18 @@ export default async function ClientMessagesPage() {
             publish: "PUBLISHED",
           },
         },
+        {
+          specialOrderClient: {
+            clientId: session.user.clientId,
+          },
+        },
         { isDirect: true, participants: { some: { userId: myId } } },
       ],
     },
     orderBy: { updatedAt: "desc" },
     include: {
       job: { select: { title: true } },
+      specialOrderClient: { select: { title: true } },
       participants: {
         include: { user: { select: { id: true, name: true, role: true } } },
       },
@@ -45,9 +51,21 @@ export default async function ClientMessagesPage() {
     const other = c.participants.find((p) => p.userId !== myId);
     return {
       id: c.id,
-      kind: (c.job ? "JOB" : "DIRECT") as "JOB" | "DIRECT",
-      name: c.job?.title ?? other?.user.name ?? "Direct message",
-      subtitle: c.job ? "Job discussion" : "Direct message",
+      kind: (c.job
+        ? "JOB"
+        : c.specialOrderClient
+          ? "SPECIAL_CLIENT"
+          : "DIRECT") as "JOB" | "DIRECT" | "SPECIAL_CLIENT",
+      name:
+        c.job?.title ??
+        c.specialOrderClient?.title ??
+        other?.user.name ??
+        "Direct message",
+      subtitle: c.job
+        ? "Job discussion"
+        : c.specialOrderClient
+          ? "Special order"
+          : "Direct message",
       isClientRelated: true,
       lastBody: last?.body ?? null,
       lastAt: last?.createdAt.toISOString() ?? null,

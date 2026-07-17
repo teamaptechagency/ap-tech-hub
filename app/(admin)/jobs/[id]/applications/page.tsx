@@ -64,7 +64,11 @@ export default async function ApplicationsPage({
         </p>
       </div>
 
-      <ApplicationsList applications={rows} jobStatus={job.status} />
+      <ApplicationsList
+        applications={rows}
+        jobStatus={job.status}
+        defaultWorkerValue={job.workerValue ? Number(job.workerValue) : null}
+      />
     </div>
   );
 }

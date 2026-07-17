@@ -26,8 +26,12 @@ async function audit(
 }
 
 // Convert to BDT using Settings rates
-async function toBdt(amount: number, currency: string) {
+async function toBdt(amount: number, currency: string, manualRate?: string) {
   if (currency === "BDT") return amount;
+  const parsedManualRate = parseFloat(manualRate ?? "");
+  if (Number.isFinite(parsedManualRate) && parsedManualRate > 0) {
+    return amount * parsedManualRate;
+  }
   const rate = await prisma.exchangeRate.findUnique({
     where: { code: currency },
   });
@@ -40,8 +44,10 @@ async function toBdt(amount: number, currency: string) {
 export async function addCustomEarning(formData: {
   title: string;
   description?: string;
+  category?: string;
   amount: string;
   currency: "USD" | "EUR" | "GBP" | "BDT";
+  exchangeRate?: string;
 }) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
@@ -54,7 +60,11 @@ export async function addCustomEarning(formData: {
     return { error: "Enter a valid amount" };
   }
 
-  const amountBdt = await toBdt(amount, formData.currency);
+  const amountBdt = await toBdt(
+    amount,
+    formData.currency,
+    formData.exchangeRate
+  );
 
   const earning = await prisma.earning.create({
     data: {
@@ -64,6 +74,7 @@ export async function addCustomEarning(formData: {
       currency: formData.currency,
       amountBdt,
       source: "CUSTOM",
+      category: formData.category || "Other",
       createdById: session.user.id,
     },
   });
@@ -89,6 +100,7 @@ export async function addExpense(formData: {
   description?: string;
   amount: string;
   currency: "USD" | "EUR" | "GBP" | "BDT";
+  exchangeRate?: string;
   category: string;
   recurring: boolean;
   recurringDay?: string;
@@ -112,7 +124,11 @@ export async function addExpense(formData: {
     }
   }
 
-  const amountBdt = await toBdt(amount, formData.currency);
+  const amountBdt = await toBdt(
+    amount,
+    formData.currency,
+    formData.exchangeRate
+  );
 
   const expense = await prisma.expense.create({
     data: {

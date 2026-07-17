@@ -77,10 +77,10 @@ export async function globalSearch(query: string) {
       href: `/invoices/${i.id}`,
     })),
     ...users.map((u) => ({
-      kind: "Member",
+      kind: "Employee",
       label: u.name,
-      hint: "team member",
-      href: `/accounts/workers`,
+      hint: "employee",
+      href: `/accounts/employees`,
     })),
   ];
 

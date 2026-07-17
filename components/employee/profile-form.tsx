@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { updateProfile, changePassword } from "@/actions/profile.actions";
+import {
+  changePassword,
+  requestEmailChange,
+  enableAuthenticator,
+  setTwoFactorEnabled,
+  setupAuthenticator,
+  updateProfile,
+} from "@/actions/profile.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,39 +31,166 @@ const TIMEZONES = [
   "Asia/Dubai",
 ];
 
+type PendingChange = {
+  id: string;
+  type: string;
+  createdAt: string;
+};
+
 export function ProfileForm({
+  name,
+  email,
+  phone,
+  address,
+  dateOfBirth,
+  nidNumber,
+  nidUrl,
+  photoUrl,
+  identityStatus,
+  emergencyContact,
+  bio,
+  gender,
+  profession,
   payoutMethod,
   payoutDetails,
   timezone,
+  twoFactorEnabled,
+  withdrawBlockedUntil,
+  pendingChanges = [],
 }: {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  dateOfBirth: string;
+  nidNumber: string;
+  nidUrl: string;
+  photoUrl: string;
+  identityStatus: string;
+  emergencyContact: string;
+  bio: string;
+  gender: string;
+  profession: string;
   payoutMethod: string;
   payoutDetails: string;
   timezone: string;
+  twoFactorEnabled: boolean;
+  withdrawBlockedUntil: string | null;
+  pendingChanges?: PendingChange[];
 }) {
-  const [method, setMethod] = useState<string | null>(
-    payoutMethod || "bKash"
-  );
+  const [fullName, setFullName] = useState(name);
+  const [nextEmail, setNextEmail] = useState(email);
+  const [phoneValue, setPhoneValue] = useState(phone);
+  const [addressValue, setAddressValue] = useState(address);
+  const [dobValue, setDobValue] = useState(dateOfBirth);
+  const [nidNumberValue, setNidNumberValue] = useState(nidNumber);
+  const [nidUrlValue, setNidUrlValue] = useState(nidUrl);
+  const [photoUrlValue, setPhotoUrlValue] = useState(photoUrl);
+  const [emergencyValue, setEmergencyValue] = useState(emergencyContact);
+  const [bioValue, setBioValue] = useState(bio);
+  const [genderValue, setGenderValue] = useState(gender || "OTHER");
+  const [professionValue, setProfessionValue] = useState(profession);
+  const [method, setMethod] = useState(payoutMethod || "bKash");
   const [details, setDetails] = useState(payoutDetails);
-  const [tz, setTz] = useState<string | null>(timezone);
+  const [tz, setTz] = useState(timezone);
+  const [twoFactor, setTwoFactor] = useState(twoFactorEnabled);
   const [busy, setBusy] = useState(false);
-
-  // Password
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [securityBusy, setSecurityBusy] = useState(false);
+  const [uploading, setUploading] = useState<"nid" | "photo" | null>(null);
+  const [authSecret, setAuthSecret] = useState("");
+  const [authUrl, setAuthUrl] = useState("");
+  const [authCode, setAuthCode] = useState("");
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [pwBusy, setPwBusy] = useState(false);
+  const authQrUrl = authUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(authUrl)}`
+    : "";
 
   async function saveProfile(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     const result = await updateProfile({
-      payoutMethod: method ?? "",
+      name: fullName,
+      phone: phoneValue,
+      address: addressValue,
+      dateOfBirth: dobValue,
+      nidNumber: nidNumberValue,
+      nidUrl: nidUrlValue,
+      photoUrl: photoUrlValue,
+      emergencyContact: emergencyValue,
+      bio: bioValue,
+      gender: genderValue,
+      profession: professionValue,
+      payoutMethod: method,
       payoutDetails: details,
-      timezone: tz ?? "Asia/Dhaka",
+      timezone: tz,
     });
     setBusy(false);
     if (result.error) return toast.error(result.error);
-    toast.success("Profile saved");
+    toast.success(result.review ?? "Profile saved");
   }
+
+  async function saveEmail(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setEmailBusy(true);
+    const result = await requestEmailChange(nextEmail);
+    setEmailBusy(false);
+    if (result.error) return toast.error(result.error);
+    toast.success(result.review ?? "Email change requested");
+  }
+
+  async function toggleTwoFactor() {
+    setSecurityBusy(true);
+    const enabled = !twoFactor;
+    const result = await setTwoFactorEnabled(enabled);
+    setSecurityBusy(false);
+    if (result.error) return toast.error(result.error);
+    setTwoFactor(enabled);
+    toast.success(enabled ? "2-factor login enabled" : "2-factor login disabled");
+  }
+
+  async function startAuthenticator() {
+    setSecurityBusy(true);
+    const result = await setupAuthenticator();
+    setSecurityBusy(false);
+    if (result.error) return toast.error(result.error);
+    setAuthSecret(result.secret ?? "");
+    setAuthUrl(result.otpAuthUrl ?? "");
+    toast.success("Authenticator secret created");
+  }
+
+  async function confirmAuthenticator() {
+    setSecurityBusy(true);
+    const result = await enableAuthenticator(authCode);
+    setSecurityBusy(false);
+    if (result.error) return toast.error(result.error);
+    setTwoFactor(true);
+    setAuthCode("");
+    toast.success("Authenticator 2-factor enabled");
+  }
+
+  async function uploadIdentityFile(file: File, type: "nid" | "photo") {
+    setUploading(type);
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    setUploading(null);
+    if (!response.ok || !data.attachment?.fileUrl) {
+      toast.error(data.error ?? "Upload failed");
+      return;
+    }
+    if (type === "nid") setNidUrlValue(data.attachment.fileUrl);
+    else setPhotoUrlValue(data.attachment.fileUrl);
+    toast.success("File uploaded. Save profile to submit for review.");
+  }
+
+  const mobilePayout = ["bKash", "Nagad"].includes(method);
 
   async function savePassword(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -73,14 +207,77 @@ export function ProfileForm({
     <>
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Payout details</CardTitle>
+          <CardTitle className="text-base">Personal information</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={saveProfile} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Full name" id="pfName" value={fullName} onChange={setFullName} required />
+              <Field label="Phone number" id="pfPhone" value={phoneValue} onChange={setPhoneValue} />
+              <Field label="Profession" id="pfProfession" value={professionValue} onChange={setProfessionValue} />
+              <div className="space-y-2">
+                <Label>Gender</Label>
+                <Select
+                  value={genderValue}
+                  onValueChange={(value) => value && setGenderValue(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MALE">Male</SelectItem>
+                    <SelectItem value="FEMALE">Female</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Field label="Date of birth" id="pfDob" value={dobValue} onChange={setDobValue} type="date" />
+              <Field label="Emergency contact" id="pfEmergency" value={emergencyValue} onChange={setEmergencyValue} />
+            </div>
+
+            <div className="rounded-md border bg-muted/20 p-3">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-medium">Identity verification</p>
+                  <p className="text-xs text-muted-foreground">
+                    Profile photo, NID number, DOB and NID copy are reviewed by admin.
+                  </p>
+                </div>
+                <span className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground">
+                  {identityStatus.toLowerCase()}
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="NID number" id="pfNidNumber" value={nidNumberValue} onChange={setNidNumberValue} />
+                <UploadBox
+                  label="Profile photo"
+                  uploaded={Boolean(photoUrlValue)}
+                  uploading={uploading === "photo"}
+                  accept="image/*"
+                  onFile={(file) => uploadIdentityFile(file, "photo")}
+                  onOpen={() => photoUrlValue && window.open(photoUrlValue, "_blank")}
+                />
+                <UploadBox
+                  label="NID copy"
+                  uploaded={Boolean(nidUrlValue)}
+                  uploading={uploading === "nid"}
+                  accept="image/*,application/pdf"
+                  onFile={(file) => uploadIdentityFile(file, "nid")}
+                  onOpen={() => nidUrlValue && window.open(nidUrlValue, "_blank")}
+                />
+              </div>
+            </div>
+
+            <Field label="Address" id="pfAddress" value={addressValue} onChange={setAddressValue} />
+            <Field label="Short bio / note" id="pfBio" value={bioValue} onChange={setBioValue} />
+
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Payout method</Label>
-                <Select value={method} onValueChange={setMethod}>
+                <Select
+                  value={method}
+                  onValueChange={(value) => value && setMethod(value)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -88,42 +285,142 @@ export function ProfileForm({
                     <SelectItem value="bKash">bKash</SelectItem>
                     <SelectItem value="Nagad">Nagad</SelectItem>
                     <SelectItem value="Bank">Bank transfer</SelectItem>
+                    <SelectItem value="Payoneer">Payoneer</SelectItem>
+                    <SelectItem value="Wise">Wise</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pfDetails">Account details</Label>
-                <Input
-                  id="pfDetails"
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  placeholder="e.g. 017XX-XXXXXX or bank acc no"
-                />
+                {mobilePayout ? (
+                  <Input
+                    id="pfDetails"
+                    value={details}
+                    onChange={(event) => setDetails(event.target.value)}
+                    placeholder="e.g. 017XX-XXXXXX"
+                  />
+                ) : (
+                  <textarea
+                    id="pfDetails"
+                    value={details}
+                    onChange={(event) => setDetails(event.target.value)}
+                    placeholder="Bank name, account name, account number, branch, routing, note..."
+                    className="min-h-32 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                )}
               </div>
             </div>
+
             <div className="space-y-2">
               <Label>Timezone</Label>
-              <Select value={tz} onValueChange={setTz}>
+              <Select value={tz} onValueChange={(value) => value && setTz(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIMEZONES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
+                  {TIMEZONES.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
             <Button type="submit" size="sm" disabled={busy}>
               {busy ? "Saving..." : "Save profile"}
             </Button>
+
             <p className="text-[10px] text-muted-foreground">
-              Withdraw requests pre-fill from these details — the admin sends
-              money here.
+              Phone and payout changes go under review. Withdrawal requests are
+              allowed, but payment waits up to 24 hours for verification unless
+              admin approves earlier.
+            </p>
+
+            {withdrawBlockedUntil && new Date(withdrawBlockedUntil) > new Date() && (
+              <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-700">
+                Verification wait until{" "}
+                {new Date(withdrawBlockedUntil).toLocaleString("en-GB")}.
+                You can still submit a withdrawal request.
+              </p>
+            )}
+
+            {pendingChanges.length > 0 && (
+              <div className="rounded-md border bg-muted/40 p-3 text-xs">
+                <p className="font-medium">Pending review</p>
+                {pendingChanges.map((change) => (
+                  <p key={change.id} className="mt-1 text-muted-foreground">
+                    {change.type.toLowerCase()} change requested{" "}
+                    {new Date(change.createdAt).toLocaleDateString("en-GB")}
+                  </p>
+                ))}
+              </div>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Email and security</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form onSubmit={saveEmail} className="space-y-3">
+            <Field label="Email address" id="pfEmail" type="email" value={nextEmail} onChange={setNextEmail} required />
+            <Button type="submit" size="sm" variant="outline" disabled={emailBusy}>
+              {emailBusy ? "Requesting..." : "Request email change"}
+            </Button>
+            <p className="text-[10px] text-muted-foreground">
+              Email changes require admin review before they become active.
             </p>
           </form>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">2-factor login</p>
+              <p className="text-xs text-muted-foreground">
+                Use email code or Google/Microsoft Authenticator after password.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={toggleTwoFactor} disabled={securityBusy}>
+                {securityBusy ? "Saving..." : twoFactor ? "Turn off" : "Use email code"}
+              </Button>
+              <Button type="button" size="sm" onClick={startAuthenticator} disabled={securityBusy}>
+                Use Authenticator
+              </Button>
+            </div>
+          </div>
+          {authSecret && (
+            <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+              <p className="text-sm font-medium">Add this to Google or Microsoft Authenticator</p>
+              {authQrUrl && (
+                <div className="inline-flex rounded-md border bg-white p-3">
+                  <img
+                    src={authQrUrl}
+                    alt="Authenticator setup QR code"
+                    className="h-[220px] w-[220px]"
+                  />
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Scan the QR code, then enter the 6 digit code from your app.
+              </p>
+              <p className="break-all font-mono text-xs">{authSecret}</p>
+              <p className="break-all text-[10px] text-muted-foreground">{authUrl}</p>
+              <div className="flex gap-2">
+                <Input
+                  value={authCode}
+                  onChange={(event) => setAuthCode(event.target.value)}
+                  placeholder="6 digit code"
+                  inputMode="numeric"
+                />
+                <Button type="button" onClick={confirmAuthenticator} disabled={securityBusy || authCode.length < 6}>
+                  Verify
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -134,26 +431,8 @@ export function ProfileForm({
         <CardContent>
           <form onSubmit={savePassword} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="pwCurrent">Current password</Label>
-                <Input
-                  id="pwCurrent"
-                  type="password"
-                  value={current}
-                  onChange={(e) => setCurrent(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pwNext">New password (min 8)</Label>
-                <Input
-                  id="pwNext"
-                  type="password"
-                  value={next}
-                  onChange={(e) => setNext(e.target.value)}
-                  required
-                />
-              </div>
+              <Field label="Current password" id="pwCurrent" type="password" value={current} onChange={setCurrent} required />
+              <Field label="New password (min 8)" id="pwNext" type="password" value={next} onChange={setNext} required />
             </div>
             <Button type="submit" size="sm" variant="outline" disabled={pwBusy}>
               {pwBusy ? "Changing..." : "Change password"}
@@ -162,5 +441,78 @@ export function ProfileForm({
         </CardContent>
       </Card>
     </>
+  );
+}
+
+function UploadBox({
+  label,
+  uploaded,
+  uploading,
+  accept,
+  onFile,
+  onOpen,
+}: {
+  label: string;
+  uploaded: boolean;
+  uploading: boolean;
+  accept: string;
+  onFile: (file: File) => void;
+  onOpen: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex gap-2">
+        <label className="flex flex-1 cursor-pointer items-center justify-center rounded-md border border-dashed p-2 text-xs text-muted-foreground hover:bg-muted">
+          {uploading ? "Uploading..." : uploaded ? "Uploaded" : "Upload file"}
+          <input
+            type="file"
+            accept={accept}
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onFile(file);
+            }}
+          />
+        </label>
+        {uploaded && (
+          <Button type="button" size="sm" variant="outline" onClick={onOpen}>
+            Open
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  id,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  required,
+}: {
+  label: string;
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  placeholder?: string;
+  required?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        required={required}
+      />
+    </div>
   );
 }

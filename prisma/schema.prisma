@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================
@@ -16,6 +17,8 @@ enum Role {
   ADMIN
   CEO
   TEAM_MEMBER
+  BUSINESS_PARTNER
+  PARTNER_MANAGER
   CLIENT
   CLIENT_MANAGER
 }
@@ -34,6 +37,12 @@ model User {
   // Worker payout info (set by the worker in their profile)
   payoutMethod    String?
   payoutDetails   String?
+  withdrawBlockedUntil DateTime?
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorMethod  String    @default("EMAIL")
+  twoFactorCode    String?
+  twoFactorCodeExp DateTime?
+  totpSecret       String?
   // Cached money (ledger = WorkerTxn)
   balance         Decimal   @default(0) @db.Decimal(12, 2)
   reserve         Decimal   @default(0) @db.Decimal(12, 2)
@@ -43,35 +52,98 @@ model User {
 
   // Public registration profile
   phone      String?
+  address    String?
+  dateOfBirth DateTime?
+  emergencyContact String?
+  bio        String?
   gender     String? // MALE | FEMALE | OTHER
   profession String? // e.g. "UI/UX Designer"
   nidUrl     String? // NID/Passport document
+  nidNumber  String?
   photoUrl   String? // profile photo
+  identityStatus String @default("UNVERIFIED") // UNVERIFIED | PENDING | VERIFIED | REJECTED
 
   // Registration approval + password reset
   accountStatus String    @default("ACTIVE") // ACTIVE | PENDING_APPROVAL | REJECTED
   resetToken    String?   @unique
   resetTokenExp DateTime?
 
-  skills              Skill[]
-  jobMemberships      JobMember[]
-  workSessions        WorkSession[]
-  applications        Application[]
-  assignedTasks       WeeklyTask[]              @relation("TaskAssignee")
-  completedTasks      WeeklyTask[]              @relation("TaskCompleter")
-  assignedMilestones  Milestone[]               @relation("MilestoneAssignee")
-  sentMessages        Message[]
-  uploadedAttachments Attachment[]              @relation("AttachmentUploader")
-  conversations       ConversationParticipant[]
-  workerTxns          WorkerTxn[]
-  withdrawRequests    WithdrawRequest[]
-  ratingsReceived     Rating[]                  @relation("RatedWorker")
-  meetingsCreated     Meeting[]                 @relation("MeetingCreator")
-  meetings            MeetingParticipant[]
-  notifications       Notification[]
-  paymentSubmissions  PaymentSubmission[]
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
+  skills               Skill[]
+  jobMemberships       JobMember[]
+  workSessions         WorkSession[]
+  applications         Application[]
+  assignedTasks        WeeklyTask[]              @relation("TaskAssignee")
+  completedTasks       WeeklyTask[]              @relation("TaskCompleter")
+  assignedMilestones   Milestone[]               @relation("MilestoneAssignee")
+  sentMessages         Message[]
+  uploadedAttachments  Attachment[]              @relation("AttachmentUploader")
+  conversations        ConversationParticipant[]
+  workerTxns           WorkerTxn[]
+  withdrawRequests     WithdrawRequest[]
+  ratingsReceived      Rating[]                  @relation("RatedWorker")
+  meetingsCreated      Meeting[]                 @relation("MeetingCreator")
+  meetings             MeetingParticipant[]
+  notifications        Notification[]
+  paymentSubmissions   PaymentSubmission[]
+  profileChangeRequests UserProfileChangeRequest[]
+  profileChangeReviews  UserProfileChangeRequest[] @relation("ProfileChangeReviewer")
+  specialOrdersWorked  SpecialOrder[]            @relation("SpecialOrderPartner")
+  specialOrdersCreated SpecialOrder[]            @relation("SpecialOrderCreator")
+  specialProfiles      SpecialOrderProfile[]     @relation("SpecialOrderProfilePartner")
+  defaultMarketplaces  Marketplace[]             @relation("MarketplaceDefaultPartner")
+  permissions          UserPermission[]
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+}
+
+enum ProfileChangeType {
+  EMAIL
+  PHONE
+  PAYOUT
+}
+
+enum ProfileChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model UserProfileChangeRequest {
+  id                   String              @id @default(cuid())
+  userId               String
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type                 ProfileChangeType
+  oldValue             String?
+  newValue             String
+  status               ProfileChangeStatus @default(PENDING)
+  withdrawBlockedUntil DateTime
+  reviewedById         String?
+  reviewedBy           User?               @relation("ProfileChangeReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt           DateTime?
+  note                 String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+}
+
+model UserPermission {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource  String
+  canCreate Boolean  @default(false)
+  canRead   Boolean  @default(true)
+  canUpdate Boolean  @default(false)
+  canDelete Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, resource])
+  @@index([userId])
+  @@index([resource])
 }
 
 model EmailOtp {
@@ -122,6 +194,8 @@ model Client {
   exchangeRequests   PointExchangeRequest[]
   ratings            Rating[]
   jobRequests        JobRequest[]
+  specialOrders      SpecialOrder[]
+  specialProfiles    SpecialOrderProfile[]
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
 }
@@ -170,6 +244,11 @@ model Job {
   clientValue    Decimal? @db.Decimal(12, 2)
   clientCurrency String   @default("USD")
   vatPercent     Decimal? @db.Decimal(5, 2)
+
+  // Default worker payout visible before application.
+  // MONTHLY: per month | FIXED: total | HOURLY: per hour
+  workerValue    Decimal? @db.Decimal(12, 2)
+  workerCurrency String   @default("BDT")
 
   // Type-specific fields
   startDate       DateTime?
@@ -348,14 +427,18 @@ model Application {
 // ============================================
 
 model Conversation {
-  id           String                    @id @default(cuid())
-  jobId        String?                   @unique
-  job          Job?                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  isDirect     Boolean                   @default(false)
-  participants ConversationParticipant[]
-  messages     Message[]
-  createdAt    DateTime                  @default(now())
-  updatedAt    DateTime                  @default(now()) @updatedAt
+  id                    String                    @id @default(cuid())
+  jobId                 String?                   @unique
+  job                   Job?                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  specialOrderClientId  String?                   @unique
+  specialOrderClient    SpecialOrder?             @relation("SpecialOrderClientConversation", fields: [specialOrderClientId], references: [id], onDelete: Cascade)
+  specialOrderPartnerId String?                   @unique
+  specialOrderPartner   SpecialOrder?             @relation("SpecialOrderPartnerConversation", fields: [specialOrderPartnerId], references: [id], onDelete: Cascade)
+  isDirect              Boolean                   @default(false)
+  participants          ConversationParticipant[]
+  messages              Message[]
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @default(now()) @updatedAt
 }
 
 model ConversationParticipant {
@@ -410,6 +493,8 @@ model Attachment {
   workSession         WorkSession?       @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
   paymentSubmissionId String?
   paymentSubmission   PaymentSubmission? @relation(fields: [paymentSubmissionId], references: [id], onDelete: SetNull)
+  specialOrderId      String?
+  specialOrder        SpecialOrder?      @relation(fields: [specialOrderId], references: [id], onDelete: Cascade)
   createdAt           DateTime           @default(now())
 
   @@index([uploadedById])
@@ -419,6 +504,7 @@ model Attachment {
   @@index([taskId])
   @@index([workSessionId])
   @@index([paymentSubmissionId])
+  @@index([specialOrderId])
 }
 
 // ============================================
@@ -428,6 +514,7 @@ model Attachment {
 enum InvoiceType {
   AUTO
   CUSTOM
+  SPECIAL_ORDER
 }
 
 enum InvoiceStatus {
@@ -446,6 +533,8 @@ model Invoice {
   title                      String?
   jobId                      String?
   job                        Job?                @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  specialOrderId             String?             @unique
+  specialOrder               SpecialOrder?       @relation(fields: [specialOrderId], references: [id], onDelete: SetNull)
   clientId                   String
   client                     Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
   amount                     Decimal             @db.Decimal(12, 2)
@@ -471,6 +560,158 @@ model Invoice {
   updatedAt                  DateTime            @updatedAt
 
   @@unique([jobId, periodStart])
+}
+
+enum SpecialOrderStatus {
+  PLANNED
+  ACTIVE
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum SpecialOrderReviewStatus {
+  PENDING
+  DONE
+}
+
+model SpecialOrder {
+  id                    String                   @id @default(cuid())
+  title                 String
+  profileId             String?
+  profile               SpecialOrderProfile?     @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  marketplaceId         String?
+  marketplace           Marketplace?             @relation(fields: [marketplaceId], references: [id], onDelete: SetNull)
+  profileName           String?
+  buyerProfile          String?
+  niche                 String?
+  conversationSheetUrl  String?
+  orderDate             DateTime?
+  plannedDate           DateTime?
+  dueDate               DateTime?
+  deliveryDate          DateTime?
+  orderAmountUsd        Decimal                  @db.Decimal(12, 2)
+  clientUsdRate         Decimal                  @db.Decimal(12, 2)
+  partnerUsdRate        Decimal                  @db.Decimal(12, 2)
+  clientAmountBdt       Decimal                  @db.Decimal(12, 2)
+  partnerCostBdt        Decimal                  @db.Decimal(12, 2)
+  profitBdt             Decimal                  @db.Decimal(12, 2)
+  status                SpecialOrderStatus       @default(PLANNED)
+  activeState           String?
+  gigImageUrl           String?
+  keyword               String?
+  profileLevel          String?
+  reviewStatus          SpecialOrderReviewStatus @default(PENDING)
+  privateFeedbackUrl    String?
+  privateFeedbackDevice String?
+  privateFeedbackDate   DateTime?
+  privateFeedback       String?
+  reviewText            String?
+  adminReviewText       String?
+  partnerReviewText     String?
+  reviewUrl             String?
+  clientComment         String?
+  partnerComment        String?
+  deliveryNote          String?
+  conversationMessages  Json?
+  conversationFields    Json?
+  clientId              String
+  client                Client                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  partnerId             String?
+  partner               User?                    @relation("SpecialOrderPartner", fields: [partnerId], references: [id], onDelete: SetNull)
+  createdById           String?
+  createdBy             User?                    @relation("SpecialOrderCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  invoice               Invoice?
+  earning               Earning?
+  clientConversation    Conversation?            @relation("SpecialOrderClientConversation")
+  partnerConversation   Conversation?            @relation("SpecialOrderPartnerConversation")
+  attachments           Attachment[]
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  @@index([clientId])
+  @@index([partnerId])
+  @@index([profileId])
+  @@index([marketplaceId])
+  @@index([status])
+  @@index([plannedDate])
+}
+
+model Marketplace {
+  id             String                  @id @default(cuid())
+  name           String                  @unique
+  active         Boolean                 @default(true)
+  clientUsdRate  Decimal                 @default(125) @db.Decimal(12, 2)
+  partnerUsdRate Decimal                 @default(115) @db.Decimal(12, 2)
+  defaultPartnerId String?
+  defaultPartner   User?                   @relation("MarketplaceDefaultPartner", fields: [defaultPartnerId], references: [id], onDelete: SetNull)
+  profiles       SpecialOrderProfile[]
+  specialOrders  SpecialOrder[]
+  rateTiers      MarketplaceRateTier[]
+  adjustments    MarketplaceAdjustment[]
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@index([defaultPartnerId])
+}
+
+model MarketplaceRateTier {
+  id             String      @id @default(cuid())
+  marketplaceId  String
+  marketplace    Marketplace @relation(fields: [marketplaceId], references: [id], onDelete: Cascade)
+  minUsd         Decimal     @default(0) @db.Decimal(12, 2)
+  maxUsd         Decimal?    @db.Decimal(12, 2)
+  clientUsdRate  Decimal     @db.Decimal(12, 2)
+  partnerUsdRate Decimal     @db.Decimal(12, 2)
+  active         Boolean     @default(true)
+  priority       Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([marketplaceId])
+  @@index([active, priority])
+}
+
+model MarketplaceAdjustment {
+  id            String      @id @default(cuid())
+  marketplaceId String
+  marketplace   Marketplace @relation(fields: [marketplaceId], references: [id], onDelete: Cascade)
+  label         String
+  type          String
+  thresholdUsd  Decimal?    @db.Decimal(12, 2)
+  value         Decimal     @db.Decimal(12, 2)
+  active        Boolean     @default(true)
+  priority      Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([marketplaceId])
+  @@index([active, priority])
+}
+
+model SpecialOrderProfile {
+  id              String         @id @default(cuid())
+  clientId        String?
+  client          Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  partnerId       String?
+  partner         User?          @relation("SpecialOrderProfilePartner", fields: [partnerId], references: [id], onDelete: SetNull)
+  marketplaceId   String
+  marketplace     Marketplace    @relation(fields: [marketplaceId], references: [id], onDelete: Cascade)
+  profileName     String
+  profileLevel    String?
+  niche           String?
+  keywords        String?
+  gigThumbnailUrl String?
+  active          Boolean        @default(true)
+  note            String?
+  orders          SpecialOrder[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([clientId])
+  @@index([partnerId])
+  @@index([marketplaceId])
+  @@index([active])
 }
 
 model InvoiceItem {
@@ -692,16 +933,22 @@ enum EntrySource {
 }
 
 model Earning {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  amount      Decimal     @db.Decimal(12, 2)
-  currency    String      @default("BDT")
-  amountBdt   Decimal     @db.Decimal(12, 2)
-  source      EntrySource @default(CUSTOM)
-  invoiceId   String?     @unique
-  createdById String?
-  createdAt   DateTime    @default(now())
+  id             String        @id @default(cuid())
+  title          String
+  description    String?
+  amount         Decimal       @db.Decimal(12, 2)
+  currency       String        @default("BDT")
+  amountBdt      Decimal       @db.Decimal(12, 2)
+  source         EntrySource   @default(CUSTOM)
+  category       String        @default("Other")
+  status         String        @default("POSTED")
+  invoiceId      String?       @unique
+  specialOrderId String?       @unique
+  specialOrder   SpecialOrder? @relation(fields: [specialOrderId], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdAt      DateTime      @default(now())
+
+  @@index([specialOrderId])
 }
 
 model Expense {

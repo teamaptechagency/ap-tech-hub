@@ -109,6 +109,7 @@ export function CreateJobDialog({
   const [clientValue, setClientValue] = useState("");
   const [clientCurrency, setClientCurrency] =
     useState<Currency>("USD");
+  const [workerValue, setWorkerValue] = useState("");
 
   // Type-specific fields
   const [startDate, setStartDate] = useState("");
@@ -148,13 +149,13 @@ export function CreateJobDialog({
         ...currentMembers,
         {
           userId,
-          workerValue: "",
+          workerValue,
         },
       ];
     });
   }
 
-  function setWorkerValue(userId: string, value: string) {
+  function setMemberWorkerValue(userId: string, value: string) {
     setMembers((currentMembers) =>
       currentMembers.map((member) =>
         member.userId === userId
@@ -231,11 +232,21 @@ export function CreateJobDialog({
       return;
     }
 
+    const defaultWorkerValue = Number(workerValue);
+    if (
+      !workerValue ||
+      !Number.isFinite(defaultWorkerValue) ||
+      defaultWorkerValue <= 0
+    ) {
+      setError("Please enter how much the employee will receive.");
+      return;
+    }
+
     const invalidMemberValue = members.some((member) => {
+      if (!member.workerValue) return false;
       const value = Number(member.workerValue);
 
       return (
-        !member.workerValue ||
         !Number.isFinite(value) ||
         value < 0
       );
@@ -243,7 +254,7 @@ export function CreateJobDialog({
 
     if (invalidMemberValue) {
       setError(
-        "Please enter a valid worker value for each selected member."
+        "Please enter a valid worker value for selected members, or leave it empty to use the default employee payout."
       );
       return;
     }
@@ -274,6 +285,7 @@ export function CreateJobDialog({
             : "",
         clientValue,
         clientCurrency,
+        workerValue,
         startDate,
         billingDay,
         deadline,
@@ -644,7 +656,7 @@ export function CreateJobDialog({
           </div>
 
           {/* Pricing */}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-[1fr_0.65fr]">
             <div className="space-y-2">
               <Label htmlFor="client-value">
                 Client value{" "}
@@ -696,6 +708,33 @@ export function CreateJobDialog({
                   </SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="worker-value">
+                Employee payout{" "}
+                <span className="text-xs font-normal text-muted-foreground">
+                  ({valueLabel}, BDT)
+                </span>
+              </Label>
+
+              <Input
+                id="worker-value"
+                type="number"
+                min={0}
+                step="0.01"
+                value={workerValue}
+                onChange={(event) =>
+                  setWorkerValue(event.target.value)
+                }
+                placeholder="e.g. 8000"
+                disabled={loading}
+                required
+              />
+              <p className="text-[10px] text-muted-foreground">
+                This is what employees see before applying. Assigned members
+                can still have a different payout below if needed.
+              </p>
             </div>
           </div>
 
@@ -803,7 +842,7 @@ export function CreateJobDialog({
                     step="0.01"
                     value={selectedMember.workerValue}
                     onChange={(event) =>
-                      setWorkerValue(
+                      setMemberWorkerValue(
                         selectedMember.userId,
                         event.target.value
                       )

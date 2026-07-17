@@ -47,6 +47,7 @@ const createJobSchema = z.object({
   // Client-side pricing
   clientValue: z.string().optional(),
   clientCurrency: z.enum(["USD", "EUR", "GBP", "BDT"]),
+  workerValue: z.string().optional(),
 
   // Type-specific
   startDate: z.string().optional(),
@@ -157,6 +158,11 @@ export async function createJob(formData: CreateJobInput) {
   }
 
   const clientValue = data.clientValue ? parseFloat(data.clientValue) : null;
+  const workerValue = data.workerValue ? parseFloat(data.workerValue) : null;
+
+  if (!workerValue || isNaN(workerValue) || workerValue <= 0) {
+    return { error: "Enter how much the employee will receive for this job" };
+  }
 
   const job = await prisma.job.create({
     data: {
@@ -175,6 +181,8 @@ export async function createJob(formData: CreateJobInput) {
 
       clientValue,
       clientCurrency: data.clientCurrency,
+      workerValue,
+      workerCurrency: "BDT",
 
       startDate: data.startDate ? new Date(data.startDate) : null,
       billingDay:
@@ -191,7 +199,7 @@ export async function createJob(formData: CreateJobInput) {
       members: {
         create: data.members.map((m) => ({
           userId: m.userId,
-          workerValue: parseFloat(m.workerValue) || 0,
+          workerValue: parseFloat(m.workerValue) || workerValue,
           workerCurrency: "BDT",
         })),
       },

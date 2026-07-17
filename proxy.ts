@@ -1,6 +1,12 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { homeFor, ADMIN_ROLES, WORKER_ROLES, CLIENT_ROLES } from "@/lib/roles";
+import {
+  homeFor,
+  ADMIN_ROLES,
+  WORKER_ROLES,
+  CLIENT_ROLES,
+  PARTNER_ROLES,
+} from "@/lib/roles";
 
 // Routes anyone can visit without logging in
 const PUBLIC_PATHS = [
@@ -31,7 +37,10 @@ export const proxy = auth((req) => {
 
   // Everything else requires login
   if (!user) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("reason", "auth");
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   const role = user.role;
@@ -43,10 +52,14 @@ export const proxy = auth((req) => {
   if (pathname.startsWith("/c/") && !CLIENT_ROLES.includes(role)) {
     return NextResponse.redirect(new URL(homeFor(role), req.url));
   }
-  // Admin portal = everything not /e/ or /c/
+  if (pathname.startsWith("/p/") && !PARTNER_ROLES.includes(role)) {
+    return NextResponse.redirect(new URL(homeFor(role), req.url));
+  }
+  // Admin portal = everything not /e/, /c/ or /p/
   if (
     !pathname.startsWith("/e/") &&
     !pathname.startsWith("/c/") &&
+    !pathname.startsWith("/p/") &&
     !ADMIN_ROLES.includes(role)
   ) {
     return NextResponse.redirect(new URL(homeFor(role), req.url));

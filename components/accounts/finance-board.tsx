@@ -6,12 +6,10 @@ import {
   addExpense,
   deleteFinanceEntry,
 } from "@/actions/finance.actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Repeat } from "lucide-react";
+import { Plus, Repeat, Trash2 } from "lucide-react";
 
 type EarningRow = {
   id: string;
@@ -36,6 +36,7 @@ type EarningRow = {
   currency: string;
   amountBdt: number;
   source: string;
+  category?: string;
   createdAt: string;
 };
 
@@ -45,7 +46,42 @@ type ExpenseRow = EarningRow & {
   recurringDay: number | null;
 };
 
-const CATEGORIES = ["Tools", "Office", "Marketing", "Worker pay", "Other"];
+const EARNING_CATEGORIES = [
+  "Project Income",
+  "Special Order Income",
+  "Consultation",
+  "Maintenance",
+  "Commission",
+  "Bonus",
+  "Affiliate Income",
+  "Adjustment",
+  "Other",
+];
+
+const EXPENSE_CATEGORIES = [
+  "Employee Cost",
+  "Partner Cost",
+  "Software",
+  "Subscription",
+  "Marketing",
+  "Hosting",
+  "Domain",
+  "Office",
+  "Refund",
+  "Marketplace Fee",
+  "Other",
+];
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function money(amount: number) {
+  return `BDT ${Math.round(amount).toLocaleString()}`;
+}
 
 export function FinanceBoard({
   earnings,
@@ -59,114 +95,123 @@ export function FinanceBoard({
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<string | null>("BDT");
-  const [category, setCategory] = useState<string | null>("Tools");
+  const [exchangeRate, setExchangeRate] = useState("");
+  const [category, setCategory] = useState<string | null>("Other");
   const [recurring, setRecurring] = useState(false);
   const [recurringDay, setRecurringDay] = useState("1");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  function reset() {
+  function reset(nextDialog?: "earning" | "expense") {
     setTitle("");
     setDescription("");
     setAmount("");
     setCurrency("BDT");
-    setCategory("Tools");
+    setExchangeRate("");
+    setCategory(
+      nextDialog === "earning" ? "Project Income" : "Other"
+    );
     setRecurring(false);
     setRecurringDay("1");
     setError("");
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!dialog) return;
+
     setError("");
     setBusy(true);
+
     const cur = (currency ?? "BDT") as "USD" | "EUR" | "GBP" | "BDT";
     const result =
       dialog === "earning"
-        ? await addCustomEarning({ title, description, amount, currency: cur })
+        ? await addCustomEarning({
+            title,
+            description,
+            amount,
+            currency: cur,
+            exchangeRate,
+            category: category ?? "Other",
+          })
         : await addExpense({
             title,
             description,
             amount,
             currency: cur,
+            exchangeRate,
             category: category ?? "Other",
             recurring,
             recurringDay,
           });
+
     setBusy(false);
-    if (result.error) return setError(result.error);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
     setDialog(null);
     reset();
   }
 
-  function fmt(iso: string) {
-    return new Date(iso).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-    });
-  }
-
-  const currencySym: Record<string, string> = {
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
-    BDT: "৳",
-  };
-
   return (
     <>
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Earnings */}
         <Card>
           <CardHeader className="flex-row items-center justify-between pb-3">
             <CardTitle className="text-base">Earnings</CardTitle>
             <Button
               size="sm"
               onClick={() => {
-                reset();
+                reset("earning");
                 setDialog("earning");
               }}
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
-              Custom earning
+              Add earning
             </Button>
           </CardHeader>
           <CardContent className="divide-y p-0 px-4 pb-2">
             {earnings.length === 0 && (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                No earnings yet — paid invoices appear here automatically
+                No earnings yet - paid invoices and completed special orders appear here.
               </p>
             )}
-            {earnings.map((e) => (
-              <div key={e.id} className="group flex items-start justify-between py-2.5">
-                <div className="min-w-0 pr-3">
+            {earnings.map((entry) => (
+              <div
+                key={entry.id}
+                className="group flex items-start justify-between gap-3 py-2.5"
+              >
+                <div className="min-w-0">
                   <p className="text-sm">
-                    {e.title}{" "}
+                    {entry.title}{" "}
                     <Badge
                       variant="secondary"
                       className={`text-[10px] ${
-                        e.source === "AUTO"
+                        entry.source === "AUTO"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-violet-100 text-violet-700"
                       }`}
                     >
-                      {e.source === "AUTO" ? "Auto" : "Custom"}
+                      {entry.source === "AUTO" ? "Automatic" : "Custom"}
                     </Badge>
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {fmt(e.createdAt)}
-                    {e.currency !== "BDT" &&
-                      ` · ${currencySym[e.currency]}${e.amount.toFixed(2)}`}
-                    {e.description && ` · ${e.description}`}
+                  <p className="truncate text-xs text-muted-foreground">
+                    {formatDate(entry.createdAt)} · {entry.category ?? "Other"}
+                    {entry.currency !== "BDT" &&
+                      ` · ${entry.currency} ${entry.amount.toFixed(2)}`}
+                    {entry.description && ` · ${entry.description}`}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="text-sm font-medium text-green-600">
-                    +৳{e.amountBdt.toLocaleString()}
+                    +{money(entry.amountBdt)}
                   </span>
-                  {e.source === "CUSTOM" && (
+                  {entry.source === "CUSTOM" && (
                     <button
-                      onClick={() => deleteFinanceEntry(e.id, "earning")}
+                      type="button"
+                      onClick={() => deleteFinanceEntry(entry.id, "earning")}
                       className="invisible text-muted-foreground hover:text-red-500 group-hover:visible"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -178,7 +223,6 @@ export function FinanceBoard({
           </CardContent>
         </Card>
 
-        {/* Expenses */}
         <Card>
           <CardHeader className="flex-row items-center justify-between pb-3">
             <CardTitle className="text-base">Expenses</CardTitle>
@@ -186,7 +230,7 @@ export function FinanceBoard({
               size="sm"
               variant="outline"
               onClick={() => {
-                reset();
+                reset("expense");
                 setDialog("expense");
               }}
             >
@@ -200,40 +244,41 @@ export function FinanceBoard({
                 No expenses recorded yet
               </p>
             )}
-            {expenses.map((e) => (
-              <div key={e.id} className="group flex items-start justify-between py-2.5">
-                <div className="min-w-0 pr-3">
+            {expenses.map((entry) => (
+              <div
+                key={entry.id}
+                className="group flex items-start justify-between gap-3 py-2.5"
+              >
+                <div className="min-w-0">
                   <p className="text-sm">
-                    {e.title}{" "}
+                    {entry.title}{" "}
                     <Badge
                       variant="secondary"
                       className="bg-amber-100 text-[10px] text-amber-700"
                     >
-                      {e.category}
+                      {entry.category}
                     </Badge>
-                    {e.recurring && (
-                      <Badge
-                        variant="secondary"
-                        className="ml-1 text-[10px]"
-                      >
+                    {entry.recurring && (
+                      <Badge variant="secondary" className="ml-1 text-[10px]">
                         <Repeat className="mr-0.5 h-2.5 w-2.5" />
-                        day {e.recurringDay}
+                        day {entry.recurringDay}
                       </Badge>
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {fmt(e.createdAt)}
-                    {e.currency !== "BDT" &&
-                      ` · ${currencySym[e.currency]}${e.amount.toFixed(2)}`}
-                    {e.description && ` · ${e.description}`}
+                  <p className="truncate text-xs text-muted-foreground">
+                    {formatDate(entry.createdAt)}
+                    {entry.currency !== "BDT" &&
+                      ` · ${entry.currency} ${entry.amount.toFixed(2)}`}
+                    {entry.description && ` · ${entry.description}`}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="text-sm font-medium text-red-500">
-                    −৳{e.amountBdt.toLocaleString()}
+                    -{money(entry.amountBdt)}
                   </span>
                   <button
-                    onClick={() => deleteFinanceEntry(e.id, "expense")}
+                    type="button"
+                    onClick={() => deleteFinanceEntry(entry.id, "expense")}
                     className="invisible text-muted-foreground hover:text-red-500 group-hover:visible"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -245,8 +290,7 @@ export function FinanceBoard({
         </Card>
       </div>
 
-      {/* Add dialog */}
-      <Dialog open={dialog !== null} onOpenChange={(o) => !o && setDialog(null)}>
+      <Dialog open={dialog !== null} onOpenChange={(open) => !open && setDialog(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -254,42 +298,39 @@ export function FinanceBoard({
             </DialogTitle>
             <DialogDescription>
               {dialog === "earning"
-                ? "Income outside invoices — reseller commissions, affiliates, etc."
-                : "Fixed bills can auto-repeat monthly (internet, rent) — variable ones stay manual"}
+                ? "Manual income with category and optional currency conversion."
+                : "Record business expenses with category and optional monthly repeat."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fTitle">Title</Label>
+              <Label htmlFor="finance-title">Title</Label>
               <Input
-                id="fTitle"
+                id="finance-title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={
-                  dialog === "earning"
-                    ? "e.g. Hosting reseller income"
-                    : "e.g. Office internet"
-                }
+                onChange={(event) => setTitle(event.target.value)}
                 required
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="fDesc">Description (optional)</Label>
+              <Label htmlFor="finance-description">Note</Label>
               <Input
-                id="fDesc"
+                id="finance-description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(event) => setDescription(event.target.value)}
               />
             </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="fAmount">Amount</Label>
+                <Label htmlFor="finance-amount">Amount</Label>
                 <Input
-                  id="fAmount"
+                  id="finance-amount"
                   type="number"
                   step="0.01"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(event) => setAmount(event.target.value)}
                   required
                 />
               </div>
@@ -300,58 +341,77 @@ export function FinanceBoard({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="BDT">BDT (৳)</SelectItem>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="BDT">BDT</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
+            {currency !== "BDT" && (
+              <div className="space-y-2">
+                <Label htmlFor="finance-rate">Exchange rate to BDT</Label>
+                <Input
+                  id="finance-rate"
+                  type="number"
+                  step="0.01"
+                  value={exchangeRate}
+                  onChange={(event) => setExchangeRate(event.target.value)}
+                  placeholder="Leave blank to use default rate"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(dialog === "earning"
+                    ? EARNING_CATEGORIES
+                    : EXPENSE_CATEGORIES
+                  ).map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {dialog === "expense" && (
               <>
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <label className="flex cursor-pointer items-center gap-2 text-sm">
                   <Checkbox
                     checked={recurring}
-                    onCheckedChange={(c) => setRecurring(c === true)}
+                    onCheckedChange={(checked) => setRecurring(checked === true)}
                   />
                   Repeat automatically every month
                 </label>
                 {recurring && (
                   <div className="space-y-2">
-                    <Label htmlFor="fDay">Day of month (1–28)</Label>
+                    <Label htmlFor="finance-recurring-day">
+                      Day of month (1-28)
+                    </Label>
                     <Input
-                      id="fDay"
+                      id="finance-recurring-day"
                       type="number"
                       min="1"
                       max="28"
                       value={recurringDay}
-                      onChange={(e) => setRecurringDay(e.target.value)}
+                      onChange={(event) => setRecurringDay(event.target.value)}
                     />
                   </div>
                 )}
               </>
             )}
 
-            {error && (
-              <p className="text-center text-sm text-red-500">{error}</p>
-            )}
+            {error && <p className="text-center text-sm text-red-500">{error}</p>}
+
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Saving..." : "Save"}
             </Button>
