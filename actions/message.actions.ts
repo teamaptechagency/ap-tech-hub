@@ -889,13 +889,28 @@ export async function markSeen(
   }
 
   const seenAt = new Date();
+  const userId = access.session.user.id;
+  const userExists = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!userExists) {
+    return {
+      success: true,
+    };
+  }
 
   await prisma.conversationParticipant.upsert({
     where: {
       conversationId_userId: {
         conversationId:
           cleanConversationId,
-        userId: access.session.user.id,
+        userId,
       },
     },
     update: {
@@ -904,7 +919,7 @@ export async function markSeen(
     create: {
       conversationId:
         cleanConversationId,
-      userId: access.session.user.id,
+      userId,
       lastSeenAt: seenAt,
     },
   });
@@ -913,7 +928,7 @@ export async function markSeen(
     `conversation-${cleanConversationId}`,
     "conversation-seen",
     {
-      userId: access.session.user.id,
+      userId,
       seenAt: seenAt.toISOString(),
     }
   );
