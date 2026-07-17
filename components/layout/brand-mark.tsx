@@ -8,6 +8,22 @@ type BrandMarkProps = {
   suffix?: string;
 };
 
+function SplitBrandText({ value }: { value: string }) {
+  const parts = value.trim().split(/\s+/);
+  const accent = parts.pop();
+  const lead = parts.join(" ");
+
+  if (!accent || !lead) {
+    return <>{value}</>;
+  }
+
+  return (
+    <>
+      {lead} <span className="text-primary">{accent}</span>
+    </>
+  );
+}
+
 export function BrandMark({ href, branding, suffix }: BrandMarkProps) {
   const siteName = branding?.siteName?.trim() || "AP Tech Hub";
   const logoUrl = branding?.logoUrl?.trim();
@@ -27,7 +43,7 @@ export function BrandMark({ href, branding, suffix }: BrandMarkProps) {
         />
       ) : null}
       <span className="min-w-0 truncate">
-        {siteName}
+        <SplitBrandText value={siteName} />
         {suffix ? <span className="text-primary"> {suffix}</span> : null}
       </span>
     </Link>

@@ -59,6 +59,7 @@ export default async function PartnerLayout({
     { label: "Orders", href: "/p/special-orders", icon: "special" },
     { label: "Messages", href: "/p/messages", icon: "messages" },
     { label: "Balance", href: "/p/balance", icon: "wallet" },
+    { label: "Report", href: "/p/feedback", icon: "feedback" },
     { label: "Profile", href: "/p/profile", icon: "profile" },
   ];
 

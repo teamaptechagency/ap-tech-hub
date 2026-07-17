@@ -8,6 +8,7 @@ import { BrandMark } from "@/components/layout/brand-mark";
 import { cn } from "@/lib/utils";
 import type { BrandingSettings } from "@/lib/branding";
 import {
+  Bug,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -27,6 +28,7 @@ export const partnerNavItems: PartnerNavItem[] = [
   { label: "Dashboard", href: "/p/dashboard", icon: LayoutDashboard },
   { label: "Special orders", href: "/p/special-orders", icon: ShoppingBag },
   { label: "Messages", href: "/p/messages", icon: MessageCircle },
+  { label: "Bug & Feedback", href: "/p/feedback", icon: Bug },
   { label: "My balance", href: "/p/balance", icon: Wallet },
   { label: "Profile", href: "/p/profile", icon: User },
 ];

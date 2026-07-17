@@ -112,6 +112,11 @@ export default async function ClientLayout({
       href: "/c/special-orders",
       icon: "special",
     },
+    {
+      label: "Report",
+      href: "/c/feedback",
+      icon: "feedback",
+    },
   ];
 
   return (

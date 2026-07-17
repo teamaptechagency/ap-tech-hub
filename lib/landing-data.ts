@@ -146,7 +146,13 @@ export const defaultLandingData: LandingPageData = {
     offerText: "Get 20% Off",
     countdownEndsAt: "",
     messages: [
-      "Offer: get 20% off - start now.",
+      "Popular service offer: 20% off WordPress website, UI/UX, SEO and branding projects.",
+      "Start a website, landing page or Next.js app this week with free planning support.",
+      "Need growth? Lead generation, outreach, social media and SEO campaign slots are open.",
+      "Design support available for Figma UI/UX, logo, branding and campaign graphics.",
+      "Architecture service slots open for interior, exterior and 3D modeling projects.",
+      "Business support available for accounting, office freelancing and document cleanup.",
+      "Website maintenance, bug fixing, speed optimization and monthly support are available.",
       "New client offer: free project planning session with selected web and UI/UX orders.",
       "Trusted remote team for websites, branding, SEO, 3D modeling and office support.",
     ],
@@ -155,29 +161,29 @@ export const defaultLandingData: LandingPageData = {
     popup: {
       enabled: false,
       title: "Get 20% Off",
-      body: "Start your new website, UI/UX or SEO project before this offer ends.",
+      body: "Start your website, UI/UX, SEO, branding or 3D modeling project before this offer ends.",
       buttonLabel: "Start now",
       buttonUrl: "#contact",
     },
     top: {
       enabled: false,
-      title: "Limited offer",
-      body: "Get 20% off on selected services.",
+      title: "Popular service offer",
+      body: "20% off selected website, design, SEO, lead generation and 3D modeling services.",
       buttonLabel: "Start now",
       buttonUrl: "#contact",
     },
     left: {
       enabled: false,
       title: "Need a website?",
-      body: "Talk to AP Tech Agency.",
+      body: "WordPress, Elementor, Next.js and Laravel project support.",
       buttonLabel: "Contact",
       buttonUrl: "#contact",
       desktopOnly: true,
     },
     right: {
       enabled: false,
-      title: "Free planning",
-      body: "Book a quick project review.",
+      title: "Need growth?",
+      body: "SEO, lead generation, outreach and social media support.",
       buttonLabel: "Start",
       buttonUrl: "#contact",
       desktopOnly: true,
@@ -197,16 +203,76 @@ export const defaultLandingData: LandingPageData = {
       secondaryTarget: "#portfolio",
     },
     {
-      id: "hero-2",
-      badge: "Strategy, Design & Growth",
-      title: "Agency Support For Fast-Moving Teams",
+      id: "hero-web",
+      badge: "Web Development",
+      title: "Launch Fast Websites That Bring Real Leads",
       description:
-        "From websites to marketplace growth, our experts keep your business moving with focused execution.",
-      imageUrl: image("photo-1552664730-d307ca884978"),
-      primaryLabel: "Meet Experts",
-      primaryTarget: "#team",
-      secondaryLabel: "Contact Us",
-      secondaryTarget: "#contact",
+        "WordPress, Elementor, Next.js and Laravel websites built for speed, trust and conversion.",
+      imageUrl: image("photo-1460925895917-afdab827c52f"),
+      primaryLabel: "Start Web Project",
+      primaryTarget: "#contact",
+      secondaryLabel: "View Services",
+      secondaryTarget: "#services",
+    },
+    {
+      id: "hero-uiux",
+      badge: "UI/UX & Product Design",
+      title: "Design Clear Interfaces Customers Can Trust",
+      description:
+        "Figma-first UI/UX, landing pages, product flows and conversion-focused design systems.",
+      imageUrl: image("photo-1559028012-481c04fa702d"),
+      primaryLabel: "Plan Design",
+      primaryTarget: "#contact",
+      secondaryLabel: "Meet Team",
+      secondaryTarget: "#team",
+    },
+    {
+      id: "hero-marketing",
+      badge: "Marketing & SEO",
+      title: "Grow With SEO, Content And Campaign Support",
+      description:
+        "Search optimization, social media support, outreach and reporting for steady business growth.",
+      imageUrl: image("photo-1551288049-bebda4e38f71"),
+      primaryLabel: "Grow My Business",
+      primaryTarget: "#contact",
+      secondaryLabel: "Popular Services",
+      secondaryTarget: "#services",
+    },
+    {
+      id: "hero-leadgen",
+      badge: "Lead Generation",
+      title: "Find Better Prospects And Follow Up Smarter",
+      description:
+        "Targeted lead lists, outreach copy and follow-up systems for agencies, startups and service teams.",
+      imageUrl: image("photo-1556761175-5973dc0f32e7"),
+      primaryLabel: "Start Outreach",
+      primaryTarget: "#contact",
+      secondaryLabel: "View Reviews",
+      secondaryTarget: "#testimonials",
+    },
+    {
+      id: "hero-architecture",
+      badge: "3D & Architecture",
+      title: "Interior And Exterior 3D Visuals For Projects",
+      description:
+        "Architecture visualization, interior modeling and exterior renders for presentations and approvals.",
+      imageUrl: image("photo-1503387762-592deb58ef4e"),
+      primaryLabel: "Request 3D Work",
+      primaryTarget: "#contact",
+      secondaryLabel: "View Projects",
+      secondaryTarget: "#portfolio",
+    },
+    {
+      id: "hero-business",
+      badge: "Office & Accounts Support",
+      title: "Clean Business Support For Daily Operations",
+      description:
+        "Accounting support, document cleanup, data entry, research and office freelancing help when your team needs backup.",
+      imageUrl: image("photo-1554224155-6726b3ff858f"),
+      primaryLabel: "Get Support",
+      primaryTarget: "#contact",
+      secondaryLabel: "View Services",
+      secondaryTarget: "#services",
     },
   ],
   categories: [
@@ -1080,6 +1146,39 @@ function mergeFooter(savedFooter: Partial<LandingPageData["footer"]> | undefined
   };
 }
 
+function mergeTopBarMessages(savedMessages: string[] | undefined) {
+  const cleanedSaved = (savedMessages ?? [])
+    .map((message) => message.trim())
+    .filter(Boolean);
+  const messages = cleanedSaved.length
+    ? [...cleanedSaved, ...defaultLandingData.topBar.messages]
+    : defaultLandingData.topBar.messages;
+
+  return Array.from(new Set(messages));
+}
+
+function mergeHeroSlides(savedSlides: LandingHeroSlideData[] | undefined) {
+  const slides = savedSlides?.length ? savedSlides : defaultLandingData.heroSlides;
+  const cleanedSlides = slides.filter(
+    (slide) =>
+      !(
+        slide.id === "hero-2" &&
+        slide.title === "Agency Support For Fast-Moving Teams"
+      )
+  );
+  const existingKeys = new Set(
+    cleanedSlides.map((slide) => (slide.id || slide.title).trim().toLowerCase())
+  );
+  const mergedSlides = [
+    ...cleanedSlides,
+    ...defaultLandingData.heroSlides.filter(
+      (slide) => !existingKeys.has((slide.id || slide.title).trim().toLowerCase())
+    ),
+  ];
+
+  return mergedSlides.length ? mergedSlides : defaultLandingData.heroSlides;
+}
+
 function mergeLandingContent(
   saved: Partial<LandingPageData>,
   liveTeam = defaultLandingData.team
@@ -1132,9 +1231,7 @@ function mergeLandingContent(
     topBar: {
       ...defaultLandingData.topBar,
       ...(saved.topBar ?? {}),
-      messages: saved.topBar?.messages?.length
-        ? saved.topBar.messages
-        : defaultLandingData.topBar.messages,
+      messages: mergeTopBarMessages(saved.topBar?.messages),
     },
     ads: {
       popup: {
@@ -1154,9 +1251,7 @@ function mergeLandingContent(
         ...(saved.ads?.right ?? {}),
       },
     },
-    heroSlides: saved.heroSlides?.length
-      ? saved.heroSlides
-      : defaultLandingData.heroSlides,
+    heroSlides: mergeHeroSlides(saved.heroSlides),
     categories: mergeByKey(
       saved.categories,
       defaultLandingData.categories,

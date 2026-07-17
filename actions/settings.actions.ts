@@ -1,9 +1,12 @@
 "use server";
 
+import { readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
+import { editableEnvKeys, type EditableEnvKey } from "@/lib/env-settings";
 import { revalidatePath } from "next/cache";
 
 async function checkAdmin() {
@@ -83,6 +86,31 @@ export type BankAccountSettingsInput = {
 function cleanOptional(value: string | undefined) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+}
+
+function quoteEnvValue(value: string) {
+  const escaped = value
+    .replace(/\\/g, "\\\\")
+    .replace(/\r?\n/g, "\\n")
+    .replace(/"/g, '\\"');
+
+  return `"${escaped}"`;
+}
+
+function upsertEnvLine(content: string, key: EditableEnvKey, value: string) {
+  const normalized = content.replace(/\r\n/g, "\n");
+  const line = `${key}=${quoteEnvValue(value)}`;
+  const pattern = new RegExp(`^${key}=.*$`, "m");
+
+  if (pattern.test(normalized)) {
+    return normalized.replace(pattern, line);
+  }
+
+  const separator = normalized.endsWith("\n") || normalized.length === 0
+    ? ""
+    : "\n";
+
+  return `${normalized}${separator}${line}\n`;
 }
 
 function normalizeVersion(value: string) {
@@ -418,16 +446,75 @@ export async function updateSettings(
   return { success: true };
 }
 
+export async function updateEnvironmentSettings(
+  entries: { key: EditableEnvKey; value: string }[]
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const updates = entries
+    .map((entry) => ({
+      key: entry.key,
+      value: entry.value.trim(),
+    }))
+    .filter((entry) => entry.value.length > 0);
+
+  if (updates.length === 0) {
+    return { error: "Enter at least one new environment value" };
+  }
+
+  for (const update of updates) {
+    if (!editableEnvKeys.includes(update.key)) {
+      return { error: `Environment key ${update.key} is not editable` };
+    }
+  }
+
+  const envPath = path.join(process.cwd(), ".env");
+  let content = "";
+
+  try {
+    content = await readFile(envPath, "utf8");
+  } catch {
+    content = "";
+  }
+
+  const nextContent = updates.reduce(
+    (currentContent, update) =>
+      upsertEnvLine(currentContent, update.key, update.value),
+    content
+  );
+
+  await writeFile(envPath, nextContent, "utf8");
+
+  await audit(
+    session.user.id,
+    "ENV_UPDATED",
+    "Environment",
+    updates.map((update) => update.key).join(","),
+    "Environment values changed from settings. Values are hidden."
+  );
+
+  revalidatePath("/settings");
+  return {
+    success: true,
+    updatedKeys: updates.map((update) => update.key),
+  };
+}
+
 export async function updateBrandingSettings(input: {
   siteName: string;
   logoUrl?: string;
+  hubLogoUrl?: string;
+  publicLogoUrl?: string;
   faviconUrl?: string;
 }) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 
   const siteName = input.siteName.trim();
-  const logoUrl = input.logoUrl?.trim() ?? "";
+  const hubLogoUrl = input.hubLogoUrl?.trim() ?? input.logoUrl?.trim() ?? "";
+  const publicLogoUrl =
+    input.publicLogoUrl?.trim() ?? input.logoUrl?.trim() ?? "";
   const faviconUrl = input.faviconUrl?.trim() ?? "";
 
   if (siteName.length < 2) {
@@ -435,7 +522,8 @@ export async function updateBrandingSettings(input: {
   }
 
   const urlFields = [
-    { label: "Logo URL", value: logoUrl },
+    { label: "Hub logo URL", value: hubLogoUrl },
+    { label: "Public logo URL", value: publicLogoUrl },
     { label: "Favicon URL", value: faviconUrl },
   ];
 
@@ -456,8 +544,18 @@ export async function updateBrandingSettings(input: {
     }),
     prisma.setting.upsert({
       where: { key: "brand.logoUrl" },
-      update: { value: logoUrl },
-      create: { key: "brand.logoUrl", value: logoUrl },
+      update: { value: hubLogoUrl },
+      create: { key: "brand.logoUrl", value: hubLogoUrl },
+    }),
+    prisma.setting.upsert({
+      where: { key: "brand.hubLogoUrl" },
+      update: { value: hubLogoUrl },
+      create: { key: "brand.hubLogoUrl", value: hubLogoUrl },
+    }),
+    prisma.setting.upsert({
+      where: { key: "brand.publicLogoUrl" },
+      update: { value: publicLogoUrl },
+      create: { key: "brand.publicLogoUrl", value: publicLogoUrl },
     }),
     prisma.setting.upsert({
       where: { key: "brand.faviconUrl" },

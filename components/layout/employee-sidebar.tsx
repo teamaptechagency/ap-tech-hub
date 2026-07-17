@@ -12,6 +12,7 @@ import type { BrandingSettings } from "@/lib/branding";
 
 import {
   Briefcase,
+  Bug,
   Clock,
   Compass,
   FileText,
@@ -63,6 +64,11 @@ export const employeeNavItems: EmployeeNavItem[] = [
     label: "Messages",
     href: "/e/messages",
     icon: MessageCircle,
+  },
+  {
+    label: "Bug & Feedback",
+    href: "/e/feedback",
+    icon: Bug,
   },
   {
     label: "My balance",

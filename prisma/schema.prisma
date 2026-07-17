@@ -87,6 +87,8 @@ model User {
   paymentSubmissions   PaymentSubmission[]
   profileChangeRequests UserProfileChangeRequest[]
   profileChangeReviews  UserProfileChangeRequest[] @relation("ProfileChangeReviewer")
+  supportTickets        SupportTicket[]          @relation("SupportTicketReporter")
+  supportTicketsAssigned SupportTicket[]         @relation("SupportTicketAssignee")
   specialOrdersWorked  SpecialOrder[]            @relation("SpecialOrderPartner")
   specialOrdersCreated SpecialOrder[]            @relation("SpecialOrderCreator")
   specialProfiles      SpecialOrderProfile[]     @relation("SpecialOrderProfilePartner")
@@ -1193,6 +1195,35 @@ model LeadActivity {
   @@index([leadId])
   @@index([type])
   @@index([scheduledAt])
+}
+
+// ============================================
+// BUG REPORTS + FEEDBACK
+// ============================================
+
+model SupportTicket {
+  id           String   @id @default(cuid())
+  type         String   @default("FEEDBACK") // BUG | FEEDBACK | FEATURE | OTHER
+  priority     String   @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+  status       String   @default("OPEN") // OPEN | REVIEWING | PLANNED | RESOLVED | CLOSED
+  title        String
+  description  String
+  pageUrl      String?
+  screenshotUrl String?
+  reporterId   String
+  reporter     User     @relation("SupportTicketReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  assignedToId String?
+  assignedTo   User?    @relation("SupportTicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  adminNote    String?
+  resolvedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([reporterId])
+  @@index([status])
+  @@index([type])
+  @@index([priority])
+  @@index([createdAt])
 }
 
 // ============================================

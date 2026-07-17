@@ -75,6 +75,11 @@ export default async function AdminLayout({
       icon: "special",
     },
     {
+      label: "Report",
+      href: "/feedback",
+      icon: "feedback",
+    },
+    {
       label: "Profile",
       href: "/profile",
       icon: "profile",

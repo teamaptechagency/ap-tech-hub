@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { SettingsShell } from "@/components/settings/settings-shell";
+import { editableEnvKeys } from "@/lib/env-settings";
 
 const fixedPaymentMethods = [
   { key: "BANK_TRANSFER", label: "Bank Transfer", sortOrder: 10 },
@@ -47,6 +48,10 @@ export default async function SettingsPage() {
     ]);
 
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+  const envStatuses = editableEnvKeys.map((key) => ({
+    key,
+    configured: !!process.env[key]?.trim(),
+  }));
 
   return (
     <SettingsShell
@@ -127,6 +132,7 @@ export default async function SettingsPage() {
         title: t.title,
         priority: t.priority,
       }))}
+      envStatuses={envStatuses}
     />
   );
 }

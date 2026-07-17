@@ -157,7 +157,7 @@ function MiniReviewRail({ reviews }: { reviews: LandingReviewData[] }) {
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full min-w-0 overflow-hidden">
       <div
         ref={ref}
         className="flex snap-x gap-3 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -304,7 +304,7 @@ function CardRail({
       </button>
       <div
         ref={ref}
-        className={`flex snap-x gap-5 overflow-x-auto scroll-smooth pb-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}
+        className={`flex w-full min-w-0 snap-x gap-5 overflow-x-auto overscroll-x-contain scroll-smooth pb-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}
       >
         {children}
       </div>
@@ -921,6 +921,9 @@ function PublicTopBar({
 }) {
   const [stats, setStats] = useState<TrustStats | null>(null);
   const [now, setNow] = useState(() => new Date());
+  const [defaultCountdownEnd, setDefaultCountdownEnd] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     setStats(buildTrustStats());
@@ -932,13 +935,22 @@ function PublicTopBar({
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    setDefaultCountdownEnd(
+      getDefaultCountdownEnd("ap-tech-topbar-countdown-end")
+    );
+  }, []);
+
   if (!topBar.enabled) return null;
 
   const cleanMessages = topBar.messages?.filter(Boolean).length
     ? topBar.messages.filter(Boolean)
     : ["Offer: get 20% off - start now."];
   const marqueeText = [...cleanMessages, ...cleanMessages].join("     |     ");
-  const countdown = formatCountdown(topBar.countdownEndsAt, now);
+  const countdown = formatCountdown(
+    topBar.countdownEndsAt || defaultCountdownEnd,
+    now
+  );
 
   return (
     <div className="border-b border-[#2c3548] bg-[#101623] text-white">
@@ -988,6 +1000,21 @@ function formatCountdown(value: string | null | undefined, now: Date) {
   return `${minutes} min`;
 }
 
+function getDefaultCountdownEnd(key: string) {
+  const fallbackMs = (10 * 24 + 2) * 60 * 60 * 1000;
+  const existing = window.localStorage.getItem(key);
+  if (existing) {
+    const existingDate = new Date(existing);
+    if (!Number.isNaN(existingDate.getTime()) && existingDate.getTime() > Date.now()) {
+      return existing;
+    }
+  }
+
+  const next = new Date(Date.now() + fallbackMs).toISOString();
+  window.localStorage.setItem(key, next);
+  return next;
+}
+
 function StatPill({
   icon,
   label,
@@ -1029,10 +1056,12 @@ function AdButton({
   ad,
   className = "",
   compact = false,
+  countdown,
 }: {
   ad: LandingAdData;
   className?: string;
   compact?: boolean;
+  countdown?: string | null;
 }) {
   if (!isVisibleAd(ad)) return null;
 
@@ -1046,6 +1075,11 @@ function AdButton({
         />
       )}
       <p className="font-black">{ad.title}</p>
+      {countdown && compact && (
+        <span className="rounded-full bg-[#101623] px-2.5 py-1 text-xs font-black text-[#f5a83c]">
+          {countdown}
+        </span>
+      )}
       {ad.body && !compact && (
         <p className="mt-1 text-xs leading-5 opacity-80">{ad.body}</p>
       )}
@@ -1081,8 +1115,26 @@ function AdButton({
   );
 }
 
-function TopAd({ ad }: { ad: LandingAdData }) {
+function TopAd({
+  ad,
+  countdownEndsAt,
+}: {
+  ad: LandingAdData;
+  countdownEndsAt?: string | null;
+}) {
+  const [now, setNow] = useState(() => new Date());
+  const [defaultCountdownEnd, setDefaultCountdownEnd] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    setDefaultCountdownEnd(getDefaultCountdownEnd("ap-tech-top-ad-countdown-end"));
+    const timer = window.setInterval(() => setNow(new Date()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   if (!isVisibleAd(ad)) return null;
+  const countdown = formatCountdown(countdownEndsAt || defaultCountdownEnd, now);
 
   return (
     <div className="border-b border-[#e8e3dc] bg-[#fff8f3]">
@@ -1090,6 +1142,7 @@ function TopAd({ ad }: { ad: LandingAdData }) {
         <AdButton
           ad={ad}
           compact
+          countdown={countdown ? `Remaining ${countdown}` : null}
           className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#f0d8c8] bg-white px-4 py-3 text-center text-sm font-black text-[#101623] shadow-[0_10px_24px_rgba(16,22,35,.06)] transition hover:border-[#c6613f]"
         />
       </div>
@@ -1203,9 +1256,11 @@ function PopupAd({ ad }: { ad: LandingAdData }) {
 export function LandingPage({
   data,
   portalHref,
+  publicLogoUrl,
 }: {
   data: LandingPageData;
   portalHref?: string | null;
+  publicLogoUrl?: string | null;
 }) {
   const [heroIndex, setHeroIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -1275,7 +1330,7 @@ export function LandingPage({
   };
 
   return (
-    <main className="min-h-screen bg-white font-sans text-[#2a3040]">
+    <main className="min-h-screen w-full overflow-x-hidden bg-white font-sans text-[#2a3040]">
       <header className="sticky top-0 z-40 border-b border-[#e8e3dc] bg-white">
         <PublicTopBar
           topBar={data.topBar}
@@ -1284,9 +1339,18 @@ export function LandingPage({
           <button
             type="button"
             onClick={() => scrollToId("#home")}
-            className="text-left text-xl font-extrabold leading-none text-[#101623]"
+            className="flex items-center gap-2 text-left text-xl font-extrabold leading-none text-[#101623]"
           >
-            AP Tech <span className="text-[#c6613f]">Agency</span>
+            {publicLogoUrl?.trim() ? (
+              <img
+                src={publicLogoUrl}
+                alt=""
+                className="h-9 w-9 rounded-md object-contain"
+              />
+            ) : null}
+            <span>
+              AP Tech <span className="text-[#c6613f]">Agency</span>
+            </span>
           </button>
           <nav className="hidden items-center gap-7 text-sm font-semibold text-[#6b7280] lg:flex">
             {[
@@ -1334,28 +1398,28 @@ export function LandingPage({
             )}
           </div>
         </div>
-        <TopAd ad={data.ads.top} />
+        <TopAd ad={data.ads.top} countdownEndsAt={data.topBar.countdownEndsAt} />
       </header>
 
       <section
         id="home"
-        className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] pt-20 text-white"
+        className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] pt-16 text-white md:pt-20"
       >
         <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
-        <div className="relative z-10 mx-auto grid max-w-[1140px] items-center gap-10 px-4 pb-16 md:grid-cols-[1.15fr_1fr]">
+        <div className="relative z-10 mx-auto grid min-h-[520px] max-w-[1140px] items-center gap-10 px-4 pb-20 md:min-h-[560px] md:grid-cols-[1.15fr_1fr]">
           <div className="max-w-2xl">
             {activeHero?.badge && (
-              <p className="mb-4 text-xs font-extrabold uppercase tracking-[0.18em] text-[#f5a83c]">
+              <p className="mb-4 min-h-4 text-xs font-extrabold uppercase tracking-[0.18em] text-[#f5a83c]">
                 {activeHero.badge}
               </p>
             )}
-            <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight md:text-[54px]">
+            <h1 className="min-h-[132px] text-4xl font-extrabold leading-[1.08] tracking-tight md:min-h-[176px] md:text-[54px] lg:min-h-[124px]">
               <HighlightTitle title={activeHero?.title ?? ""} />
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-[#cbd2df]">
+            <p className="mt-5 min-h-[84px] max-w-xl text-base leading-7 text-[#cbd2df]">
               {activeHero?.description}
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-7 flex min-h-[48px] flex-wrap gap-3">
               {activeHero?.primaryLabel && (
                 <button
                   type="button"
@@ -1379,15 +1443,15 @@ export function LandingPage({
             </div>
           </div>
           {activeHero?.imageUrl ? (
-            <div className="hidden overflow-hidden rounded-[18px] border border-white/10 bg-white/[.05] shadow-2xl md:block">
+            <div className="hidden h-[330px] overflow-hidden rounded-[18px] border border-white/10 bg-white/[.05] shadow-2xl lg:h-[360px] md:block">
               <img
                 src={activeHero.imageUrl}
                 alt={activeHero.title}
-                className="h-[330px] w-full object-cover"
+                className="h-full w-full object-cover"
               />
             </div>
           ) : (
-            <div className="hidden rounded-[18px] border border-white/10 bg-white/[.05] p-6 text-sm text-[#cbd2df] backdrop-blur md:block">
+            <div className="hidden h-[330px] rounded-[18px] border border-white/10 bg-white/[.05] p-6 text-sm text-[#cbd2df] backdrop-blur lg:h-[360px] md:block">
               {[
                 ["Project", "E-commerce Website"],
                 ["Status", "On track ✓"],
@@ -1561,7 +1625,7 @@ export function LandingPage({
                 key={project.id}
                 type="button"
                 onClick={() => setModal({ type: "project", item: project })}
-                className="flex h-[224px] w-[82vw] shrink-0 snap-start flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[44%] lg:w-[242px]"
+                className="flex h-[224px] w-[min(82vw,242px)] shrink-0 snap-start flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[44%] lg:w-[242px]"
               >
                 {project.thumbnailUrl || project.imageUrl ? (
                   <img
@@ -1594,14 +1658,14 @@ export function LandingPage({
       <section id="team" className="scroll-mt-24 py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <SectionLabel eyebrow="Our Team" title="Meet Our Experts" />
-          <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_212px]">
+          <div className="grid min-w-0 items-start gap-5 md:grid-cols-[minmax(0,1fr)_212px]">
             <CardRail className="md:pr-1">
               {visibleTeam.map((member) => (
                 <button
                   key={member.id}
                   type="button"
                   onClick={() => setModal({ type: "team", item: member })}
-                  className="flex h-[214px] w-[82vw] shrink-0 snap-start flex-col items-center justify-center rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-center transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[44%] md:w-[212px]"
+                  className="flex h-[214px] w-[min(82vw,212px)] shrink-0 snap-start flex-col items-center justify-center rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-center transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[44%] md:w-[212px]"
                 >
                   <div className="mx-auto mb-3 grid h-[72px] w-[72px] place-items-center rounded-full bg-[#1b2334] text-xl font-extrabold text-white">
                     {member.name
@@ -1616,7 +1680,7 @@ export function LandingPage({
                   </p>
                 </button>
               ))}
-              <JoinTeamCard className="w-[82vw] snap-start sm:w-[44%] md:hidden" />
+              <JoinTeamCard className="w-[min(82vw,212px)] snap-start sm:w-[44%] md:hidden" />
             </CardRail>
             <JoinTeamCard className="sticky top-24 hidden w-full md:flex" />
           </div>
@@ -1632,7 +1696,7 @@ export function LandingPage({
                 key={review.id}
                 type="button"
                 onClick={() => setModal({ type: "review", item: review })}
-                className="flex h-[242px] w-[88vw] shrink-0 snap-start flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[48%] lg:w-[320px]"
+                className="flex h-[242px] w-[min(88vw,320px)] shrink-0 snap-start flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[48%] lg:w-[320px]"
               >
                 <div className="mb-4 flex gap-1 text-amber-400">
                   {Array.from({ length: ratingStars(review.rating).stars }).map((_, index) => (

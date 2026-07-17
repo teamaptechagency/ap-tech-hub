@@ -15,6 +15,7 @@ import {
   saveUserPermission,
   setUserSkills,
   updateExchangeRate,
+  updateEnvironmentSettings,
   updateBrandingSettings,
   updateSettings,
   updateSystemUpgradeSettings,
@@ -101,6 +102,12 @@ type SettingsShellProps = {
   team: TeamRow[];
   paymentMethods: FixedPaymentMethodRow[];
   templates: TemplateRow[];
+  envStatuses: EnvStatusRow[];
+};
+
+type EnvStatusRow = {
+  key: string;
+  configured: boolean;
 };
 
 type TeamRole =
@@ -129,6 +136,69 @@ const permissionResources = [
   { key: "settings", label: "Settings" },
 ];
 
+type SettingsSection =
+  | "branding"
+  | "environment"
+  | "finance"
+  | "skills"
+  | "system"
+  | "backup"
+  | "terms"
+  | "team"
+  | "payments";
+
+const settingsSections: {
+  key: SettingsSection;
+  label: string;
+  description: string;
+}[] = [
+  {
+    key: "branding",
+    label: "Branding",
+    description: "Logo, favicon and site name",
+  },
+  {
+    key: "environment",
+    label: "Environment",
+    description: "Database, email and API keys",
+  },
+  {
+    key: "finance",
+    label: "Finance",
+    description: "Rates, USD and loyalty",
+  },
+  {
+    key: "skills",
+    label: "Skills",
+    description: "Employee skill library",
+  },
+  {
+    key: "system",
+    label: "System",
+    description: "Version and rollback record",
+  },
+  {
+    key: "backup",
+    label: "Backup",
+    description: "Download and upload backup",
+  },
+  {
+    key: "terms",
+    label: "Terms",
+    description: "Client and employee terms",
+  },
+  {
+    key: "team",
+    label: "Team",
+    description: "Invite, roles and permissions",
+  },
+  {
+    key: "payments",
+    label: "Payments",
+    description: "Gateway and receiving details",
+  },
+];
+
 function getActionError(result: unknown): string | null {
   if (
     result &&
@@ -155,6 +225,20 @@ function getActionPassword(result: unknown): string | null {
   return null;
 }
 
+function SplitBrandPreview({ value }: { value: string }) {
+  const parts = value.trim().split(/\s+/);
+  const accent = parts.pop();
+  const lead = parts.join(" ");
+
+  if (!accent || !lead) return <>{value}</>;
+
+  return (
+    <>
+      {lead} <span className="text-primary">{accent}</span>
+    </>
+  );
+}
+
 export function SettingsShell({
   rates,
   settings,
@@ -162,7 +246,11 @@ export function SettingsShell({
   team,
   paymentMethods,
   templates,
+  envStatuses,
 }: SettingsShellProps) {
+  const [activeSection, setActiveSection] =
+    useState<SettingsSection>("branding");
+
   // ============================================
   // EXCHANGE RATES
   // ============================================
@@ -214,9 +302,17 @@ export function SettingsShell({
   const [siteName, setSiteName] = useState(
     settings["brand.siteName"] ?? "AP Tech Hub"
   );
-  const [logoUrl, setLogoUrl] = useState(settings["brand.logoUrl"] ?? "");
+  const [hubLogoUrl, setHubLogoUrl] = useState(
+    settings["brand.hubLogoUrl"] ?? settings["brand.logoUrl"] ?? ""
+  );
+  const [publicLogoUrl, setPublicLogoUrl] = useState(
+    settings["brand.publicLogoUrl"] ?? settings["brand.logoUrl"] ?? ""
+  );
   const [faviconUrl, setFaviconUrl] = useState(
     settings["brand.faviconUrl"] ?? ""
+  );
+  const [envValues, setEnvValues] = useState<Record<string, string>>(
+    Object.fromEntries(envStatuses.map((env) => [env.key, ""]))
   );
 
   // ============================================
@@ -260,12 +356,17 @@ export function SettingsShell({
 
   const [busy, setBusy] = useState(false);
   const [uploadingBrandAsset, setUploadingBrandAsset] = useState<
-    "logo" | "favicon" | null
+    "hubLogo" | "publicLogo" | "favicon" | null
   >(null);
 
-  async function uploadBrandAsset(file: File, type: "logo" | "favicon") {
+  async function uploadBrandAsset(
+    file: File,
+    type: "hubLogo" | "publicLogo" | "favicon"
+  ) {
     const fileName = file.name.toLowerCase();
-    const isLogoPng = type === "logo" && file.type === "image/png";
+    const isLogoPng =
+      (type === "hubLogo" || type === "publicLogo") &&
+      file.type === "image/png";
     const isFavicon =
       type === "favicon" &&
       (file.type === "image/png" ||
@@ -275,7 +376,7 @@ export function SettingsShell({
 
     if (!isLogoPng && !isFavicon) {
       toast.error(
-        type === "logo"
+        type === "hubLogo" || type === "publicLogo"
           ? "Logo must be a PNG file"
           : "Favicon must be ICO, PNG, SVG or WebP"
       );
@@ -299,14 +400,16 @@ export function SettingsShell({
         return;
       }
 
-      if (type === "logo") {
-        setLogoUrl(data.attachment.fileUrl);
+      if (type === "hubLogo") {
+        setHubLogoUrl(data.attachment.fileUrl);
+      } else if (type === "publicLogo") {
+        setPublicLogoUrl(data.attachment.fileUrl);
       } else {
         setFaviconUrl(data.attachment.fileUrl);
       }
 
       toast.success(
-        `${type === "logo" ? "Logo" : "Favicon"} uploaded. Click Save branding to apply it.`
+        `${type === "favicon" ? "Favicon" : "Logo"} uploaded. Click Save branding to apply it.`
       );
     } catch (error) {
       console.error("Brand asset upload failed:", error);
@@ -325,7 +428,8 @@ export function SettingsShell({
     try {
       const result = await updateBrandingSettings({
         siteName,
-        logoUrl,
+        hubLogoUrl,
+        publicLogoUrl,
         faviconUrl,
       });
 
@@ -339,6 +443,40 @@ export function SettingsShell({
     } catch (error) {
       console.error("Failed to save branding:", error);
       toast.error("Branding could not be saved");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveEnvironment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+
+    const entries = envStatuses.map((env) => ({
+      key: env.key,
+      value: envValues[env.key] ?? "",
+    }));
+
+    setBusy(true);
+
+    try {
+      const result = await updateEnvironmentSettings(
+        entries as Parameters<typeof updateEnvironmentSettings>[0]
+      );
+
+      const error = getActionError(result);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      setEnvValues(
+        Object.fromEntries(envStatuses.map((env) => [env.key, ""]))
+      );
+      toast.success("Environment updated. Restart the server to apply changes.");
+    } catch (error) {
+      console.error("Failed to save environment settings:", error);
+      toast.error("Environment could not be saved");
     } finally {
       setBusy(false);
     }
@@ -974,6 +1112,33 @@ export function SettingsShell({
         </p>
       </div>
 
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {settingsSections.map((section) => {
+          const active = activeSection === section.key;
+
+          return (
+            <button
+              key={section.key}
+              type="button"
+              onClick={() => setActiveSection(section.key)}
+              className={`rounded-lg border p-3 text-left transition-colors ${
+                active
+                  ? "border-green-500 bg-green-500/10 text-green-300"
+                  : "bg-card hover:bg-muted/40"
+              }`}
+            >
+              <span className="block text-sm font-semibold">
+                {section.label}
+              </span>
+              <span className="mt-1 block text-xs text-muted-foreground">
+                {section.description}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {activeSection === "branding" && (
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
@@ -1003,13 +1168,13 @@ export function SettingsShell({
             </div>
 
             <div className="space-y-2">
-              <Label>Logo</Label>
+              <Label>Hub logo</Label>
               <div className="rounded-lg border bg-muted/20 p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border bg-background">
-                    {logoUrl.trim() ? (
+                    {hubLogoUrl.trim() ? (
                       <img
-                        src={logoUrl}
+                        src={hubLogoUrl}
                         alt=""
                         className="h-10 w-10 rounded object-contain"
                       />
@@ -1021,31 +1186,31 @@ export function SettingsShell({
                   </div>
                   <div className="min-w-0 flex-1">
                     <Label
-                      htmlFor="brand-logo-file"
+                      htmlFor="brand-hub-logo-file"
                       className="inline-flex cursor-pointer rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
                     >
-                      {uploadingBrandAsset === "logo"
+                      {uploadingBrandAsset === "hubLogo"
                         ? "Uploading..."
-                        : logoUrl.trim()
-                          ? "Change logo"
-                          : "Upload logo"}
+                        : hubLogoUrl.trim()
+                          ? "Change hub logo"
+                          : "Upload hub logo"}
                     </Label>
                     <Input
-                      id="brand-logo-file"
+                      id="brand-hub-logo-file"
                       type="file"
                       accept="image/png,.png"
                       className="hidden"
                       disabled={busy || uploadingBrandAsset !== null}
                       onChange={(event) => {
                         const file = event.target.files?.[0];
-                        if (file) void uploadBrandAsset(file, "logo");
+                        if (file) void uploadBrandAsset(file, "hubLogo");
                         event.currentTarget.value = "";
                       }}
                     />
-                    {logoUrl.trim() && (
+                    {hubLogoUrl.trim() && (
                       <button
                         type="button"
-                        onClick={() => setLogoUrl("")}
+                        onClick={() => setHubLogoUrl("")}
                         className="ml-2 text-xs text-muted-foreground hover:text-red-500"
                         disabled={busy}
                       >
@@ -1056,7 +1221,65 @@ export function SettingsShell({
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Attach PNG only. Leave empty to use text only.
+                Used inside admin/client/employee/partner hub.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Public logo</Label>
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border bg-background">
+                    {publicLogoUrl.trim() ? (
+                      <img
+                        src={publicLogoUrl}
+                        alt=""
+                        className="h-10 w-10 rounded object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        Public
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <Label
+                      htmlFor="brand-public-logo-file"
+                      className="inline-flex cursor-pointer rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+                    >
+                      {uploadingBrandAsset === "publicLogo"
+                        ? "Uploading..."
+                        : publicLogoUrl.trim()
+                          ? "Change public logo"
+                          : "Upload public logo"}
+                    </Label>
+                    <Input
+                      id="brand-public-logo-file"
+                      type="file"
+                      accept="image/png,.png"
+                      className="hidden"
+                      disabled={busy || uploadingBrandAsset !== null}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void uploadBrandAsset(file, "publicLogo");
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                    {publicLogoUrl.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setPublicLogoUrl("")}
+                        className="ml-2 text-xs text-muted-foreground hover:text-red-500"
+                        disabled={busy}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Used on the public landing page.
               </p>
             </div>
 
@@ -1120,15 +1343,15 @@ export function SettingsShell({
 
             <div className="flex flex-col gap-2 lg:col-span-3">
               <div className="flex max-w-md items-center gap-2 rounded-md border bg-muted/30 p-2">
-                {logoUrl.trim() ? (
+                {hubLogoUrl.trim() ? (
                   <img
-                    src={logoUrl}
+                    src={hubLogoUrl}
                     alt=""
                     className="h-8 w-8 rounded object-contain"
                   />
                 ) : null}
                 <span className="min-w-0 truncate text-sm font-semibold">
-                  {siteName || "AP Tech Hub"}
+                  <SplitBrandPreview value={siteName || "AP Tech Hub"} />
                 </span>
               </div>
               <Button
@@ -1143,8 +1366,75 @@ export function SettingsShell({
           </form>
         </CardContent>
       </Card>
+      )}
+
+      {activeSection === "environment" && (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">
+            Environment
+          </CardTitle>
+
+          <p className="text-xs text-muted-foreground">
+            Update deployment secrets and API keys stored in the local .env
+            file. Existing values are hidden; fill only the keys you want to
+            change.
+          </p>
+        </CardHeader>
+
+        <CardContent>
+          <form onSubmit={saveEnvironment} className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {envStatuses.map((env) => (
+                <div key={env.key} className="space-y-2 rounded-lg border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor={`env-${env.key}`} className="text-xs">
+                      {env.key}
+                    </Label>
+                    <Badge
+                      variant={env.configured ? "secondary" : "outline"}
+                      className="text-[10px]"
+                    >
+                      {env.configured ? "Set" : "Missing"}
+                    </Badge>
+                  </div>
+                  <Input
+                    id={`env-${env.key}`}
+                    type="password"
+                    value={envValues[env.key] ?? ""}
+                    onChange={(event) =>
+                      setEnvValues((currentValues) => ({
+                        ...currentValues,
+                        [env.key]: event.target.value,
+                      }))
+                    }
+                    placeholder={
+                      env.configured
+                        ? "Leave blank to keep current value"
+                        : "Enter value"
+                    }
+                    autoComplete="off"
+                    disabled={busy}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+              Changes are written to the .env file. Restart the local server or
+              redeploy production after saving so the new values can load.
+            </div>
+
+            <Button type="submit" size="sm" disabled={busy}>
+              {busy ? "Saving..." : "Save environment"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      )}
 
       {/* Exchange rates and loyalty */}
+      {activeSection === "finance" && (
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Exchange rates */}
         <Card>
@@ -1406,8 +1696,10 @@ export function SettingsShell({
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Skills library */}
+      {activeSection === "skills" && (
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
@@ -1479,8 +1771,10 @@ export function SettingsShell({
           </form>
         </CardContent>
       </Card>
+      )}
 
       {/* System upgrade */}
+      {activeSection === "system" && (
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
@@ -1582,8 +1876,10 @@ export function SettingsShell({
           </form>
         </CardContent>
       </Card>
+      )}
 
       {/* Backup */}
+      {activeSection === "backup" && (
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
@@ -1612,8 +1908,10 @@ export function SettingsShell({
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Terms and conditions */}
+      {activeSection === "terms" && (
       <TermsEditor
         employeeTerms={
           settings["terms.employee"] ?? ""
@@ -1623,8 +1921,10 @@ export function SettingsShell({
         }
         version={settings["terms.version"] ?? "1.0"}
       />
+      )}
 
       {/* Team and roles */}
+      {activeSection === "team" && (
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-4 pb-3">
           <div>
@@ -1738,10 +2038,13 @@ export function SettingsShell({
           ))}
         </CardContent>
       </Card>
+      )}
 
+      {activeSection === "payments" && (
       <PaymentMethodSettings
         paymentMethods={paymentMethods}
       />
+      )}
 
       {/* Payment methods and templates */}
       <div className="hidden grid gap-4 lg:grid-cols-2">

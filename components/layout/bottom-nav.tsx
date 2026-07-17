@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 import {
   Briefcase,
+  Bug,
   Clock,
   Compass,
   FileText,
@@ -31,7 +32,8 @@ export type BottomNavIcon =
   | "meetings"
   | "wallet"
   | "special"
-  | "files";
+  | "files"
+  | "feedback";
 
 export type BottomNavItem = {
   label: string;
@@ -55,6 +57,7 @@ const iconMap: Record<BottomNavIcon, LucideIcon> = {
   wallet: Wallet,
   special: ShoppingBag,
   files: FileText,
+  feedback: Bug,
 };
 
 export function BottomNav({ items }: BottomNavProps) {

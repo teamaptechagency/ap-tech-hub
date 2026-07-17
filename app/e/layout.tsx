@@ -97,6 +97,11 @@ export default async function EmployeeLayout({
       href: "/e/hours",
       icon: "hours",
     },
+    {
+      label: "Report",
+      href: "/e/feedback",
+      icon: "feedback",
+    },
   ];
 
   return (

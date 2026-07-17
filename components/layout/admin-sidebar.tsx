@@ -14,6 +14,7 @@ import type { BrandingSettings } from "@/lib/branding";
 import {
   BarChart3,
   Briefcase,
+  Bug,
   ContactRound,
   GalleryHorizontalEnd,
   LayoutDashboard,
@@ -74,6 +75,11 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Messages",
     href: "/messages",
     icon: MessageCircle,
+  },
+  {
+    label: "Bug & Feedback",
+    href: "/feedback",
+    icon: Bug,
   },
   {
     label: "Invoices",

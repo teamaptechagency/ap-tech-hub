@@ -1,5 +1,6 @@
 import { LandingPage } from "@/components/landing/landing-page";
 import { getLandingPageData } from "@/lib/landing-data";
+import { getBrandingSettings } from "@/lib/branding";
 import { auth } from "@/lib/auth";
 import { homeFor } from "@/lib/roles";
 import type { Metadata } from "next";
@@ -75,9 +76,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootPage() {
-  const [data, session] = await Promise.all([
+  const [data, session, branding] = await Promise.all([
     getLandingPageData(),
     auth(),
+    getBrandingSettings(),
   ]);
 
   const jsonLd = {
@@ -132,6 +134,7 @@ export default async function RootPage() {
       <LandingPage
         data={data}
         portalHref={session?.user ? homeFor(session.user.role) : null}
+        publicLogoUrl={branding.publicLogoUrl}
       />
     </>
   );
