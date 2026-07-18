@@ -334,7 +334,7 @@ export function ClientsPageClient({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Page header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -352,33 +352,33 @@ export function ClientsPageClient({
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-md bg-primary/10 p-2 text-primary">
-              <Building2 className="h-5 w-5" />
+          <CardContent className="flex items-center gap-2.5 p-3">
+            <div className="rounded-md bg-primary/10 p-1.5 text-primary">
+              <Building2 className="h-4 w-4" />
             </div>
 
             <div>
               <p className="text-xs text-muted-foreground">
                 Active clients
               </p>
-              <p className="text-xl font-bold">{activeClients.length}</p>
+              <p className="text-lg font-bold">{activeClients.length}</p>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-md bg-primary/10 p-2 text-primary">
-              <KeyRound className="h-5 w-5" />
+          <CardContent className="flex items-center gap-2.5 p-3">
+            <div className="rounded-md bg-primary/10 p-1.5 text-primary">
+              <KeyRound className="h-4 w-4" />
             </div>
 
             <div>
               <p className="text-xs text-muted-foreground">
                 Portal logins
               </p>
-              <p className="text-xl font-bold">
+              <p className="text-lg font-bold">
                 {clients.filter((client) => client.hasLogin).length}
               </p>
             </div>
@@ -386,16 +386,16 @@ export function ClientsPageClient({
         </Card>
 
         <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-md bg-primary/10 p-2 text-primary">
-              <Briefcase className="h-5 w-5" />
+          <CardContent className="flex items-center gap-2.5 p-3">
+            <div className="rounded-md bg-primary/10 p-1.5 text-primary">
+              <Briefcase className="h-4 w-4" />
             </div>
 
             <div>
               <p className="text-xs text-muted-foreground">
                 Client jobs
               </p>
-              <p className="text-xl font-bold">
+              <p className="text-lg font-bold">
                 {clients.reduce(
                   (total, client) => total + client.jobCount,
                   0
@@ -406,16 +406,16 @@ export function ClientsPageClient({
         </Card>
 
         <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-md bg-primary/10 p-2 text-primary">
-              <Archive className="h-5 w-5" />
+          <CardContent className="flex items-center gap-2.5 p-3">
+            <div className="rounded-md bg-primary/10 p-1.5 text-primary">
+              <Archive className="h-4 w-4" />
             </div>
 
             <div>
               <p className="text-xs text-muted-foreground">
                 Archived
               </p>
-              <p className="text-xl font-bold">
+              <p className="text-lg font-bold">
                 {archivedClients.length}
               </p>
             </div>
@@ -485,7 +485,7 @@ export function ClientsPageClient({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid gap-3 xl:grid-cols-2">
           {filteredClients.map((client) => {
             const createLoginBusy =
               busyAction === `create-login-${client.id}`;
@@ -500,8 +500,20 @@ export function ClientsPageClient({
               busyAction === `delete-${client.id}`;
 
             return (
-              <Card key={client.id}>
-                <CardHeader className="pb-3">
+              <Card
+                key={client.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => router.push(`/clients/${client.id}`)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    router.push(`/clients/${client.id}`);
+                  }
+                }}
+                className="cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/20"
+              >
+                <CardHeader className="pb-2 pt-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <CardTitle className="truncate text-base">
@@ -526,21 +538,21 @@ export function ClientsPageClient({
                   </div>
                 </CardHeader>
 
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 pb-4">
                   {/* Contact details */}
-                  <div className="grid gap-2 text-sm sm:grid-cols-2">
+                  <div className="grid gap-1.5 text-xs sm:grid-cols-2">
                     <p className="flex min-w-0 items-center gap-2">
-                      <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       <span className="truncate">{client.email}</span>
                     </p>
 
                     <p className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       <span>{client.phone || "No phone"}</span>
                     </p>
 
                     <p className="flex items-center gap-2">
-                      <Globe2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Globe2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       <span>{client.country || "No country"}</span>
                     </p>
 
@@ -550,8 +562,8 @@ export function ClientsPageClient({
                   </div>
 
                   {/* Client statistics */}
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <div className="rounded-md bg-muted/50 p-2">
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                    <div className="rounded-md bg-muted/50 p-1.5">
                       <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <Briefcase className="h-3 w-3" />
                         Jobs
@@ -559,7 +571,7 @@ export function ClientsPageClient({
                       <p className="font-semibold">{client.jobCount}</p>
                     </div>
 
-                    <div className="rounded-md bg-muted/50 p-2">
+                    <div className="rounded-md bg-muted/50 p-1.5">
                       <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <FileText className="h-3 w-3" />
                         Invoices
@@ -569,7 +581,7 @@ export function ClientsPageClient({
                       </p>
                     </div>
 
-                    <div className="rounded-md bg-muted/50 p-2">
+                    <div className="rounded-md bg-muted/50 p-1.5">
                       <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <WalletCards className="h-3 w-3" />
                         Balance
@@ -582,7 +594,7 @@ export function ClientsPageClient({
                       </p>
                     </div>
 
-                    <div className="rounded-md bg-muted/50 p-2">
+                    <div className="rounded-md bg-muted/50 p-1.5">
                       <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <Coins className="h-3 w-3" />
                         Points
@@ -594,7 +606,10 @@ export function ClientsPageClient({
                   </div>
 
                   {/* Portal access */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+                  <div
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2.5"
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     <div>
                       <p className="text-xs font-medium">
                         Portal access
@@ -642,7 +657,10 @@ export function ClientsPageClient({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap gap-2 border-t pt-4">
+                  <div
+                    className="flex flex-wrap gap-2 border-t pt-3"
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     <Button
                       type="button"
                       size="sm"

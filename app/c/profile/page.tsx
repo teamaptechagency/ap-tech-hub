@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileForm } from "@/components/employee/profile-form";
+import { getUserLoginDevices } from "@/lib/login-security";
 
 export default async function ClientProfilePage() {
   const session = await auth();
@@ -31,6 +32,7 @@ export default async function ClientProfilePage() {
     },
   });
   if (!currentUser || !me) notFound();
+  const loginDevices = await getUserLoginDevices(currentUser.id);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -127,6 +129,7 @@ export default async function ClientProfilePage() {
         payoutDetails={currentUser.payoutDetails ?? ""}
         timezone={currentUser.timezone}
         twoFactorEnabled={currentUser.twoFactorEnabled}
+        twoFactorMethod={currentUser.twoFactorMethod}
         withdrawBlockedUntil={currentUser.withdrawBlockedUntil?.toISOString() ?? null}
         pendingChanges={currentUser.profileChangeRequests.map((change) => ({
           id: change.id,
@@ -134,6 +137,12 @@ export default async function ClientProfilePage() {
           newValue: change.newValue,
           createdAt: change.createdAt.toISOString(),
         }))}
+        loginDevices={loginDevices.map((device) => ({
+          ...device,
+          lastSeenAt: device.lastSeenAt.toISOString(),
+          createdAt: device.createdAt.toISOString(),
+        }))}
+        showPayment={false}
       />
     </div>
   );

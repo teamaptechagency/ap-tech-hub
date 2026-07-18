@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { BrandMark } from "@/components/layout/brand-mark";
+import { UserAvatar } from "@/components/layout/user-avatar";
 import type { BrandingSettings } from "@/lib/branding";
 
 import {
@@ -35,6 +36,7 @@ type EmployeeSidebarProps = {
   user: {
     name: string;
     role: string;
+    imageUrl?: string | null;
   };
   branding?: BrandingSettings;
 };
@@ -99,23 +101,12 @@ function formatRole(role: string) {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function getInitials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase())
-    .slice(0, 2)
-    .join("");
-}
-
 export function EmployeeSidebar({
   user,
   branding,
 }: EmployeeSidebarProps) {
   const pathname = usePathname();
 
-  const initials = getInitials(user.name);
   const formattedRole = formatRole(user.role);
 
   return (
@@ -164,9 +155,7 @@ export function EmployeeSidebar({
       <div className="shrink-0 border-t p-3">
         <div className="mb-2 flex items-center justify-between gap-2 px-2">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-              {initials || "TM"}
-            </div>
+            <UserAvatar name={user.name} imageUrl={user.imageUrl} fallback="TM" />
 
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">

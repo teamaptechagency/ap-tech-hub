@@ -13,7 +13,7 @@ import { isEmailVerified } from "@/actions/otp.actions";
 // WORKER: + gender, profession, skills (max 5),
 //   NID/passport + photo (uploaded first via
 //   /api/register-upload)
-// Workers require verified email OTP. Clients can verify later from profile.
+// Every public account requires verified email OTP before creation.
 // Worker accounts land as PENDING_APPROVAL; clients can sign in immediately.
 // ============================================
 export async function registerAccount(formData: {
@@ -39,8 +39,7 @@ export async function registerAccount(formData: {
     return { error: "Password must be at least 8 characters" };
   }
 
-  // OTP gate for workers only
-  if (kind === "WORKER" && !(await isEmailVerified(email))) {
+  if (!(await isEmailVerified(email))) {
     return { error: "Please verify your email with the OTP code first" };
   }
 
@@ -107,9 +106,7 @@ export async function registerAccount(formData: {
     });
   }
 
-  if (kind === "WORKER") {
-    await prisma.emailOtp.delete({ where: { email } }).catch(() => {});
-  }
+  await prisma.emailOtp.delete({ where: { email } }).catch(() => {});
 
   await notifyAdmins({
     title: `New ${kind === "CLIENT" ? "client" : "team member"} registration`,

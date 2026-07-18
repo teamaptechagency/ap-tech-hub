@@ -16,7 +16,10 @@ function readMetadataBase(siteUrl: string) {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const data = await getLandingPageData();
+  const [data, branding] = await Promise.all([
+    getLandingPageData(),
+    getBrandingSettings(),
+  ]);
   const title = data.seo.title;
   const description = data.seo.description;
   const imageUrl =
@@ -66,6 +69,13 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       images: imageUrl ? [imageUrl] : undefined,
     },
+    icons: branding.faviconUrl
+      ? {
+          icon: branding.faviconUrl,
+          shortcut: branding.faviconUrl,
+          apple: branding.faviconUrl,
+        }
+      : undefined,
     other: {
       "business:contact_data:email": data.seo.email,
       "business:contact_data:phone_number": data.seo.phone,

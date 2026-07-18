@@ -10,7 +10,14 @@ export const editableEnvKeys = [
   "PUSHER_SECRET",
   "NEXT_PUBLIC_PUSHER_KEY",
   "NEXT_PUBLIC_PUSHER_CLUSTER",
+  "BLOB_READ_WRITE_TOKEN",
   "CRON_SECRET",
+  "WHATSAPP_ENABLED",
+  "WHATSAPP_ACCESS_TOKEN",
+  "WHATSAPP_PHONE_NUMBER_ID",
+  "WHATSAPP_GRAPH_VERSION",
+  "WHATSAPP_OTP_ENABLED",
+  "WHATSAPP_NOTIFICATIONS_ENABLED",
 ] as const;
 
 export type EditableEnvKey = (typeof editableEnvKeys)[number];

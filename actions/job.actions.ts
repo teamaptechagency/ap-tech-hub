@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
+import { notify } from "@/lib/notify";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -273,6 +274,40 @@ export async function createJob(formData: CreateJobInput) {
     job.id,
     `${data.type}${data.members.length === 0 ? " (open)" : ""}`
   );
+
+  const assignedUserIds = data.members.map((member) => member.userId);
+  if (assignedUserIds.length > 0) {
+    await Promise.all(
+      assignedUserIds.map((userId) =>
+        notify({
+          userId,
+          title: "New job assigned",
+          body: `${data.title} has been assigned to you. Payout: BDT ${workerValue.toLocaleString()}.`,
+          href: `/e/jobs/${job.id}`,
+        })
+      )
+    );
+  } else if (data.skillIds.length > 0) {
+    const matchedUsers = await prisma.user.findMany({
+      where: {
+        role: "TEAM_MEMBER",
+        accountStatus: "ACTIVE",
+        skills: { some: { id: { in: data.skillIds } } },
+      },
+      select: { id: true },
+    });
+
+    await Promise.all(
+      matchedUsers.map((user) =>
+        notify({
+          userId: user.id,
+          title: "New matching job",
+          body: `${data.title} matches your skills. Payout: BDT ${workerValue.toLocaleString()}.`,
+          href: "/e/find-work",
+        })
+      )
+    );
+  }
 
   revalidatePath("/jobs");
   return { success: true, jobId: job.id };

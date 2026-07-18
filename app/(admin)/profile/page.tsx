@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileForm } from "@/components/employee/profile-form";
+import { getUserLoginDevices } from "@/lib/login-security";
 
 export default async function AdminProfilePage() {
   const session = await auth();
@@ -20,6 +21,7 @@ export default async function AdminProfilePage() {
     },
   });
   if (!me) notFound();
+  const loginDevices = await getUserLoginDevices(me.id);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -74,12 +76,26 @@ export default async function AdminProfilePage() {
         payoutDetails={me.payoutDetails ?? ""}
         timezone={me.timezone}
         twoFactorEnabled={me.twoFactorEnabled}
-        withdrawBlockedUntil={me.withdrawBlockedUntil?.toISOString() ?? null}
-        pendingChanges={me.profileChangeRequests.map((change) => ({
-          id: change.id,
-          type: change.type,
-          newValue: change.newValue,
-          createdAt: change.createdAt.toISOString(),
+        twoFactorMethod={me.twoFactorMethod}
+        withdrawBlockedUntil={
+          me.role === "SUPER_ADMIN"
+            ? null
+            : me.withdrawBlockedUntil?.toISOString() ?? null
+        }
+        pendingChanges={
+          me.role === "SUPER_ADMIN"
+            ? []
+            : me.profileChangeRequests.map((change) => ({
+                id: change.id,
+                type: change.type,
+                newValue: change.newValue,
+                createdAt: change.createdAt.toISOString(),
+              }))
+        }
+        loginDevices={loginDevices.map((device) => ({
+          ...device,
+          lastSeenAt: device.lastSeenAt.toISOString(),
+          createdAt: device.createdAt.toISOString(),
         }))}
       />
     </div>

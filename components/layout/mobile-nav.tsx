@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth.actions";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { BrandMark } from "@/components/layout/brand-mark";
+import { UserAvatar } from "@/components/layout/user-avatar";
 import type { BrandingSettings } from "@/lib/branding";
 import { Menu, X, LogOut, type LucideIcon } from "lucide-react";
 
@@ -20,11 +21,13 @@ export function MobileNav({
   items,
   userName,
   userSub,
+  userImageUrl,
   branding,
 }: {
   items: MobileNavItem[];
   userName: string;
   userSub: string;
+  userImageUrl?: string | null;
   branding?: BrandingSettings;
 }) {
   const pathname = usePathname();
@@ -108,13 +111,12 @@ export function MobileNav({
 
         <div className="border-t p-3">
           <div className="mb-2 flex items-center gap-3 px-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-              {userName
-                .split(" ")
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join("")}
-            </div>
+            <UserAvatar
+              name={userName}
+              imageUrl={userImageUrl}
+              fallback="U"
+              className="h-8 w-8"
+            />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{userName}</p>
               <p className="truncate text-xs text-muted-foreground">

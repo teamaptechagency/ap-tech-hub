@@ -32,7 +32,7 @@ export default async function PartnerLayout({
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { termsAcceptedAt: true },
+    select: { photoUrl: true, image: true, termsAcceptedAt: true },
   });
 
   if (!currentUser) redirect("/login");
@@ -49,6 +49,7 @@ export default async function PartnerLayout({
 
   const userName = session.user.name?.trim() || "Partner";
   const userRole = session.user.role.replaceAll("_", " ").toLowerCase();
+  const userImageUrl = currentUser.photoUrl || currentUser.image || null;
   const [floatingMessages, branding] = await Promise.all([
     getFloatingConversations(),
     getBrandingSettings(),
@@ -69,11 +70,12 @@ export default async function PartnerLayout({
         portal="partner"
         userName={userName}
         userSub={userRole}
+        userImageUrl={userImageUrl}
         branding={branding}
       />
 
       <PartnerSidebar
-        user={{ name: userName, role: session.user.role }}
+        user={{ name: userName, role: session.user.role, imageUrl: userImageUrl }}
         branding={branding}
       />
 

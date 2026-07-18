@@ -18,7 +18,6 @@ import {
   updateEnvironmentSettings,
   updateBrandingSettings,
   updateSettings,
-  updateSystemUpgradeSettings,
 } from "@/actions/settings.actions";
 
 import {
@@ -27,6 +26,10 @@ import {
 } from "@/components/settings/payment-method-settings";
 import { BackupUpload } from "@/components/settings/backup-upload";
 import { TermsEditor } from "@/components/settings/terms-editor";
+import {
+  SystemInformation,
+  type SystemInformationData,
+} from "@/components/settings/system-information";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -103,11 +106,13 @@ type SettingsShellProps = {
   paymentMethods: FixedPaymentMethodRow[];
   templates: TemplateRow[];
   envStatuses: EnvStatusRow[];
+  systemInfo: SystemInformationData;
 };
 
 type EnvStatusRow = {
   key: string;
   configured: boolean;
+  maskedValue: string;
 };
 
 type TeamRole =
@@ -145,7 +150,8 @@ type SettingsSection =
   | "backup"
   | "terms"
   | "team"
-  | "payments";
+  | "payments"
+  | "security";
 
 const settingsSections: {
   key: SettingsSection;
@@ -197,6 +203,11 @@ const settingsSections: {
     label: "Payments",
     description: "Gateway and receiving details",
   },
+  {
+    key: "security",
+    label: "Security",
+    description: "2FA, blacklist and login help",
+  },
 ];
 
 function getActionError(result: unknown): string | null {
@@ -247,6 +258,7 @@ export function SettingsShell({
   paymentMethods,
   templates,
   envStatuses,
+  systemInfo,
 }: SettingsShellProps) {
   const [activeSection, setActiveSection] =
     useState<SettingsSection>("branding");
@@ -291,13 +303,6 @@ export function SettingsShell({
     settings["specialOrder.partnerUsdRate"] ?? "145"
   );
 
-  const [systemVersion, setSystemVersion] = useState(
-    settings["system.version"] ?? "1.0.0"
-  );
-  const [rollbackRetentionMonths, setRollbackRetentionMonths] = useState(
-    settings["system.rollbackRetentionMonths"] ?? "2"
-  );
-  const [upgradeNote, setUpgradeNote] = useState("");
 
   const [siteName, setSiteName] = useState(
     settings["brand.siteName"] ?? "AP Tech Hub"
@@ -388,6 +393,8 @@ export function SettingsShell({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("visibility", "public");
+      formData.append("assetKind", type);
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -855,35 +862,6 @@ export function SettingsShell({
     } catch (error) {
       console.error("Failed to save special USD rate:", error);
       toast.error("Special USD rate could not be saved");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function saveSystemUpgrade(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (busy) return;
-
-    setBusy(true);
-
-    try {
-      const result = await updateSystemUpgradeSettings({
-        targetVersion: systemVersion,
-        retentionMonths: rollbackRetentionMonths,
-        note: upgradeNote,
-      });
-
-      const error = getActionError(result);
-      if (error) {
-        toast.error(error);
-        return;
-      }
-
-      setUpgradeNote("");
-      toast.success("System upgrade record saved");
-    } catch (error) {
-      console.error("Failed to save system upgrade settings:", error);
-      toast.error("System upgrade record could not be saved");
     } finally {
       setBusy(false);
     }
@@ -1398,6 +1376,11 @@ export function SettingsShell({
                       {env.configured ? "Set" : "Missing"}
                     </Badge>
                   </div>
+                  {env.maskedValue && (
+                    <p className="rounded-md bg-muted/30 px-2 py-1 font-mono text-[11px] text-muted-foreground">
+                      Current: {env.maskedValue}
+                    </p>
+                  )}
                   <Input
                     id={`env-${env.key}`}
                     type="password"
@@ -1773,109 +1756,9 @@ export function SettingsShell({
       </Card>
       )}
 
-      {/* System upgrade */}
+      {/* System information */}
       {activeSection === "system" && (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">
-            System upgrade
-          </CardTitle>
-
-          <p className="text-xs text-muted-foreground">
-            Record app upgrades, block downgrades, and keep rollback
-            points before adding new features.
-          </p>
-        </CardHeader>
-
-        <CardContent>
-          <form
-            onSubmit={saveSystemUpgrade}
-            className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="system-version">
-                Current / next version
-              </Label>
-              <Input
-                id="system-version"
-                value={systemVersion}
-                onChange={(event) =>
-                  setSystemVersion(event.target.value)
-                }
-                placeholder="1.0.0"
-                disabled={busy}
-              />
-              <p className="text-xs text-muted-foreground">
-                Same version can be recorded again. Downgrade is blocked.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Rollback data retention</Label>
-              <Select
-                value={rollbackRetentionMonths}
-                onValueChange={(value) => {
-                  if (value) setRollbackRetentionMonths(value);
-                }}
-                disabled={busy}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 month</SelectItem>
-                  <SelectItem value="2">2 months</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Old rollback files are not removed automatically here.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2 lg:min-w-48">
-              <a href="/api/backup?type=rollback" download>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="w-full"
-                >
-                  Download rollback point
-                </Button>
-              </a>
-              <Button type="submit" size="sm" disabled={busy}>
-                Save upgrade record
-              </Button>
-            </div>
-
-            <div className="space-y-2 lg:col-span-3">
-              <Label htmlFor="upgrade-note">
-                Upgrade note
-              </Label>
-              <Input
-                id="upgrade-note"
-                value={upgradeNote}
-                onChange={(event) =>
-                  setUpgradeNote(event.target.value)
-                }
-                placeholder="What changed in this update?"
-                disabled={busy}
-              />
-              <p className="text-xs text-muted-foreground">
-                Last update:{" "}
-                {settings["system.lastUpgradeAt"]
-                  ? new Date(
-                      settings["system.lastUpgradeAt"]
-                    ).toLocaleString()
-                  : "not recorded"}{" "}
-                {settings["system.lastUpgradeBy"]
-                  ? `by ${settings["system.lastUpgradeBy"]}`
-                  : ""}
-              </p>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        <SystemInformation data={systemInfo} />
       )}
 
       {/* Backup */}
@@ -2044,6 +1927,30 @@ export function SettingsShell({
       <PaymentMethodSettings
         paymentMethods={paymentMethods}
       />
+      )}
+
+      {activeSection === "security" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Security center</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Review blocked IPs, trusted devices, PIN login activity and help
+              requests here.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <a
+              href="/settings/blacklist"
+              className="block rounded-lg border p-4 transition-colors hover:border-primary hover:bg-primary/5"
+            >
+              <p className="font-medium">Blacklist and login help</p>
+              <p className="text-sm text-muted-foreground">
+                See blocked IP addresses, unlock users, and review Need Help
+                form submissions.
+              </p>
+            </a>
+          </CardContent>
+        </Card>
       )}
 
       {/* Payment methods and templates */}

@@ -98,6 +98,88 @@ model User {
   updatedAt            DateTime                  @updatedAt
 }
 
+model LoginSecurityRecord {
+  id            String    @id @default(cuid())
+  key           String    @unique
+  email         String?
+  ipAddress     String
+  failedCount   Int       @default(0)
+  holdLevel     Int       @default(0)
+  holdUntil     DateTime?
+  hardBlocked   Boolean   @default(false)
+  lastAttemptAt DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([ipAddress])
+  @@index([holdUntil])
+  @@index([hardBlocked])
+}
+
+model IpBlock {
+  id          String    @id @default(cuid())
+  ipAddress   String    @unique
+  reason      String
+  active      Boolean   @default(true)
+  blockedBy   String    @default("SYSTEM")
+  blockedUntil DateTime?
+  unlockedAt  DateTime?
+  unlockToken String?   @unique
+  unlockTokenExp DateTime?
+  note        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([active])
+  @@index([blockedUntil])
+  @@index([unlockToken])
+}
+
+model LoginHelpRequest {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  ipAddress String?
+  status    String   @default("OPEN")
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+}
+
+model UserLoginPin {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  pinHash   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserLoginDevice {
+  id           String    @id @default(cuid())
+  userId       String
+  deviceToken  String    @unique
+  ipAddress    String?
+  userAgent    String?
+  country      String?
+  city         String?
+  region       String?
+  trusted      Boolean   @default(true)
+  lastSeenAt   DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([lastSeenAt])
+  @@index([trusted])
+}
+
 enum ProfileChangeType {
   EMAIL
   PHONE

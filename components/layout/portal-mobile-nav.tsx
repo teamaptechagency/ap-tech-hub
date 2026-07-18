@@ -14,6 +14,7 @@ type PortalMobileNavProps = {
   portal: PortalType;
   userName: string;
   userSub: string;
+  userImageUrl?: string | null;
   branding?: BrandingSettings;
 };
 
@@ -21,6 +22,7 @@ export function PortalMobileNav({
   portal,
   userName,
   userSub,
+  userImageUrl,
   branding,
 }: PortalMobileNavProps) {
   const items =
@@ -37,6 +39,7 @@ export function PortalMobileNav({
       items={items}
       userName={userName}
       userSub={userSub}
+      userImageUrl={userImageUrl}
       branding={branding}
     />
   );

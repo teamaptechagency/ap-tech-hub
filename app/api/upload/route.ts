@@ -1,4 +1,6 @@
 import { del, put } from "@vercel/blob";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
@@ -30,6 +32,98 @@ function getOptionalFormValue(
   return cleanValue || null;
 }
 
+async function getBlobToken() {
+  const savedToken = await prisma.setting.findUnique({
+    where: { key: "env.BLOB_READ_WRITE_TOKEN" },
+    select: { value: true },
+  });
+
+  const candidates = [
+    savedToken?.value,
+    await readBlobTokenFromEnvFile(),
+    process.env.BLOB_READ_WRITE_TOKEN,
+  ]
+    .map(normalizeBlobToken)
+    .filter(Boolean);
+
+  return candidates.find(isLikelyBlobToken) || candidates[0] || "";
+}
+
+function normalizeBlobToken(value: string | null | undefined) {
+  let cleanValue = value?.trim() ?? "";
+
+  if (cleanValue.startsWith("BLOB_READ_WRITE_TOKEN=")) {
+    cleanValue = cleanValue.slice("BLOB_READ_WRITE_TOKEN=".length).trim();
+  }
+
+  if (
+    (cleanValue.startsWith('"') && cleanValue.endsWith('"')) ||
+    (cleanValue.startsWith("'") && cleanValue.endsWith("'"))
+  ) {
+    cleanValue = cleanValue.slice(1, -1).trim();
+  }
+
+  return cleanValue;
+}
+
+function isLikelyBlobToken(value: string) {
+  return value.startsWith("vercel_blob_rw_");
+}
+
+async function readBlobTokenFromEnvFile() {
+  try {
+    const content = await readFile(path.join(process.cwd(), ".env"), "utf8");
+    const matches = Array.from(
+      content.matchAll(/^BLOB_READ_WRITE_TOKEN=(.*)$/gm)
+    );
+    const rawValue = matches.at(-1)?.[1]?.trim() ?? "";
+
+    if (!rawValue) return "";
+
+    return normalizeBlobToken(rawValue);
+  } catch {
+    return "";
+  }
+}
+
+function getUploadErrorMessage(error: unknown, blobToken: string) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "";
+  const lowerMessage = message.toLowerCase();
+
+  if (!blobToken.trim()) {
+    return "Blob storage token is missing. Add BLOB_READ_WRITE_TOKEN in Environment settings, then upload again.";
+  }
+
+  if (blobToken.startsWith("store_")) {
+    return "You pasted the Blob Store ID, not the read/write token. Open the public Blob Store, copy BLOB_READ_WRITE_TOKEN, save it in Environment settings, then upload again.";
+  }
+
+  if (!isLikelyBlobToken(blobToken)) {
+    return "BLOB_READ_WRITE_TOKEN does not look like a Vercel Blob read/write token. It should start with vercel_blob_rw_. Copy the token from the connected public Blob Store.";
+  }
+
+  if (lowerMessage.includes("store does not exist")) {
+    return "Blob Store token points to a deleted or wrong store. Copy the token from your connected public Blob Store and save BLOB_READ_WRITE_TOKEN in Environment settings again.";
+  }
+
+  if (
+    lowerMessage.includes("token") ||
+    lowerMessage.includes("unauthorized") ||
+    lowerMessage.includes("forbidden") ||
+    lowerMessage.includes("not found") ||
+    lowerMessage.includes("store")
+  ) {
+    return "Blob storage is not connected correctly. Update BLOB_READ_WRITE_TOKEN with the new public Blob Store token, then upload again.";
+  }
+
+  return "The file could not be uploaded. Please try again.";
+}
+
 export async function POST(request: Request) {
   const session = await auth();
 
@@ -46,8 +140,38 @@ export async function POST(request: Request) {
   }
 
   let uploadedBlobUrl: string | null = null;
+  let blobToken = "";
 
   try {
+    blobToken = await getBlobToken();
+
+    if (!blobToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Blob storage token is missing. Add BLOB_READ_WRITE_TOKEN in Environment settings, then upload again.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    if (!isLikelyBlobToken(blobToken)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: blobToken.startsWith("store_")
+            ? "You pasted the Blob Store ID, not the read/write token. Open the public Blob Store, copy BLOB_READ_WRITE_TOKEN, save it in Environment settings, then upload again."
+            : "BLOB_READ_WRITE_TOKEN does not look like a Vercel Blob read/write token. It should start with vercel_blob_rw_. Copy the token from the connected public Blob Store.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
     const formData = await request.formData();
 
     const fileValue = formData.get("file");
@@ -55,6 +179,16 @@ export async function POST(request: Request) {
     const jobId = getOptionalFormValue(
       formData,
       "jobId"
+    );
+
+    const visibility = getOptionalFormValue(
+      formData,
+      "visibility"
+    );
+
+    const assetKind = getOptionalFormValue(
+      formData,
+      "assetKind"
     );
 
     const messageId = getOptionalFormValue(
@@ -281,13 +415,18 @@ export async function POST(request: Request) {
 
     const safeFileName =
       cleanFileName(file.name) || "attachment";
+    const isPublicAsset = visibility === "public";
+    const folder = isPublicAsset
+      ? `public-assets/${assetKind || "general"}`
+      : `attachments/${session.user.id}`;
 
     const blob = await put(
-      `attachments/${session.user.id}/${Date.now()}-${safeFileName}`,
+      `${folder}/${Date.now()}-${safeFileName}`,
       file,
       {
-        access: "private",
+        access: isPublicAsset ? "public" : "private",
         addRandomSuffix: true,
+        token: blobToken,
       }
     );
 
@@ -359,8 +498,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        error:
-          "The file could not be uploaded. Please try again.",
+        error: getUploadErrorMessage(error, blobToken),
       },
       {
         status: 500,

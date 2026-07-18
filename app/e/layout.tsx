@@ -39,6 +39,8 @@ export default async function EmployeeLayout({
       id: session.user.id,
     },
     select: {
+      photoUrl: true,
+      image: true,
       termsAcceptedAt: true,
     },
   });
@@ -66,6 +68,7 @@ export default async function EmployeeLayout({
 
   const userName =
     session.user.name?.trim() || "Team Member";
+  const userImageUrl = currentUser.photoUrl || currentUser.image || null;
   const [floatingMessages, branding] = await Promise.all([
     getFloatingConversations(),
     getBrandingSettings(),
@@ -111,6 +114,7 @@ export default async function EmployeeLayout({
         portal="employee"
         userName={userName}
         userSub="team member"
+        userImageUrl={userImageUrl}
         branding={branding}
       />
 
@@ -119,6 +123,7 @@ export default async function EmployeeLayout({
         user={{
           name: userName,
           role: session.user.role,
+          imageUrl: userImageUrl,
         }}
         branding={branding}
       />

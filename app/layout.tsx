@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FaviconSync } from "@/components/branding/favicon-sync";
 import { CookieConsent } from "@/components/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
 import { getBrandingSettings } from "@/lib/branding";
@@ -22,11 +23,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const branding = await getBrandingSettings();
+
   return (
     <html
       lang="en"
@@ -34,6 +37,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         {children}
+        <FaviconSync href={branding.faviconUrl} />
         <CookieConsent />
 
         <Toaster

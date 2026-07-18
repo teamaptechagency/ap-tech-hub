@@ -204,6 +204,9 @@ function downloadCsv(leads: LeadRow[]) {
 export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
   const [selectedCollectionId, setSelectedCollectionId] = useState("ALL");
   const [selectedLeadId, setSelectedLeadId] = useState(leads[0]?.id ?? "");
+  const [activeSection, setActiveSection] = useState<
+    "overview" | "leads" | "bulk" | "followups" | "import"
+  >("overview");
   const [search, setSearch] = useState("");
   const [csvText, setCsvText] = useState("");
   const [selectedMailIds, setSelectedMailIds] = useState<string[]>([]);
@@ -237,8 +240,19 @@ export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
       followUp: leads.filter((lead) => lead.status === "FOLLOW_UP").length,
       qualified: leads.filter((lead) => lead.status === "QUALIFIED").length,
       won: leads.filter((lead) => lead.status === "WON").length,
+      selected: selectedMailIds.length,
     }),
-    [leads]
+    [leads, selectedMailIds.length]
+  );
+
+  const emailReadyLeadIds = useMemo(
+    () => visibleLeads.filter((lead) => lead.email).map((lead) => lead.id),
+    [visibleLeads]
+  );
+
+  const selectedEmailLeads = useMemo(
+    () => leads.filter((lead) => selectedMailIds.includes(lead.id) && lead.email),
+    [leads, selectedMailIds]
   );
 
   function runAction(action: () => Promise<unknown>, success: string) {
@@ -383,7 +397,7 @@ export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
   }
 
   return (
-    <main className="space-y-6 p-4 md:p-8">
+    <main className="w-full min-w-0 space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">Lead collections</h1>
@@ -407,22 +421,58 @@ export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="flex max-w-full gap-2 overflow-x-auto rounded-2xl border bg-card p-2">
+        {[
+          ["overview", "Overview"],
+          ["leads", "Leads"],
+          ["bulk", `Bulk message (${selectedMailIds.length})`],
+          ["followups", "Follow-up"],
+          ["import", "Import / Export"],
+        ].map(([key, title]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setActiveSection(key as typeof activeSection)}
+            className={`whitespace-nowrap rounded-xl px-4 py-2 text-sm font-medium transition ${
+              activeSection === key
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            {title}
+          </button>
+        ))}
+      </div>
+
+      {activeSection === "overview" && (
+        <div className="grid gap-4 md:grid-cols-5">
         {[
           ["Total leads", stats.total],
           ["Follow-up", stats.followUp],
           ["Qualified", stats.qualified],
           ["Won", stats.won],
+          ["Selected", stats.selected],
         ].map(([title, value]) => (
           <div key={title} className="rounded-2xl border bg-card p-5">
             <p className="text-sm text-muted-foreground">{title}</p>
             <p className="mt-2 text-3xl font-bold">{value}</p>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
-      <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
-        <section className="space-y-5">
+      {(activeSection === "leads" ||
+        activeSection === "bulk" ||
+        activeSection === "import") && (
+      <div
+        className={
+          activeSection === "import"
+            ? "grid min-w-0 gap-5 xl:grid-cols-[360px_minmax(0,1fr)]"
+            : "grid min-w-0 gap-5"
+        }
+      >
+        {activeSection === "import" && (
+        <section className="min-w-0 space-y-5">
           <div className="rounded-2xl border bg-card p-5">
             <h2 className="font-semibold">New collection</h2>
             <form onSubmit={submitCollection} className="mt-4 space-y-3">
@@ -501,8 +551,10 @@ export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
             </div>
           </div>
         </section>
+        )}
 
-        <section className="space-y-5">
+        <section className="min-w-0 space-y-5">
+          {activeSection === "leads" && (
           <div className="rounded-2xl border bg-card p-5">
             <h2 className="font-semibold">Add lead</h2>
             <LeadForm
@@ -513,23 +565,24 @@ export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
               }
             />
           </div>
+          )}
 
           <div className="rounded-2xl border bg-card">
             <div className="flex flex-col gap-3 border-b p-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="font-semibold">Lead list</h2>
+                <h2 className="font-semibold">
+                  {activeSection === "bulk" ? "Select leads" : "Lead list"}
+                </h2>
                 <p className="text-xs text-muted-foreground">
-                  Click any card to edit. Tick leads for bulk email, star important leads.
+                  {activeSection === "bulk"
+                    ? "Tick multiple leads, then send one message to everyone selected."
+                    : "Click any card to edit. Tick leads for bulk email, star important leads."}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    setSelectedMailIds(
-                      visibleLeads.filter((lead) => lead.email).map((lead) => lead.id)
-                    )
-                  }
+                  onClick={() => setSelectedMailIds(emailReadyLeadIds)}
                   className="rounded-md border px-3 py-2 text-sm hover:bg-muted"
                 >
                   Select emails
@@ -549,7 +602,7 @@ export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
                 />
               </div>
             </div>
-            <div className="grid gap-3 p-5 lg:grid-cols-2">
+            <div className="grid min-w-0 gap-3 p-5 md:grid-cols-2 2xl:grid-cols-3">
               {visibleLeads.length === 0 && (
                 <p className="col-span-full py-10 text-center text-sm text-muted-foreground">
                   No leads found.
@@ -640,9 +693,55 @@ export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
           </div>
         </section>
       </div>
+      )}
 
-      {selectedLead && (
-        <section className="grid gap-5 xl:grid-cols-[1fr_420px]">
+      {activeSection === "bulk" && (
+        <section className="rounded-2xl border bg-card p-5">
+          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="font-semibold">Bulk message / mail</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {selectedEmailLeads.length} email-ready lead selected. Selected names:
+                {" "}
+                {selectedEmailLeads.length
+                  ? selectedEmailLeads.map((lead) => lead.name).join(", ")
+                  : "none"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedMailIds([])}
+              className="rounded-md border px-3 py-2 text-sm hover:bg-muted"
+            >
+              Clear selection
+            </button>
+          </div>
+          <form onSubmit={submitBulkEmail} className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+            <input
+              name="subject"
+              placeholder="Subject"
+              className="rounded-md border bg-background px-3 py-2 text-sm"
+            />
+            <textarea
+              name="body"
+              placeholder="Write the message once. It will be sent/logged for all selected leads."
+              rows={3}
+              className="rounded-md border bg-background px-3 py-2 text-sm md:row-span-2"
+            />
+            <button
+              disabled={isPending || !selectedMailIds.length}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 md:row-span-2"
+            >
+              <Mail className="h-4 w-4" />
+              Send selected
+            </button>
+          </form>
+        </section>
+      )}
+
+      {selectedLead && (activeSection === "leads" || activeSection === "followups") && (
+        <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+          {activeSection === "leads" && (
           <div className="rounded-2xl border bg-card p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -668,8 +767,10 @@ export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
               onSubmit={submitUpdateLead}
             />
           </div>
+          )}
 
           <div className="space-y-5">
+            {activeSection === "leads" && (
             <div className="rounded-2xl border bg-card p-5">
               <h2 className="font-semibold">Bulk email selected leads</h2>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -696,6 +797,7 @@ export function LeadCrmShell({ collections, leads, setupMessage }: Props) {
                 </button>
               </form>
             </div>
+            )}
 
             <div className="rounded-2xl border bg-card p-5">
               <h2 className="font-semibold">Email this lead</h2>

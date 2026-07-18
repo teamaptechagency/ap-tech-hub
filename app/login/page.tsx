@@ -4,11 +4,13 @@ import { LoginForm } from "@/components/auth/login-form";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ reason?: string; next?: string }>;
+  searchParams?: Promise<{ reason?: string; next?: string; message?: string }>;
 }) {
   const params = await searchParams;
   const initialMessage =
-    params?.reason === "auth"
+    params?.message
+      ? params.message
+      : params?.reason === "auth"
       ? "Please sign in first, then we will open your portal."
       : "";
 

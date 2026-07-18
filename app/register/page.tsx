@@ -60,7 +60,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     setBusy(true);
-    const result = await sendOtp(email);
+    const result = await sendOtp(email, phone);
     setBusy(false);
     if (result.error) return setError(result.error);
     setInfo(
@@ -134,6 +134,7 @@ export default function RegisterPage() {
       kind: "CLIENT",
       name,
       email,
+      phone,
       password,
     });
     setBusy(false);
@@ -173,7 +174,7 @@ export default function RegisterPage() {
           </CardTitle>
           <p className="text-center text-sm text-muted-foreground">
             AP Tech <span className="text-primary">Hub</span>
-            {kind === "WORKER" ? ` - step ${step} of 3` : ""}
+            {` - step ${step} of 3`}
           </p>
         </CardHeader>
         <CardContent>
@@ -211,24 +212,18 @@ export default function RegisterPage() {
             </p>
           ) : null}
 
-          {kind === "CLIENT" ? (
+          {kind === "CLIENT" && step === 3 ? (
             <form onSubmit={handleClientRegister} className="space-y-4">
+              <p className="rounded-md bg-green-50 px-3 py-1.5 text-xs text-green-700">
+                ✓ {email} verified
+              </p>
+
               <div className="space-y-2">
                 <Label htmlFor="clientName">Name</Label>
                 <Input
                   id="clientName"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="clientEmail">Email</Label>
-                <Input
-                  id="clientEmail"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
@@ -249,14 +244,13 @@ export default function RegisterPage() {
                 {busy ? "Creating..." : "Create client account"}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                Email verification and company documents can be completed later
-                from profile.
+                Company documents can be completed later from profile.
               </p>
             </form>
           ) : null}
 
           {/* STEP 1 — email */}
-          {kind === "WORKER" && step === 1 ? (
+          {step === 1 ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="rgEmail">Email</Label>
@@ -269,6 +263,20 @@ export default function RegisterPage() {
                   required
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="rgWhatsApp">
+                  WhatsApp number{" "}
+                  <span className="text-[10px] text-muted-foreground">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id="rgWhatsApp"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+8801..."
+                />
+              </div>
               {error ? (
                 <p className="text-center text-sm text-red-500">{error}</p>
               ) : null}
@@ -279,7 +287,7 @@ export default function RegisterPage() {
           ) : null}
 
           {/* STEP 2 — OTP */}
-          {kind === "WORKER" && step === 2 ? (
+          {step === 2 ? (
             <form onSubmit={handleVerify} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="rgCode">6-digit code</Label>
@@ -304,7 +312,7 @@ export default function RegisterPage() {
                 type="button"
                 onClick={async () => {
                   setError("");
-                  const r = await sendOtp(email);
+                  const r = await sendOtp(email, phone);
                   if (r.error) setError(r.error);
                   else setInfo("New code sent!");
                 }}

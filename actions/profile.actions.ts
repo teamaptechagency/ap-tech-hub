@@ -11,6 +11,26 @@ import {
   verifyTotp,
 } from "@/lib/totp";
 
+const FIXED_SUPER_ADMIN_EMAIL = "nazmulha30@gmail.com";
+type TwoFactorMethod = "EMAIL" | "WHATSAPP" | "AUTHENTICATOR";
+
+function parseTwoFactorMethods(value?: string | null) {
+  return new Set<TwoFactorMethod>(
+    (value ?? "")
+      .split(",")
+      .map((method) => method.trim().toUpperCase())
+      .filter((method): method is TwoFactorMethod =>
+        ["EMAIL", "WHATSAPP", "AUTHENTICATOR"].includes(method)
+      )
+  );
+}
+
+function serializeTwoFactorMethods(methods: Set<TwoFactorMethod>) {
+  return ["EMAIL", "WHATSAPP", "AUTHENTICATOR"]
+    .filter((method) => methods.has(method as TwoFactorMethod))
+    .join(",");
+}
+
 // ============================================
 // UPDATE PAYOUT DETAILS + TIMEZONE (any user)
 // ============================================
@@ -74,6 +94,30 @@ export async function updateProfile(formData: {
   }[] = [];
 
   const nextPhone = formData.phone?.trim() || "";
+  const nextPayoutMethod = formData.payoutMethod?.trim() || "";
+  const nextPayoutDetails = formData.payoutDetails?.trim() || "";
+
+  if (me.role === "SUPER_ADMIN") {
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          phone: nextPhone || null,
+          payoutMethod: nextPayoutMethod || null,
+          payoutDetails: nextPayoutDetails || null,
+          withdrawBlockedUntil: null,
+        },
+      }),
+      prisma.userProfileChangeRequest.deleteMany({
+        where: { userId: session.user.id, status: "PENDING" },
+      }),
+    ]);
+
+    revalidatePath("/profile");
+    revalidatePath("/accounts/profile-reviews");
+    return { success: true, review: null };
+  }
+
   if (nextPhone && nextPhone !== (me.phone ?? "")) {
     sensitiveRequests.push({
       type: "PHONE",
@@ -82,8 +126,6 @@ export async function updateProfile(formData: {
     });
   }
 
-  const nextPayoutMethod = formData.payoutMethod?.trim() || "";
-  const nextPayoutDetails = formData.payoutDetails?.trim() || "";
   const oldPayout = JSON.stringify({
     method: me.payoutMethod ?? "",
     details: me.payoutDetails ?? "",
@@ -157,6 +199,28 @@ export async function requestEmailChange(email: string) {
   const exists = await prisma.user.findUnique({ where: { email: nextEmail } });
   if (exists) return { error: "This email is already used" };
 
+  if (me.role === "SUPER_ADMIN") {
+    if (nextEmail !== FIXED_SUPER_ADMIN_EMAIL) {
+      return {
+        error: `Super admin email is fixed: ${FIXED_SUPER_ADMIN_EMAIL}`,
+      };
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: session.user.id },
+        data: { email: nextEmail, withdrawBlockedUntil: null },
+      }),
+      prisma.userProfileChangeRequest.deleteMany({
+        where: { userId: session.user.id, status: "PENDING" },
+      }),
+    ]);
+
+    revalidatePath("/profile");
+    revalidatePath("/accounts/profile-reviews");
+    return { success: true, review: null };
+  }
+
   const blockUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
   await prisma.$transaction([
     prisma.user.update({
@@ -186,15 +250,38 @@ export async function requestEmailChange(email: string) {
   };
 }
 
-export async function setTwoFactorEnabled(enabled: boolean) {
+export async function setTwoFactorEnabled(
+  enabled: boolean,
+  method: TwoFactorMethod = "EMAIL"
+) {
   const session = await auth();
   if (!session?.user) return { error: "You must be signed in" };
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { phone: true, twoFactorMethod: true },
+  });
+  if (!user) return { error: "User not found" };
+  if (enabled && method === "WHATSAPP" && !user.phone?.trim()) {
+    return { error: "Add your WhatsApp number in Personal details first" };
+  }
+  if (enabled && method === "AUTHENTICATOR") {
+    return { error: "Use Authenticator setup first" };
+  }
+
+  const methods = parseTwoFactorMethods(user.twoFactorMethod);
+  if (enabled) {
+    methods.add(method);
+  } else {
+    methods.delete(method);
+  }
+  const nextMethods = serializeTwoFactorMethods(methods);
 
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      twoFactorEnabled: enabled,
-      twoFactorMethod: enabled ? "EMAIL" : "EMAIL",
+      twoFactorEnabled: nextMethods.length > 0,
+      twoFactorMethod: nextMethods || "EMAIL",
       twoFactorCode: null,
       twoFactorCodeExp: null,
     },
@@ -236,18 +323,21 @@ export async function enableAuthenticator(code: string) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { totpSecret: true },
+    select: { totpSecret: true, twoFactorMethod: true },
   });
   if (!user?.totpSecret) return { error: "Set up authenticator first" };
   if (!verifyTotp(code, user.totpSecret)) {
     return { error: "Authenticator code is not valid" };
   }
 
+  const methods = parseTwoFactorMethods(user.twoFactorMethod);
+  methods.add("AUTHENTICATOR");
+
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
       twoFactorEnabled: true,
-      twoFactorMethod: "AUTHENTICATOR",
+      twoFactorMethod: serializeTwoFactorMethods(methods),
       twoFactorCode: null,
       twoFactorCodeExp: null,
     },

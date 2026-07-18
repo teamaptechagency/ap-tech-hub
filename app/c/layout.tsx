@@ -50,6 +50,8 @@ export default async function ClientLayout({
         id: session.user.id,
       },
       select: {
+        photoUrl: true,
+        image: true,
         termsAcceptedAt: true,
       },
     }),
@@ -81,6 +83,7 @@ export default async function ClientLayout({
 
   const companyName =
     client.companyName?.trim() || "Client Account";
+  const userImageUrl = currentUser.photoUrl || currentUser.image || null;
   const [floatingMessages, branding] = await Promise.all([
     getFloatingConversations(),
     getBrandingSettings(),
@@ -126,6 +129,7 @@ export default async function ClientLayout({
         portal="client"
         userName={userName}
         userSub={companyName}
+        userImageUrl={userImageUrl}
         branding={branding}
       />
 
@@ -134,6 +138,7 @@ export default async function ClientLayout({
         user={{
           name: userName,
           companyName,
+          imageUrl: userImageUrl,
         }}
         branding={branding}
       />

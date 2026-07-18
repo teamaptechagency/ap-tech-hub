@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { logout } from "@/actions/auth.actions";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { BrandMark } from "@/components/layout/brand-mark";
+import { UserAvatar } from "@/components/layout/user-avatar";
 import { cn } from "@/lib/utils";
 import type { BrandingSettings } from "@/lib/branding";
 import {
@@ -41,16 +42,10 @@ export function PartnerSidebar({
   user,
   branding,
 }: {
-  user: { name: string; role: string };
+  user: { name: string; role: string; imageUrl?: string | null };
   branding?: BrandingSettings;
 }) {
   const pathname = usePathname();
-  const initials = user.name
-    .split(/\s+/)
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
@@ -85,9 +80,7 @@ export function PartnerSidebar({
       <div className="shrink-0 border-t p-3">
         <div className="mb-2 flex items-center justify-between gap-2 px-2">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-              {initials || "P"}
-            </div>
+            <UserAvatar name={user.name} imageUrl={user.imageUrl} fallback="P" />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{user.name}</p>
               <p className="truncate text-xs text-muted-foreground">

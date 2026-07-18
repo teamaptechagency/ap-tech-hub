@@ -1573,23 +1573,23 @@ export function LandingPage({
               </button>
             ))}
           </div>
-          <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {filteredServices.map((service) => (
               <button
                 type="button"
                 key={service.id}
                 onClick={() => setModal({ type: "service", item: service })}
-                className="group flex h-[236px] flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.12)]"
+                className="group flex h-[206px] flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.12)] sm:h-[236px]"
               >
                 {service.thumbnailUrl || service.imageUrl ? (
                   <img
                     src={service.thumbnailUrl || service.imageUrl || ""}
                     alt={service.title}
-                    className="h-[118px] w-full object-cover"
+                    className="h-[92px] w-full object-cover sm:h-[118px]"
                   />
                 ) : (
                   <div
-                    className="grid h-[118px] place-items-center text-4xl"
+                    className="grid h-[92px] place-items-center text-3xl sm:h-[118px] sm:text-4xl"
                     style={{ backgroundColor: service.accent || "#2e3b55" }}
                   >
                     <span className="drop-shadow-sm">
@@ -1597,14 +1597,14 @@ export function LandingPage({
                     </span>
                   </div>
                 )}
-                <div className="flex flex-1 flex-col p-4">
-                  <h3 className="line-clamp-2 min-h-12 text-[15px] font-extrabold leading-6 text-[#101623]">{service.title}</h3>
-                  <div className="mt-auto flex items-end justify-between gap-3 pt-4">
-                    <span className="text-sm font-bold text-[#f59e0b]">
+                <div className="flex flex-1 flex-col p-3 sm:p-4">
+                  <h3 className="line-clamp-2 min-h-10 text-[13px] font-extrabold leading-5 text-[#101623] sm:min-h-12 sm:text-[15px] sm:leading-6">{service.title}</h3>
+                  <div className="mt-auto flex items-end justify-between gap-2 pt-3 sm:gap-3 sm:pt-4">
+                    <span className="text-xs font-bold text-[#f59e0b] sm:text-sm">
                       ★ {ratingStars(service.rating).label}
                     </span>
                     {service.priceRange && (
-                      <span className="text-right text-xs text-[#64748b]">
+                      <span className="text-right text-[11px] text-[#64748b] sm:text-xs">
                         {service.priceRange.replace("Start from ", "From ").replace("From ", "From ")}
                       </span>
                     )}

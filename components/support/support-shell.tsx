@@ -3,7 +3,14 @@
 import type { FormEvent, ReactNode, SelectHTMLAttributes } from "react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Bug, Lightbulb, MessageSquareText, Send, ShieldCheck } from "lucide-react";
+import {
+  Bug,
+  Lightbulb,
+  MessageSquareText,
+  Send,
+  ShieldCheck,
+  UploadCloud,
+} from "lucide-react";
 
 import {
   createSupportTicket,
@@ -76,7 +83,40 @@ export function SupportShell({
   const [description, setDescription] = useState("");
   const [pageUrl, setPageUrl] = useState("");
   const [screenshotUrl, setScreenshotUrl] = useState("");
+  const [uploadingFile, setUploadingFile] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  async function uploadScreenshot(file: File | null) {
+    if (!file) return;
+
+    setUploadingFile(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("visibility", "public");
+    formData.append("assetKind", "support-ticket");
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = await response.json();
+      const fileUrl = payload?.attachment?.fileUrl;
+
+      if (!response.ok || typeof fileUrl !== "string") {
+        toast.error(payload?.error ?? "Attachment upload failed");
+        return;
+      }
+
+      setScreenshotUrl(fileUrl);
+      toast.success("Attachment uploaded");
+    } catch (error) {
+      console.error("Support attachment upload failed:", error);
+      toast.error("Attachment upload failed");
+    } finally {
+      setUploadingFile(false);
+    }
+  }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -188,12 +228,27 @@ export function SupportShell({
                 />
               </Field>
 
-              <Field label="Screenshot / file URL">
-                <Input
-                  value={screenshotUrl}
-                  onChange={(event) => setScreenshotUrl(event.target.value)}
-                  placeholder="Optional: upload file first and paste URL"
-                />
+              <Field label="Screenshot / file">
+                <div className="flex gap-2">
+                  <Input
+                    value={screenshotUrl}
+                    onChange={(event) => setScreenshotUrl(event.target.value)}
+                    placeholder="No attachment selected"
+                  />
+                  <Label className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors hover:bg-muted">
+                    <UploadCloud className="h-4 w-4" />
+                    {uploadingFile ? "Uploading..." : "Attach"}
+                    <Input
+                      type="file"
+                      className="hidden"
+                      disabled={uploadingFile || pending}
+                      onChange={(event) => {
+                        void uploadScreenshot(event.currentTarget.files?.[0] ?? null);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </Label>
+                </div>
               </Field>
 
               <Button type="submit" disabled={pending} className="w-full gap-2">

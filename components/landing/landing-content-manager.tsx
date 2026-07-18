@@ -123,6 +123,8 @@ function ImageField({
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("visibility", "public");
+    formData.append("assetKind", "landing-image");
 
     try {
       const response = await fetch("/api/upload", {

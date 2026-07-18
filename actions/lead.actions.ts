@@ -411,24 +411,69 @@ export async function sendLeadBulkEmail(input: {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 
-  const db = leadDb();
-  if (!db) return { error: "Lead database is not migrated yet" };
-
   const subject = clean(input.subject);
   const body = clean(input.body);
   const leadIds = [...new Set(input.leadIds)].filter(Boolean).slice(0, 200);
+  const fallbackIds = leadIds
+    .filter((leadId) => leadId.startsWith("fallback:"))
+    .map((leadId) => leadId.replace("fallback:", ""));
+  const dbLeadIds = leadIds.filter((leadId) => !leadId.startsWith("fallback:"));
 
   if (!leadIds.length) return { error: "Select at least one lead" };
   if (!subject || !body) return { error: "Subject and message are required" };
 
-  const leads = await db.lead.findMany({
-    where: { id: { in: leadIds }, email: { not: null } },
-    select: { id: true, email: true, name: true },
-  });
-
-  if (!leads.length) return { error: "Selected leads have no email address" };
-
+  let totalSent = 0;
   let failed = 0;
+
+  if (fallbackIds.length) {
+    const setting = await prisma.setting.findUnique({
+      where: { key: "landing.chat.fallback" },
+      select: { value: true },
+    });
+    const chats = JSON.parse(setting?.value ?? "[]") as Array<{
+      id: string;
+      email?: string;
+      messages?: { body: string; createdAt: string }[];
+      updatedAt?: string;
+    }>;
+
+    for (const chat of chats) {
+      if (!fallbackIds.includes(chat.id) || !chat.email) continue;
+      const status = await sendPlainEmail(chat.email, subject, body);
+      if (status === "FAILED") failed += 1;
+      chat.messages = [
+        ...(chat.messages ?? []),
+        {
+          body: `Admin email: ${subject}\n\n${body}`,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+      chat.updatedAt = new Date().toISOString();
+      totalSent += 1;
+    }
+
+    await prisma.setting.upsert({
+      where: { key: "landing.chat.fallback" },
+      update: { value: JSON.stringify(chats) },
+      create: { key: "landing.chat.fallback", value: JSON.stringify(chats) },
+    });
+  }
+
+  const db = leadDb();
+  if (dbLeadIds.length && !db) return { error: "Lead database is not migrated yet" };
+  const activeDb = db;
+
+  const leads = activeDb
+    ? await activeDb.lead.findMany({
+        where: { id: { in: dbLeadIds }, email: { not: null } },
+        select: { id: true, email: true, name: true },
+      })
+    : [];
+
+  if (!leads.length && totalSent === 0) {
+    return { error: "Selected leads have no email address" };
+  }
+
   for (const lead of leads) {
     let status = "SENT";
     try {
@@ -452,8 +497,11 @@ export async function sendLeadBulkEmail(input: {
       failed += 1;
       console.error("Lead bulk email failed:", error);
     }
+    totalSent += 1;
 
-    await db.lead.update({
+    if (!activeDb) continue;
+
+    await activeDb.lead.update({
       where: { id: lead.id },
       data: {
         status: "CONTACTED",
@@ -461,7 +509,7 @@ export async function sendLeadBulkEmail(input: {
       },
     });
 
-    await db.leadActivity.create({
+    await activeDb.leadActivity.create({
       data: {
         leadId: lead.id,
         type: "EMAIL",
@@ -477,7 +525,7 @@ export async function sendLeadBulkEmail(input: {
   revalidatePath("/leads");
 
   return failed
-    ? { error: `${leads.length - failed} sent, ${failed} failed` }
+    ? { error: `${totalSent - failed} sent, ${failed} failed` }
     : { success: true };
 }
 

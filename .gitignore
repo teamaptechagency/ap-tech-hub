@@ -44,3 +44,6 @@ work-dev-server*.log
 next-env.d.ts
 
 /app/generated/prisma
+
+.vercel
+.env*

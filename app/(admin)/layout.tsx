@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES, CLIENT_ROLES, PARTNER_ROLES } from "@/lib/roles";
 import { getFloatingConversations } from "@/actions/message.actions";
 import { getBrandingSettings } from "@/lib/branding";
@@ -44,10 +45,15 @@ export default async function AdminLayout({
 
   const userName =
     session.user.name?.trim() || "Admin User";
-  const [floatingMessages, branding] = await Promise.all([
+  const [floatingMessages, branding, currentUser] = await Promise.all([
     getFloatingConversations(),
     getBrandingSettings(),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { photoUrl: true, image: true },
+    }),
   ]);
+  const userImageUrl = currentUser?.photoUrl || currentUser?.image || null;
 
   const userRole = role
     .replaceAll("_", " ")
@@ -93,6 +99,7 @@ export default async function AdminLayout({
         portal="admin"
         userName={userName}
         userSub={userRole}
+        userImageUrl={userImageUrl}
         branding={branding}
       />
 
@@ -101,6 +108,7 @@ export default async function AdminLayout({
         user={{
           name: userName,
           role,
+          imageUrl: userImageUrl,
         }}
         branding={branding}
       />

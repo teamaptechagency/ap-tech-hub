@@ -100,17 +100,32 @@ function quoteEnvValue(value: string) {
 function upsertEnvLine(content: string, key: EditableEnvKey, value: string) {
   const normalized = content.replace(/\r\n/g, "\n");
   const line = `${key}=${quoteEnvValue(value)}`;
-  const pattern = new RegExp(`^${key}=.*$`, "m");
+  const pattern = new RegExp(`^${key}=.*(?:\n|$)`, "gm");
+  const withoutExisting = normalized.replace(pattern, "");
 
-  if (pattern.test(normalized)) {
-    return normalized.replace(pattern, line);
-  }
-
-  const separator = normalized.endsWith("\n") || normalized.length === 0
+  const separator = withoutExisting.endsWith("\n") || withoutExisting.length === 0
     ? ""
     : "\n";
 
-  return `${normalized}${separator}${line}\n`;
+  return `${withoutExisting}${separator}${line}\n`;
+}
+
+function normalizeEnvInputValue(key: EditableEnvKey, value: string) {
+  let cleanValue = value.trim();
+
+  const keyPrefix = `${key}=`;
+  if (cleanValue.startsWith(keyPrefix)) {
+    cleanValue = cleanValue.slice(keyPrefix.length).trim();
+  }
+
+  if (
+    (cleanValue.startsWith('"') && cleanValue.endsWith('"')) ||
+    (cleanValue.startsWith("'") && cleanValue.endsWith("'"))
+  ) {
+    cleanValue = cleanValue.slice(1, -1);
+  }
+
+  return cleanValue.trim();
 }
 
 function normalizeVersion(value: string) {
@@ -135,6 +150,104 @@ function compareVersions(nextVersion: string, currentVersion: string) {
   }
 
   return 0;
+}
+
+export async function updateSystemInformationSettings(input: {
+  siteName: string;
+  applicationName: string;
+  companyName: string;
+  ownerName: string;
+  developerName: string;
+  developerWebsite: string;
+  supportEmail: string;
+  supportPhone: string;
+  websiteUrl: string;
+  copyrightText: string;
+  releaseNotes: string;
+  systemStatus: string;
+  maintenanceMessage: string;
+  internalNotes: string;
+}) {
+  const session = await checkAdmin();
+
+  if (!session) {
+    return {
+      error: "You don't have permission for this action",
+    };
+  }
+
+  const siteName = input.siteName.trim();
+  const applicationName = input.applicationName.trim();
+
+  if (siteName.length < 2) {
+    return { error: "Site name is required" };
+  }
+
+  if (applicationName.length < 2) {
+    return { error: "Application name is required" };
+  }
+
+  if (
+    input.supportEmail.trim() &&
+    !input.supportEmail.trim().includes("@")
+  ) {
+    return { error: "Enter a valid support email" };
+  }
+
+  for (const value of [
+    input.developerWebsite,
+    input.websiteUrl,
+  ]) {
+    if (!value.trim()) continue;
+
+    try {
+      new URL(value.trim());
+    } catch {
+      return { error: "Enter valid website URLs" };
+    }
+  }
+
+  const entries = [
+    ["site.name", siteName],
+    ["site.applicationName", applicationName],
+    ["site.companyName", input.companyName.trim()],
+    ["site.ownerName", input.ownerName.trim()],
+    ["site.developerName", input.developerName.trim()],
+    ["site.developerWebsite", input.developerWebsite.trim()],
+    ["site.supportEmail", input.supportEmail.trim()],
+    ["site.supportPhone", input.supportPhone.trim()],
+    ["site.websiteUrl", input.websiteUrl.trim()],
+    ["site.copyright", input.copyrightText.trim()],
+    ["site.releaseNotes", input.releaseNotes.trim()],
+    ["site.systemStatus", input.systemStatus.trim() || "ACTIVE"],
+    [
+      "site.maintenanceMessage",
+      input.maintenanceMessage.trim(),
+    ],
+    ["site.internalNotes", input.internalNotes.trim()],
+    ["site.lastUpdatedAt", new Date().toISOString()],
+  ] as const;
+
+  await prisma.$transaction(
+    entries.map(([key, value]) =>
+      prisma.setting.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value },
+      })
+    )
+  );
+
+  await audit(
+    session.user.id,
+    "SYSTEM_INFORMATION_UPDATED",
+    "Setting",
+    "system-information"
+  );
+
+  revalidatePath("/settings");
+
+  return { success: true };
 }
 
 export async function updateSystemUpgradeSettings(input: {
@@ -455,7 +568,7 @@ export async function updateEnvironmentSettings(
   const updates = entries
     .map((entry) => ({
       key: entry.key,
-      value: entry.value.trim(),
+      value: normalizeEnvInputValue(entry.key, entry.value),
     }))
     .filter((entry) => entry.value.length > 0);
 
@@ -466,6 +579,18 @@ export async function updateEnvironmentSettings(
   for (const update of updates) {
     if (!editableEnvKeys.includes(update.key)) {
       return { error: `Environment key ${update.key} is not editable` };
+    }
+
+    if (
+      update.key === "BLOB_READ_WRITE_TOKEN" &&
+      !update.value.startsWith("vercel_blob_rw_")
+    ) {
+      return {
+        error:
+          update.value.startsWith("store_")
+            ? "You pasted the Blob Store ID. Please paste the BLOB_READ_WRITE_TOKEN value from the connected public Blob Store."
+            : "BLOB_READ_WRITE_TOKEN should start with vercel_blob_rw_. Copy it from the connected public Blob Store.",
+      };
     }
   }
 
@@ -485,6 +610,15 @@ export async function updateEnvironmentSettings(
   );
 
   await writeFile(envPath, nextContent, "utf8");
+
+  for (const update of updates) {
+    process.env[update.key] = update.value;
+    await prisma.setting.upsert({
+      where: { key: `env.${update.key}` },
+      update: { value: update.value },
+      create: { key: `env.${update.key}`, value: update.value },
+    });
+  }
 
   await audit(
     session.user.id,
