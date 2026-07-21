@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import {
   ClientsPageClient,
   type ClientListItem,
 } from "@/components/clients/clients-page-client";
 
 export default async function ClientsPage() {
+  const session = await auth();
   const clients = await prisma.client.findMany({
     orderBy: [
       {
@@ -60,5 +62,10 @@ export default async function ClientsPage() {
     };
   });
 
-  return <ClientsPageClient clients={clientRows} />;
+  return (
+    <ClientsPageClient
+      clients={clientRows}
+      isSuperAdmin={session?.user.role === "SUPER_ADMIN"}
+    />
+  );
 }

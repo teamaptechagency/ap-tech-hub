@@ -10,6 +10,7 @@ import {
   updateTeamMemberStatus,
 } from "@/actions/settings.actions";
 import { adjustWorkerBalance, applyPenalty } from "@/actions/worker.actions";
+import { SensitiveDeleteDialog } from "@/components/shared/sensitive-delete-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Trash2 } from "lucide-react";
 
 type Txn = {
   id: string;
@@ -89,6 +91,8 @@ export function WorkerBalances({
   emptyLabel = "No employees yet",
   createLabel,
   createRoles,
+  isSuperAdmin = false,
+  onDelete,
 }: {
   workers: WorkerRow[];
   title?: string;
@@ -97,12 +101,15 @@ export function WorkerBalances({
   emptyLabel?: string;
   createLabel?: string;
   createRoles?: CreateOption[];
+  isSuperAdmin?: boolean;
+  onDelete?: (userId: string, code: string) => Promise<{ error?: string }>;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<WorkerRow | null>(
     workers[0] ?? null
   );
   const [dialog, setDialog] = useState<"adjust" | "penalty" | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createEmail, setCreateEmail] = useState("");
@@ -326,6 +333,17 @@ export function WorkerBalances({
                   >
                     Penalty
                   </Button>
+                  {isSuperAdmin && onDelete && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      onClick={() => setDeleteOpen(true)}
+                    >
+                      <Trash2 className="mr-1 h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -587,6 +605,20 @@ export function WorkerBalances({
           )}
         </DialogContent>
       </Dialog>
+
+      {isSuperAdmin && onDelete && selected && (
+        <SensitiveDeleteDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title={`Delete ${selected.name}?`}
+          description="This permanently removes their account and login. Messages they sent and meetings they created are reassigned to you so history isn't lost. This can't be undone."
+          onConfirm={(code) => onDelete(selected.id, code)}
+          onDeleted={() => {
+            setSelected(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

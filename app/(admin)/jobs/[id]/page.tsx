@@ -17,6 +17,7 @@ import {
 import { CompleteJobButton } from "@/components/jobs/complete-job-button";
 import { PublishToggle } from "@/components/jobs/publish-toggle";
 import { JobPricingEditor } from "@/components/jobs/job-pricing-editor";
+import { DeleteJobButton } from "@/components/jobs/delete-job-button";
 import { ChatPanel } from "@/components/chat/chat-panel";
 
 import { hoursThisWeek } from "@/actions/session.actions";
@@ -341,6 +342,10 @@ export default async function JobDetailsPage({
 
           {isManager && job.status !== "COMPLETED" && (
             <CompleteJobButton jobId={job.id} />
+          )}
+
+          {session.user.role === "SUPER_ADMIN" && (
+            <DeleteJobButton jobId={job.id} jobTitle={job.title} />
           )}
         </div>
       </div>

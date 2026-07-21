@@ -9,8 +9,10 @@ import {
   cancelInvoice,
   holdInvoice,
   unholdInvoice,
+  deleteInvoice,
 } from "@/actions/invoice.actions";
 import { EditInvoiceDialog } from "@/components/invoices/edit-invoice-dialog";
+import { SensitiveDeleteDialog } from "@/components/shared/sensitive-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BadgeCheck, Ban, Pause, Pencil, Play } from "lucide-react";
+import { BadgeCheck, Ban, Pause, Pencil, Play, Trash2 } from "lucide-react";
 
 type LatestPaymentSubmission = {
   methodLabel: string;
@@ -82,6 +84,7 @@ export function PaymentActions({
   latestSubmission,
   amountPaid,
   editableData,
+  isSuperAdmin,
 }: {
   invoiceId: string;
   status: string;
@@ -92,11 +95,13 @@ export function PaymentActions({
   latestSubmission: LatestPaymentSubmission | null;
   amountPaid: number;
   editableData: EditableInvoiceData;
+  isSuperAdmin: boolean;
 }) {
   const router = useRouter();
   const [approveOpen, setApproveOpen] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [amount, setAmount] = useState(remaining.toFixed(2));
   const [paidVia, setPaidVia] = useState("");
   const [method, setMethod] = useState<string | null>("Bank transfer");
@@ -456,6 +461,36 @@ export function PaymentActions({
           initial={editableData}
         />
       )}
+
+      {/* Danger zone — super admin only */}
+      {isSuperAdmin && (
+        <Card className="border-red-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-red-600">
+              Danger zone
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              className="w-full justify-start border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete invoice
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <SensitiveDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete this invoice?"
+        description="This permanently removes the invoice, its line items and payment submissions. This can't be undone."
+        onConfirm={(code) => deleteInvoice(invoiceId, code)}
+        onDeleted={() => router.push("/invoices")}
+      />
     </div>
   );
 }

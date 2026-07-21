@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { WorkerBalances } from "@/components/accounts/worker-balances";
+import { deletePartner } from "@/actions/worker.actions";
 
 export default async function PartnersPage() {
+  const session = await auth();
   const partners = await prisma.user.findMany({
     where: { role: { in: ["BUSINESS_PARTNER", "PARTNER_MANAGER"] } },
     orderBy: { name: "asc" },
@@ -37,6 +40,8 @@ export default async function PartnersPage() {
         { label: "Business partner", role: "BUSINESS_PARTNER" },
         { label: "Partner manager", role: "PARTNER_MANAGER" },
       ]}
+      isSuperAdmin={session?.user.role === "SUPER_ADMIN"}
+      onDelete={deletePartner}
       workers={partners.map((partner) => ({
         id: partner.id,
         name: partner.name,

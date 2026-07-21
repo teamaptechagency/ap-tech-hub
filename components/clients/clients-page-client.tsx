@@ -12,6 +12,7 @@ import {
 } from "@/actions/client.actions";
 
 import { ClientDialog } from "@/components/clients/client-dialog";
+import { SensitiveDeleteDialog } from "@/components/shared/sensitive-delete-dialog";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ type TemporaryCredentials = {
 
 type ClientsPageClientProps = {
   clients: ClientListItem[];
+  isSuperAdmin: boolean;
 };
 
 function getActionError(result: unknown): string | null {
@@ -131,6 +133,7 @@ function formatRole(role: string | null) {
 
 export function ClientsPageClient({
   clients,
+  isSuperAdmin,
 }: ClientsPageClientProps) {
   const router = useRouter();
 
@@ -145,6 +148,9 @@ export function ClientsPageClient({
     useState<TemporaryCredentials | null>(null);
 
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ClientListItem | null>(
+    null
+  );
 
   const activeClients = clients.filter(
     (client) => client.status !== "ARCHIVED"
@@ -302,34 +308,23 @@ export function ClientsPageClient({
     }
   }
 
-  async function handleDelete(client: ClientListItem) {
-    const confirmed = window.confirm(
-      `Permanently delete ${client.companyName}?\n\nThis will also remove the client's portal users and related records. This action cannot be undone.`
-    );
-
-    if (!confirmed || busyAction) return;
-
-    const actionKey = `delete-${client.id}`;
-    setBusyAction(actionKey);
+  async function handleDeleteConfirmed(code: string) {
+    if (!deleteTarget) return { error: "No client selected" };
 
     try {
-      const result = await deleteClient(client.id);
+      const result = await deleteClient(deleteTarget.id, code);
       const error = getActionError(result);
 
-      if (error) {
-        toast.error(error);
-        return;
-      }
+      if (error) return { error };
 
       toast.success("Client deleted permanently.");
       router.refresh();
+      return {};
     } catch (error) {
       console.error("Delete client failed:", error);
-      toast.error(
-        "Client could not be deleted. Related records may still exist."
-      );
-    } finally {
-      setBusyAction(null);
+      return {
+        error: "Client could not be deleted. Related records may still exist.",
+      };
     }
   }
 
@@ -495,9 +490,6 @@ export function ClientsPageClient({
 
             const archiveBusy =
               busyAction === `archive-${client.id}`;
-
-            const deleteBusy =
-              busyAction === `delete-${client.id}`;
 
             return (
               <Card
@@ -685,16 +677,18 @@ export function ClientsPageClient({
                       </Button>
                     )}
 
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(client)}
-                      disabled={Boolean(busyAction)}
-                    >
-                      <Trash2 className="mr-2 h-3.5 w-3.5" />
-                      {deleteBusy ? "Deleting..." : "Delete"}
-                    </Button>
+                    {isSuperAdmin && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setDeleteTarget(client)}
+                        disabled={Boolean(busyAction)}
+                      >
+                        <Trash2 className="mr-2 h-3.5 w-3.5" />
+                        Delete
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -761,6 +755,17 @@ export function ClientsPageClient({
           </Button>
         </DialogContent>
       </Dialog>
+
+      {/* Delete client — super admin + verification code required */}
+      {deleteTarget && (
+        <SensitiveDeleteDialog
+          open={deleteTarget !== null}
+          onOpenChange={(open) => !open && setDeleteTarget(null)}
+          title={`Delete ${deleteTarget.companyName}?`}
+          description="This permanently removes the client, their portal users and related records. Consider archiving instead — history stays for accounting."
+          onConfirm={handleDeleteConfirmed}
+        />
+      )}
     </div>
   );
 }

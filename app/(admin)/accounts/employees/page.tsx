@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { WorkerBalances } from "@/components/accounts/worker-balances";
+import { deleteEmployee } from "@/actions/worker.actions";
 
 export default async function EmployeesPage() {
+  const session = await auth();
   const employees = await prisma.user.findMany({
     where: { role: "TEAM_MEMBER" },
     orderBy: { name: "asc" },
@@ -34,6 +37,8 @@ export default async function EmployeesPage() {
       emptyLabel="No employees yet"
       createLabel="Add employee"
       createRoles={[{ label: "Employee", role: "TEAM_MEMBER" }]}
+      isSuperAdmin={session?.user.role === "SUPER_ADMIN"}
+      onDelete={deleteEmployee}
       workers={employees.map((employee) => ({
         id: employee.id,
         name: employee.name,

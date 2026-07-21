@@ -6,6 +6,7 @@ import { ADMIN_ROLES } from "@/lib/roles";
 import { revalidatePath } from "next/cache";
 import { notify, notifyAdmins } from "@/lib/notify";
 import type { Prisma } from "@prisma/client";
+import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
 
 // ============================================
 // HELPERS
@@ -13,6 +14,14 @@ import type { Prisma } from "@prisma/client";
 async function checkAdmin() {
   const session = await auth();
   if (!session?.user || !ADMIN_ROLES.includes(session.user.role)) {
+    return null;
+  }
+  return session;
+}
+
+async function checkSuperAdmin() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
     return null;
   }
   return session;
@@ -839,6 +848,41 @@ export async function unholdInvoice(invoiceId: string) {
   revalidatePath("/invoices");
   revalidatePath(`/invoices/${invoiceId}`);
   revalidatePath(`/c/invoices/${invoiceId}`);
+  return { success: true };
+}
+
+// ============================================
+// DELETE INVOICE
+// Super admin only, step-up verified. Removes the
+// invoice and its items/payment submissions
+// (cascade). Client/point ledger entries that
+// reference this invoice keep their historical
+// note but the invoiceId link becomes orphaned,
+// same as other loose audit-style references in
+// this app.
+// ============================================
+export async function deleteInvoice(invoiceId: string, verificationCode: string) {
+  const session = await checkSuperAdmin();
+  if (!session) return { error: "Only the super admin can delete an invoice" };
+
+  const verified = await verifySensitiveActionCode(
+    session.user.id,
+    verificationCode
+  );
+  if (!verified) return { error: "Verification code is invalid or expired" };
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { clientId: true },
+  });
+  if (!invoice) return { error: "Invoice not found" };
+
+  await prisma.invoice.delete({ where: { id: invoiceId } });
+
+  await audit(session.user.id, "INVOICE_DELETED", "Invoice", invoiceId);
+
+  revalidatePath("/invoices");
+  revalidatePath(`/clients/${invoice.clientId}`);
   return { success: true };
 }
 

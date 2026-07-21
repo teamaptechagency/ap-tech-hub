@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { ADMIN_ROLES, PARTNER_ROLES, WORKER_ROLES } from "@/lib/roles";
 import { revalidatePath } from "next/cache";
 import { notify, notifyAdmins } from "@/lib/notify";
+import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
 
 // ============================================
 // HELPERS
@@ -12,6 +13,14 @@ import { notify, notifyAdmins } from "@/lib/notify";
 async function checkAdmin() {
   const session = await auth();
   if (!session?.user || !ADMIN_ROLES.includes(session.user.role)) {
+    return null;
+  }
+  return session;
+}
+
+async function checkSuperAdmin() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
     return null;
   }
   return session;
@@ -649,4 +658,75 @@ export async function processWithdraw(
   revalidatePath("/accounts/partners");
   revalidatePath("/e/balance");
   return { success: true };
+}
+
+// ============================================
+// DELETE EMPLOYEE / PARTNER
+// Super admin only, step-up verified. A hard
+// delete — almost every relation on User already
+// cascades or nulls out at the DB level, except
+// Message.senderId and Meeting.createdById which
+// are required fields (can't be null). Those get
+// reassigned to the deleting super admin first so
+// conversation/meeting history for other people
+// isn't destroyed, then the user row is removed.
+// ============================================
+async function deleteWorkerUser(
+  userId: string,
+  allowedRoles: readonly string[],
+  verificationCode: string
+) {
+  const session = await checkSuperAdmin();
+  if (!session) return { error: "Only the super admin can delete this account" };
+
+  if (userId === session.user.id) {
+    return { error: "You can't delete your own account" };
+  }
+
+  const verified = await verifySensitiveActionCode(
+    session.user.id,
+    verificationCode
+  );
+  if (!verified) return { error: "Verification code is invalid or expired" };
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, name: true },
+  });
+  if (!target) return { error: "Account not found" };
+  if (!allowedRoles.includes(target.role)) {
+    return { error: "This account isn't eligible for deletion here" };
+  }
+
+  await prisma.$transaction([
+    prisma.message.updateMany({
+      where: { senderId: userId },
+      data: { senderId: session.user.id },
+    }),
+    prisma.meeting.updateMany({
+      where: { createdById: userId },
+      data: { createdById: session.user.id },
+    }),
+    prisma.user.delete({ where: { id: userId } }),
+  ]);
+
+  await audit(
+    session.user.id,
+    "USER_DELETED",
+    "User",
+    userId,
+    `${target.name} · ${target.role}`
+  );
+
+  revalidatePath("/accounts/employees");
+  revalidatePath("/accounts/partners");
+  return { success: true };
+}
+
+export async function deleteEmployee(userId: string, verificationCode: string) {
+  return deleteWorkerUser(userId, WORKER_ROLES, verificationCode);
+}
+
+export async function deletePartner(userId: string, verificationCode: string) {
+  return deleteWorkerUser(userId, PARTNER_ROLES, verificationCode);
 }

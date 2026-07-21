@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PaymentActions } from "@/components/invoices/payment-actions";
@@ -30,6 +31,8 @@ export default async function InvoiceViewPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  const session = await auth();
 
   const [invoice, paymentMethods] = await Promise.all([
     prisma.invoice.findUnique({
@@ -336,6 +339,7 @@ export default async function InvoiceViewPage({
         <div className="print:hidden">
           <PaymentActions
             invoiceId={invoice.id}
+            isSuperAdmin={session?.user.role === "SUPER_ADMIN"}
             status={displayStatus}
             currencySym={sym}
             remaining={remaining}

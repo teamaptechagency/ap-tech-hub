@@ -6,11 +6,28 @@ import { ADMIN_ROLES } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { ensureLoginSecurityTables } from "@/lib/login-security";
 import { sendWhatsAppNotification } from "@/lib/whatsapp";
+import { requestSensitiveActionCode } from "@/lib/sensitive-verify";
 
 async function checkAdmin() {
   const session = await auth();
   if (!session?.user || !ADMIN_ROLES.includes(session.user.role)) return null;
   return session;
+}
+
+// ============================================
+// SENSITIVE ACTION STEP-UP CODE REQUEST
+// Used before super-admin-only destructive actions
+// (deleting a Job, Invoice, Client, Employee or
+// Partner). Always has a working path: sends an
+// email OTP even if the actor never enabled 2FA,
+// or asks for the authenticator code if enabled.
+// ============================================
+export async function requestSensitiveVerificationCode() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
+    return { error: "Only the super admin can perform this action" };
+  }
+  return requestSensitiveActionCode(session.user.id);
 }
 
 export async function unblockIp(ipAddress: string) {

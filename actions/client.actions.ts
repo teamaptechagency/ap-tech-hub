@@ -6,6 +6,7 @@ import { ADMIN_ROLES } from "@/lib/roles";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
 
 // ============================================
 // PERMISSION
@@ -13,6 +14,14 @@ import bcrypt from "bcryptjs";
 async function checkAdmin() {
   const session = await auth();
   if (!session?.user || !ADMIN_ROLES.includes(session.user.role)) {
+    return null;
+  }
+  return session;
+}
+
+async function checkSuperAdmin() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
     return null;
   }
   return session;
@@ -254,9 +263,15 @@ export async function archiveClient(id: string) {
   return { success: true };
 }
 
-export async function deleteClient(id: string) {
-  const session = await checkAdmin();
-  if (!session) return { error: "You don't have permission for this action" };
+export async function deleteClient(id: string, verificationCode: string) {
+  const session = await checkSuperAdmin();
+  if (!session) return { error: "Only the super admin can delete a client" };
+
+  const verified = await verifySensitiveActionCode(
+    session.user.id,
+    verificationCode
+  );
+  if (!verified) return { error: "Verification code is invalid or expired" };
 
   // Also remove portal users of this client
   await prisma.user.deleteMany({ where: { clientId: id } });
