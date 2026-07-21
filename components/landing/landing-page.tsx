@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Globe2,
   MessageCircle,
   Send,
   Star,
@@ -110,6 +111,31 @@ function ReviewAvatar({ name }: { name: string }) {
       {initials}
     </div>
   );
+}
+
+const countryFlags: Record<string, string> = {
+  "United States": "🇺🇸",
+  "United Kingdom": "🇬🇧",
+  Canada: "🇨🇦",
+  Australia: "🇦🇺",
+  Ireland: "🇮🇪",
+  Germany: "🇩🇪",
+  France: "🇫🇷",
+  Spain: "🇪🇸",
+  Italy: "🇮🇹",
+  Brazil: "🇧🇷",
+  Bangladesh: "🇧🇩",
+  India: "🇮🇳",
+  "United Arab Emirates": "🇦🇪",
+  Singapore: "🇸🇬",
+  "South Africa": "🇿🇦",
+  "New Zealand": "🇳🇿",
+  Netherlands: "🇳🇱",
+};
+
+function countryFlag(country?: string | null) {
+  if (!country) return "";
+  return countryFlags[country] ?? "🌍";
 }
 
 function serviceFeedback(service: LandingServiceData): LandingReviewData[] {
@@ -485,6 +511,11 @@ function LandingModal({
         <p className="leading-7 text-slate-600">
           {modal.item.details || modal.item.description}
         </p>
+        {modal.item.review && (
+          <p className="rounded-[10px] bg-[#faf8f5] p-4 text-sm italic leading-6 text-[#6b7280]">
+            {modal.item.review}
+          </p>
+        )}
         <div className="flex flex-wrap gap-3">
           {modal.item.figmaUrl ? (
             <a
@@ -598,14 +629,24 @@ function LandingModal({
               .join(" / ")}
           </p>
         )}
-        <div className="flex gap-1 text-amber-400">
-          {Array.from({ length: ratingStars(modal.item.rating).stars }).map((_, index) => (
-            <Star key={index} size={18} fill="currentColor" />
-          ))}
-          <span className="ml-2 text-sm font-black text-slate-600">
-            {ratingStars(modal.item.rating).label}
-          </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex gap-1 text-amber-400">
+            {Array.from({ length: ratingStars(modal.item.rating).stars }).map((_, index) => (
+              <Star key={index} size={18} fill="currentColor" />
+            ))}
+            <span className="ml-2 text-sm font-black text-slate-600">
+              {ratingStars(modal.item.rating).label}
+            </span>
+          </div>
+          {modal.item.country && (
+            <span className="rounded-full bg-[#faf8f5] px-2 py-1 text-xs font-bold text-[#6b7280]">
+              {countryFlag(modal.item.country)} {modal.item.country}
+            </span>
+          )}
         </div>
+        {modal.item.quote !== modal.item.details && (
+          <p className="italic leading-7 text-slate-500">“{modal.item.quote}”</p>
+        )}
         <p className="leading-7 text-slate-700">
           {modal.item.details || modal.item.quote}
         </p>
@@ -649,7 +690,11 @@ function LandingModal({
   );
 }
 
-function FloatingChat() {
+function FloatingChat({
+  languageNote,
+}: {
+  languageNote?: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [leadId, setLeadId] = useState("");
   const [text, setText] = useState("");
@@ -719,6 +764,12 @@ function FloatingChat() {
               <input name="name" placeholder="Name" className="rounded-[9px] border border-[#e8e3dc] bg-white px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
               <input name="email" placeholder="Email" type="email" className="rounded-[9px] border border-[#e8e3dc] bg-white px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
               <input name="subject" placeholder="Subject" className="rounded-[9px] border border-[#e8e3dc] bg-white px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
+              {languageNote && (
+                <p className="flex items-start gap-1.5 text-[11px] leading-4 text-[#6b7280]">
+                  <Globe2 size={13} className="mt-0.5 shrink-0 text-[#c6613f]" />
+                  Write in whatever language you're comfortable with - no need for English.
+                </p>
+              )}
               <button
                 type="submit"
                 disabled={pending}
@@ -1640,7 +1691,7 @@ export function LandingPage({
                 key={project.id}
                 type="button"
                 onClick={() => setModal({ type: "project", item: project })}
-                className="flex h-[224px] w-[min(82vw,242px)] shrink-0 snap-start flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[44%] lg:w-[242px]"
+                className={`flex ${project.review ? "h-[288px]" : "h-[224px]"} w-[min(82vw,242px)] shrink-0 snap-start flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[44%] lg:w-[242px]`}
               >
                 {project.thumbnailUrl || project.imageUrl ? (
                   <img
@@ -1658,6 +1709,11 @@ export function LandingPage({
                   <p className="mt-1 text-xs text-[#6b7280]">
                     {[project.service, project.category].filter(Boolean).join(" / ") || "Project"}
                   </p>
+                  {project.review && (
+                    <p className="mt-2 line-clamp-3 text-[11px] italic leading-4 text-[#6b7280]">
+                      {project.review}
+                    </p>
+                  )}
                   {project.budget && (
                     <p className="mt-auto pt-2 text-xs font-bold text-[#c6613f]">
                       {project.budget}
@@ -1713,19 +1769,42 @@ export function LandingPage({
                 onClick={() => setModal({ type: "review", item: review })}
                 className="flex h-[242px] w-[min(88vw,320px)] shrink-0 snap-start flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[48%] lg:w-[320px]"
               >
-                <div className="mb-4 flex gap-1 text-amber-400">
-                  {Array.from({ length: ratingStars(review.rating).stars }).map((_, index) => (
-                    <Star key={index} size={16} fill="currentColor" />
-                  ))}
-                  <span className="ml-1 text-xs font-black text-[#64748b]">
-                    {ratingStars(review.rating).label}
-                  </span>
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <div className="flex gap-1 text-amber-400">
+                    {Array.from({ length: ratingStars(review.rating).stars }).map((_, index) => (
+                      <Star key={index} size={16} fill="currentColor" />
+                    ))}
+                    <span className="ml-1 text-xs font-black text-[#64748b]">
+                      {ratingStars(review.rating).label}
+                    </span>
+                  </div>
+                  {review.country && (
+                    <span className="shrink-0 whitespace-nowrap rounded-full bg-[#faf8f5] px-2 py-1 text-[11px] font-bold text-[#6b7280]">
+                      {countryFlag(review.country)} {review.country}
+                    </span>
+                  )}
                 </div>
                 <p className="line-clamp-4 min-h-24 text-sm leading-6 text-slate-700">
                   {review.quote}
                 </p>
                 <div className="mt-auto flex items-center gap-3 pt-5">
-                  <ReviewAvatar name={review.clientName} />
+                  <div className="relative">
+                    <ReviewAvatar name={review.clientName} />
+                    {review.orderNumber && review.orderNumber > 1 && (
+                      <span
+                        className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-[#c6613f] text-[10px] font-black text-white ring-2 ring-white"
+                        title={`${review.orderNumber}${
+                          review.orderNumber === 2
+                            ? "nd"
+                            : review.orderNumber === 3
+                              ? "rd"
+                              : "th"
+                        } project with us`}
+                      >
+                        {review.orderNumber}
+                      </span>
+                    )}
+                  </div>
                   <div>
                     <p className="text-sm font-black">{review.clientName}</p>
                     {review.service && (
@@ -1792,6 +1871,17 @@ export function LandingPage({
                 Have a project in mind or need consultation? Send a message and
                 the team will respond from the existing AP Tech workflow.
               </p>
+              {data.contact.languageNoteEnabled && data.contact.languageNote && (
+                <div className="mt-5 max-w-sm rounded-[12px] border border-[#e8e3dc] bg-white p-4">
+                  <p className="flex items-center gap-2 text-xs font-extrabold text-[#c6613f]">
+                    <Globe2 size={14} />
+                    Write in your own language
+                  </p>
+                  <p className="mt-2 text-xs leading-6 text-[#6b7280]">
+                    {data.contact.languageNote}
+                  </p>
+                </div>
+              )}
             </div>
             <form
               onSubmit={submitContact}
@@ -1844,7 +1934,11 @@ export function LandingPage({
         </div>
       </footer>
 
-      <FloatingChat />
+      <FloatingChat
+        languageNote={
+          data.contact.languageNoteEnabled ? data.contact.languageNote : null
+        }
+      />
       <SideAds left={data.ads.left} right={data.ads.right} />
       <PopupAd ad={data.ads.popup} />
       <CookieNotice

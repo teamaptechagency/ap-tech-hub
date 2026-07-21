@@ -26,6 +26,7 @@ type SectionKey =
   | "reviews"
   | "seo"
   | "about"
+  | "contact"
   | "footer";
 
 const sections: { key: SectionKey; label: string }[] = [
@@ -39,6 +40,7 @@ const sections: { key: SectionKey; label: string }[] = [
   { key: "reviews", label: "Reviews" },
   { key: "seo", label: "SEO / Google" },
   { key: "about", label: "About" },
+  { key: "contact", label: "Contact / Language" },
   { key: "footer", label: "Footer / Policy" },
 ];
 
@@ -888,6 +890,40 @@ export function LandingContentManager({
               <Field label={`Point ${index + 1} text`} value={point.text} onChange={(value) => setData((current) => ({ ...current, about: { ...current.about, points: current.about.points.map((item, itemIndex) => itemIndex === index ? { ...item, text: value } : item) } }))} />
             </div>
           ))}
+        </Panel>
+      )}
+
+      {active === "contact" && (
+        <Panel title="Contact / Language support">
+          <ToggleField
+            label="Show language note on the contact form"
+            checked={data.contact.languageNoteEnabled}
+            onChange={(value) =>
+              setData((current) => ({
+                ...current,
+                contact: { ...current.contact, languageNoteEnabled: value },
+              }))
+            }
+          />
+          <Field
+            label="Language note"
+            value={data.contact.languageNote}
+            textarea
+            onChange={(value) =>
+              setData((current) => ({
+                ...current,
+                contact: { ...current.contact, languageNote: value },
+              }))
+            }
+          />
+          <div className="rounded-lg border bg-muted/40 p-3 text-sm md:col-span-2">
+            <p className="font-semibold">Why this matters</p>
+            <p className="mt-1 text-muted-foreground">
+              Shown above the contact form and floating chat so international
+              visitors know they do not have to write in English - they can
+              message you in whatever language they are comfortable with.
+            </p>
+          </div>
         </Panel>
       )}
 

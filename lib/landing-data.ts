@@ -72,6 +72,8 @@ export type LandingReviewData = {
   company?: string | null;
   service?: string | null;
   serviceCategory?: string | null;
+  country?: string | null;
+  orderNumber?: number | null;
   avatarUrl?: string | null;
   rating: number;
   quote: string;
@@ -118,6 +120,10 @@ export type LandingPageData = {
     description: string;
     imageUrl: string;
     points: { title: string; text: string }[];
+  };
+  contact: {
+    languageNoteEnabled: boolean;
+    languageNote: string;
   };
   footer: {
     copyright: string;
@@ -573,6 +579,7 @@ export const defaultLandingData: LandingPageData = {
       description: "A clean reporting dashboard for finance teams.",
       details: "Built with performance-focused dashboards, charts and approval flows.",
       imageUrl: image("photo-1551288049-bebda4e38f71"),
+      review: "“Our finance team finally has one dashboard everyone trusts.” — Ryan Cooper, Ledgerline Partners (USA)",
     },
     {
       id: "project-commerce",
@@ -581,6 +588,7 @@ export const defaultLandingData: LandingPageData = {
       description: "A modern store experience for product discovery.",
       details: "Includes product cards, checkout-friendly UI and campaign-ready sections.",
       imageUrl: image("photo-1556742049-0cfed4f6a45d"),
+      review: "“Product pages finally load fast and checkouts feel effortless.” — Priya Nair, TrendStore Retail (India)",
     },
     {
       id: "project-travel",
@@ -589,6 +597,7 @@ export const defaultLandingData: LandingPageData = {
       description: "A visual landing experience for travel packages.",
       details: "Designed to highlight locations, packages, reviews and lead capture.",
       imageUrl: image("photo-1500530855697-b586d89ba3ee"),
+      review: "“Visitors finally spend time browsing instead of bouncing.” — Marco Rossi, Explora Viaggi (Italy)",
     },
     {
       id: "project-health",
@@ -597,6 +606,7 @@ export const defaultLandingData: LandingPageData = {
       description: "A service platform for patient-friendly scheduling.",
       details: "Focused on clarity, mobile-first layouts and simple inquiry flows.",
       imageUrl: image("photo-1576091160399-112ba8d25d1d"),
+      review: "“Patients book appointments without calling the front desk anymore.” — Fatima Al-Sayed, Wellspring Clinic (UAE)",
     },
   ],
   team: [
@@ -740,6 +750,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "John Smith",
       clientRole: "CEO",
       company: "TechCorp",
+      country: "United States",
       rating: 4.9,
       quote:
         "AP Tech Agency delivered an outstanding website that exceeded our expectations.",
@@ -752,6 +763,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Sarah Johnson",
       clientRole: "Marketing Director",
       company: "ShopEase",
+      country: "United Kingdom",
       rating: 4.6,
       quote:
         "They understood our requirements perfectly and delivered on time.",
@@ -760,10 +772,25 @@ export const defaultLandingData: LandingPageData = {
       avatarUrl: "",
     },
     {
+      id: "review-sarah-2",
+      clientName: "Sarah Johnson",
+      clientRole: "Marketing Director",
+      company: "ShopEase",
+      country: "United Kingdom",
+      orderNumber: 2,
+      rating: 4.8,
+      quote:
+        "We came back for a second project and the handover was just as smooth as the first time.",
+      details:
+        "This time it was the SEO and campaign setup - same steady communication as our first website project.",
+      avatarUrl: "",
+    },
+    {
       id: "review-david",
       clientName: "David Brown",
       clientRole: "Founder",
       company: "TrendyMart",
+      country: "Canada",
       rating: 4.4,
       quote:
         "Our online store saw a huge improvement after their SEO and marketing work.",
@@ -776,6 +803,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Emily Carter",
       clientRole: "Operations Manager",
       company: "BrightNest Studio",
+      country: "Australia",
       rating: 4.8,
       quote:
         "The website refresh made our service pages much easier for clients to understand.",
@@ -788,6 +816,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Michael Reed",
       clientRole: "Director",
       company: "NorthPeak Consulting",
+      country: "United States",
       rating: 4.7,
       quote:
         "Their team gave practical suggestions and delivered a clean, professional result.",
@@ -800,6 +829,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Olivia Bennett",
       clientRole: "Founder",
       company: "BloomCare",
+      country: "Ireland",
       rating: 4.9,
       quote:
         "The UI/UX work helped us explain our offer with a lot more confidence.",
@@ -809,12 +839,13 @@ export const defaultLandingData: LandingPageData = {
     },
     {
       id: "review-daniel",
-      clientName: "Daniel Brooks",
+      clientName: "Daniel Fischer",
       clientRole: "Product Lead",
-      company: "Trackly",
+      company: "Trackly GmbH",
+      country: "Germany",
       rating: 4.3,
       quote:
-        "Our dashboard prototype became much easier to present after their design pass.",
+        "Unser Dashboard-Prototyp ließ sich nach ihrer Designarbeit viel leichter präsentieren.",
       details:
         "The team organized complex information into screens that were simple to scan.",
       avatarUrl: "",
@@ -824,6 +855,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Ava Mitchell",
       clientRole: "Marketing Lead",
       company: "GreenShelf",
+      country: "United States",
       rating: 4.6,
       quote:
         "The social media content plan gave our small team a clear monthly direction.",
@@ -836,6 +868,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "James Wilson",
       clientRole: "Owner",
       company: "Wilson Home Services",
+      country: "Canada",
       rating: 4.8,
       quote:
         "They built a service website that looks professional and brings in better inquiries.",
@@ -848,6 +881,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Sophia Turner",
       clientRole: "Creative Director",
       company: "LumaBrand",
+      country: "United Kingdom",
       rating: 4.5,
       quote:
         "The branding and graphics support matched our tone and saved us a lot of time.",
@@ -860,6 +894,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Liam Anderson",
       clientRole: "E-commerce Manager",
       company: "CartPilot",
+      country: "Australia",
       rating: 4.9,
       quote:
         "The WooCommerce setup was smooth and the product pages felt much better organized.",
@@ -869,12 +904,13 @@ export const defaultLandingData: LandingPageData = {
     },
     {
       id: "review-mia",
-      clientName: "Mia Collins",
+      clientName: "Sofía Ramírez",
       clientRole: "Founder",
       company: "StudioWell",
+      country: "Spain",
       rating: 4.2,
       quote:
-        "Their landing page work helped us test a new offer quickly without overbuilding.",
+        "El trabajo en la landing page nos ayudó a probar una nueva oferta rápidamente.",
       details:
         "The page had clear sections, useful copy direction and a simple lead flow.",
       avatarUrl: "",
@@ -884,6 +920,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Noah Parker",
       clientRole: "Agency Partner",
       company: "BlueOrbit",
+      country: "United States",
       rating: 4.8,
       quote:
         "AP Tech supported our overflow development work reliably and stayed organized.",
@@ -896,6 +933,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Isabella Moore",
       clientRole: "Real Estate Consultant",
       company: "PrimeHabitat",
+      country: "United Arab Emirates",
       rating: 4.4,
       quote:
         "The 3D presentation visuals helped our client understand the space faster.",
@@ -905,36 +943,39 @@ export const defaultLandingData: LandingPageData = {
     },
     {
       id: "review-ethan",
-      clientName: "Ethan Hughes",
+      clientName: "Carlos Almeida",
       clientRole: "Founder",
       company: "LeadBridge",
+      country: "Brazil",
       rating: 4.5,
       quote:
-        "The outreach list and follow-up messages gave us a useful starting point.",
+        "A lista de prospecção e as mensagens de follow-up nos deram um ótimo ponto de partida.",
       details:
         "It was practical, organized and easy for our sales assistant to continue.",
       avatarUrl: "",
     },
     {
       id: "review-charlotte",
-      clientName: "Charlotte Evans",
+      clientName: "Rima Chowdhury",
       clientRole: "Business Manager",
       company: "CarePoint Admin",
+      country: "Bangladesh",
       rating: 4.3,
       quote:
-        "Their office support helped clean up documents and spreadsheets that had piled up.",
+        "জমে থাকা ডকুমেন্ট আর স্প্রেডশিট গুছিয়ে দেওয়ায় আমাদের অফিসের কাজ অনেক সহজ হয়ে গেছে।",
       details:
         "The work was organized clearly and returned in a format our team could use immediately.",
       avatarUrl: "",
     },
     {
       id: "review-benjamin",
-      clientName: "Benjamin Scott",
+      clientName: "Julien Moreau",
       clientRole: "CEO",
       company: "NexaFlow",
+      country: "France",
       rating: 4.9,
       quote:
-        "The React dashboard work was clean and the interface felt much more stable.",
+        "Le tableau de bord React est propre et l'interface est bien plus stable qu'avant.",
       details:
         "They understood the workflow and improved the UI without adding unnecessary complexity.",
       avatarUrl: "",
@@ -944,6 +985,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Amelia Wright",
       clientRole: "Founder",
       company: "CraftLane",
+      country: "New Zealand",
       rating: 4.2,
       quote:
         "The logo and brand assets gave our new business a more confident look.",
@@ -956,6 +998,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Henry Adams",
       clientRole: "Finance Lead",
       company: "ClearLedger",
+      country: "Singapore",
       rating: 4.7,
       quote:
         "The bookkeeping sheets and invoice records were much easier to review after cleanup.",
@@ -968,6 +1011,7 @@ export const defaultLandingData: LandingPageData = {
       clientName: "Grace Morgan",
       clientRole: "Marketing Manager",
       company: "EduVista",
+      country: "South Africa",
       rating: 4.8,
       quote:
         "Their SEO updates gave our course pages a stronger structure and better clarity.",
@@ -1006,6 +1050,11 @@ export const defaultLandingData: LandingPageData = {
       { title: "On-Time Delivery", text: "Always on schedule." },
       { title: "24/7 Support", text: "We are here when you need us." },
     ],
+  },
+  contact: {
+    languageNoteEnabled: true,
+    languageNote:
+      "Comfortable in your own language? Feel free to write to us in Bengali, Spanish, French, German, Portuguese or any language you prefer — we'll understand and reply just as easily. No need to translate into English first.",
   },
   footer: {
     thanksText: "Thanks!",
@@ -1271,6 +1320,10 @@ function mergeLandingContent(
       ...defaultLandingData.about,
       ...(saved.about ?? {}),
     },
+    contact: {
+      ...defaultLandingData.contact,
+      ...(saved.contact ?? {}),
+    },
     footer: mergeFooter(saved.footer),
   };
 }
@@ -1444,6 +1497,16 @@ export async function getLandingPageData(): Promise<LandingPageData> {
           }
         : defaultLandingData.seo;
 
+    const contact =
+      contentMap.contact &&
+      typeof contentMap.contact === "object" &&
+      !Array.isArray(contentMap.contact)
+        ? {
+            ...defaultLandingData.contact,
+            ...(contentMap.contact as Partial<LandingPageData["contact"]>),
+          }
+        : defaultLandingData.contact;
+
     const cmsCategories = categories.map((category) => ({
       id: category.id,
       name: category.name,
@@ -1480,6 +1543,7 @@ export async function getLandingPageData(): Promise<LandingPageData> {
       reviews: reviews.length ? reviews : defaultLandingData.reviews,
       seo,
       about,
+      contact,
       footer,
     };
   } catch (error) {
