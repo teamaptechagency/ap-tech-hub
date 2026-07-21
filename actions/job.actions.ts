@@ -30,14 +30,21 @@ async function audit(
   });
 }
 
+const receivedRateSettingKey: Record<string, string> = {
+  USD: "finance.receivedUsdRate",
+  EUR: "finance.receivedEurRate",
+  GBP: "finance.receivedGbpRate",
+};
+
 async function getCurrencyRateToBdt(currency: string) {
   if (currency === "BDT") return 1;
 
-  if (currency === "USD") {
-    const receivedUsdRate = await prisma.setting.findUnique({
-      where: { key: "finance.receivedUsdRate" },
+  const settingKey = receivedRateSettingKey[currency];
+  if (settingKey) {
+    const receivedRate = await prisma.setting.findUnique({
+      where: { key: settingKey },
     });
-    const value = Number(receivedUsdRate?.value ?? 0);
+    const value = Number(receivedRate?.value ?? 0);
     if (Number.isFinite(value) && value > 0) return value;
   }
 
@@ -187,11 +194,7 @@ export async function createJob(formData: CreateJobInput) {
   const workerValue = data.workerValue ? parseFloat(data.workerValue) : null;
 
   if (!clientValue || isNaN(clientValue) || clientValue <= 0) {
-    return { error: "Enter the client budget in USD" };
-  }
-
-  if (data.clientCurrency !== "USD") {
-    return { error: "Client budget must be in USD" };
+    return { error: "Enter the client budget" };
   }
 
   if (!workerValue || isNaN(workerValue) || workerValue <= 0) {

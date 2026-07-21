@@ -280,6 +280,17 @@ export function SettingsShell({
   const [receivedUsdRate, setReceivedUsdRate] = useState(
     settings["finance.receivedUsdRate"] ?? "118"
   );
+  const [receivedEurRate, setReceivedEurRate] = useState(
+    settings["finance.receivedEurRate"] ?? "130"
+  );
+  const [nidRequirement, setNidRequirement] = useState(
+    settings["signup.nidRequirement"] ?? "REQUIRED"
+  );
+  const [nidBusy, setNidBusy] = useState(false);
+
+  const [receivedGbpRate, setReceivedGbpRate] = useState(
+    settings["finance.receivedGbpRate"] ?? "152"
+  );
 
   const [specialUsdRate, setSpecialUsdRate] = useState(
     settings["specialOrder.usdRate"] ?? "125"
@@ -451,6 +462,24 @@ export function SettingsShell({
       return;
     }
 
+    const parsedReceivedEurRate = Number(receivedEurRate);
+    if (
+      !Number.isFinite(parsedReceivedEurRate) ||
+      parsedReceivedEurRate <= 0
+    ) {
+      toast.error("Enter a valid received EUR rate");
+      return;
+    }
+
+    const parsedReceivedGbpRate = Number(receivedGbpRate);
+    if (
+      !Number.isFinite(parsedReceivedGbpRate) ||
+      parsedReceivedGbpRate <= 0
+    ) {
+      toast.error("Enter a valid received GBP rate");
+      return;
+    }
+
     setBusy(true);
 
     try {
@@ -473,6 +502,14 @@ export function SettingsShell({
           key: "finance.receivedUsdRate",
           value: receivedUsdRate,
         },
+        {
+          key: "finance.receivedEurRate",
+          value: receivedEurRate,
+        },
+        {
+          key: "finance.receivedGbpRate",
+          value: receivedGbpRate,
+        },
       ]);
 
       const error = getActionError(result);
@@ -487,6 +524,31 @@ export function SettingsShell({
       toast.error("Exchange rates could not be saved");
     } finally {
       setBusy(false);
+    }
+  }
+
+  // ============================================
+  // SAVE NID SIGNUP REQUIREMENT
+  // ============================================
+  async function saveNidRequirement(value: string | null) {
+    if (!value) return;
+    setNidRequirement(value);
+    setNidBusy(true);
+    try {
+      const result = await updateSettings([
+        { key: "signup.nidRequirement", value },
+      ]);
+      const error = getActionError(result);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      toast.success("Signup requirement saved");
+    } catch (error) {
+      console.error("Failed to save signup requirement:", error);
+      toast.error("Could not save signup requirement");
+    } finally {
+      setNidBusy(false);
     }
   }
 
@@ -1389,6 +1451,62 @@ export function SettingsShell({
               </div>
             </div>
 
+            <div className="mt-4 rounded-md border bg-muted/20 p-3">
+              <p className="text-sm font-medium">
+                Received EUR rate
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Used for Add Job budgets in EUR and for the 20% minimum
+                profit check.
+              </p>
+              <div className="mt-3 flex max-w-md items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  1 EUR =
+                </span>
+                <Input
+                  type="number"
+                  min={0.01}
+                  step="0.01"
+                  value={receivedEurRate}
+                  onChange={(event) =>
+                    setReceivedEurRate(event.target.value)
+                  }
+                  disabled={busy}
+                />
+                <span className="text-sm text-muted-foreground">
+                  BDT
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-md border bg-muted/20 p-3">
+              <p className="text-sm font-medium">
+                Received GBP rate
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Used for Add Job budgets in GBP and for the 20% minimum
+                profit check.
+              </p>
+              <div className="mt-3 flex max-w-md items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  1 GBP =
+                </span>
+                <Input
+                  type="number"
+                  min={0.01}
+                  step="0.01"
+                  value={receivedGbpRate}
+                  onChange={(event) =>
+                    setReceivedGbpRate(event.target.value)
+                  }
+                  disabled={busy}
+                />
+                <span className="text-sm text-muted-foreground">
+                  BDT
+                </span>
+              </div>
+            </div>
+
             <div className="mt-4 border-t pt-4">
               <p className="text-sm font-medium">
                 Special order USD rates
@@ -1684,6 +1802,37 @@ export function SettingsShell({
       )}
 
       {/* Team and roles */}
+      {activeSection === "team" && (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">
+            Worker signup requirements
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Controls whether NID / passport upload is asked for when a
+            worker creates their own account on the public signup form.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex max-w-sm items-center gap-2">
+            <Select
+              value={nidRequirement}
+              onValueChange={saveNidRequirement}
+            >
+              <SelectTrigger disabled={nidBusy}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="REQUIRED">Required</SelectItem>
+                <SelectItem value="OPTIONAL">Optional</SelectItem>
+                <SelectItem value="OFF">Off (don't ask)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+      )}
+
       {activeSection === "team" && (
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-4 pb-3">

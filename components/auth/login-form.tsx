@@ -42,14 +42,6 @@ export function LoginForm({
   const [helpPhone, setHelpPhone] = useState("");
   const [helpMessage, setHelpMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const modeLabel =
-    loginMode === "authenticator"
-        ? "Authenticator"
-        : loginMode === "email"
-          ? "Email OTP"
-          : loginMode === "whatsapp"
-            ? "WhatsApp OTP"
-            : "Password";
 
   useEffect(() => {
     const savedToken = window.localStorage.getItem("aptech_login_device") ?? "";
@@ -163,30 +155,39 @@ export function LoginForm({
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="login-mode">Login method</Label>
-              <select
-                id="login-mode"
-                value={loginMode}
-                onChange={(event) => {
-                  setLoginMode(event.target.value as typeof loginMode);
-                  setNeedsCode(false);
-                  setCode("");
-                  setPasswordlessCodeSent(false);
-                }}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="password">Password</option>
-                <option value="email">Email OTP</option>
-                {passwordlessMethods.includes("WHATSAPP") && (
-                  <option value="whatsapp">WhatsApp OTP</option>
-                )}
-                {passwordlessMethods.includes("AUTHENTICATOR") && (
-                  <option value="authenticator">Authenticator</option>
-                )}
-              </select>
-              <p className="text-xs text-muted-foreground">
-                Showing available methods only. Current: {modeLabel}
-              </p>
+              <Label>Login method</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    { value: "password", label: "Password" },
+                    { value: "email", label: "Email OTP" },
+                    ...(passwordlessMethods.includes("WHATSAPP")
+                      ? [{ value: "whatsapp", label: "WhatsApp OTP" }]
+                      : []),
+                    ...(passwordlessMethods.includes("AUTHENTICATOR")
+                      ? [{ value: "authenticator", label: "Authenticator" }]
+                      : []),
+                  ] as { value: typeof loginMode; label: string }[]
+                ).map((method) => (
+                  <button
+                    key={method.value}
+                    type="button"
+                    onClick={() => {
+                      setLoginMode(method.value);
+                      setNeedsCode(false);
+                      setCode("");
+                      setPasswordlessCodeSent(false);
+                    }}
+                    className={`h-10 rounded-md border text-sm font-medium transition-colors ${
+                      loginMode === method.value
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background hover:bg-muted"
+                    }`}
+                  >
+                    {method.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
           <div className="space-y-2">

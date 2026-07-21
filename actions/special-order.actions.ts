@@ -7,7 +7,16 @@ import type { Prisma, Role } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { notify } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
+import { pusherServer } from "@/lib/pusher-server";
 import { ADMIN_ROLES, PARTNER_ROLES } from "@/lib/roles";
+
+async function triggerPusher(channel: string, event: string, payload: unknown) {
+  try {
+    await pusherServer.trigger(channel, event, payload);
+  } catch (error) {
+    console.error(`Pusher event failed: ${event}`, error);
+  }
+}
 
 async function checkAdmin() {
   const session = await auth();
@@ -46,6 +55,7 @@ type ScriptMessage = {
   attachment?: string;
   done: boolean;
   createdAt: string;
+  copiedAt?: string;
 };
 
 type ConversationField = {
@@ -1140,6 +1150,12 @@ export async function addSpecialOrderMessage(formData: {
     data: { conversationMessages: messages },
   });
 
+  await triggerPusher(
+    `special-order-script-${formData.orderId}`,
+    "messages-updated",
+    { messages }
+  );
+
   revalidatePath(`/special-orders/${formData.orderId}`);
   return { success: true };
 }
@@ -1155,17 +1171,22 @@ export async function toggleSpecialOrderMessageDone(
 
   const order = await prisma.specialOrder.findUnique({
     where: { id: orderId },
-    select: { partnerId: true, status: true, conversationMessages: true },
+    select: {
+      partnerId: true,
+      status: true,
+      conversationMessages: true,
+      conversationBreakMinutes: true,
+    },
   });
   if (!order) return { error: "Conversation not found" };
   if (order.status === "COMPLETED") {
     return { error: "Completed orders are view only" };
   }
 
-  const targetMessage = jsonArray<ScriptMessage>(order.conversationMessages).find(
-    (message) => message.id === messageId
-  );
-  if (!targetMessage) return { error: "Message not found" };
+  const allMessages = jsonArray<ScriptMessage>(order.conversationMessages);
+  const index = allMessages.findIndex((message) => message.id === messageId);
+  if (index === -1) return { error: "Message not found" };
+  const targetMessage = allMessages[index];
 
   const assignedPartner = isPartner && order.partnerId === session.user.id;
   const allowed =
@@ -1173,14 +1194,94 @@ export async function toggleSpecialOrderMessageDone(
 
   if (!allowed) return { error: "You don't have permission for this action" };
 
-  const messages = jsonArray<ScriptMessage>(order.conversationMessages).map(
-    (message) =>
-      message.id === messageId ? { ...message, done: !message.done } : message
+  const marking = !targetMessage.done;
+
+  if (marking && index > 0) {
+    const previous = allMessages[index - 1];
+    if (!previous.done) {
+      return { error: "Copy the previous message first" };
+    }
+
+    const breakMinutes = order.conversationBreakMinutes ?? 1;
+    if (breakMinutes > 0 && previous.copiedAt) {
+      const elapsedMs = Date.now() - new Date(previous.copiedAt).getTime();
+      const requiredMs = breakMinutes * 60_000;
+      if (elapsedMs < requiredMs) {
+        const remainingSec = Math.ceil((requiredMs - elapsedMs) / 1000);
+        return {
+          error: `Please wait ${formatWaitTime(remainingSec)} before copying this message`,
+          remainingSec,
+        };
+      }
+    }
+  }
+
+  const messages = allMessages.map((message) =>
+    message.id === messageId
+      ? {
+          ...message,
+          done: marking,
+          copiedAt: marking ? new Date().toISOString() : undefined,
+        }
+      : message
   );
 
   await prisma.specialOrder.update({
     where: { id: orderId },
     data: { conversationMessages: messages },
+  });
+
+  await triggerPusher(`special-order-script-${orderId}`, "messages-updated", {
+    messages,
+  });
+
+  revalidatePath(`/special-orders/${orderId}`);
+  revalidatePath(`/p/special-orders/${orderId}`);
+  return { success: true };
+}
+
+function formatWaitTime(seconds: number) {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.ceil(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.ceil(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.ceil(hours / 24);
+  return `${days}d`;
+}
+
+// ============================================
+// UPDATE CONVERSATION BREAK (creator/admin only)
+// Minimum minutes required between consecutive
+// message copies in the script.
+// ============================================
+export async function updateSpecialOrderConversationBreak(
+  orderId: string,
+  minutes: number
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  if (!Number.isFinite(minutes) || minutes < 0) {
+    return { error: "Enter a valid break duration" };
+  }
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { status: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED") {
+    return { error: "Completed orders are view only" };
+  }
+
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: { conversationBreakMinutes: Math.round(minutes) },
+  });
+
+  await triggerPusher(`special-order-script-${orderId}`, "break-updated", {
+    conversationBreakMinutes: Math.round(minutes),
   });
 
   revalidatePath(`/special-orders/${orderId}`);

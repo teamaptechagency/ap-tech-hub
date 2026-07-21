@@ -74,6 +74,7 @@ model User {
   applications         Application[]
   assignedTasks        WeeklyTask[]              @relation("TaskAssignee")
   completedTasks       WeeklyTask[]              @relation("TaskCompleter")
+  cancelledTasks       WeeklyTask[]              @relation("TaskCanceller")
   assignedMilestones   Milestone[]               @relation("MilestoneAssignee")
   sentMessages         Message[]
   uploadedAttachments  Attachment[]              @relation("AttachmentUploader")
@@ -381,6 +382,7 @@ model JobMember {
 enum TaskStatus {
   PENDING
   COMPLETED
+  CANCELLED
 }
 
 enum Priority {
@@ -415,6 +417,10 @@ model WeeklyTask {
   completedById String?
   completedBy   User?        @relation("TaskCompleter", fields: [completedById], references: [id])
   completedAt   DateTime?
+  cancelReason  String?
+  cancelledById String?
+  cancelledBy   User?        @relation("TaskCanceller", fields: [cancelledById], references: [id])
+  cancelledAt   DateTime?
   attachments   Attachment[]
   createdAt     DateTime     @default(now())
 }
@@ -608,6 +614,7 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   CANCELLED
+  ON_HOLD
 }
 
 model Invoice {
@@ -699,6 +706,7 @@ model SpecialOrder {
   deliveryNote          String?
   conversationMessages  Json?
   conversationFields    Json?
+  conversationBreakMinutes Int                   @default(1)
   clientId              String
   client                Client                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   partnerId             String?

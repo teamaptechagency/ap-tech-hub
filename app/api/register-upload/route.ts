@@ -5,66 +5,22 @@ import { NextResponse } from "next/server";
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
-function getBlobToken() {
-  return (process.env.BLOB_READ_WRITE_TOKEN ?? "").trim();
-}
-
-function isLikelyBlobToken(value: string) {
-  return value.startsWith("vercel_blob_rw_");
-}
-
-function getRegisterUploadErrorMessage(error: unknown, blobToken: string) {
+function getRegisterUploadErrorMessage(error: unknown) {
   const message =
     error instanceof Error
       ? error.message
       : typeof error === "string"
         ? error
         : "";
-  const lowerMessage = message.toLowerCase();
 
-  if (!blobToken) {
-    return "Blob storage token is missing. Set BLOB_READ_WRITE_TOKEN in the Vercel project's Environment Variables, then redeploy.";
-  }
+  // The SDK's own BlobError messages are already specific and actionable
+  // (missing credentials, deleted store, OIDC not enabled for this env, etc).
+  if (message) return message;
 
-  if (blobToken.startsWith("store_")) {
-    return "BLOB_READ_WRITE_TOKEN is set to the Blob Store ID, not the read/write token. Reconnect the Blob Store to this project in Vercel so it can inject the correct token.";
-  }
-
-  if (!isLikelyBlobToken(blobToken)) {
-    return "BLOB_READ_WRITE_TOKEN does not look like a Vercel Blob read/write token. It should start with vercel_blob_rw_. Reconnect the Blob Store to this project in Vercel to get a fresh one.";
-  }
-
-  if (lowerMessage.includes("store does not exist")) {
-    return "Blob Store token points to a deleted or wrong store. Reconnect the correct Blob Store to this project in Vercel.";
-  }
-
-  return "Blob storage is not connected correctly. Reconnect the Blob Store to this project in Vercel (Storage tab), then redeploy.";
+  return "The file could not be uploaded. Please try again.";
 }
 
 export async function POST(req: Request) {
-  const blobToken = getBlobToken();
-
-  if (!blobToken) {
-    return NextResponse.json(
-      {
-        error:
-          "Blob storage token is missing. Set BLOB_READ_WRITE_TOKEN in the Vercel project's Environment Variables, then redeploy.",
-      },
-      { status: 500 }
-    );
-  }
-
-  if (!isLikelyBlobToken(blobToken)) {
-    return NextResponse.json(
-      {
-        error: blobToken.startsWith("store_")
-          ? "BLOB_READ_WRITE_TOKEN is set to the Blob Store ID, not the read/write token. Reconnect the Blob Store to this project in Vercel so it can inject the correct token."
-          : "BLOB_READ_WRITE_TOKEN does not look like a Vercel Blob read/write token. It should start with vercel_blob_rw_. Reconnect the Blob Store to this project in Vercel to get a fresh one.",
-      },
-      { status: 500 }
-    );
-  }
-
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
   const email = (formData.get("email") as string) || "";
@@ -93,7 +49,7 @@ export async function POST(req: Request) {
     const blob = await put(
       `registrations/${email.replace(/[^a-z0-9]/gi, "_")}/${Date.now()}-${file.name}`,
       file,
-      { access: "private", token: blobToken }
+      { access: "private" }
     );
 
     return NextResponse.json({ url: blob.url });
@@ -101,7 +57,7 @@ export async function POST(req: Request) {
     console.error("Registration upload failed:", error);
     return NextResponse.json(
       {
-        error: getRegisterUploadErrorMessage(error, blobToken),
+        error: getRegisterUploadErrorMessage(error),
       },
       { status: 500 }
     );

@@ -179,6 +179,7 @@ export default async function JobDetailsPage({
         title: task.title,
         priority: task.priority,
         status: task.status,
+        cancelReason: task.cancelReason,
       })),
     };
   });

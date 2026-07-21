@@ -30,6 +30,7 @@ const statusBadge: Record<string, string> = {
   PAID: "bg-green-100 text-green-700",
   OVERDUE: "bg-red-100 text-red-600",
   CANCELLED: "bg-slate-100 text-slate-500",
+  ON_HOLD: "bg-purple-100 text-purple-700",
 };
 
 function formatStatus(status: string) {
@@ -514,7 +515,24 @@ export default async function ClientInvoiceViewPage({
             </Card>
           )}
 
-          {remaining > 0 && (
+          {displayStatus === "ON_HOLD" && (
+            <Card className="border-purple-200 bg-purple-50">
+              <CardContent className="py-6 text-center">
+                <Badge
+                  variant="secondary"
+                  className="bg-purple-200 text-purple-700"
+                >
+                  On hold
+                </Badge>
+                <p className="mt-2 text-xs text-purple-700">
+                  This invoice is temporarily on hold. Please contact us
+                  before making a payment.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {remaining > 0 && displayStatus !== "ON_HOLD" && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">

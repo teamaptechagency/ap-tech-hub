@@ -30,48 +30,17 @@ function getOptionalFormValue(
   return cleanValue || null;
 }
 
-function getBlobToken() {
-  return (process.env.BLOB_READ_WRITE_TOKEN ?? "").trim();
-}
-
-function isLikelyBlobToken(value: string) {
-  return value.startsWith("vercel_blob_rw_");
-}
-
-function getUploadErrorMessage(error: unknown, blobToken: string) {
+function getUploadErrorMessage(error: unknown) {
   const message =
     error instanceof Error
       ? error.message
       : typeof error === "string"
         ? error
         : "";
-  const lowerMessage = message.toLowerCase();
 
-  if (!blobToken.trim()) {
-    return "Blob storage token is missing. Set BLOB_READ_WRITE_TOKEN in the Vercel project's Environment Variables, then redeploy.";
-  }
-
-  if (blobToken.startsWith("store_")) {
-    return "BLOB_READ_WRITE_TOKEN is set to the Blob Store ID, not the read/write token. Reconnect the Blob Store to this project in Vercel so it can inject the correct token.";
-  }
-
-  if (!isLikelyBlobToken(blobToken)) {
-    return "BLOB_READ_WRITE_TOKEN does not look like a Vercel Blob read/write token. It should start with vercel_blob_rw_. Reconnect the Blob Store to this project in Vercel to get a fresh one.";
-  }
-
-  if (lowerMessage.includes("store does not exist")) {
-    return "Blob Store token points to a deleted or wrong store. Reconnect the correct Blob Store to this project in Vercel.";
-  }
-
-  if (
-    lowerMessage.includes("token") ||
-    lowerMessage.includes("unauthorized") ||
-    lowerMessage.includes("forbidden") ||
-    lowerMessage.includes("not found") ||
-    lowerMessage.includes("store")
-  ) {
-    return "Blob storage is not connected correctly. Reconnect the Blob Store to this project in Vercel (Storage tab), then redeploy.";
-  }
+  // The SDK's own BlobError messages are already specific and actionable
+  // (missing credentials, deleted store, OIDC not enabled for this env, etc).
+  if (message) return message;
 
   return "The file could not be uploaded. Please try again.";
 }
@@ -92,38 +61,8 @@ export async function POST(request: Request) {
   }
 
   let uploadedBlobUrl: string | null = null;
-  let blobToken = "";
 
   try {
-    blobToken = getBlobToken();
-
-    if (!blobToken) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Blob storage token is missing. Set BLOB_READ_WRITE_TOKEN in the Vercel project's Environment Variables, then redeploy.",
-        },
-        {
-          status: 500,
-        }
-      );
-    }
-
-    if (!isLikelyBlobToken(blobToken)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: blobToken.startsWith("store_")
-            ? "BLOB_READ_WRITE_TOKEN is set to the Blob Store ID, not the read/write token. Reconnect the Blob Store to this project in Vercel so it can inject the correct token."
-            : "BLOB_READ_WRITE_TOKEN does not look like a Vercel Blob read/write token. It should start with vercel_blob_rw_. Reconnect the Blob Store to this project in Vercel to get a fresh one.",
-        },
-        {
-          status: 500,
-        }
-      );
-    }
-
     const formData = await request.formData();
 
     const fileValue = formData.get("file");
@@ -378,7 +317,6 @@ export async function POST(request: Request) {
       {
         access: isPublicAsset ? "public" : "private",
         addRandomSuffix: true,
-        token: blobToken,
       }
     );
 
@@ -450,7 +388,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        error: getUploadErrorMessage(error, blobToken),
+        error: getUploadErrorMessage(error),
       },
       {
         status: 500,

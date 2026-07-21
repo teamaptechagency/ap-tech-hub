@@ -21,6 +21,7 @@ const statusBadge: Record<string, string> = {
   PAID: "bg-green-100 text-green-700",
   OVERDUE: "bg-red-100 text-red-600",
   CANCELLED: "bg-slate-100 text-slate-400",
+  ON_HOLD: "bg-purple-100 text-purple-700",
 };
 
 export default async function InvoiceViewPage({
@@ -339,6 +340,31 @@ export default async function InvoiceViewPage({
             currencySym={sym}
             remaining={remaining}
             paymentNote={invoice.paymentNote}
+            amountPaid={amountPaid}
+            editableData={{
+              title: invoice.title ?? "",
+              items:
+                invoice.items.length > 0
+                  ? invoice.items.map((i) => ({
+                      description: i.description,
+                      qty: String(i.qty),
+                      amount: String(Number(i.amount)),
+                    }))
+                  : [
+                      {
+                        description: invoice.title ?? "Services",
+                        qty: "1",
+                        amount: String(subtotal),
+                      },
+                    ],
+              currency: invoice.currency,
+              vatPercent: vat !== null ? String(vat) : "",
+              dueDate: invoice.dueDate.toISOString().slice(0, 10),
+              payoneerInvoiceUrl: invoice.payoneerInvoiceUrl ?? "",
+              payoneerInvoiceButtonLabel:
+                invoice.payoneerInvoiceButtonLabel ?? "Pay with Payoneer",
+              payoneerInvoiceNote: invoice.payoneerInvoiceNote ?? "",
+            }}
             submittedAt={invoice.submittedAt?.toISOString() ?? null}
             latestSubmission={
               invoice.paymentSubmissions[0]

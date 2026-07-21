@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   approvePayment,
   rejectPayment,
   recordManualPayment,
   cancelInvoice,
+  holdInvoice,
+  unholdInvoice,
 } from "@/actions/invoice.actions";
+import { EditInvoiceDialog } from "@/components/invoices/edit-invoice-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BadgeCheck, Ban } from "lucide-react";
+import { BadgeCheck, Ban, Pause, Pencil, Play } from "lucide-react";
 
 type LatestPaymentSubmission = {
   methodLabel: string;
@@ -57,6 +61,17 @@ type LatestPaymentSubmission = {
   }[];
 };
 
+type EditableInvoiceData = {
+  title: string;
+  items: { description: string; qty: string; amount: string }[];
+  currency: string;
+  vatPercent: string;
+  dueDate: string;
+  payoneerInvoiceUrl: string;
+  payoneerInvoiceButtonLabel: string;
+  payoneerInvoiceNote: string;
+};
+
 export function PaymentActions({
   invoiceId,
   status,
@@ -65,6 +80,8 @@ export function PaymentActions({
   paymentNote,
   submittedAt,
   latestSubmission,
+  amountPaid,
+  editableData,
 }: {
   invoiceId: string;
   status: string;
@@ -73,15 +90,32 @@ export function PaymentActions({
   paymentNote: string | null;
   submittedAt: string | null;
   latestSubmission: LatestPaymentSubmission | null;
+  amountPaid: number;
+  editableData: EditableInvoiceData;
 }) {
+  const router = useRouter();
   const [approveOpen, setApproveOpen] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [amount, setAmount] = useState(remaining.toFixed(2));
   const [paidVia, setPaidVia] = useState("");
   const [method, setMethod] = useState<string | null>("Bank transfer");
   const [reference, setReference] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [holdBusy, setHoldBusy] = useState(false);
+
+  const canEdit = amountPaid <= 0 && !["PAID", "CANCELLED"].includes(status);
+
+  async function handleHoldToggle() {
+    setHoldBusy(true);
+    const result =
+      status === "ON_HOLD"
+        ? await unholdInvoice(invoiceId)
+        : await holdInvoice(invoiceId);
+    setHoldBusy(false);
+    if (!result.error) router.refresh();
+  }
 
   const open = !["PAID", "CANCELLED"].includes(status);
 
@@ -258,6 +292,33 @@ export function PaymentActions({
             <CardTitle className="text-sm">Admin actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
+            {canEdit && (
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit invoice
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={handleHoldToggle}
+              disabled={holdBusy}
+            >
+              {status === "ON_HOLD" ? (
+                <Play className="mr-2 h-4 w-4" />
+              ) : (
+                <Pause className="mr-2 h-4 w-4" />
+              )}
+              {holdBusy
+                ? "Please wait..."
+                : status === "ON_HOLD"
+                  ? "Resume invoice"
+                  : "Hold invoice"}
+            </Button>
             <Button
               variant="outline"
               className="w-full justify-start"
@@ -386,6 +447,15 @@ export function PaymentActions({
           </form>
         </DialogContent>
       </Dialog>
+
+      {canEdit && (
+        <EditInvoiceDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          invoiceId={invoiceId}
+          initial={editableData}
+        />
+      )}
     </div>
   );
 }

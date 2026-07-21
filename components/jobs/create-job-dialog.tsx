@@ -61,6 +61,8 @@ type CreateJobDialogProps = {
   teamMembers: Option[];
   skills: Option[];
   receivedUsdRate: number;
+  receivedEurRate: number;
+  receivedGbpRate: number;
 };
 
 const JOB_TYPES: JobTypeOption[] = [
@@ -91,6 +93,8 @@ export function CreateJobDialog({
   teamMembers,
   skills,
   receivedUsdRate,
+  receivedEurRate,
+  receivedGbpRate,
 }: CreateJobDialogProps) {
   const router = useRouter();
 
@@ -109,7 +113,7 @@ export function CreateJobDialog({
 
   // Pricing
   const [clientValue, setClientValue] = useState("");
-  const [clientCurrency] = useState<Currency>("USD");
+  const [clientCurrency, setClientCurrency] = useState<Currency>("USD");
   const [workerValue, setWorkerValue] = useState("");
 
   // Type-specific fields
@@ -126,10 +130,23 @@ export function CreateJobDialog({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const safeUsdRate =
-    Number.isFinite(receivedUsdRate) && receivedUsdRate > 0
-      ? receivedUsdRate
-      : 118;
+  const defaultRates: Record<Currency, number> = {
+    USD: 118,
+    EUR: 130,
+    GBP: 152,
+    BDT: 1,
+  };
+  const receivedRates: Record<Currency, number> = {
+    USD: receivedUsdRate,
+    EUR: receivedEurRate,
+    GBP: receivedGbpRate,
+    BDT: 1,
+  };
+  const safeRate =
+    Number.isFinite(receivedRates[clientCurrency]) &&
+    receivedRates[clientCurrency] > 0
+      ? receivedRates[clientCurrency]
+      : defaultRates[clientCurrency];
   const numericClientValue = Number(clientValue);
   const defaultWorkerValue = Number(workerValue);
   const memberWorkerCosts =
@@ -147,13 +164,13 @@ export function CreateJobDialog({
   );
   const clientBudgetBdt =
     Number.isFinite(numericClientValue) && numericClientValue > 0
-      ? numericClientValue * safeUsdRate
+      ? numericClientValue * safeRate
       : 0;
   const maxEmployeePayout =
     Math.floor(clientBudgetBdt * 0.8 * 100) / 100;
-  const minimumClientBudgetUsd =
+  const minimumClientBudget =
     totalEmployeePayout > 0
-      ? Math.ceil((totalEmployeePayout / 0.8 / safeUsdRate) * 100) / 100
+      ? Math.ceil((totalEmployeePayout / 0.8 / safeRate) * 100) / 100
       : 0;
   const estimatedProfit = clientBudgetBdt - totalEmployeePayout;
   const estimatedProfitPercent =
@@ -277,7 +294,7 @@ export function CreateJobDialog({
       !Number.isFinite(numericClientValue) ||
       numericClientValue <= 0
     ) {
-      setError("Please enter the client budget in USD.");
+      setError("Please enter the client budget.");
       return;
     }
 
@@ -309,7 +326,7 @@ export function CreateJobDialog({
 
     if (!budgetHasProfit) {
       setError(
-        `Minimum 20% company profit required. For this employee payout, client budget must be at least USD ${minimumClientBudgetUsd.toLocaleString()}.`
+        `Minimum 20% company profit required. For this employee payout, client budget must be at least ${clientCurrency} ${minimumClientBudget.toLocaleString()}.`
       );
       return;
     }
@@ -737,7 +754,13 @@ export function CreateJobDialog({
             <div className="space-y-2">
               <Label>Currency</Label>
 
-              <Select value={clientCurrency} disabled>
+              <Select
+                value={clientCurrency}
+                onValueChange={(value) =>
+                  setClientCurrency(value as Currency)
+                }
+                disabled={loading}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -783,8 +806,8 @@ export function CreateJobDialog({
               <p className="text-[10px] text-muted-foreground">
                 This is what employees see before applying. Assigned members
                 can still have a different payout below if needed. Total payout
-                must leave at least 20% company profit after USD converts to
-                BDT.
+                must leave at least 20% company profit after {clientCurrency}{" "}
+                converts to BDT.
               </p>
             </div>
 
@@ -797,15 +820,15 @@ export function CreateJobDialog({
             >
               <div className="grid gap-2 sm:grid-cols-2">
                 <p>
-                  Received USD rate:{" "}
+                  Received {clientCurrency} rate:{" "}
                   <span className="font-medium text-foreground">
-                    1 USD = BDT {safeUsdRate.toLocaleString()}
+                    1 {clientCurrency} = BDT {safeRate.toLocaleString()}
                   </span>
                 </p>
                 <p>
                   Minimum client budget:{" "}
                   <span className="font-medium text-foreground">
-                    USD {minimumClientBudgetUsd.toLocaleString()}
+                    {clientCurrency} {minimumClientBudget.toLocaleString()}
                   </span>
                 </p>
                 <p>

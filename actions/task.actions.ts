@@ -69,6 +69,9 @@ export async function toggleTask(taskId: string, jobId: string) {
 
   const task = await prisma.weeklyTask.findUnique({ where: { id: taskId } });
   if (!task) return { error: "Task not found" };
+  if (task.status === "CANCELLED") {
+    return { error: "This task is cancelled. Reopen it first." };
+  }
 
   const completing = task.status === "PENDING";
 
@@ -78,6 +81,69 @@ export async function toggleTask(taskId: string, jobId: string) {
       status: completing ? "COMPLETED" : "PENDING",
       completedById: completing ? access.session.user.id : null,
       completedAt: completing ? new Date() : null,
+    },
+  });
+
+  revalidatePath(`/jobs/${jobId}`);
+  return { success: true };
+}
+
+// ============================================
+// CANCEL / REOPEN TASK (manager only, reason required)
+// ============================================
+export async function cancelTask(
+  taskId: string,
+  jobId: string,
+  reason: string
+) {
+  const access = await canTouchJob(jobId);
+  if (!access?.isManager) {
+    return { error: "You don't have permission for this action" };
+  }
+
+  const cleanReason = reason.trim();
+  if (cleanReason.length < 3) {
+    return { error: "Enter a reason for cancelling this task" };
+  }
+
+  const task = await prisma.weeklyTask.findUnique({ where: { id: taskId } });
+  if (!task) return { error: "Task not found" };
+
+  await prisma.weeklyTask.update({
+    where: { id: taskId },
+    data: {
+      status: "CANCELLED",
+      cancelReason: cleanReason,
+      cancelledById: access.session.user.id,
+      cancelledAt: new Date(),
+      completedById: null,
+      completedAt: null,
+    },
+  });
+
+  revalidatePath(`/jobs/${jobId}`);
+  return { success: true };
+}
+
+export async function reopenTask(taskId: string, jobId: string) {
+  const access = await canTouchJob(jobId);
+  if (!access?.isManager) {
+    return { error: "You don't have permission for this action" };
+  }
+
+  const task = await prisma.weeklyTask.findUnique({ where: { id: taskId } });
+  if (!task) return { error: "Task not found" };
+  if (task.status !== "CANCELLED") {
+    return { error: "This task is not cancelled" };
+  }
+
+  await prisma.weeklyTask.update({
+    where: { id: taskId },
+    data: {
+      status: "PENDING",
+      cancelReason: null,
+      cancelledById: null,
+      cancelledAt: null,
     },
   });
 

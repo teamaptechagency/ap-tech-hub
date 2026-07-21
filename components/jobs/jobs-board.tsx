@@ -73,12 +73,16 @@ export function JobsBoard({
   teamMembers,
   skills,
   receivedUsdRate,
+  receivedEurRate,
+  receivedGbpRate,
 }: {
   jobs: JobRow[];
   clients: Option[];
   teamMembers: Option[];
   skills: Option[];
   receivedUsdRate: number;
+  receivedEurRate: number;
+  receivedGbpRate: number;
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState("ALL");
@@ -306,6 +310,8 @@ export function JobsBoard({
           teamMembers={teamMembers}
           skills={skills}
           receivedUsdRate={receivedUsdRate}
+          receivedEurRate={receivedEurRate}
+          receivedGbpRate={receivedGbpRate}
         />
       )}
     </div>

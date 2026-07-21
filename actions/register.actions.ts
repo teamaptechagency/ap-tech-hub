@@ -16,6 +16,23 @@ import { isEmailVerified } from "@/actions/otp.actions";
 // Every public account requires verified email OTP before creation.
 // Worker accounts land as PENDING_APPROVAL; clients can sign in immediately.
 // ============================================
+type NidRequirement = "OFF" | "OPTIONAL" | "REQUIRED";
+
+async function getNidRequirement(): Promise<NidRequirement> {
+  const setting = await prisma.setting.findUnique({
+    where: { key: "signup.nidRequirement" },
+  });
+  const value = setting?.value?.trim().toUpperCase();
+  return value === "OFF" || value === "OPTIONAL" ? value : "REQUIRED";
+}
+
+// ============================================
+// PUBLIC: SIGNUP REQUIREMENTS (register form)
+// ============================================
+export async function getSignupRequirements() {
+  return { nidRequirement: await getNidRequirement() };
+}
+
 export async function registerAccount(formData: {
   kind: "CLIENT" | "WORKER";
   name: string;
@@ -52,7 +69,8 @@ export async function registerAccount(formData: {
     if (formData.skillIds.length > 5) {
       return { error: "Maximum 5 skills" };
     }
-    if (!formData.nidUrl) {
+    const nidRequirement = await getNidRequirement();
+    if (nidRequirement === "REQUIRED" && !formData.nidUrl) {
       return { error: "Upload your NID or passport" };
     }
     if (!formData.photoUrl) {

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ExternalLink, MessageSquareText, Plus, Upload } from "lucide-react";
+import { toast } from "sonner";
+import { Check, Clock, ExternalLink, MessageSquareText, Plus, Upload } from "lucide-react";
 
 import {
   addSpecialOrderMessage,
@@ -10,7 +11,9 @@ import {
   toggleSpecialOrderFieldDone,
   toggleSpecialOrderMessageDone,
   updateSpecialOrderBuyerName,
+  updateSpecialOrderConversationBreak,
 } from "@/actions/special-order.actions";
+import { getPusherClient } from "@/lib/pusher-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -38,7 +41,16 @@ type ScriptMessage = {
   attachment?: string;
   done: boolean;
   createdAt: string;
+  copiedAt?: string;
 };
+
+const BREAK_PRESETS = [
+  { label: "1 minute", minutes: 1 },
+  { label: "10 minutes", minutes: 10 },
+  { label: "20 minutes", minutes: 20 },
+  { label: "1 day", minutes: 1440 },
+  { label: "2 days", minutes: 2880 },
+];
 
 type ConversationField = {
   id?: string;
@@ -66,6 +78,7 @@ type ConversationWorkspaceProps = {
   readOnly?: boolean;
   buyerNameEditable?: boolean;
   actionsLocked?: boolean;
+  conversationBreakMinutes?: number;
 };
 
 const fieldLabels: Record<ConversationField["type"], string> = {
@@ -82,6 +95,23 @@ function fallbackBuyer(name: string | null) {
   return name?.trim() || "Buyer (Client)";
 }
 
+function formatCountdown(seconds: number) {
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) {
+    const minutes = Math.floor(seconds / 60);
+    const rest = seconds % 60;
+    return rest > 0 ? `${minutes}m ${rest}s` : `${minutes}m`;
+  }
+  if (seconds < 86400) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  }
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+}
+
 function replaceNames(text: string, buyerName: string, sellerName: string) {
   return text
     .replaceAll("Buyer", buyerName)
@@ -95,12 +125,13 @@ export function ConversationWorkspace({
   orderId,
   profileName,
   buyerName,
-  messages,
+  messages: initialMessages,
   fields,
   viewerRole = "ADMIN",
   readOnly = viewerRole !== "ADMIN",
   buyerNameEditable = !readOnly,
   actionsLocked = false,
+  conversationBreakMinutes = 1,
 }: ConversationWorkspaceProps) {
   const router = useRouter();
   const buyerLabel = fallbackBuyer(buyerName);
@@ -121,9 +152,74 @@ export function ConversationWorkspace({
   const [uploadingField, setUploadingField] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [messages, setMessages] = useState(initialMessages);
+  const [breakMinutes, setBreakMinutes] = useState(conversationBreakMinutes);
+  const [customBreak, setCustomBreak] = useState(
+    String(conversationBreakMinutes)
+  );
+  const [now, setNow] = useState(() => Date.now());
   const visibleFields = fields.filter(
     (field) => field.value?.trim() || field.url?.trim()
   );
+
+  // Live sync: another viewer copying a message or changing the
+  // break duration updates this view instantly, no refresh needed.
+  useEffect(() => {
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe(`special-order-script-${orderId}`);
+
+    channel.bind(
+      "messages-updated",
+      (payload: { messages: ScriptMessage[] }) => {
+        setMessages(payload.messages);
+      }
+    );
+    channel.bind(
+      "break-updated",
+      (payload: { conversationBreakMinutes: number }) => {
+        setBreakMinutes(payload.conversationBreakMinutes);
+        setCustomBreak(String(payload.conversationBreakMinutes));
+      }
+    );
+
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(`special-order-script-${orderId}`);
+    };
+  }, [orderId]);
+
+  // Ticks every second so the "wait Xs" countdown on a locked
+  // message counts down live and auto-unlocks without a refresh.
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  function messageLockInfo(index: number) {
+    if (index === 0) return { locked: false, waitSec: 0 };
+    const previous = messages[index - 1];
+    if (!previous.done) return { locked: true, waitSec: 0 };
+    if (breakMinutes <= 0 || !previous.copiedAt) {
+      return { locked: false, waitSec: 0 };
+    }
+    const elapsedMs = now - new Date(previous.copiedAt).getTime();
+    const requiredMs = breakMinutes * 60_000;
+    const waitSec = Math.max(0, Math.ceil((requiredMs - elapsedMs) / 1000));
+    return { locked: waitSec > 0, waitSec };
+  }
+
+  async function saveBreak(minutes: number) {
+    if (!Number.isFinite(minutes) || minutes < 0) return;
+    const previous = breakMinutes;
+    setBreakMinutes(minutes);
+    setCustomBreak(String(minutes));
+    const result = await updateSpecialOrderConversationBreak(orderId, minutes);
+    if (result?.error) {
+      toast.error(result.error);
+      setBreakMinutes(previous);
+      setCustomBreak(String(previous));
+    }
+  }
 
   function fieldLabel(type: ConversationField["type"]) {
     if (type === "CLIENT_REVIEW") {
@@ -185,15 +281,19 @@ export function ConversationWorkspace({
     return viewerRole === "ADMIN";
   }
 
-  async function toggleDone(messageId: string) {
-    const item = messages.find((message) => message.id === messageId);
+  async function toggleDone(messageId: string, index: number) {
+    const item = messages[index];
     if (!item || !canToggleMessage(item)) return;
-    if (item && !item.done) {
+
+    const { locked } = messageLockInfo(index);
+    if (!item.done && locked) return;
+
+    if (!item.done) {
       const text = replaceNames(item.message, buyerLabel, profileName);
       await navigator.clipboard?.writeText(text);
     }
-    await toggleSpecialOrderMessageDone(orderId, messageId);
-    router.refresh();
+    const result = await toggleSpecialOrderMessageDone(orderId, messageId);
+    if (result?.error) toast.error(result.error);
   }
 
   function canToggleField(field: ConversationField) {
@@ -291,8 +391,44 @@ export function ConversationWorkspace({
             <p className="text-xs text-muted-foreground">
               {actionsLocked
                 ? "Completed order is view only. Copy and check actions are locked."
-                : "Click the check box to copy text and mark it done."}
+                : "Click the check box to copy text and mark it done. Each message unlocks after the one before it is copied."}
             </p>
+            {viewerRole === "ADMIN" && !actionsLocked && (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/20 p-2 text-xs">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  Break between messages:
+                </span>
+                {BREAK_PRESETS.map((preset) => (
+                  <button
+                    key={preset.minutes}
+                    type="button"
+                    onClick={() => saveBreak(preset.minutes)}
+                    className={`rounded-full border px-2 py-0.5 ${
+                      breakMinutes === preset.minutes
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "hover:border-primary/40"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    min={0}
+                    value={customBreak}
+                    onChange={(event) => setCustomBreak(event.target.value)}
+                    onBlur={() => {
+                      const parsed = Number(customBreak);
+                      if (parsed !== breakMinutes) saveBreak(parsed);
+                    }}
+                    className="h-6 w-16 text-xs"
+                  />
+                  <span className="text-muted-foreground">min (custom)</span>
+                </div>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -310,24 +446,34 @@ export function ConversationWorkspace({
                 No script messages yet
               </p>
             )}
-            {messages.map((item) => {
+            {messages.map((item, index) => {
               const label =
                 item.sender === "BUYER" ? buyerLabel : profileName;
               const display = replaceNames(item.message, buyerLabel, profileName);
-              const disabled = !canToggleMessage(item);
+              const permissionDenied = !canToggleMessage(item);
+              const { locked, waitSec } = messageLockInfo(index);
+              const sequenceLocked = !item.done && locked;
+              const disabled = permissionDenied || sequenceLocked;
+              const isNextUp =
+                !item.done && !sequenceLocked && !permissionDenied;
+
               return (
                 <div
                   key={item.id}
                   onClick={() => setSelectedMessageId(item.id)}
                   className={`rounded-md border p-3 transition-colors ${
                     item.done
-                      ? "bg-muted text-muted-foreground opacity-70"
-                      : selectedMessageId === item.id
-                        ? "border-primary/70 bg-primary/10"
-                      : "bg-background"
-                  } ${disabled ? "border-muted bg-muted/30" : ""}`}
+                      ? "border-emerald-500/30 bg-muted text-muted-foreground opacity-70"
+                      : sequenceLocked
+                        ? "border-dashed border-muted bg-muted/30 opacity-60"
+                        : isNextUp
+                          ? "border-primary bg-primary/5"
+                          : selectedMessageId === item.id
+                            ? "border-primary/70 bg-primary/10"
+                            : "bg-background"
+                  } ${permissionDenied ? "border-muted bg-muted/30" : ""}`}
                   title={
-                    disabled
+                    permissionDenied
                       ? item.sender === "BUYER"
                         ? actionsLocked
                           ? "Completed orders are view only"
@@ -335,20 +481,24 @@ export function ConversationWorkspace({
                         : actionsLocked
                           ? "Completed orders are view only"
                           : "Only admin can copy and mark this message"
-                      : undefined
+                      : sequenceLocked
+                        ? waitSec > 0
+                          ? `Wait ${formatCountdown(waitSec)} before copying this message`
+                          : "Copy the previous message first"
+                        : undefined
                   }
                 >
                   <div className="flex items-start gap-3">
                     <button
                       type="button"
                       disabled={disabled}
-                      onClick={() => toggleDone(item.id)}
+                      onClick={() => toggleDone(item.id, index)}
                       className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
                         item.done
-                          ? "bg-muted-foreground text-background"
+                          ? "bg-emerald-500 text-background"
                           : disabled
                             ? "cursor-not-allowed bg-muted text-transparent opacity-60"
-                          : "bg-background text-transparent"
+                            : "bg-background text-transparent"
                       }`}
                       title={
                         disabled
@@ -359,9 +509,27 @@ export function ConversationWorkspace({
                       <Check className="h-3.5 w-3.5" />
                     </button>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-muted-foreground">
-                        {label}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                          {label}
+                        </p>
+                        {item.done && (
+                          <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-500">
+                            Copied
+                          </span>
+                        )}
+                        {isNextUp && (
+                          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                            Active
+                          </span>
+                        )}
+                        {sequenceLocked && waitSec > 0 && (
+                          <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+                            <Clock className="h-2.5 w-2.5" />
+                            {formatCountdown(waitSec)}
+                          </span>
+                        )}
+                      </div>
                       <p className="mt-1 whitespace-pre-wrap text-sm font-medium">
                         {display}
                       </p>

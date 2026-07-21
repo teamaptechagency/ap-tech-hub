@@ -362,6 +362,9 @@ export async function submitPayment(
   if (["PAID", "CANCELLED"].includes(invoice.status)) {
     return { error: "This invoice is already settled" };
   }
+  if (invoice.status === "ON_HOLD") {
+    return { error: "This invoice is on hold. Please contact us before paying." };
+  }
 
   const amount = parseFloat(formData.amount);
   const remaining = Number(invoice.amount) - Number(invoice.amountPaid);
@@ -776,5 +779,167 @@ export async function cancelInvoice(invoiceId: string) {
   await audit(session.user.id, "INVOICE_CANCELLED", "Invoice", invoiceId);
 
   revalidatePath("/invoices");
+  return { success: true };
+}
+
+// ============================================
+// HOLD / RESUME INVOICE
+// Holding blocks the client from submitting a new payment
+// while the invoice stays visible. Does not affect anything
+// already paid.
+// ============================================
+export async function holdInvoice(invoiceId: string) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { status: true },
+  });
+  if (!invoice) return { error: "Invoice not found" };
+  if (["PAID", "CANCELLED"].includes(invoice.status)) {
+    return { error: "This invoice is already settled" };
+  }
+
+  await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: { status: "ON_HOLD" },
+  });
+
+  await audit(session.user.id, "INVOICE_HELD", "Invoice", invoiceId);
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath(`/c/invoices/${invoiceId}`);
+  return { success: true };
+}
+
+export async function unholdInvoice(invoiceId: string) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { status: true, dueDate: true },
+  });
+  if (!invoice) return { error: "Invoice not found" };
+  if (invoice.status !== "ON_HOLD") {
+    return { error: "This invoice is not on hold" };
+  }
+
+  await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: {
+      status: invoice.dueDate < new Date() ? "OVERDUE" : "DUE",
+    },
+  });
+
+  await audit(session.user.id, "INVOICE_RESUMED", "Invoice", invoiceId);
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath(`/c/invoices/${invoiceId}`);
+  return { success: true };
+}
+
+// ============================================
+// UPDATE INVOICE (only while nothing has been paid yet)
+// ============================================
+export async function updateInvoice(
+  invoiceId: string,
+  formData: {
+    title: string;
+    items: { description: string; qty: string; amount: string }[];
+    currency: "USD" | "EUR" | "GBP" | "BDT";
+    vatPercent?: string;
+    dueDate: string;
+    payoneerInvoiceUrl?: string;
+    payoneerInvoiceButtonLabel?: string;
+    payoneerInvoiceNote?: string;
+  }
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const existing = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { status: true, amountPaid: true, balanceApplied: true },
+  });
+  if (!existing) return { error: "Invoice not found" };
+  if (["PAID", "CANCELLED"].includes(existing.status)) {
+    return { error: "This invoice is already settled and can't be edited" };
+  }
+  if (Number(existing.amountPaid) > 0) {
+    return {
+      error:
+        "This invoice already has a payment recorded against it and can't be edited. Cancel it and create a new one instead.",
+    };
+  }
+
+  if (!formData.title || formData.title.length < 2) {
+    return { error: "Invoice title is required" };
+  }
+  if (!formData.dueDate) return { error: "Due date is required" };
+
+  const payoneerInvoiceUrl = formData.payoneerInvoiceUrl?.trim() || null;
+
+  if (payoneerInvoiceUrl) {
+    try {
+      const url = new URL(payoneerInvoiceUrl);
+      const isLocalhost = url.hostname === "localhost";
+      if (url.protocol !== "https:" && !isLocalhost) {
+        return { error: "Payoneer invoice URL must be HTTPS" };
+      }
+    } catch {
+      return { error: "Enter a valid Payoneer invoice URL" };
+    }
+  }
+
+  const items = formData.items
+    .map((i) => ({
+      description: i.description.trim(),
+      qty: parseInt(i.qty) || 1,
+      amount: parseFloat(i.amount) || 0,
+    }))
+    .filter((i) => i.description && i.amount > 0);
+
+  if (items.length === 0) {
+    return { error: "Add at least one line item with an amount" };
+  }
+
+  const subtotal = items.reduce((s, i) => s + i.qty * i.amount, 0);
+  const vat = formData.vatPercent ? parseFloat(formData.vatPercent) : null;
+  const total = vat ? subtotal * (1 + vat / 100) : subtotal;
+
+  await prisma.$transaction([
+    prisma.invoiceItem.deleteMany({ where: { invoiceId } }),
+    prisma.invoice.update({
+      where: { id: invoiceId },
+      data: {
+        title: formData.title,
+        amount: total,
+        currency: formData.currency,
+        vatPercent: vat,
+        dueDate: new Date(formData.dueDate),
+        payoneerInvoiceUrl,
+        payoneerInvoiceButtonLabel:
+          formData.payoneerInvoiceButtonLabel?.trim() || null,
+        payoneerInvoiceNote: formData.payoneerInvoiceNote?.trim() || null,
+        items: { create: items },
+      },
+    }),
+  ]);
+
+  await audit(
+    session.user.id,
+    "INVOICE_UPDATED",
+    "Invoice",
+    invoiceId,
+    `${formData.currency} ${total.toFixed(2)}`
+  );
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath(`/c/invoices/${invoiceId}`);
   return { success: true };
 }

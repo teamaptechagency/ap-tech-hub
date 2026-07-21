@@ -6,6 +6,7 @@ import { sendOtp, verifyOtp } from "@/actions/otp.actions";
 import {
   registerAccount,
   getPublicSkills,
+  getSignupRequirements,
 } from "@/actions/register.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,9 @@ export default function RegisterPage() {
   const [nidUrl, setNidUrl] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [uploading, setUploading] = useState<"nid" | "photo" | null>(null);
+  const [nidRequirement, setNidRequirement] = useState<
+    "OFF" | "OPTIONAL" | "REQUIRED"
+  >("REQUIRED");
 
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
@@ -55,6 +59,10 @@ export default function RegisterPage() {
       getPublicSkills().then((r) => setSkills(r.skills));
     }
   }, [kind, skills.length]);
+
+  useEffect(() => {
+    getSignupRequirements().then((r) => setNidRequirement(r.nidRequirement));
+  }, []);
 
   async function handleSendOtp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -434,25 +442,34 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label>NID / Passport</Label>
-                      <label className="flex cursor-pointer items-center justify-center rounded-md border border-dashed p-3 text-xs text-muted-foreground hover:bg-muted">
-                        {uploading === "nid"
-                          ? "Uploading..."
-                          : nidUrl
-                            ? "✓ Uploaded"
-                            : "Upload (JPG/PDF, 5MB)"}
-                        <input
-                          type="file"
-                          accept="image/*,application/pdf"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) uploadFile(f, "nid");
-                          }}
-                        />
-                      </label>
-                    </div>
+                    {nidRequirement !== "OFF" && (
+                      <div className="space-y-2">
+                        <Label>
+                          NID / Passport
+                          {nidRequirement === "OPTIONAL" && (
+                            <span className="ml-1 text-[10px] font-normal text-muted-foreground">
+                              (optional)
+                            </span>
+                          )}
+                        </Label>
+                        <label className="flex cursor-pointer items-center justify-center rounded-md border border-dashed p-3 text-xs text-muted-foreground hover:bg-muted">
+                          {uploading === "nid"
+                            ? "Uploading..."
+                            : nidUrl
+                              ? "✓ Uploaded"
+                              : "Upload (JPG/PDF, 5MB)"}
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) uploadFile(f, "nid");
+                            }}
+                          />
+                        </label>
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <Label>Your photo</Label>
                       <label className="flex cursor-pointer items-center justify-center rounded-md border border-dashed p-3 text-xs text-muted-foreground hover:bg-muted">

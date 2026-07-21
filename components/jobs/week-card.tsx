@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { addTask, toggleTask, deleteTask } from "@/actions/task.actions";
+import { toast } from "sonner";
+import {
+  addTask,
+  toggleTask,
+  deleteTask,
+  cancelTask,
+  reopenTask,
+} from "@/actions/task.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +21,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  Ban,
+  RotateCcw,
+} from "lucide-react";
 
 export type WeekData = {
   id: string;
@@ -27,6 +41,7 @@ export type WeekData = {
     title: string;
     priority: string;
     status: string;
+    cancelReason: string | null;
   }[];
 };
 
@@ -60,6 +75,27 @@ export function WeekCard({
   const [priority, setPriority] = useState<string | null>("MEDIUM");
   const [busy, setBusy] = useState(false);
   const [collapsed, setCollapsed] = useState(week.state === "COMPLETED");
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelReasonInput, setCancelReasonInput] = useState("");
+  const [cancelBusy, setCancelBusy] = useState(false);
+
+  async function confirmCancelTask(taskId: string) {
+    if (cancelReasonInput.trim().length < 3) return;
+    setCancelBusy(true);
+    const result = await cancelTask(taskId, jobId, cancelReasonInput);
+    setCancelBusy(false);
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+    setCancellingId(null);
+    setCancelReasonInput("");
+  }
+
+  async function handleReopen(taskId: string) {
+    const result = await reopenTask(taskId, jobId);
+    if (result?.error) toast.error(result.error);
+  }
 
   const pendingCount = week.tasks.filter(
     (t) => t.status === "PENDING"
@@ -156,42 +192,117 @@ export function WeekCard({
             </p>
           )}
 
-          {week.tasks.map((task) => (
-            <div
-              key={task.id}
-              className="group flex items-center gap-2 rounded px-1 py-1 hover:bg-muted/50"
-            >
-              <Checkbox
-                checked={task.status === "COMPLETED"}
-                disabled={!canToggle}
-                onCheckedChange={() => toggleTask(task.id, jobId)}
-              />
-              <span
-                className={`flex-1 text-sm ${
-                  task.status === "COMPLETED"
-                    ? "text-muted-foreground line-through"
-                    : ""
-                }`}
-              >
-                {task.title}
-              </span>
-              <Badge
-                variant="secondary"
-                className={`text-[10px] ${priorityBadge[task.priority]}`}
-              >
-                {task.priority.charAt(0) +
-                  task.priority.slice(1).toLowerCase()}
-              </Badge>
-              {isManager && (
-                <button
-                  onClick={() => deleteTask(task.id, jobId)}
-                  className="invisible text-muted-foreground hover:text-red-500 group-hover:visible"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          ))}
+          {week.tasks.map((task) => {
+            const isCancelled = task.status === "CANCELLED";
+
+            return (
+              <div key={task.id}>
+                <div className="group flex items-center gap-2 rounded px-1 py-1 hover:bg-muted/50">
+                  <Checkbox
+                    checked={task.status === "COMPLETED"}
+                    disabled={!canToggle || isCancelled}
+                    onCheckedChange={() => toggleTask(task.id, jobId)}
+                  />
+                  <span
+                    className={`flex-1 text-sm ${
+                      task.status === "COMPLETED"
+                        ? "text-muted-foreground line-through"
+                        : isCancelled
+                          ? "text-red-500/70 line-through"
+                          : ""
+                    }`}
+                  >
+                    {task.title}
+                  </span>
+                  {isCancelled ? (
+                    <Badge
+                      variant="secondary"
+                      className="bg-red-100 text-[10px] text-red-600"
+                    >
+                      Cancelled
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="secondary"
+                      className={`text-[10px] ${priorityBadge[task.priority]}`}
+                    >
+                      {task.priority.charAt(0) +
+                        task.priority.slice(1).toLowerCase()}
+                    </Badge>
+                  )}
+                  {isManager && isCancelled && (
+                    <button
+                      onClick={() => handleReopen(task.id)}
+                      title="Reopen task"
+                      className="invisible text-muted-foreground hover:text-primary group-hover:visible"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {isManager && !isCancelled && (
+                    <button
+                      onClick={() => {
+                        setCancellingId(task.id);
+                        setCancelReasonInput("");
+                      }}
+                      title="Cancel task"
+                      className="invisible text-muted-foreground hover:text-amber-500 group-hover:visible"
+                    >
+                      <Ban className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {isManager && (
+                    <button
+                      onClick={() => deleteTask(task.id, jobId)}
+                      className="invisible text-muted-foreground hover:text-red-500 group-hover:visible"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {isCancelled && task.cancelReason && (
+                  <p className="pl-7 text-[11px] text-muted-foreground">
+                    Reason: {task.cancelReason}
+                  </p>
+                )}
+
+                {cancellingId === task.id && (
+                  <div className="ml-7 mt-1 flex gap-2">
+                    <Input
+                      value={cancelReasonInput}
+                      onChange={(e) => setCancelReasonInput(e.target.value)}
+                      placeholder="Why is this task cancelled?"
+                      className="h-8 text-sm"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      disabled={
+                        cancelBusy || cancelReasonInput.trim().length < 3
+                      }
+                      onClick={() => confirmCancelTask(task.id)}
+                    >
+                      {cancelBusy ? "Cancelling..." : "Confirm"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setCancellingId(null);
+                        setCancelReasonInput("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {isManager &&
             (adding ? (

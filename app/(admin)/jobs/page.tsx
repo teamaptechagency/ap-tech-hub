@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { JobsBoard } from "@/components/jobs/jobs-board";
+import { ADMIN_ROLES, WORKER_ROLES } from "@/lib/roles";
 
 export default async function JobsPage() {
-  const [jobs, clients, teamMembers, skills, receivedUsdRate] = await Promise.all([
+  const [jobs, clients, teamMembers, skills, receivedUsdRate, receivedEurRate, receivedGbpRate] = await Promise.all([
     prisma.job.findMany({
       orderBy: { updatedAt: "desc" },
       include: {
@@ -25,7 +26,7 @@ export default async function JobsPage() {
       select: { id: true, companyName: true },
     }),
     prisma.user.findMany({
-      where: { role: "TEAM_MEMBER" },
+      where: { role: { in: [...WORKER_ROLES, ...ADMIN_ROLES] as any } },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
@@ -35,6 +36,14 @@ export default async function JobsPage() {
     }),
     prisma.setting.findUnique({
       where: { key: "finance.receivedUsdRate" },
+      select: { value: true },
+    }),
+    prisma.setting.findUnique({
+      where: { key: "finance.receivedEurRate" },
+      select: { value: true },
+    }),
+    prisma.setting.findUnique({
+      where: { key: "finance.receivedGbpRate" },
       select: { value: true },
     }),
   ]);
@@ -100,6 +109,8 @@ export default async function JobsPage() {
       teamMembers={teamMembers}
       skills={skills}
       receivedUsdRate={Number(receivedUsdRate?.value ?? 118)}
+      receivedEurRate={Number(receivedEurRate?.value ?? 130)}
+      receivedGbpRate={Number(receivedGbpRate?.value ?? 152)}
     />
   );
 }

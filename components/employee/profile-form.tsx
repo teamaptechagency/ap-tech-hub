@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   changePassword,
   requestEmailChange,
+  requestSecurityVerificationCode,
   enableAuthenticator,
   setTwoFactorEnabled,
   setupAuthenticator,
@@ -135,7 +136,10 @@ export function ProfileForm({
   const [authCode, setAuthCode] = useState("");
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
+  const [pwCode, setPwCode] = useState("");
+  const [pwCodeSending, setPwCodeSending] = useState(false);
   const [pwBusy, setPwBusy] = useState(false);
+  const [twoFactorOffPassword, setTwoFactorOffPassword] = useState("");
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
   const authQrUrl = authUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(authUrl)}`
@@ -212,10 +216,19 @@ export function ProfileForm({
   }
 
   async function turnOffTwoFactor(method: TwoFactorMethod) {
+    if (!twoFactorOffPassword) {
+      toast.error("Enter your current password to turn off 2FA");
+      return;
+    }
     setSecurityBusy(true);
-    const result = await setTwoFactorEnabled(false, method);
+    const result = await setTwoFactorEnabled(
+      false,
+      method,
+      twoFactorOffPassword
+    );
     setSecurityBusy(false);
     if (result.error) return toast.error(result.error);
+    setTwoFactorOffPassword("");
     applyTwoFactorMethod(method, false);
     toast.success(`${method === "AUTHENTICATOR" ? "Authenticator" : method} 2-factor login disabled`);
   }
@@ -284,14 +297,23 @@ export function ProfileForm({
   const payoutPending = pendingChanges.filter((change) => change.type === "PAYOUT");
   const emailPending = pendingChanges.filter((change) => change.type === "EMAIL");
 
+  async function sendPasswordChangeCode() {
+    setPwCodeSending(true);
+    const result = await requestSecurityVerificationCode();
+    setPwCodeSending(false);
+    if (result.error) return toast.error(result.error);
+    toast.success(result.message ?? "Code sent");
+  }
+
   async function savePassword(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPwBusy(true);
-    const result = await changePassword({ current, next });
+    const result = await changePassword({ current, next, code: pwCode });
     setPwBusy(false);
     if (result.error) return toast.error(result.error);
     setCurrent("");
     setNext("");
+    setPwCode("");
     toast.success("Password changed");
   }
 
@@ -562,6 +584,25 @@ export function ProfileForm({
               </p>
               </div>
             </div>
+            {(hasWhatsApp2fa || hasAuthenticator2fa) && (
+              <div className="space-y-2">
+                <Label htmlFor="twoFactorOffPassword">
+                  Password{" "}
+                  <span className="text-[10px] font-normal text-muted-foreground">
+                    (required to turn a method off below)
+                  </span>
+                </Label>
+                <Input
+                  id="twoFactorOffPassword"
+                  type="password"
+                  value={twoFactorOffPassword}
+                  onChange={(event) =>
+                    setTwoFactorOffPassword(event.target.value)
+                  }
+                  placeholder="Current password"
+                />
+              </div>
+            )}
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-md border bg-muted/25 p-3">
                 <div className="flex items-start justify-between gap-3">
@@ -720,6 +761,34 @@ export function ProfileForm({
               <Field label="Current password" id="pwCurrent" type="password" value={current} onChange={setCurrent} required />
               <Field label="New password (min 8)" id="pwNext" type="password" value={next} onChange={setNext} required />
             </div>
+            {twoFactorEnabled && (
+              <div className="space-y-2">
+                <Label htmlFor="pwCode">2FA code</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="pwCode"
+                    value={pwCode}
+                    onChange={(event) => setPwCode(event.target.value)}
+                    placeholder="6 digit code"
+                    inputMode="numeric"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={sendPasswordChangeCode}
+                    disabled={pwCodeSending}
+                  >
+                    {pwCodeSending ? "Sending..." : "Send code"}
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  2FA is on for this account, so changing your password needs
+                  a verification code too.
+                </p>
+              </div>
+            )}
             <Button type="submit" size="sm" variant="outline" disabled={pwBusy}>
               {pwBusy ? "Changing..." : "Change password"}
             </Button>

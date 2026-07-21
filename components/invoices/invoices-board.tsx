@@ -39,6 +39,7 @@ const FILTERS = [
   { key: "PAYMENT_SUBMITTED", label: "Submitted" },
   { key: "PAID", label: "Paid" },
   { key: "OVERDUE", label: "Overdue" },
+  { key: "ON_HOLD", label: "On hold" },
 ];
 
 const statusBadge: Record<string, string> = {
@@ -48,6 +49,7 @@ const statusBadge: Record<string, string> = {
   PAID: "bg-green-100 text-green-700",
   OVERDUE: "bg-red-100 text-red-600",
   CANCELLED: "bg-slate-100 text-slate-400",
+  ON_HOLD: "bg-purple-100 text-purple-700",
 };
 
 const statusLabel: Record<string, string> = {
@@ -57,6 +59,7 @@ const statusLabel: Record<string, string> = {
   PAID: "Paid",
   OVERDUE: "Overdue",
   CANCELLED: "Cancelled",
+  ON_HOLD: "On hold",
 };
 
 const typeLabel: Record<string, string> = {

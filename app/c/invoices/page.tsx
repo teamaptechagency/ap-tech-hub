@@ -12,6 +12,7 @@ const statusBadge: Record<string, string> = {
   PAYMENT_SUBMITTED: "bg-blue-100 text-blue-700",
   PAID: "bg-green-100 text-green-700",
   OVERDUE: "bg-red-100 text-red-600",
+  ON_HOLD: "bg-purple-100 text-purple-700",
 };
 
 const currencySymbol: Record<string, string> = {

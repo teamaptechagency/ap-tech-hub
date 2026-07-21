@@ -1,0 +1,2 @@
+ALTER TABLE "SpecialOrder"
+  ADD COLUMN IF NOT EXISTS "conversationBreakMinutes" INTEGER NOT NULL DEFAULT 1;

@@ -163,6 +163,7 @@ export default async function EmployeeJobDetailsPage({
         title: task.title,
         priority: task.priority,
         status: task.status,
+        cancelReason: task.cancelReason,
       })),
     };
   });

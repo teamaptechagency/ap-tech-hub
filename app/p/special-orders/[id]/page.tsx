@@ -229,6 +229,7 @@ export default async function PartnerHubSpecialOrderDetailsPage({
         readOnly
         buyerNameEditable={!isCompleted && isAssignedPartner}
         actionsLocked={isCompleted}
+        conversationBreakMinutes={order.conversationBreakMinutes}
       />
     </div>
   );

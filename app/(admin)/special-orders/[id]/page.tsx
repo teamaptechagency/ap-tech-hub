@@ -326,6 +326,7 @@ export default async function SpecialOrderDetailsPage({
         readOnly={order.status === "COMPLETED"}
         buyerNameEditable={order.status !== "COMPLETED"}
         actionsLocked={order.status === "COMPLETED"}
+        conversationBreakMinutes={order.conversationBreakMinutes}
       />
     </div>
   );

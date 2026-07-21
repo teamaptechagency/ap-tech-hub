@@ -10,6 +10,8 @@ import {
   generateTotpSecret,
   verifyTotp,
 } from "@/lib/totp";
+import { getEmailConfig } from "@/lib/email-config";
+import { sendWhatsAppOtp } from "@/lib/whatsapp";
 
 const FIXED_SUPER_ADMIN_EMAIL = "nazmulha30@gmail.com";
 type TwoFactorMethod = "EMAIL" | "WHATSAPP" | "AUTHENTICATOR";
@@ -29,6 +31,106 @@ function serializeTwoFactorMethods(methods: Set<TwoFactorMethod>) {
   return ["EMAIL", "WHATSAPP", "AUTHENTICATOR"]
     .filter((method) => methods.has(method as TwoFactorMethod))
     .join(",");
+}
+
+// ============================================
+// SECURITY RE-VERIFICATION
+// Used before sensitive actions on an already-signed-in
+// session: disabling 2FA, changing password.
+// ============================================
+async function verifyOwnTwoFactorCode(userId: string, code: string) {
+  const trimmed = code.trim();
+  if (!trimmed) return false;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      twoFactorMethod: true,
+      twoFactorCode: true,
+      twoFactorCodeExp: true,
+      totpSecret: true,
+    },
+  });
+  if (!user) return false;
+
+  const methods = parseTwoFactorMethods(user.twoFactorMethod);
+
+  if (methods.has("AUTHENTICATOR") && user.totpSecret) {
+    if (verifyTotp(trimmed, user.totpSecret)) return true;
+  }
+
+  return (
+    !!user.twoFactorCode &&
+    user.twoFactorCode === trimmed &&
+    !!user.twoFactorCodeExp &&
+    user.twoFactorCodeExp >= new Date()
+  );
+}
+
+export async function requestSecurityVerificationCode() {
+  const session = await auth();
+  if (!session?.user) return { error: "You must be signed in" };
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      email: true,
+      phone: true,
+      twoFactorEnabled: true,
+      twoFactorMethod: true,
+    },
+  });
+  if (!user?.twoFactorEnabled) {
+    return { error: "2FA is not enabled on this account" };
+  }
+
+  const methods = parseTwoFactorMethods(user.twoFactorMethod);
+
+  if (methods.has("AUTHENTICATOR")) {
+    return {
+      success: true,
+      message: "Enter the 6-digit code from your authenticator app",
+    };
+  }
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: {
+      twoFactorCode: code,
+      twoFactorCodeExp: new Date(Date.now() + 10 * 60 * 1000),
+    },
+  });
+
+  if (methods.has("WHATSAPP") && user.phone?.trim()) {
+    try {
+      await sendWhatsAppOtp(user.phone, code);
+    } catch (error) {
+      console.error("Security code WhatsApp send failed:", error);
+    }
+    return { success: true, message: "Code sent via WhatsApp" };
+  }
+
+  const emailConfig = await getEmailConfig();
+  if (!emailConfig?.resendApiKey) {
+    console.log(`[DEV] Security verification code for ${user.email}: ${code}`);
+  } else {
+    try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(emailConfig.resendApiKey);
+      await resend.emails.send({
+        from: emailConfig.emailFrom,
+        to: user.email,
+        subject: "Your AP Tech verification code",
+        html: `<p>Your verification code is <strong>${code}</strong>.</p><p>This code expires in 10 minutes.</p>`,
+      });
+    } catch (error) {
+      console.error("Security code email failed:", error);
+      console.log(`[FALLBACK] Security verification code for ${user.email}: ${code}`);
+    }
+  }
+
+  return { success: true, message: "Code sent to your email" };
 }
 
 // ============================================
@@ -252,14 +354,15 @@ export async function requestEmailChange(email: string) {
 
 export async function setTwoFactorEnabled(
   enabled: boolean,
-  method: TwoFactorMethod = "EMAIL"
+  method: TwoFactorMethod = "EMAIL",
+  currentPassword?: string
 ) {
   const session = await auth();
   if (!session?.user) return { error: "You must be signed in" };
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { phone: true, twoFactorMethod: true },
+    select: { phone: true, twoFactorMethod: true, password: true },
   });
   if (!user) return { error: "User not found" };
   if (enabled && method === "WHATSAPP" && !user.phone?.trim()) {
@@ -267,6 +370,15 @@ export async function setTwoFactorEnabled(
   }
   if (enabled && method === "AUTHENTICATOR") {
     return { error: "Use Authenticator setup first" };
+  }
+
+  if (!enabled) {
+    const validPassword =
+      !!currentPassword &&
+      (await bcrypt.compare(currentPassword, user.password));
+    if (!validPassword) {
+      return { error: "Enter your current password to turn off 2FA" };
+    }
   }
 
   const methods = parseTwoFactorMethods(user.twoFactorMethod);
@@ -286,6 +398,18 @@ export async function setTwoFactorEnabled(
       twoFactorCodeExp: null,
     },
   });
+
+  if (!enabled) {
+    await prisma.auditLog.create({
+      data: {
+        actorId: session.user.id,
+        action: "TWO_FACTOR_DISABLED",
+        entity: "User",
+        entityId: session.user.id,
+        meta: method,
+      },
+    });
+  }
 
   revalidatePath("/profile");
   revalidatePath("/e/profile");
@@ -425,6 +549,7 @@ export async function reviewProfileChange(
 export async function changePassword(formData: {
   current: string;
   next: string;
+  code?: string;
 }) {
   const session = await auth();
   if (!session?.user) return { error: "You must be signed in" };
@@ -441,9 +566,23 @@ export async function changePassword(formData: {
   const valid = await bcrypt.compare(formData.current, me.password);
   if (!valid) return { error: "Current password is incorrect" };
 
+  if (me.twoFactorEnabled) {
+    const validCode = await verifyOwnTwoFactorCode(
+      session.user.id,
+      formData.code ?? ""
+    );
+    if (!validCode) {
+      return { error: "Enter a valid 2FA code to change your password" };
+    }
+  }
+
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { password: await bcrypt.hash(formData.next, 10) },
+    data: {
+      password: await bcrypt.hash(formData.next, 10),
+      twoFactorCode: null,
+      twoFactorCodeExp: null,
+    },
   });
 
   await prisma.auditLog.create({
