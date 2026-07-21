@@ -8,6 +8,7 @@ import {
   Globe2,
   MessageCircle,
   Send,
+  ShieldCheck,
   Star,
   X,
 } from "lucide-react";
@@ -965,11 +966,6 @@ function buildTrustStats(): TrustStats {
   };
 }
 
-function formatCountPlus(value: number | undefined, step = 50) {
-  if (!value || value < step) return value ? `${value}` : "";
-  return `${Math.floor(value / step) * step}+`;
-}
-
 function PublicTopBar({
   topBar,
   stats,
@@ -1570,7 +1566,7 @@ export function LandingPage({
         <div className="relative z-10 border-t border-white/10 bg-white/[.04]">
           <div className="mx-auto grid max-w-[1140px] grid-cols-2 px-4 py-6 md:grid-cols-4">
             {[
-              [formatCountPlus(trustStats?.completedJobs) || "150+", "Projects Completed"],
+              ["300+", "Projects Completed"],
               ["120+", "Happy Clients"],
               ["25+", "Team Members"],
               ["98%", "Client Satisfaction"],
@@ -1761,6 +1757,13 @@ export function LandingPage({
       <section id="testimonials" className="scroll-mt-24 border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <SectionLabel eyebrow="Testimonials" title="What Our Clients Say" />
+          <p className="-mt-4 mb-7 flex items-center gap-1.5 text-xs text-[#6b7280]">
+            <ShieldCheck size={14} className="shrink-0 text-[#c6613f]" />
+            Real feedback our clients have left about the team on Fiverr,
+            Upwork and other marketplaces, plus direct projects — collected
+            in one place so it reflects what people actually say working
+            with us.
+          </p>
           <CardRail>
             {visibleReviews.map((review) => (
               <button
