@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ const statusBadge: Record<string, string> = {
 
 export default async function MyJobsPage() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
 
   const memberships = await prisma.jobMember.findMany({
     where: { userId: session.user.id },

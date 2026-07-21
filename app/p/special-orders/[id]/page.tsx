@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -83,7 +83,7 @@ export default async function PartnerHubSpecialOrderDetailsPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
 
   const isManager =
     session.user.role === "PARTNER_MANAGER" &&

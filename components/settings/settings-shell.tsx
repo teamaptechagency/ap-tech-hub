@@ -15,7 +15,6 @@ import {
   saveUserPermission,
   setUserSkills,
   updateExchangeRate,
-  updateEnvironmentSettings,
   updateBrandingSettings,
   updateSettings,
 } from "@/actions/settings.actions";
@@ -105,14 +104,7 @@ type SettingsShellProps = {
   team: TeamRow[];
   paymentMethods: FixedPaymentMethodRow[];
   templates: TemplateRow[];
-  envStatuses: EnvStatusRow[];
   systemInfo: SystemInformationData;
-};
-
-type EnvStatusRow = {
-  key: string;
-  configured: boolean;
-  maskedValue: string;
 };
 
 type TeamRole =
@@ -143,7 +135,6 @@ const permissionResources = [
 
 type SettingsSection =
   | "branding"
-  | "environment"
   | "finance"
   | "skills"
   | "system"
@@ -162,11 +153,6 @@ const settingsSections: {
     key: "branding",
     label: "Branding",
     description: "Logo, favicon and site name",
-  },
-  {
-    key: "environment",
-    label: "Environment",
-    description: "Database, email and API keys",
   },
   {
     key: "finance",
@@ -257,7 +243,6 @@ export function SettingsShell({
   team,
   paymentMethods,
   templates,
-  envStatuses,
   systemInfo,
 }: SettingsShellProps) {
   const [activeSection, setActiveSection] =
@@ -316,10 +301,6 @@ export function SettingsShell({
   const [faviconUrl, setFaviconUrl] = useState(
     settings["brand.faviconUrl"] ?? ""
   );
-  const [envValues, setEnvValues] = useState<Record<string, string>>(
-    Object.fromEntries(envStatuses.map((env) => [env.key, ""]))
-  );
-
   // ============================================
   // SKILLS
   // ============================================
@@ -450,40 +431,6 @@ export function SettingsShell({
     } catch (error) {
       console.error("Failed to save branding:", error);
       toast.error("Branding could not be saved");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function saveEnvironment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (busy) return;
-
-    const entries = envStatuses.map((env) => ({
-      key: env.key,
-      value: envValues[env.key] ?? "",
-    }));
-
-    setBusy(true);
-
-    try {
-      const result = await updateEnvironmentSettings(
-        entries as Parameters<typeof updateEnvironmentSettings>[0]
-      );
-
-      const error = getActionError(result);
-      if (error) {
-        toast.error(error);
-        return;
-      }
-
-      setEnvValues(
-        Object.fromEntries(envStatuses.map((env) => [env.key, ""]))
-      );
-      toast.success("Environment updated. Restart the server to apply changes.");
-    } catch (error) {
-      console.error("Failed to save environment settings:", error);
-      toast.error("Environment could not be saved");
     } finally {
       setBusy(false);
     }
@@ -1341,76 +1288,6 @@ export function SettingsShell({
                 {busy ? "Saving..." : "Save branding"}
               </Button>
             </div>
-          </form>
-        </CardContent>
-      </Card>
-      )}
-
-      {activeSection === "environment" && (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">
-            Environment
-          </CardTitle>
-
-          <p className="text-xs text-muted-foreground">
-            Update deployment secrets and API keys stored in the local .env
-            file. Existing values are hidden; fill only the keys you want to
-            change.
-          </p>
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={saveEnvironment} className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {envStatuses.map((env) => (
-                <div key={env.key} className="space-y-2 rounded-lg border p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor={`env-${env.key}`} className="text-xs">
-                      {env.key}
-                    </Label>
-                    <Badge
-                      variant={env.configured ? "secondary" : "outline"}
-                      className="text-[10px]"
-                    >
-                      {env.configured ? "Set" : "Missing"}
-                    </Badge>
-                  </div>
-                  {env.maskedValue && (
-                    <p className="rounded-md bg-muted/30 px-2 py-1 font-mono text-[11px] text-muted-foreground">
-                      Current: {env.maskedValue}
-                    </p>
-                  )}
-                  <Input
-                    id={`env-${env.key}`}
-                    type="password"
-                    value={envValues[env.key] ?? ""}
-                    onChange={(event) =>
-                      setEnvValues((currentValues) => ({
-                        ...currentValues,
-                        [env.key]: event.target.value,
-                      }))
-                    }
-                    placeholder={
-                      env.configured
-                        ? "Leave blank to keep current value"
-                        : "Enter value"
-                    }
-                    autoComplete="off"
-                    disabled={busy}
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
-              Changes are written to the .env file. Restart the local server or
-              redeploy production after saving so the new values can load.
-            </div>
-
-            <Button type="submit" size="sm" disabled={busy}>
-              {busy ? "Saving..." : "Save environment"}
-            </Button>
           </form>
         </CardContent>
       </Card>

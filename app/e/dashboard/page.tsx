@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ const typeBadge: Record<string, string> = {
 
 export default async function EmployeeDashboard() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
   const myId = session.user.id;
 
   const [me, myJobs, openCount, pendingApps] = await Promise.all([

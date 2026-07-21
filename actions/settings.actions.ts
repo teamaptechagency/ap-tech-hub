@@ -1,12 +1,9 @@
 "use server";
 
-import { readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
-import { editableEnvKeys, type EditableEnvKey } from "@/lib/env-settings";
 import { revalidatePath } from "next/cache";
 
 async function checkAdmin() {
@@ -15,6 +12,17 @@ async function checkAdmin() {
     return null;
   }
   return session;
+}
+
+export async function clearAppCache() {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  revalidatePath("/", "layout");
+
+  await audit(session.user.id, "CACHE_CLEARED", "App", "all");
+
+  return { success: true };
 }
 
 async function audit(
@@ -86,46 +94,6 @@ export type BankAccountSettingsInput = {
 function cleanOptional(value: string | undefined) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
-}
-
-function quoteEnvValue(value: string) {
-  const escaped = value
-    .replace(/\\/g, "\\\\")
-    .replace(/\r?\n/g, "\\n")
-    .replace(/"/g, '\\"');
-
-  return `"${escaped}"`;
-}
-
-function upsertEnvLine(content: string, key: EditableEnvKey, value: string) {
-  const normalized = content.replace(/\r\n/g, "\n");
-  const line = `${key}=${quoteEnvValue(value)}`;
-  const pattern = new RegExp(`^${key}=.*(?:\n|$)`, "gm");
-  const withoutExisting = normalized.replace(pattern, "");
-
-  const separator = withoutExisting.endsWith("\n") || withoutExisting.length === 0
-    ? ""
-    : "\n";
-
-  return `${withoutExisting}${separator}${line}\n`;
-}
-
-function normalizeEnvInputValue(key: EditableEnvKey, value: string) {
-  let cleanValue = value.trim();
-
-  const keyPrefix = `${key}=`;
-  if (cleanValue.startsWith(keyPrefix)) {
-    cleanValue = cleanValue.slice(keyPrefix.length).trim();
-  }
-
-  if (
-    (cleanValue.startsWith('"') && cleanValue.endsWith('"')) ||
-    (cleanValue.startsWith("'") && cleanValue.endsWith("'"))
-  ) {
-    cleanValue = cleanValue.slice(1, -1);
-  }
-
-  return cleanValue.trim();
 }
 
 function normalizeVersion(value: string) {
@@ -557,82 +525,6 @@ export async function updateSettings(
 
   revalidatePath("/settings");
   return { success: true };
-}
-
-export async function updateEnvironmentSettings(
-  entries: { key: EditableEnvKey; value: string }[]
-) {
-  const session = await checkAdmin();
-  if (!session) return { error: "You don't have permission for this action" };
-
-  const updates = entries
-    .map((entry) => ({
-      key: entry.key,
-      value: normalizeEnvInputValue(entry.key, entry.value),
-    }))
-    .filter((entry) => entry.value.length > 0);
-
-  if (updates.length === 0) {
-    return { error: "Enter at least one new environment value" };
-  }
-
-  for (const update of updates) {
-    if (!editableEnvKeys.includes(update.key)) {
-      return { error: `Environment key ${update.key} is not editable` };
-    }
-
-    if (
-      update.key === "BLOB_READ_WRITE_TOKEN" &&
-      !update.value.startsWith("vercel_blob_rw_")
-    ) {
-      return {
-        error:
-          update.value.startsWith("store_")
-            ? "You pasted the Blob Store ID. Please paste the BLOB_READ_WRITE_TOKEN value from the connected public Blob Store."
-            : "BLOB_READ_WRITE_TOKEN should start with vercel_blob_rw_. Copy it from the connected public Blob Store.",
-      };
-    }
-  }
-
-  const envPath = path.join(process.cwd(), ".env");
-  let content = "";
-
-  try {
-    content = await readFile(envPath, "utf8");
-  } catch {
-    content = "";
-  }
-
-  const nextContent = updates.reduce(
-    (currentContent, update) =>
-      upsertEnvLine(currentContent, update.key, update.value),
-    content
-  );
-
-  await writeFile(envPath, nextContent, "utf8");
-
-  for (const update of updates) {
-    process.env[update.key] = update.value;
-    await prisma.setting.upsert({
-      where: { key: `env.${update.key}` },
-      update: { value: update.value },
-      create: { key: `env.${update.key}`, value: update.value },
-    });
-  }
-
-  await audit(
-    session.user.id,
-    "ENV_UPDATED",
-    "Environment",
-    updates.map((update) => update.key).join(","),
-    "Environment values changed from settings. Values are hidden."
-  );
-
-  revalidatePath("/settings");
-  return {
-    success: true,
-    updatedKeys: updates.map((update) => update.key),
-  };
 }
 
 export async function updateBrandingSettings(input: {

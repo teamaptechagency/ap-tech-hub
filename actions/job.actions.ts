@@ -573,10 +573,20 @@ export async function deleteJob(id: string) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 
+  await prisma.earning.deleteMany({
+    where: {
+      source: "AUTO",
+      category: "Project Income",
+      description: { contains: `[job:${id}]` },
+    },
+  });
+
   await prisma.job.delete({ where: { id } });
 
   await audit(session.user.id, "JOB_DELETED", "Job", id);
 
   revalidatePath("/jobs");
+  revalidatePath("/accounts");
+  revalidatePath("/reports");
   return { success: true };
 }

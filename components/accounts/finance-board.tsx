@@ -5,6 +5,8 @@ import {
   addCustomEarning,
   addExpense,
   deleteFinanceEntry,
+  updateCustomEarning,
+  updateExpense,
 } from "@/actions/finance.actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Repeat, Trash2 } from "lucide-react";
+import { Pencil, Plus, Repeat, Trash2 } from "lucide-react";
 
 type EarningRow = {
   id: string;
@@ -91,6 +93,7 @@ export function FinanceBoard({
   expenses: ExpenseRow[];
 }) {
   const [dialog, setDialog] = useState<"earning" | "expense" | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -103,6 +106,7 @@ export function FinanceBoard({
   const [busy, setBusy] = useState(false);
 
   function reset(nextDialog?: "earning" | "expense") {
+    setEditingId(null);
     setTitle("");
     setDescription("");
     setAmount("");
@@ -116,6 +120,24 @@ export function FinanceBoard({
     setError("");
   }
 
+  function startEdit(entry: EarningRow | ExpenseRow, type: "earning" | "expense") {
+    setEditingId(entry.id);
+    setTitle(entry.title);
+    setDescription(entry.description ?? "");
+    setAmount(String(entry.amount));
+    setCurrency(entry.currency);
+    setExchangeRate("");
+    setCategory(entry.category ?? "Other");
+    setRecurring(type === "expense" ? (entry as ExpenseRow).recurring : false);
+    setRecurringDay(
+      type === "expense" && (entry as ExpenseRow).recurringDay
+        ? String((entry as ExpenseRow).recurringDay)
+        : "1"
+    );
+    setError("");
+    setDialog(type);
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!dialog) return;
@@ -124,17 +146,17 @@ export function FinanceBoard({
     setBusy(true);
 
     const cur = (currency ?? "BDT") as "USD" | "EUR" | "GBP" | "BDT";
-    const result =
+    const payload =
       dialog === "earning"
-        ? await addCustomEarning({
+        ? {
             title,
             description,
             amount,
             currency: cur,
             exchangeRate,
             category: category ?? "Other",
-          })
-        : await addExpense({
+          }
+        : {
             title,
             description,
             amount,
@@ -143,7 +165,15 @@ export function FinanceBoard({
             category: category ?? "Other",
             recurring,
             recurringDay,
-          });
+          };
+
+    const result = editingId
+      ? dialog === "earning"
+        ? await updateCustomEarning(editingId, payload as Parameters<typeof updateCustomEarning>[1])
+        : await updateExpense(editingId, payload as Parameters<typeof updateExpense>[1])
+      : dialog === "earning"
+        ? await addCustomEarning(payload as Parameters<typeof addCustomEarning>[0])
+        : await addExpense(payload as Parameters<typeof addExpense>[0]);
 
     setBusy(false);
     if (result.error) {
@@ -209,13 +239,22 @@ export function FinanceBoard({
                     +{money(entry.amountBdt)}
                   </span>
                   {entry.source === "CUSTOM" && (
-                    <button
-                      type="button"
-                      onClick={() => deleteFinanceEntry(entry.id, "earning")}
-                      className="invisible text-muted-foreground hover:text-red-500 group-hover:visible"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => startEdit(entry, "earning")}
+                        className="invisible text-muted-foreground hover:text-primary group-hover:visible"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteFinanceEntry(entry.id, "earning")}
+                        className="invisible text-muted-foreground hover:text-red-500 group-hover:visible"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -278,6 +317,13 @@ export function FinanceBoard({
                   </span>
                   <button
                     type="button"
+                    onClick={() => startEdit(entry, "expense")}
+                    className="invisible text-muted-foreground hover:text-primary group-hover:visible"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => deleteFinanceEntry(entry.id, "expense")}
                     className="invisible text-muted-foreground hover:text-red-500 group-hover:visible"
                   >
@@ -294,7 +340,13 @@ export function FinanceBoard({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {dialog === "earning" ? "Add custom earning" : "Add expense"}
+              {editingId
+                ? dialog === "earning"
+                  ? "Edit earning"
+                  : "Edit expense"
+                : dialog === "earning"
+                  ? "Add custom earning"
+                  : "Add expense"}
             </DialogTitle>
             <DialogDescription>
               {dialog === "earning"
@@ -413,7 +465,7 @@ export function FinanceBoard({
             {error && <p className="text-center text-sm text-red-500">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Saving..." : "Save"}
+              {busy ? "Saving..." : editingId ? "Update" : "Save"}
             </Button>
           </form>
         </DialogContent>

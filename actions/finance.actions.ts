@@ -161,6 +161,133 @@ export async function addExpense(formData: {
 }
 
 // ============================================
+// UPDATE CUSTOM EARNING (custom only — auto is managed by its source)
+// ============================================
+export async function updateCustomEarning(
+  id: string,
+  formData: {
+    title: string;
+    description?: string;
+    category?: string;
+    amount: string;
+    currency: "USD" | "EUR" | "GBP" | "BDT";
+    exchangeRate?: string;
+  }
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const existing = await prisma.earning.findUnique({ where: { id } });
+  if (!existing) return { error: "Earning not found" };
+  if (existing.source === "AUTO") {
+    return { error: "Auto entries come from paid invoices — cancel the invoice instead" };
+  }
+
+  if (!formData.title || formData.title.length < 2) {
+    return { error: "Title is required" };
+  }
+  const amount = parseFloat(formData.amount);
+  if (isNaN(amount) || amount <= 0) {
+    return { error: "Enter a valid amount" };
+  }
+
+  const amountBdt = await toBdt(amount, formData.currency, formData.exchangeRate);
+
+  await prisma.earning.update({
+    where: { id },
+    data: {
+      title: formData.title,
+      description: formData.description || null,
+      amount,
+      currency: formData.currency,
+      amountBdt,
+      category: formData.category || "Other",
+    },
+  });
+
+  await audit(
+    session.user.id,
+    "EARNING_UPDATED",
+    "Earning",
+    id,
+    `${formData.currency} ${amount} = ৳${amountBdt.toFixed(0)}`
+  );
+
+  revalidatePath("/accounts");
+  revalidatePath("/accounts/earnings");
+  return { success: true };
+}
+
+// ============================================
+// UPDATE EXPENSE
+// ============================================
+export async function updateExpense(
+  id: string,
+  formData: {
+    title: string;
+    description?: string;
+    amount: string;
+    currency: "USD" | "EUR" | "GBP" | "BDT";
+    exchangeRate?: string;
+    category: string;
+    recurring: boolean;
+    recurringDay?: string;
+  }
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const existing = await prisma.expense.findUnique({ where: { id } });
+  if (!existing) return { error: "Expense not found" };
+
+  if (!formData.title || formData.title.length < 2) {
+    return { error: "Title is required" };
+  }
+  const amount = parseFloat(formData.amount);
+  if (isNaN(amount) || amount <= 0) {
+    return { error: "Enter a valid amount" };
+  }
+
+  let recurringDay: number | null = null;
+  if (formData.recurring) {
+    recurringDay = parseInt(formData.recurringDay ?? "");
+    if (isNaN(recurringDay) || recurringDay < 1 || recurringDay > 28) {
+      return { error: "Recurring day must be between 1 and 28" };
+    }
+  }
+
+  const amountBdt = await toBdt(amount, formData.currency, formData.exchangeRate);
+
+  await prisma.expense.update({
+    where: { id },
+    data: {
+      title: formData.title,
+      description: formData.description || null,
+      amount,
+      currency: formData.currency,
+      amountBdt,
+      category: formData.category || "Other",
+      recurring: formData.recurring,
+      recurringDay,
+    },
+  });
+
+  await audit(
+    session.user.id,
+    "EXPENSE_UPDATED",
+    "Expense",
+    id,
+    `${formData.category} · ${formData.currency} ${amount}${
+      formData.recurring ? ` · recurring day ${recurringDay}` : ""
+    }`
+  );
+
+  revalidatePath("/accounts");
+  revalidatePath("/accounts/earnings");
+  return { success: true };
+}
+
+// ============================================
 // DELETE ENTRY (custom only — auto stays)
 // ============================================
 export async function deleteFinanceEntry(

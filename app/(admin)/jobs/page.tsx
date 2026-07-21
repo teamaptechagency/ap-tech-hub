@@ -58,7 +58,7 @@ export default async function JobsPage() {
         job.milestones.length > 0
           ? Math.round((done / job.milestones.length) * 100)
           : 0;
-      progressLabel = `${done}/${job.milestones.length} milestones`;
+      progressLabel = `${done}/${job.milestones.length} tasks`;
     } else {
       const seconds = job.workSessions
         .filter((s) => s.duration !== null)

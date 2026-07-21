@@ -106,7 +106,7 @@ export function MilestonesSection({
       <div className="grid grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-3">
-            <p className="text-xs text-muted-foreground">Milestones</p>
+            <p className="text-xs text-muted-foreground">Tasks</p>
             <p className="text-xl font-bold">
               {done.length}/{milestones.length}
             </p>
@@ -141,8 +141,8 @@ export function MilestonesSection({
         <CardContent className="divide-y p-0">
           {milestones.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              No milestones yet
-              {isManager && ' — click "Add milestone" to plan the delivery'}
+              No tasks yet
+              {isManager && ' — click "Add task" to plan the delivery'}
             </p>
           )}
 
@@ -233,15 +233,15 @@ export function MilestonesSection({
       {isManager && (
         <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Add milestone
+          Add task
         </Button>
       )}
 
-      {/* Add milestone dialog */}
+      {/* Add task dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add milestone</DialogTitle>
+            <DialogTitle>Add task</DialogTitle>
             <DialogDescription>
               A deliverable step with its own deadline and BDT payout
             </DialogDescription>
@@ -307,7 +307,7 @@ export function MilestonesSection({
               <p className="text-center text-sm text-red-500">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Adding..." : "Add milestone"}
+              {busy ? "Adding..." : "Add task"}
             </Button>
           </form>
         </DialogContent>

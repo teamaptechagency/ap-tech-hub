@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 
 export default async function PartnerDashboardPage() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
 
   const isManager =
     session.user.role === "PARTNER_MANAGER" &&

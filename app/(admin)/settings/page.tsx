@@ -2,7 +2,6 @@ import packageJson from "@/package.json";
 
 import { SettingsShell } from "@/components/settings/settings-shell";
 import { auth } from "@/lib/auth";
-import { editableEnvKeys } from "@/lib/env-settings";
 import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES } from "@/lib/roles";
 
@@ -38,30 +37,6 @@ const fixedPaymentMethods = [
     sortOrder: 60,
   },
 ] as const;
-
-function maskEnvValue(value: string | undefined) {
-  const cleanValue = value?.trim() ?? "";
-
-  if (!cleanValue) {
-    return "";
-  }
-
-  const visibleLength =
-    cleanValue.length > 10 ? 4 : 2;
-
-  const visibleTail =
-    cleanValue.slice(-visibleLength);
-
-  const maskLength = Math.min(
-    Math.max(
-      cleanValue.length - visibleLength,
-      4
-    ),
-    12
-  );
-
-  return `${"•".repeat(maskLength)}${visibleTail}`;
-}
 
 function getDatabaseRegion() {
   const configuredRegion =
@@ -223,22 +198,6 @@ export default async function SettingsPage() {
         setting.value,
       ])
     );
-
-  const envStatuses =
-    editableEnvKeys.map((key) => {
-      const value =
-        settingsMap[`env.${key}`] ||
-        process.env[key];
-
-      return {
-        key,
-        configured: Boolean(
-          value?.trim()
-        ),
-        maskedValue:
-          maskEnvValue(value),
-      };
-    });
 
   const systemInfo = {
     isAdmin,
@@ -571,7 +530,6 @@ export default async function SettingsPage() {
             template.priority,
         })
       )}
-      envStatuses={envStatuses}
       systemInfo={systemInfo}
     />
   );

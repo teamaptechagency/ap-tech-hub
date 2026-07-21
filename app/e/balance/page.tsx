@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import type { Prisma } from "@prisma/client";
 
 import { WithdrawRequestForm } from "@/components/employee/withdraw-request-form";
@@ -32,7 +32,7 @@ type PaymentMethodWithAccounts = Prisma.PaymentMethodGetPayload<{
 
 export default async function BalancePage() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
   const isPartner = PARTNER_ROLES.includes(session.user.role);
 
   if (isPartner) {

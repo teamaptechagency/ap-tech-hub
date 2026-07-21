@@ -383,7 +383,7 @@ export default async function ClientJobDetailsPage({
 
                 {job.milestones.length === 0 && (
                   <p className="py-10 text-center text-sm text-muted-foreground">
-                    Milestones are being planned
+                    Tasks are being planned
                   </p>
                 )}
               </CardContent>

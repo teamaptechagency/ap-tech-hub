@@ -121,7 +121,7 @@ export default async function ClientJobsPage() {
             )
           : 0;
 
-      progressLabel = `${completedMilestones}/${job.milestones.length} milestones`;
+      progressLabel = `${completedMilestones}/${job.milestones.length} tasks`;
     } else {
       const totalSeconds =
         job.workSessions.reduce(

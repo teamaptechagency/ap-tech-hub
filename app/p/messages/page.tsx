@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { MessagesShell } from "@/components/chat/messages-shell";
 import { auth } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
@@ -27,7 +27,7 @@ type PartnerConversationRecord = Prisma.ConversationGetPayload<{
 
 export default async function PartnerMessagesPage() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
   const myId = session.user.id;
   const isManager =
     session.user.role === "PARTNER_MANAGER" &&

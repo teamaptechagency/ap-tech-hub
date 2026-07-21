@@ -120,6 +120,11 @@ export default async function ClientLayout({
       href: "/c/feedback",
       icon: "feedback",
     },
+    {
+      label: "Profile",
+      href: "/c/profile",
+      icon: "profile",
+    },
   ];
 
   return (

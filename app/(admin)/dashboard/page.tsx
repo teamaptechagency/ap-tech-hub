@@ -7,6 +7,7 @@ import {
   PendingApprovals,
   type PendingUser,
 } from "@/components/pending-approvals";
+import { ClearCacheButton } from "@/components/layout/clear-cache-button";
 import { getVirtualCompletedJobEarnings, sumBdt } from "@/lib/finance-summary";
 
 function money(amount: number) {
@@ -194,15 +195,18 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">
-          Welcome, {session?.user.name?.split(" ")[0] ?? "Admin"}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {needsAction > 0
-            ? `${needsAction} item${needsAction !== 1 ? "s" : ""} need your attention`
-            : "All caught up"}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">
+            Welcome, {session?.user.name?.split(" ")[0] ?? "Admin"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {needsAction > 0
+              ? `${needsAction} item${needsAction !== 1 ? "s" : ""} need your attention`
+              : "All caught up"}
+          </p>
+        </div>
+        <ClearCacheButton />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

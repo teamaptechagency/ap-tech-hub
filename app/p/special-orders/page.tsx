@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { ChevronRight, ShoppingBag } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 
 export default async function PartnerHubSpecialOrdersPage() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
 
   const isManager =
     session.user.role === "PARTNER_MANAGER" &&

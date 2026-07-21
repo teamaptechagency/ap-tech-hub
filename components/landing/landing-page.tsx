@@ -293,7 +293,7 @@ function CardRail({
   });
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0 w-full">
       <button
         type="button"
         onClick={() => move(-1)}
@@ -914,21 +914,25 @@ function buildTrustStats(): TrustStats {
   };
 }
 
+function formatCountPlus(value: number | undefined, step = 50) {
+  if (!value || value < step) return value ? `${value}` : "";
+  return `${Math.floor(value / step) * step}+`;
+}
+
 function PublicTopBar({
   topBar,
+  stats,
 }: {
   topBar: LandingPageData["topBar"];
+  stats: TrustStats | null;
 }) {
-  const [stats, setStats] = useState<TrustStats | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [defaultCountdownEnd, setDefaultCountdownEnd] = useState<string | null>(
     null
   );
 
   useEffect(() => {
-    setStats(buildTrustStats());
     const timer = window.setInterval(() => {
-      setStats(buildTrustStats());
       setNow(new Date());
     }, 45000);
 
@@ -1266,6 +1270,7 @@ export function LandingPage({
   const [activeCategory, setActiveCategory] = useState("all");
   const [modal, setModal] = useState<ModalState>(null);
   const [contactPending, startContactTransition] = useTransition();
+  const [trustStats, setTrustStats] = useState<TrustStats | null>(null);
 
   const activeHero = data.heroSlides[heroIndex] ?? data.heroSlides[0];
 
@@ -1276,6 +1281,15 @@ export function LandingPage({
 
     return () => window.clearInterval(timer);
   }, [data.heroSlides.length]);
+
+  useEffect(() => {
+    setTrustStats(buildTrustStats());
+    const timer = window.setInterval(() => {
+      setTrustStats(buildTrustStats());
+    }, 45000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const key = "ap-tech-landing-visit-recorded";
@@ -1334,6 +1348,7 @@ export function LandingPage({
       <header className="sticky top-0 z-40 border-b border-[#e8e3dc] bg-white">
         <PublicTopBar
           topBar={data.topBar}
+          stats={trustStats}
         />
         <div className="mx-auto flex h-16 max-w-[1140px] items-center justify-between gap-5 px-4">
           <button
@@ -1504,7 +1519,7 @@ export function LandingPage({
         <div className="relative z-10 border-t border-white/10 bg-white/[.04]">
           <div className="mx-auto grid max-w-[1140px] grid-cols-2 px-4 py-6 md:grid-cols-4">
             {[
-              ["250+", "Projects Completed"],
+              [formatCountPlus(trustStats?.completedJobs) || "150+", "Projects Completed"],
               ["120+", "Happy Clients"],
               ["25+", "Team Members"],
               ["98%", "Client Satisfaction"],

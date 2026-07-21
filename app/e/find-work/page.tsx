@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { FindWorkBoard } from "@/components/employee/find-work-board";
 
 export default async function FindWorkPage() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
 
   const [openJobs, me] = await Promise.all([
     prisma.job.findMany({

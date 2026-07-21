@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { MeetingsBoard, type MeetingRow } from "@/components/meetings/meetings-board";
 
 export default async function EmployeeMeetingsPage() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
 
   const [meetings, people, jobs] = await Promise.all([
     prisma.meeting.findMany({

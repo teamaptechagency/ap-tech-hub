@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { MessagesShell } from "@/components/chat/messages-shell";
 
 export default async function MessagesPage() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
   const myId = session.user.id;
 
   // All conversations relevant to admins:

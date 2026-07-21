@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,7 @@ export default async function PartnerSpecialOrderProfilePage({
 }) {
   const { id } = await params;
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
 
   const isManager =
     session.user.role === "PARTNER_MANAGER" &&

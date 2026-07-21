@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileForm } from "@/components/employee/profile-form";
@@ -8,7 +8,7 @@ import { getUserLoginDevices } from "@/lib/login-security";
 
 export default async function AdminProfilePage() {
   const session = await auth();
-  if (!session?.user) notFound();
+  if (!session?.user) redirect("/login");
 
   const me = await prisma.user.findUnique({
     where: { id: session.user.id },
