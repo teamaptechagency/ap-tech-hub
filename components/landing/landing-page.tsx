@@ -940,7 +940,7 @@ function buildTrustStats(): TrustStats {
   );
   const activeJobs = weightedJobs(seed + Math.floor(now.getHours() / 4));
   const completedJobs =
-    Number(stored.completedJobs ?? 186) +
+    Number(stored.completedJobs ?? 312) +
     Math.floor(todayVisits / 18) +
     (seed % 7 === 0 ? 1 : 0);
   const cancelledJobs =
