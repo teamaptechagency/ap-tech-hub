@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const blob = await put(
       `registrations/${email.replace(/[^a-z0-9]/gi, "_")}/${Date.now()}-${file.name}`,
       file,
-      { access: "private" }
+      { access: "private", token: process.env.private_READ_WRITE_TOKEN }
     );
 
     return NextResponse.json({ url: blob.url });

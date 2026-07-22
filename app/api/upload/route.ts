@@ -61,6 +61,7 @@ export async function POST(request: Request) {
   }
 
   let uploadedBlobUrl: string | null = null;
+  let uploadedBlobToken: string | undefined;
 
   try {
     const formData = await request.formData();
@@ -310,6 +311,9 @@ export async function POST(request: Request) {
     const folder = isPublicAsset
       ? `public-assets/${assetKind || "general"}`
       : `attachments/${session.user.id}`;
+    const blobToken = isPublicAsset
+      ? process.env.BLOB_READ_WRITE_TOKEN
+      : process.env.private_READ_WRITE_TOKEN;
 
     const blob = await put(
       `${folder}/${Date.now()}-${safeFileName}`,
@@ -317,10 +321,12 @@ export async function POST(request: Request) {
       {
         access: isPublicAsset ? "public" : "private",
         addRandomSuffix: true,
+        token: blobToken,
       }
     );
 
     uploadedBlobUrl = blob.url;
+    uploadedBlobToken = blobToken;
 
     const attachment =
       await prisma.attachment.create({
@@ -376,7 +382,7 @@ export async function POST(request: Request) {
      */
     if (uploadedBlobUrl) {
       try {
-        await del(uploadedBlobUrl);
+        await del(uploadedBlobUrl, { token: uploadedBlobToken });
       } catch (deleteError) {
         console.error(
           "Failed to remove unused blob:",
