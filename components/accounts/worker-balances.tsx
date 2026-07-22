@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
+import { fileViewUrl } from "@/lib/file-url";
 
 type Txn = {
   id: string;
@@ -379,12 +380,12 @@ export function WorkerBalances({
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {selected.photoUrl && (
-                    <Button size="sm" variant="outline" onClick={() => window.open(selected.photoUrl ?? "", "_blank")}>
+                    <Button size="sm" variant="outline" onClick={() => window.open(fileViewUrl(selected.photoUrl), "_blank")}>
                       Open photo
                     </Button>
                   )}
                   {selected.nidUrl && (
-                    <Button size="sm" variant="outline" onClick={() => window.open(selected.nidUrl ?? "", "_blank")}>
+                    <Button size="sm" variant="outline" onClick={() => window.open(fileViewUrl(selected.nidUrl), "_blank")}>
                       Open NID
                     </Button>
                   )}

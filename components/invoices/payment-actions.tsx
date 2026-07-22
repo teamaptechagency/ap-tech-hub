@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BadgeCheck, Ban, Pause, Pencil, Play, Trash2 } from "lucide-react";
+import { fileViewUrl } from "@/lib/file-url";
 
 type LatestPaymentSubmission = {
   methodLabel: string;
@@ -249,7 +250,7 @@ export function PaymentActions({
                     {latestSubmission.attachments.map((attachment) => (
                       <a
                         key={attachment.id}
-                        href={attachment.url}
+                        href={fileViewUrl(attachment.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block text-blue-700 underline"

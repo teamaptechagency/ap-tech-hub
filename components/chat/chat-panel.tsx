@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { playWaterDropMessageSound } from "@/lib/message-sound";
+import { fileViewUrl } from "@/lib/file-url";
 import {
   MessageSquare,
   Paperclip,
@@ -270,7 +271,7 @@ export function ChatPanel({
                 {msg.attachments?.map((file) => (
                   <a
                     key={file.id}
-                    href={file.fileUrl}
+                    href={fileViewUrl(file.fileUrl)}
                     target="_blank"
                     rel="noreferrer"
                     className={`mt-2 flex items-center gap-1 rounded-md border px-2 py-1 text-xs ${

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { fileViewUrl } from "@/lib/file-url";
 import {
   Select,
   SelectContent,
@@ -403,7 +404,7 @@ export function ProfileForm({
                   uploading={uploading === "nid"}
                   accept="image/*,application/pdf"
                   onFile={(file) => uploadIdentityFile(file, "nid")}
-                  onOpen={() => nidUrlValue && window.open(nidUrlValue, "_blank")}
+                  onOpen={() => nidUrlValue && window.open(fileViewUrl(nidUrlValue), "_blank")}
                 />
               </div>
             </div>

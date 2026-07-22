@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserCheck, FileText } from "lucide-react";
+import { fileViewUrl } from "@/lib/file-url";
 
 export type PendingUser = {
   id: string;
@@ -51,10 +52,10 @@ export function PendingApprovals({ users }: { users: PendingUser[] }) {
               {u.photoUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
-                  src={u.photoUrl}
+                  src={fileViewUrl(u.photoUrl)}
                   alt={u.name}
                   className="h-12 w-12 cursor-pointer rounded-full object-cover"
-                  onClick={() => window.open(u.photoUrl ?? "", "_blank")}
+                  onClick={() => window.open(fileViewUrl(u.photoUrl), "_blank")}
                 />
               ) : null}
               <div className="min-w-0">
@@ -79,7 +80,7 @@ export function PendingApprovals({ users }: { users: PendingUser[] }) {
                 {u.nidUrl ? (
                   <button
                     type="button"
-                    onClick={() => window.open(u.nidUrl ?? "", "_blank")}
+                    onClick={() => window.open(fileViewUrl(u.nidUrl), "_blank")}
                     className="mt-0.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                   >
                     <FileText className="h-3 w-3" />
