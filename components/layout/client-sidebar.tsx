@@ -21,6 +21,7 @@ import {
   Receipt,
   ShoppingBag,
   User,
+  Users,
   Video,
   Wallet,
   type LucideIcon,
@@ -61,6 +62,11 @@ export const clientNavItems: ClientNavItem[] = [
     label: "Messages",
     href: "/c/messages",
     icon: MessageCircle,
+  },
+  {
+    label: "Our Team",
+    href: "/c/team",
+    icon: Users,
   },
   {
     label: "Bug & Feedback",

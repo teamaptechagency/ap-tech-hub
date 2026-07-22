@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 import { logout } from "@/actions/auth.actions";
+import { setPresenceBusy } from "@/actions/presence.actions";
 import { cn } from "@/lib/utils";
 
 import { NotificationBell } from "@/components/layout/notification-bell";
@@ -37,6 +39,7 @@ type EmployeeSidebarProps = {
     name: string;
     role: string;
     imageUrl?: string | null;
+    presenceBusy?: boolean;
   };
   branding?: BrandingSettings;
 };
@@ -106,8 +109,19 @@ export function EmployeeSidebar({
   branding,
 }: EmployeeSidebarProps) {
   const pathname = usePathname();
+  const [busy, setBusy] = useState(Boolean(user.presenceBusy));
+  const [savingBusy, setSavingBusy] = useState(false);
 
   const formattedRole = formatRole(user.role);
+
+  async function toggleBusy() {
+    const next = !busy;
+    setSavingBusy(true);
+    setBusy(next);
+    const result = await setPresenceBusy(next);
+    setSavingBusy(false);
+    if (result?.error) setBusy(!next);
+  }
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
@@ -170,6 +184,26 @@ export function EmployeeSidebar({
 
           <NotificationBell />
         </div>
+
+        <button
+          type="button"
+          onClick={toggleBusy}
+          disabled={savingBusy}
+          className={cn(
+            "mb-2 flex w-full items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+            busy
+              ? "border-amber-300 bg-amber-500/10 text-amber-600"
+              : "border-transparent text-muted-foreground hover:bg-muted"
+          )}
+        >
+          <span
+            className={cn(
+              "h-2 w-2 shrink-0 rounded-full",
+              busy ? "bg-amber-500" : "bg-emerald-500"
+            )}
+          />
+          {busy ? "Busy — clients see you as busy" : "Mark yourself busy"}
+        </button>
 
         <form action={logout}>
           <button

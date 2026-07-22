@@ -11,6 +11,7 @@ import { getBrandingSettings } from "@/lib/branding";
 import { EmployeeSidebar } from "@/components/layout/employee-sidebar";
 import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
+import { PresenceHeartbeat } from "@/components/layout/presence-heartbeat";
 import {
   BottomNav,
   type BottomNavItem,
@@ -42,6 +43,7 @@ export default async function EmployeeLayout({
       photoUrl: true,
       image: true,
       termsAcceptedAt: true,
+      presenceBusy: true,
     },
   });
 
@@ -114,6 +116,8 @@ export default async function EmployeeLayout({
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
+      <PresenceHeartbeat />
+
       {/* Mobile top navigation and drawer */}
       <PortalMobileNav
         portal="employee"
@@ -129,6 +133,7 @@ export default async function EmployeeLayout({
           name: userName,
           role: session.user.role,
           imageUrl: userImageUrl,
+          presenceBusy: currentUser.presenceBusy,
         }}
         branding={branding}
       />

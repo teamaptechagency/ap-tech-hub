@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { getOrCreateDirect } from "@/actions/message.actions";
+import { sendEmployeeReminder } from "@/actions/presence.actions";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Search, Briefcase, User } from "lucide-react";
+import { BellRing, Plus, Search, Briefcase, User } from "lucide-react";
 
 type ConvoRow = {
   id: string;
@@ -26,6 +28,9 @@ type ConvoRow = {
   lastBody: string | null;
   lastAt: string | null;
   unread: boolean;
+  onBehalfOptions?: { id: string; name: string }[];
+  employeeId?: string | null;
+  employeePresence?: "green" | "gray" | "red" | "orange" | null;
 };
 
 type Person = { id: string; name: string; role: string };
@@ -41,19 +46,41 @@ export function MessagesShell({
   conversations,
   people,
   currentUserId,
+  initialOpenId,
+  maskAsDisplaySender = false,
 }: {
   conversations: ConvoRow[];
   people: Person[];
   currentUserId: string;
+  initialOpenId?: string | null;
+  // True for client viewers: hides ghost-send
+  // identity so they only see the team member.
+  maskAsDisplaySender?: boolean;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<ConvoRow | null>(
-    conversations[0] ?? null
+    (initialOpenId &&
+      conversations.find((c) => c.id === initialOpenId)) ||
+      conversations[0] ||
+      null
   );
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [newOpen, setNewOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reminderBusy, setReminderBusy] = useState(false);
+
+  async function sendReminder() {
+    if (!selected || reminderBusy) return;
+    setReminderBusy(true);
+    const result = await sendEmployeeReminder(selected.id);
+    setReminderBusy(false);
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Reminder sent");
+  }
 
   const filtered = conversations.filter((c) => {
     if (filter === "JOBS" && c.kind !== "JOB") return false;
@@ -187,14 +214,33 @@ export function MessagesShell({
 
         {/* Active chat */}
         {selected ? (
-          <ChatPanel
-            key={selected.id}
-            conversationId={selected.id}
-            currentUserId={currentUserId}
-            title={selected.name}
-            heightClass="h-[460px]"
-            playIncomingSound
-          />
+          <div className="space-y-2">
+            {selected.employeePresence === "gray" && (
+              <div className="flex items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+                <span>This team member appears to be offline right now.</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 shrink-0 border-amber-400 text-amber-700 hover:bg-amber-100"
+                  disabled={reminderBusy}
+                  onClick={sendReminder}
+                >
+                  <BellRing className="mr-1.5 h-3.5 w-3.5" />
+                  {reminderBusy ? "Sending..." : "Send reminder"}
+                </Button>
+              </div>
+            )}
+            <ChatPanel
+              key={selected.id}
+              conversationId={selected.id}
+              currentUserId={currentUserId}
+              title={selected.name}
+              heightClass="h-[460px]"
+              playIncomingSound
+              maskAsDisplaySender={maskAsDisplaySender}
+              onBehalfOptions={selected.onBehalfOptions}
+            />
+          </div>
         ) : (
           <Card>
             <CardContent className="flex h-[560px] items-center justify-center text-sm text-muted-foreground">

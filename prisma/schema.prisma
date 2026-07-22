@@ -68,6 +68,10 @@ model User {
   resetToken    String?   @unique
   resetTokenExp DateTime?
 
+  // Presence (client-facing team directory status dot)
+  lastActiveAt  DateTime?
+  presenceBusy  Boolean   @default(false)
+
   skills               Skill[]
   jobMemberships       JobMember[]
   workSessions         WorkSession[]
@@ -77,6 +81,7 @@ model User {
   cancelledTasks       WeeklyTask[]              @relation("TaskCanceller")
   assignedMilestones   Milestone[]               @relation("MilestoneAssignee")
   sentMessages         Message[]
+  displayedMessages    Message[]                 @relation("MessageDisplaySender")
   uploadedAttachments  Attachment[]              @relation("AttachmentUploader")
   conversations        ConversationParticipant[]
   workerTxns           WorkerTxn[]
@@ -548,6 +553,11 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
   sender         User         @relation(fields: [senderId], references: [id])
+  // When an admin sends a message on behalf of a team member (client
+  // direct chats), this is who the client should see as the sender.
+  // Null for every normal message.
+  displaySenderId String?
+  displaySender   User?        @relation("MessageDisplaySender", fields: [displaySenderId], references: [id], onDelete: SetNull)
   body           String
   seenAt         DateTime?
   pinned         Boolean      @default(false)

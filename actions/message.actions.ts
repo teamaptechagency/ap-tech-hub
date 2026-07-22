@@ -67,6 +67,7 @@ type MessageListRow = {
   pinnedAt: Date | null;
   createdAt: Date;
   sender: SenderRow;
+  displaySender: SenderRow | null;
   attachments: AttachmentPublicRow[];
 };
 
@@ -663,7 +664,8 @@ async function canAccessConversation(
 export async function sendMessage(
   conversationId: string,
   body: string,
-  attachmentId?: string
+  attachmentId?: string,
+  onBehalfOfUserId?: string
 ) {
   const cleanConversationId =
     conversationId.trim();
@@ -694,6 +696,42 @@ export async function sendMessage(
     return {
       error: "Message can't be empty",
     };
+  }
+
+  // ============================================
+  // GHOST-SEND: admin replying as a team member
+  // Only allowed inside a direct client<->team
+  // member conversation, and only as the actual
+  // team member participant of that conversation.
+  // ============================================
+  let displaySenderId: string | null = null;
+  const cleanOnBehalfId = onBehalfOfUserId?.trim() || null;
+  if (cleanOnBehalfId) {
+    if (!ADMIN_ROLES.includes(access.session.user.role)) {
+      return {
+        error: "Only an admin can send a message on behalf of someone else",
+      };
+    }
+    if (!access.conversation.isDirect) {
+      return { error: "This isn't a direct conversation" };
+    }
+    const participants = await prisma.conversationParticipant.findMany({
+      where: { conversationId: cleanConversationId },
+      select: { user: { select: { id: true, role: true } } },
+    });
+    const isEligible =
+      participants.some(
+        (p) => p.user.id === cleanOnBehalfId && p.user.role === "TEAM_MEMBER"
+      ) &&
+      participants.some((p) =>
+        ["CLIENT", "CLIENT_MANAGER"].includes(p.user.role)
+      );
+    if (!isEligible) {
+      return {
+        error: "This conversation isn't a client-team member chat",
+      };
+    }
+    displaySenderId = cleanOnBehalfId;
   }
 
   const attachment = cleanAttachmentId
@@ -759,6 +797,7 @@ export async function sendMessage(
                 cleanConversationId,
               senderId:
                 access.session.user.id,
+              displaySenderId,
               body: cleanBody,
             },
             select: {
@@ -766,6 +805,13 @@ export async function sendMessage(
               body: true,
               createdAt: true,
               sender: {
+                select: {
+                  id: true,
+                  name: true,
+                  role: true,
+                },
+              },
+              displaySender: {
                 select: {
                   id: true,
                   name: true,
@@ -827,6 +873,13 @@ export async function sendMessage(
           name: message.sender.name,
           role: message.sender.role,
         },
+        displaySender: message.displaySender
+          ? {
+              id: message.displaySender.id,
+              name: message.displaySender.name,
+              role: message.displaySender.role,
+            }
+          : null,
         attachment: attachmentPayload,
         attachments: attachmentPayload
           ? [attachmentPayload]
@@ -924,6 +977,13 @@ export async function getMessages(
             role: true,
           },
         },
+        displaySender: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+          },
+        },
         attachments: {
           select: {
             id: true,
@@ -957,6 +1017,7 @@ export async function getMessages(
         createdAt:
           message.createdAt.toISOString(),
         sender: message.sender,
+        displaySender: message.displaySender ?? null,
         attachment:
           attachments[0] ?? null,
         attachments,

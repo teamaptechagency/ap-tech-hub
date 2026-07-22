@@ -18,6 +18,13 @@ import {
   Send,
   X,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type UploadedAttachment = {
   id: string;
@@ -32,8 +39,16 @@ type ChatMessage = {
   body: string;
   createdAt: string;
   sender: { id: string; name: string; role: string };
+  displaySender?: { id: string; name: string; role: string } | null;
   attachments?: UploadedAttachment[];
 };
+
+function formatRole(role: string) {
+  return role
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
 
 export function ChatPanel({
   conversationId,
@@ -41,12 +56,22 @@ export function ChatPanel({
   title = "Discussion",
   heightClass = "h-[420px]",
   playIncomingSound = false,
+  maskAsDisplaySender = false,
+  onBehalfOptions,
 }: {
   conversationId: string;
   currentUserId: string;
   title?: string;
   heightClass?: string;
   playIncomingSound?: boolean;
+  // True for a client viewer: shows the masked
+  // identity (team member) instead of whoever
+  // actually sent the message (e.g. an admin
+  // replying on the team member's behalf).
+  maskAsDisplaySender?: boolean;
+  // Admin viewer only: lets them pick "Me" or a
+  // team member to send the next message as.
+  onBehalfOptions?: { id: string; name: string }[];
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [body, setBody] = useState("");
@@ -56,6 +81,7 @@ export function ChatPanel({
   const [typingName, setTypingName] = useState("");
   const [attachment, setAttachment] =
     useState<UploadedAttachment | null>(null);
+  const [sendAsId, setSendAsId] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stopTypingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,7 +179,12 @@ export function ChatPanel({
     setAttachment(null);
     setSending(true);
     await sendTypingStatus(conversationId, false);
-    await sendMessage(conversationId, text, attachmentId);
+    await sendMessage(
+      conversationId,
+      text,
+      attachmentId,
+      sendAsId || undefined
+    );
     setSending(false);
   }
 
@@ -195,7 +226,24 @@ export function ChatPanel({
         )}
 
         {messages.map((msg) => {
-          const mine = msg.sender.id === currentUserId;
+          // Client viewers see the masked identity (the team member) in
+          // place of whoever actually sent it. Staff viewers always see
+          // the real sender, plus a name+title label on ghost-sent
+          // messages — even their own — so it's clear who really typed it.
+          const effectiveSender =
+            maskAsDisplaySender && msg.displaySender
+              ? msg.displaySender
+              : msg.sender;
+          const mine = effectiveSender.id === currentUserId;
+          const isGhost = !maskAsDisplaySender && !!msg.displaySender;
+          const showLabel = !mine || isGhost;
+          const labelName = isGhost
+            ? `${msg.sender.name}${
+                ["SUPER_ADMIN", "ADMIN", "CEO"].includes(msg.sender.role)
+                  ? ` (${formatRole(msg.sender.role)})`
+                  : ""
+              }`
+            : effectiveSender.name;
 
           return (
             <div
@@ -207,9 +255,9 @@ export function ChatPanel({
                   mine ? "bg-primary text-primary-foreground" : "bg-muted"
                 }`}
               >
-                {!mine && (
+                {showLabel && (
                   <p className="mb-0.5 text-[10px] font-semibold opacity-70">
-                    {msg.sender.name}
+                    {labelName}
                   </p>
                 )}
 
@@ -263,6 +311,38 @@ export function ChatPanel({
       </CardContent>
 
       <div className="border-t p-3">
+        {onBehalfOptions && onBehalfOptions.length > 0 && (
+          <div className="mb-2 flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">Send as:</span>
+            <Select
+              value={sendAsId || "me"}
+              onValueChange={(value) =>
+                setSendAsId(!value || value === "me" ? "" : value)
+              }
+            >
+              <SelectTrigger className="h-7 w-44 text-xs">
+                <SelectValue>
+                  {(value: string) =>
+                    value === "me" || !value
+                      ? "Me"
+                      : `${
+                          onBehalfOptions.find((option) => option.id === value)
+                            ?.name ?? "Me"
+                        } (on behalf)`
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="me">Me</SelectItem>
+                {onBehalfOptions.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.name} (on behalf)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {attachment && (
           <div className="mb-2 flex items-center justify-between rounded-md border px-2 py-1 text-xs">
             <span className="flex min-w-0 items-center gap-1">

@@ -2,11 +2,18 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { MessagesShell } from "@/components/chat/messages-shell";
+import { presenceColor } from "@/lib/presence";
 
-export default async function ClientMessagesPage() {
+export default async function ClientMessagesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ open?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.clientId) notFound();
   const myId = session.user.id;
+  const params = await searchParams;
+  const openId = params?.open ?? null;
 
   const conversations = await prisma.conversation.findMany({
     where: {
@@ -30,7 +37,18 @@ export default async function ClientMessagesPage() {
       job: { select: { title: true } },
       specialOrderClient: { select: { title: true } },
       participants: {
-        include: { user: { select: { id: true, name: true, role: true } } },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+              accountStatus: true,
+              lastActiveAt: true,
+              presenceBusy: true,
+            },
+          },
+        },
       },
       messages: {
         orderBy: { createdAt: "desc" },
@@ -49,6 +67,8 @@ export default async function ClientMessagesPage() {
       (!myPart?.lastSeenAt || last.createdAt > myPart.lastSeenAt);
 
     const other = c.participants.find((p) => p.userId !== myId);
+    const isTeamMemberChat = other?.user.role === "TEAM_MEMBER";
+
     return {
       id: c.id,
       kind: (c.job
@@ -65,22 +85,34 @@ export default async function ClientMessagesPage() {
         ? "Job discussion"
         : c.specialOrderClient
           ? "Special order"
-          : "Direct message",
+          : isTeamMemberChat
+            ? "Team member"
+            : "Direct message",
       isClientRelated: true,
       lastBody: last?.body ?? null,
       lastAt: last?.createdAt.toISOString() ?? null,
       unread,
+      employeeId: isTeamMemberChat ? other!.user.id : null,
+      employeePresence: isTeamMemberChat
+        ? presenceColor(other!.user)
+        : null,
     };
   });
 
-  // Clients can start directs with admins only
+  // Clients can start directs with admins and team members
   const people = await prisma.user.findMany({
-    where: { role: { in: ["SUPER_ADMIN", "ADMIN", "CEO"] } },
+    where: { role: { in: ["SUPER_ADMIN", "ADMIN", "CEO", "TEAM_MEMBER"] } },
     orderBy: { name: "asc" },
     select: { id: true, name: true, role: true },
   });
 
   return (
-    <MessagesShell conversations={rows} people={people} currentUserId={myId} />
+    <MessagesShell
+      conversations={rows}
+      people={people}
+      currentUserId={myId}
+      initialOpenId={openId}
+      maskAsDisplaySender
+    />
   );
 }
