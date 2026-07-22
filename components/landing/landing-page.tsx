@@ -2024,31 +2024,28 @@ export function LandingPage({
       <section id="team" className="scroll-mt-24 py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <SectionLabel eyebrow="Our Team" title="Meet Our Experts" />
-          <div className="grid min-w-0 items-start gap-5 md:grid-cols-[minmax(0,1fr)_212px]">
-            <CardRail className="md:pr-1">
-              {visibleTeam.map((member) => (
-                <button
-                  key={member.id}
-                  type="button"
-                  onClick={() => setModal({ type: "team", item: member })}
-                  className="flex h-[214px] w-[min(82vw,212px)] shrink-0 snap-start flex-col items-center justify-center rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-center transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[44%] md:w-[212px]"
-                >
-                  <div className="mx-auto mb-3 grid h-[72px] w-[72px] place-items-center rounded-full bg-[#1b2334] text-xl font-extrabold text-white">
-                    {member.name
-                      .split(" ")
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join("")}
-                  </div>
-                  <h3 className="line-clamp-2 min-h-10 font-extrabold leading-5 text-[#101623]">{member.name}</h3>
-                  <p className="mt-1 line-clamp-2 min-h-8 text-xs font-bold leading-4 text-[#c6613f]">
-                    {member.role}
-                  </p>
-                </button>
-              ))}
-              <JoinTeamCard className="w-[min(82vw,212px)] snap-start sm:w-[44%] md:hidden" />
-            </CardRail>
-            <JoinTeamCard className="sticky top-24 hidden w-full md:flex" />
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {visibleTeam.map((member) => (
+              <button
+                key={member.id}
+                type="button"
+                onClick={() => setModal({ type: "team", item: member })}
+                className="flex h-[214px] flex-col items-center justify-center rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-center transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
+              >
+                <div className="mx-auto mb-3 grid h-[72px] w-[72px] place-items-center rounded-full bg-[#1b2334] text-xl font-extrabold text-white">
+                  {member.name
+                    .split(" ")
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join("")}
+                </div>
+                <h3 className="line-clamp-2 min-h-10 font-extrabold leading-5 text-[#101623]">{member.name}</h3>
+                <p className="mt-1 line-clamp-2 min-h-8 text-xs font-bold leading-4 text-[#c6613f]">
+                  {member.role}
+                </p>
+              </button>
+            ))}
+            <JoinTeamCard />
           </div>
         </div>
       </section>
