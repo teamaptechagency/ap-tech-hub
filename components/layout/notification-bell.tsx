@@ -22,26 +22,52 @@ type Note = {
   createdAt: string;
 };
 
+type Snapshot = { notifications: Note[]; unread: number };
+
+// ============================================
+// SHARED POLLER
+// NotificationBell renders more than once per page
+// (desktop sidebar + mobile nav are both mounted at
+// once, CSS just hides one). Without this, each
+// instance ran its own 10s interval, multiplying
+// server load. One poll loop now serves every
+// mounted bell.
+// ============================================
+let snapshot: Snapshot = { notifications: [], unread: 0 };
+const subscribers = new Set<(next: Snapshot) => void>();
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+async function fetchAndBroadcast() {
+  const r = await getMyNotifications();
+  snapshot = { notifications: r.notifications, unread: r.unread };
+  subscribers.forEach((notify) => notify(snapshot));
+}
+
+function subscribe(notify: (next: Snapshot) => void) {
+  subscribers.add(notify);
+  notify(snapshot);
+  if (subscribers.size === 1) {
+    fetchAndBroadcast();
+    pollTimer = setInterval(fetchAndBroadcast, 10_000);
+    window.addEventListener("focus", fetchAndBroadcast);
+  }
+  return () => {
+    subscribers.delete(notify);
+    if (subscribers.size === 0) {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = null;
+      window.removeEventListener("focus", fetchAndBroadcast);
+    }
+  };
+}
+
 export function NotificationBell() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [unread, setUnread] = useState(0);
+  const [state, setState] = useState<Snapshot>(snapshot);
   const [open, setOpen] = useState(false);
 
-  async function load() {
-    const r = await getMyNotifications();
-    setNotes(r.notifications);
-    setUnread(r.unread);
-  }
+  useEffect(() => subscribe(setState), []);
 
-  useEffect(() => {
-    load();
-    const t = setInterval(load, 10_000);
-    window.addEventListener("focus", load);
-    return () => {
-      clearInterval(t);
-      window.removeEventListener("focus", load);
-    };
-  }, []);
+  const { notifications: notes, unread } = state;
 
   return (
     <DropdownMenu
@@ -49,7 +75,7 @@ export function NotificationBell() {
       onOpenChange={(open) => {
         setOpen(open);
         if (open && unread > 0) {
-          markAllRead().then(load);
+          markAllRead().then(fetchAndBroadcast);
         }
       }}
     >
