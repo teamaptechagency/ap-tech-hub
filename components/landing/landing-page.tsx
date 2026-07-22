@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe2,
+  Menu,
   MessageCircle,
   Send,
   ShieldCheck,
@@ -524,25 +525,6 @@ function CardRail({
         ))}
       </div>
     </div>
-  );
-}
-
-function JoinTeamCard({ className = "" }: { className?: string }) {
-  return (
-    <Link
-      href="/register"
-      className={`flex h-[214px] shrink-0 flex-col items-center justify-center rounded-[14px] border border-dashed border-[#c6613f]/50 bg-[#fff8f3] p-6 text-center transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] ${className}`}
-    >
-      <div className="mx-auto mb-3 grid h-[72px] w-[72px] place-items-center rounded-full bg-[#c6613f] text-xl font-extrabold text-white">
-        +
-      </div>
-      <h3 className="line-clamp-2 min-h-10 font-extrabold leading-5 text-[#101623]">
-        Become a team member
-      </h3>
-      <p className="mt-1 line-clamp-2 min-h-8 text-xs font-bold leading-4 text-[#c6613f]">
-        Join AP Tech Agency
-      </p>
-    </Link>
   );
 }
 
@@ -1478,6 +1460,7 @@ export function LandingPage({
   const [modal, setModal] = useState<ModalState>(null);
   const [contactPending, startContactTransition] = useTransition();
   const [trustStats, setTrustStats] = useState<TrustStats | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const goToSection = useSectionNav();
   const pathname = usePathname();
 
@@ -1501,6 +1484,10 @@ export function LandingPage({
 
     return () => window.clearInterval(timer);
   }, [page]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const key = "ap-tech-landing-visit-recorded";
@@ -1603,7 +1590,7 @@ export function LandingPage({
               </Link>
             ))}
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-3 lg:flex">
             {portalHref ? (
               <Link
                 href={portalHref}
@@ -1615,7 +1602,7 @@ export function LandingPage({
               <>
                 <Link
                   href="/login"
-                  className="hidden rounded-[10px] border border-[#e8e3dc] px-5 py-2.5 text-sm font-bold text-[#101623] transition hover:border-[#101623] md:inline-flex"
+                  className="inline-flex rounded-[10px] border border-[#e8e3dc] px-5 py-2.5 text-sm font-bold text-[#101623] transition hover:border-[#101623]"
                 >
                   Sign in
                 </Link>
@@ -1628,9 +1615,104 @@ export function LandingPage({
               </>
             )}
           </div>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open menu"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#e8e3dc] text-[#101623] transition hover:border-[#101623] lg:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
         </div>
         <TopAd ad={data.ads.top} countdownEndsAt={data.topBar.countdownEndsAt} />
       </header>
+
+      <div
+        className={`fixed inset-0 z-50 transition-opacity lg:hidden ${
+          mobileMenuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          className="absolute inset-0 bg-black/40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+        <div
+          className={`absolute right-0 top-0 flex h-full w-[82%] max-w-[340px] flex-col bg-white shadow-2xl transition-transform duration-300 ${
+            mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="flex items-center justify-between border-b border-[#e8e3dc] px-5 py-4">
+            <span className="text-lg font-extrabold text-[#101623]">
+              AP Tech <span className="text-[#c6613f]">Agency</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e8e3dc] text-[#101623] transition hover:border-[#101623]"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4 text-[15px] font-semibold text-[#3a4152]">
+            {(
+              [
+                ["Home", "home"],
+                ["Services", "services"],
+                ["Process", "process"],
+                ["Portfolio", "portfolio"],
+                ["Our Team", "team"],
+                ["Testimonials", "testimonials"],
+                ["About Us", "about"],
+                ["Contact", "contact"],
+              ] as [string, LandingPageKey][]
+            ).map(([label, key]) => (
+              <Link
+                key={key}
+                href={sectionRoutes[key]}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`rounded-[10px] px-3 py-2.5 transition hover:bg-[#faf8f5] ${
+                  pathname === sectionRoutes[key]
+                    ? "bg-[#faf8f5] text-[#101623]"
+                    : ""
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <div className="flex flex-col gap-3 border-t border-[#e8e3dc] px-5 py-4">
+            {portalHref ? (
+              <Link
+                href={portalHref}
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-[10px] bg-[#c6613f] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[#a94e30]"
+              >
+                Go Portal
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-[10px] border border-[#e8e3dc] px-5 py-2.5 text-center text-sm font-bold text-[#101623] transition hover:border-[#101623]"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-[10px] bg-[#c6613f] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[#a94e30]"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
 
       {page !== "home" && <PageHeader page={page} />}
 
@@ -2099,7 +2181,36 @@ export function LandingPage({
                 </p>
               </button>
             ))}
-            <JoinTeamCard />
+          </div>
+        </div>
+      </section>
+      )}
+
+      {page === "team" && (
+      <section className="py-[72px]">
+        <div className="mx-auto max-w-[1140px] px-4">
+          <div className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] px-8 py-14 text-center sm:px-16">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#c6613f]/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-[#c6613f]/10 blur-3xl" />
+            <div className="relative mx-auto max-w-xl">
+              <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-[#c6613f] text-2xl font-extrabold text-white">
+                +
+              </div>
+              <h3 className="text-2xl font-extrabold text-white sm:text-3xl">
+                Become a team member
+              </h3>
+              <p className="mt-3 text-sm font-medium leading-6 text-[#c9cedb]">
+                Passionate about design, development, or client success? Join AP Tech
+                Agency and work with a team that delivers real projects for real clients.
+              </p>
+              <Link
+                href="/register"
+                className="mt-7 inline-flex items-center gap-2 rounded-[10px] bg-[#c6613f] px-7 py-3 text-sm font-bold text-white transition hover:bg-[#a94e30]"
+              >
+                Join AP Tech Agency
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
