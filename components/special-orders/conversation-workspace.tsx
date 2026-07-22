@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Check, Clock, ExternalLink, MessageSquareText, Plus, Upload } from "lucide-react";
 
 import {
+  addSpecialOrderBreak,
   addSpecialOrderMessage,
   saveSpecialOrderField,
   toggleSpecialOrderFieldDone,
@@ -36,12 +37,14 @@ import { Textarea } from "@/components/ui/textarea";
 
 type ScriptMessage = {
   id: string;
+  kind?: "MESSAGE" | "BREAK";
   sender: "BUYER" | "SELLER";
   message: string;
   attachment?: string;
   done: boolean;
   createdAt: string;
   copiedAt?: string;
+  breakMinutes?: number;
 };
 
 const BREAK_PRESETS = [
@@ -138,6 +141,8 @@ export function ConversationWorkspace({
   const [buyerEditOpen, setBuyerEditOpen] = useState(false);
   const [buyerValue, setBuyerValue] = useState(buyerName ?? "");
   const [messageOpen, setMessageOpen] = useState(false);
+  const [breakOpen, setBreakOpen] = useState(false);
+  const [newBreakMinutes, setNewBreakMinutes] = useState("10");
   const [fieldOpen, setFieldOpen] = useState(false);
   const [sender, setSender] = useState<"BUYER" | "SELLER">("BUYER");
   const [message, setMessage] = useState("");
@@ -197,13 +202,19 @@ export function ConversationWorkspace({
 
   function messageLockInfo(index: number) {
     if (index === 0) return { locked: false, waitSec: 0 };
-    const previous = messages[index - 1];
+    const priorItem = messages[index - 1];
+    const isSpecialBreak = priorItem.kind === "BREAK";
+    const previous = isSpecialBreak ? messages[index - 2] : priorItem;
+    if (!previous) return { locked: false, waitSec: 0 };
     if (!previous.done) return { locked: true, waitSec: 0 };
-    if (breakMinutes <= 0 || !previous.copiedAt) {
+    const effectiveBreakMinutes = isSpecialBreak
+      ? (priorItem.breakMinutes ?? breakMinutes)
+      : breakMinutes;
+    if (effectiveBreakMinutes <= 0 || !previous.copiedAt) {
       return { locked: false, waitSec: 0 };
     }
     const elapsedMs = now - new Date(previous.copiedAt).getTime();
-    const requiredMs = breakMinutes * 60_000;
+    const requiredMs = effectiveBreakMinutes * 60_000;
     const waitSec = Math.max(0, Math.ceil((requiredMs - elapsedMs) / 1000));
     return { locked: waitSec > 0, waitSec };
   }
@@ -252,6 +263,24 @@ export function ConversationWorkspace({
     router.refresh();
   }
 
+  async function submitBreak(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    const result = await addSpecialOrderBreak(
+      orderId,
+      Number(newBreakMinutes)
+    );
+    setBusy(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setNewBreakMinutes("10");
+    setBreakOpen(false);
+    router.refresh();
+  }
+
   async function submitField(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -276,7 +305,7 @@ export function ConversationWorkspace({
   }
 
   function canToggleMessage(message: ScriptMessage) {
-    if (actionsLocked) return false;
+    if (actionsLocked || message.kind === "BREAK") return false;
     if (message.sender === "BUYER") return viewerRole === "PARTNER";
     return viewerRole === "ADMIN";
   }
@@ -375,29 +404,39 @@ export function ConversationWorkspace({
                 <MessageSquareText className="h-4 w-4" />
                 Conversation script
               </span>
-              <Button
-                size="sm"
-                variant="outline"
-                type="button"
-                onClick={() => setMessageOpen(true)}
-                className={readOnly ? "hidden" : ""}
-              >
-                <Plus className="mr-1 h-3.5 w-3.5" />
-                Add
-              </Button>
+              <div className={`flex gap-2 ${readOnly ? "hidden" : ""}`}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => setBreakOpen(true)}
+                >
+                  <Clock className="mr-1 h-3.5 w-3.5" />
+                  Add break
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => setMessageOpen(true)}
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Add message
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 p-4">
             <p className="text-xs text-muted-foreground">
               {actionsLocked
                 ? "Completed order is view only. Copy and check actions are locked."
-                : "Click the check box to copy text and mark it done. Each message unlocks after the one before it is copied."}
+                : "Click the check box to copy text and mark it done. Each message unlocks after the one before it is copied. Insert a special break to add an extra pause at one spot."}
             </p>
             {viewerRole === "ADMIN" && !actionsLocked && (
               <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/20 p-2 text-xs">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  Break between messages:
+                  Regular break between messages:
                 </span>
                 {BREAK_PRESETS.map((preset) => (
                   <button
@@ -447,6 +486,20 @@ export function ConversationWorkspace({
               </p>
             )}
             {messages.map((item, index) => {
+              if (item.kind === "BREAK") {
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-2 rounded-md border border-dashed border-amber-400/50 bg-amber-500/5 px-3 py-2 text-xs font-medium text-amber-600"
+                  >
+                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                    Special break — wait {item.breakMinutes ?? breakMinutes}{" "}
+                    minute{(item.breakMinutes ?? breakMinutes) === 1 ? "" : "s"}{" "}
+                    before the next message unlocks
+                  </div>
+                );
+              }
+
               const label =
                 item.sender === "BUYER" ? buyerLabel : profileName;
               const display = replaceNames(item.message, buyerLabel, profileName);
@@ -712,6 +765,56 @@ export function ConversationWorkspace({
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Adding..." : "Add message"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={breakOpen} onOpenChange={setBreakOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add special break</DialogTitle>
+            <DialogDescription>
+              Inserts a one-off pause at this point in the script — it
+              overrides the regular break just for the message right after
+              it.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={submitBreak} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Break duration</Label>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {BREAK_PRESETS.map((preset) => (
+                  <button
+                    key={preset.minutes}
+                    type="button"
+                    onClick={() => setNewBreakMinutes(String(preset.minutes))}
+                    className={`rounded-full border px-2 py-1 ${
+                      Number(newBreakMinutes) === preset.minutes
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "hover:border-primary/40"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  value={newBreakMinutes}
+                  onChange={(event) => setNewBreakMinutes(event.target.value)}
+                  className="h-8 w-24"
+                />
+                <span className="text-xs text-muted-foreground">
+                  minutes (custom)
+                </span>
+              </div>
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Adding..." : "Add break"}
             </Button>
           </form>
         </DialogContent>

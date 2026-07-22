@@ -50,12 +50,14 @@ function optionalDate(value?: string) {
 
 type ScriptMessage = {
   id: string;
+  kind?: "MESSAGE" | "BREAK";
   sender: "BUYER" | "SELLER";
   message: string;
   attachment?: string;
   done: boolean;
   createdAt: string;
   copiedAt?: string;
+  breakMinutes?: number;
 };
 
 type ConversationField = {
@@ -1160,6 +1162,60 @@ export async function addSpecialOrderMessage(formData: {
   return { success: true };
 }
 
+// ============================================
+// ADD A SPECIAL BREAK INTO THE SCRIPT
+// A one-off pause inserted at a specific point in
+// the script, separate from the conversation's
+// regular (uniform) break. Overrides the regular
+// break just for the gap right after it.
+// ============================================
+export async function addSpecialOrderBreak(
+  orderId: string,
+  minutes: number
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  if (!orderId) return { error: "Conversation not found" };
+  if (!Number.isFinite(minutes) || minutes <= 0) {
+    return { error: "Enter a valid break duration" };
+  }
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { status: true, conversationMessages: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED") {
+    return { error: "Completed orders are view only" };
+  }
+
+  const messages = jsonArray<ScriptMessage>(order.conversationMessages);
+  messages.push({
+    id: crypto.randomUUID(),
+    kind: "BREAK",
+    sender: "SELLER",
+    message: `Special break — ${minutes} minute${minutes === 1 ? "" : "s"}`,
+    done: false,
+    createdAt: new Date().toISOString(),
+    breakMinutes: minutes,
+  });
+
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: { conversationMessages: messages },
+  });
+
+  await triggerPusher(
+    `special-order-script-${orderId}`,
+    "messages-updated",
+    { messages }
+  );
+
+  revalidatePath(`/special-orders/${orderId}`);
+  return { success: true };
+}
+
 export async function toggleSpecialOrderMessageDone(
   orderId: string,
   messageId: string
@@ -1188,6 +1244,10 @@ export async function toggleSpecialOrderMessageDone(
   if (index === -1) return { error: "Message not found" };
   const targetMessage = allMessages[index];
 
+  if (targetMessage.kind === "BREAK") {
+    return { error: "A break isn't a message to copy" };
+  }
+
   const assignedPartner = isPartner && order.partnerId === session.user.id;
   const allowed =
     targetMessage.sender === "BUYER" ? assignedPartner : isAdmin;
@@ -1197,13 +1257,18 @@ export async function toggleSpecialOrderMessageDone(
   const marking = !targetMessage.done;
 
   if (marking && index > 0) {
-    const previous = allMessages[index - 1];
-    if (!previous.done) {
+    const priorItem = allMessages[index - 1];
+    const isSpecialBreak = priorItem.kind === "BREAK";
+    const previous = isSpecialBreak ? allMessages[index - 2] : priorItem;
+
+    if (previous && !previous.done) {
       return { error: "Copy the previous message first" };
     }
 
-    const breakMinutes = order.conversationBreakMinutes ?? 1;
-    if (breakMinutes > 0 && previous.copiedAt) {
+    const breakMinutes = isSpecialBreak
+      ? (priorItem.breakMinutes ?? order.conversationBreakMinutes ?? 1)
+      : (order.conversationBreakMinutes ?? 1);
+    if (previous && breakMinutes > 0 && previous.copiedAt) {
       const elapsedMs = Date.now() - new Date(previous.copiedAt).getTime();
       const requiredMs = breakMinutes * 60_000;
       if (elapsedMs < requiredMs) {
