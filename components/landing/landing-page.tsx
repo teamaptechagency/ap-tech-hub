@@ -2124,13 +2124,13 @@ export function LandingPage({
             in one place so it reflects what people actually say working
             with us.
           </p>
-          <CardRail>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {visibleReviews.map((review) => (
               <button
                 key={review.id}
                 type="button"
                 onClick={() => setModal({ type: "review", item: review })}
-                className="flex h-[242px] w-[min(88vw,320px)] shrink-0 snap-start flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[48%] lg:w-[320px]"
+                className="flex h-[242px] flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
               >
                 <div className="mb-4 flex items-center justify-between gap-2">
                   <div className="flex gap-1 text-amber-400">
@@ -2182,7 +2182,7 @@ export function LandingPage({
                 </div>
               </button>
             ))}
-          </CardRail>
+          </div>
         </div>
       </section>
       )}
