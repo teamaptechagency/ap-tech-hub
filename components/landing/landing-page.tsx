@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import {
   type FormEvent,
   type ReactNode,
@@ -238,12 +239,114 @@ function MiniReviewRail({ reviews }: { reviews: LandingReviewData[] }) {
   );
 }
 
-function scrollToId(target: string) {
-  if (!target.startsWith("#")) return;
-  document.querySelector(target)?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
+export type LandingPageKey =
+  | "home"
+  | "services"
+  | "portfolio"
+  | "team"
+  | "testimonials"
+  | "about"
+  | "contact";
+
+const sectionRoutes: Record<string, string> = {
+  home: "/",
+  services: "/services",
+  portfolio: "/portfolio",
+  team: "/team",
+  testimonials: "/testimonials",
+  about: "/about",
+  contact: "/contact",
+};
+
+// Every internal "section" link (nav, hero CTAs, modal buttons, ad
+// buttons) used to scroll within one long page. Now each section is
+// its own route, so the same targets ("#services" etc.) navigate to
+// a real page instead. Anything not a known section still falls back
+// to an in-page anchor scroll.
+function useSectionNav() {
+  const router = useRouter();
+  return (target: string) => {
+    const id = target.replace(/^#/, "");
+    const href = sectionRoutes[id];
+    if (href) {
+      router.push(href);
+      return;
+    }
+    if (target.startsWith("#")) {
+      document.querySelector(target)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+}
+
+const pageHeaderContent: Record<
+  Exclude<LandingPageKey, "home">,
+  { eyebrow: string; title: string; description: string }
+> = {
+  services: {
+    eyebrow: "What We Do",
+    title: "Popular Services",
+    description:
+      "Web, design, marketing and support services built around what your business actually needs.",
+  },
+  portfolio: {
+    eyebrow: "Our Work",
+    title: "Recent Projects",
+    description:
+      "A look at projects we've delivered — real client work across web, e-commerce and more.",
+  },
+  team: {
+    eyebrow: "Our Team",
+    title: "Meet Our Experts",
+    description:
+      "The people behind AP Tech Agency — designers, developers and specialists working on your project.",
+  },
+  testimonials: {
+    eyebrow: "Testimonials",
+    title: "What Our Clients Say",
+    description:
+      "Real feedback our clients have left about the team on Fiverr, Upwork and other marketplaces, plus direct projects.",
+  },
+  about: {
+    eyebrow: "About Us",
+    title: "About AP Tech Agency",
+    description: "Who we are and how we work with clients.",
+  },
+  contact: {
+    eyebrow: "Get In Touch",
+    title: "Let's Work Together",
+    description:
+      "Have a project in mind or need consultation? Send a message and the team will get back to you.",
+  },
+};
+
+function PageHeader({ page }: { page: Exclude<LandingPageKey, "home"> }) {
+  const content = pageHeaderContent[page];
+  return (
+    <section className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">
+      <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
+      <div className="relative z-10 mx-auto max-w-[1140px] px-4">
+        <nav className="mb-3 flex items-center gap-2 text-xs text-[#9aa3b3]">
+          <Link href="/" className="hover:text-white">
+            Home
+          </Link>
+          <span>/</span>
+          <span className="text-white">{content.title}</span>
+        </nav>
+        <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[#f5a83c]">
+          {content.eyebrow}
+        </p>
+        <h1 className="max-w-2xl text-3xl font-extrabold leading-[1.1] tracking-tight md:text-[42px]">
+          {content.title}
+        </h1>
+        <p className="mt-3 max-w-xl text-sm leading-7 text-[#cbd2df]">
+          {content.description}
+        </p>
+      </div>
+    </section>
+  );
 }
 
 function SectionLabel({
@@ -459,6 +562,7 @@ function LandingModal({
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<"personal" | "jobs">("personal");
+  const goToSection = useSectionNav();
 
   if (!modal) return null;
 
@@ -487,7 +591,7 @@ function LandingModal({
           type="button"
           onClick={() => {
             onClose();
-            window.setTimeout(() => scrollToId("#contact"), 80);
+            goToSection("#contact");
           }}
           className="inline-flex items-center gap-2 rounded-[10px] bg-[#c6613f] px-5 py-3 text-sm font-extrabold text-white transition hover:bg-[#a94e30]"
         >
@@ -552,7 +656,7 @@ function LandingModal({
             type="button"
             onClick={() => {
               onClose();
-              window.setTimeout(() => scrollToId("#contact"), 80);
+              goToSection("#contact");
             }}
             className="inline-flex items-center gap-2 rounded-[10px] bg-[#c6613f] px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#a94e30]"
           >
@@ -1114,6 +1218,7 @@ function AdButton({
   compact?: boolean;
   countdown?: string | null;
 }) {
+  const goToSection = useSectionNav();
   if (!isVisibleAd(ad)) return null;
 
   const content = (
@@ -1146,7 +1251,7 @@ function AdButton({
     return (
       <button
         type="button"
-        onClick={() => scrollToId(ad.buttonUrl || "#contact")}
+        onClick={() => goToSection(ad.buttonUrl || "#contact")}
         className={className}
       >
         {content}
@@ -1308,35 +1413,41 @@ export function LandingPage({
   data,
   portalHref,
   publicLogoUrl,
+  page = "home",
 }: {
   data: LandingPageData;
   portalHref?: string | null;
   publicLogoUrl?: string | null;
+  page?: LandingPageKey;
 }) {
   const [heroIndex, setHeroIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState("all");
   const [modal, setModal] = useState<ModalState>(null);
   const [contactPending, startContactTransition] = useTransition();
   const [trustStats, setTrustStats] = useState<TrustStats | null>(null);
+  const goToSection = useSectionNav();
+  const pathname = usePathname();
 
   const activeHero = data.heroSlides[heroIndex] ?? data.heroSlides[0];
 
   useEffect(() => {
+    if (page !== "home") return;
     const timer = window.setInterval(() => {
       setHeroIndex((current) => (current + 1) % data.heroSlides.length);
     }, 6500);
 
     return () => window.clearInterval(timer);
-  }, [data.heroSlides.length]);
+  }, [data.heroSlides.length, page]);
 
   useEffect(() => {
+    if (page !== "home") return;
     setTrustStats(buildTrustStats());
     const timer = window.setInterval(() => {
       setTrustStats(buildTrustStats());
     }, 45000);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     const key = "ap-tech-landing-visit-recorded";
@@ -1398,9 +1509,8 @@ export function LandingPage({
           stats={trustStats}
         />
         <div className="mx-auto flex h-16 max-w-[1140px] items-center justify-between gap-5 px-4">
-          <button
-            type="button"
-            onClick={() => scrollToId("#home")}
+          <Link
+            href="/"
             className="flex items-center gap-2 text-left text-xl font-extrabold leading-none text-[#101623]"
           >
             {publicLogoUrl?.trim() ? (
@@ -1413,25 +1523,30 @@ export function LandingPage({
             <span>
               AP Tech <span className="text-[#c6613f]">Agency</span>
             </span>
-          </button>
+          </Link>
           <nav className="hidden items-center gap-7 text-sm font-semibold text-[#6b7280] lg:flex">
-            {[
-              ["Home", "#home"],
-              ["Services", "#services"],
-              ["Portfolio", "#portfolio"],
-              ["Our Team", "#team"],
-              ["Testimonials", "#testimonials"],
-              ["About Us", "#about"],
-              ["Contact", "#contact"],
-            ].map(([label, target]) => (
-              <button
-                key={target}
-                type="button"
-                onClick={() => scrollToId(target)}
-                className="transition hover:text-[#101623]"
+            {(
+              [
+                ["Home", "home"],
+                ["Services", "services"],
+                ["Portfolio", "portfolio"],
+                ["Our Team", "team"],
+                ["Testimonials", "testimonials"],
+                ["About Us", "about"],
+                ["Contact", "contact"],
+              ] as [string, LandingPageKey][]
+            ).map(([label, key]) => (
+              <Link
+                key={key}
+                href={sectionRoutes[key]}
+                className={`transition hover:text-[#101623] ${
+                  pathname === sectionRoutes[key]
+                    ? "text-[#101623]"
+                    : ""
+                }`}
               >
                 {label}
-              </button>
+              </Link>
             ))}
           </nav>
           <div className="flex items-center gap-3">
@@ -1463,6 +1578,9 @@ export function LandingPage({
         <TopAd ad={data.ads.top} countdownEndsAt={data.topBar.countdownEndsAt} />
       </header>
 
+      {page !== "home" && <PageHeader page={page} />}
+
+      {page === "home" && (
       <section
         id="home"
         className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] pt-16 text-white md:pt-20"
@@ -1485,7 +1603,7 @@ export function LandingPage({
               {activeHero?.primaryLabel && (
                 <button
                   type="button"
-                  onClick={() => scrollToId(activeHero.primaryTarget || "#services")}
+                  onClick={() => goToSection(activeHero.primaryTarget || "#services")}
                   className="inline-flex items-center gap-2 rounded-[10px] bg-[#c6613f] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#a94e30]"
                 >
                   {activeHero.primaryLabel}
@@ -1495,7 +1613,7 @@ export function LandingPage({
               {activeHero?.secondaryLabel && (
                 <button
                   type="button"
-                  onClick={() => scrollToId(activeHero.secondaryTarget || "#portfolio")}
+                  onClick={() => goToSection(activeHero.secondaryTarget || "#portfolio")}
                   className="inline-flex items-center gap-2 rounded-[10px] border border-white/35 px-5 py-3 text-sm font-bold text-white transition hover:border-white"
                 >
                   {activeHero.secondaryLabel}
@@ -1584,7 +1702,79 @@ export function LandingPage({
           </div>
         </div>
       </section>
+      )}
 
+      {page === "home" && (
+        <section className="py-[72px]">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <SectionLabel
+              eyebrow="What We Do"
+              title="Popular services"
+              action={
+                <Link
+                  href="/services"
+                  className="hidden text-sm font-bold text-[#c6613f] md:inline"
+                >
+                  View all services →
+                </Link>
+              }
+            />
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              {data.services
+                .filter((service) => !service.hidden)
+                .slice(0, 4)
+                .map((service) => (
+                  <button
+                    type="button"
+                    key={service.id}
+                    onClick={() => setModal({ type: "service", item: service })}
+                    className="group flex h-[206px] flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.12)] sm:h-[236px]"
+                  >
+                    {service.thumbnailUrl || service.imageUrl ? (
+                      <img
+                        src={service.thumbnailUrl || service.imageUrl || ""}
+                        alt={service.title}
+                        className="h-[92px] w-full object-cover sm:h-[118px]"
+                      />
+                    ) : (
+                      <div
+                        className="grid h-[92px] place-items-center text-3xl sm:h-[118px] sm:text-4xl"
+                        style={{ backgroundColor: service.accent || "#2e3b55" }}
+                      >
+                        <span className="drop-shadow-sm">
+                          {service.emoji || categoryEmojiMap[service.categorySlug] || "⭐"}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex flex-1 flex-col p-3 sm:p-4">
+                      <h3 className="line-clamp-2 min-h-10 text-[13px] font-extrabold leading-5 text-[#101623] sm:min-h-12 sm:text-[15px] sm:leading-6">
+                        {service.title}
+                      </h3>
+                      <div className="mt-auto flex items-end justify-between gap-2 pt-3 sm:gap-3 sm:pt-4">
+                        <span className="text-xs font-bold text-[#f59e0b] sm:text-sm">
+                          ★ {ratingStars(service.rating).label}
+                        </span>
+                        {service.priceRange && (
+                          <span className="text-right text-[11px] text-[#64748b] sm:text-xs">
+                            {service.priceRange.replace("Start from ", "From ")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+            </div>
+            <Link
+              href="/services"
+              className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
+            >
+              View all services →
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {page === "services" && (
       <section id="services" className="scroll-mt-24 py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <SectionLabel
@@ -1593,7 +1783,7 @@ export function LandingPage({
             action={
               <button
                 type="button"
-                onClick={() => scrollToId("#contact")}
+                onClick={() => goToSection("#contact")}
                 className="hidden text-sm font-bold text-[#c6613f] md:inline"
               >
                 Start a project →
@@ -1677,7 +1867,65 @@ export function LandingPage({
           </div>
         </div>
       </section>
+      )}
 
+      {page === "home" && (
+        <section className="border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <SectionLabel
+              eyebrow="Our Work"
+              title="Recent Projects"
+              action={
+                <Link
+                  href="/portfolio"
+                  className="hidden text-sm font-bold text-[#c6613f] md:inline"
+                >
+                  View all projects →
+                </Link>
+              }
+            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {visibleProjects.slice(0, 3).map((project, index) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  onClick={() => setModal({ type: "project", item: project })}
+                  className="flex h-[224px] flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
+                >
+                  {project.thumbnailUrl || project.imageUrl ? (
+                    <img
+                      src={project.thumbnailUrl || project.imageUrl || ""}
+                      alt={project.title}
+                      className="h-[130px] w-full object-cover"
+                    />
+                  ) : (
+                    <div className="grid h-[130px] place-items-center bg-[linear-gradient(135deg,#1b2334,#3d4c6b)] text-4xl">
+                      {["📊", "🛍️", "✈️", "🎓", "🏥", "🏠"][index % 6]}
+                    </div>
+                  )}
+                  <div className="flex flex-1 flex-col p-4">
+                    <h3 className="line-clamp-2 font-extrabold text-[#101623]">
+                      {project.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-[#6b7280]">
+                      {[project.service, project.category].filter(Boolean).join(" / ") ||
+                        "Project"}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <Link
+              href="/portfolio"
+              className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
+            >
+              View all projects →
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {page === "portfolio" && (
       <section id="portfolio" className="scroll-mt-24 border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <SectionLabel eyebrow="Our Work" title="Recent Projects" />
@@ -1721,7 +1969,58 @@ export function LandingPage({
           </CardRail>
         </div>
       </section>
+      )}
 
+      {page === "home" && (
+        <section className="py-[72px]">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <SectionLabel
+              eyebrow="Our Team"
+              title="Meet Our Experts"
+              action={
+                <Link
+                  href="/team"
+                  className="hidden text-sm font-bold text-[#c6613f] md:inline"
+                >
+                  Meet the full team →
+                </Link>
+              }
+            />
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {visibleTeam.slice(0, 4).map((member) => (
+                <button
+                  key={member.id}
+                  type="button"
+                  onClick={() => setModal({ type: "team", item: member })}
+                  className="flex h-[214px] flex-col items-center justify-center rounded-[14px] border border-[#e8e3dc] bg-white p-4 text-center transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
+                >
+                  <div className="mx-auto mb-3 grid h-[72px] w-[72px] place-items-center rounded-full bg-[#1b2334] text-xl font-extrabold text-white">
+                    {member.name
+                      .split(" ")
+                      .map((part) => part[0])
+                      .slice(0, 2)
+                      .join("")}
+                  </div>
+                  <h3 className="line-clamp-2 min-h-10 font-extrabold leading-5 text-[#101623]">
+                    {member.name}
+                  </h3>
+                  <p className="mt-1 line-clamp-2 min-h-8 text-xs font-bold leading-4 text-[#c6613f]">
+                    {member.role}
+                  </p>
+                </button>
+              ))}
+            </div>
+            <Link
+              href="/team"
+              className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
+            >
+              Meet the full team →
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {page === "team" && (
       <section id="team" className="scroll-mt-24 py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <SectionLabel eyebrow="Our Team" title="Meet Our Experts" />
@@ -1753,7 +2052,71 @@ export function LandingPage({
           </div>
         </div>
       </section>
+      )}
 
+      {page === "home" && (
+        <section className="border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <SectionLabel
+              eyebrow="Testimonials"
+              title="What Our Clients Say"
+              action={
+                <Link
+                  href="/testimonials"
+                  className="hidden text-sm font-bold text-[#c6613f] md:inline"
+                >
+                  Read all reviews →
+                </Link>
+              }
+            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {visibleReviews.slice(0, 3).map((review) => (
+                <button
+                  key={review.id}
+                  type="button"
+                  onClick={() => setModal({ type: "review", item: review })}
+                  className="flex h-[220px] flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
+                >
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <div className="flex gap-1 text-amber-400">
+                      {Array.from({ length: ratingStars(review.rating).stars }).map(
+                        (_, index) => (
+                          <Star key={index} size={14} fill="currentColor" />
+                        )
+                      )}
+                    </div>
+                    {review.country && (
+                      <span className="shrink-0 whitespace-nowrap rounded-full bg-[#faf8f5] px-2 py-1 text-[11px] font-bold text-[#6b7280]">
+                        {countryFlag(review.country)} {review.country}
+                      </span>
+                    )}
+                  </div>
+                  <p className="line-clamp-4 text-sm leading-6 text-slate-700">
+                    {review.quote}
+                  </p>
+                  <div className="mt-auto flex items-center gap-3 pt-4">
+                    <ReviewAvatar name={review.clientName} />
+                    <div>
+                      <p className="text-sm font-black">{review.clientName}</p>
+                      <p className="text-xs text-slate-500">
+                        {[review.clientRole, review.company].filter(Boolean).join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <Link
+              href="/testimonials"
+              className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
+            >
+              Read all reviews →
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {page === "testimonials" && (
       <section id="testimonials" className="scroll-mt-24 border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <SectionLabel eyebrow="Testimonials" title="What Our Clients Say" />
@@ -1825,7 +2188,43 @@ export function LandingPage({
           </CardRail>
         </div>
       </section>
+      )}
 
+      {page === "home" && (
+        <section className="py-[72px]">
+          <div className="mx-auto grid max-w-[1140px] items-center gap-10 px-4 lg:grid-cols-[1.1fr_.9fr]">
+            <div>
+              <SectionLabel eyebrow={data.about.eyebrow} title={data.about.title} />
+              <p className="max-w-2xl text-[15px] leading-7 text-[#6b7280]">
+                {data.about.description}
+              </p>
+              <Link
+                href="/about"
+                className="mt-5 inline-flex text-sm font-bold text-[#c6613f]"
+              >
+                Learn more about us →
+              </Link>
+            </div>
+            <div className="rounded-[18px] bg-[linear-gradient(120deg,#14231c,#1f3a2c)] p-8 text-[#cfe0d6]">
+              <b className="mb-3 block text-lg font-extrabold text-white">
+                One portal for every project
+              </b>
+              <p className="text-sm leading-7">
+                Clients track progress, chat with the team, join meetings and pay
+                invoices from AP Tech Hub. Our own client portal keeps work clear.
+              </p>
+              <Link
+                href={portalHref ?? "/register"}
+                className="mt-5 inline-flex rounded-[10px] bg-[#c6613f] px-5 py-3 text-sm font-bold text-white"
+              >
+                {portalHref ? "Go Portal" : "Sign up"}
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {page === "about" && (
       <section id="about" className="scroll-mt-24 py-[72px]">
         <div className="mx-auto grid max-w-[1140px] items-center gap-10 px-4 lg:grid-cols-[1.1fr_.9fr]">
           <div>
@@ -1864,7 +2263,31 @@ export function LandingPage({
           </div>
         </div>
       </section>
+      )}
 
+      {page === "home" && (
+        <section className="border-t border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <div className="grid gap-8 rounded-[18px] border border-[#e8e3dc] bg-white p-8 md:grid-cols-[1fr_auto] md:items-center">
+              <div>
+                <SectionLabel eyebrow="Get In Touch" title="Let's Work Together" />
+                <p className="max-w-md text-sm leading-7 text-[#6b7280]">
+                  Have a project in mind or need consultation? Send a message
+                  and the team will get back to you.
+                </p>
+              </div>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-[#c6613f] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#a94e30]"
+              >
+                Contact us <Send size={16} />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {page === "contact" && (
       <section id="contact" className="scroll-mt-24 border-t border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <div className="grid gap-10 lg:grid-cols-[1fr_1.4fr]">
@@ -1907,6 +2330,7 @@ export function LandingPage({
           </div>
         </div>
       </section>
+      )}
 
       <footer className="bg-[#101623] text-white">
         <div className="px-4 py-20 text-center">

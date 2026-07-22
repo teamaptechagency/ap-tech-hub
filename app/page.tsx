@@ -1,88 +1,19 @@
 import { LandingPage } from "@/components/landing/landing-page";
 import { getLandingPageData } from "@/lib/landing-data";
 import { getBrandingSettings } from "@/lib/branding";
+import { buildLandingMetadata } from "@/lib/landing-metadata";
 import { auth } from "@/lib/auth";
 import { homeFor } from "@/lib/roles";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-function readMetadataBase(siteUrl: string) {
-  try {
-    return siteUrl ? new URL(siteUrl) : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 export async function generateMetadata(): Promise<Metadata> {
   const [data, branding] = await Promise.all([
     getLandingPageData(),
     getBrandingSettings(),
   ]);
-  const title = data.seo.title;
-  const description = data.seo.description;
-  const imageUrl =
-    data.seo.socialImageUrl || data.heroSlides[0]?.imageUrl || undefined;
-  const siteUrl = data.seo.siteUrl.trim();
-  const metadataBase = readMetadataBase(siteUrl);
-
-  return {
-    metadataBase,
-    title,
-    description,
-    keywords: data.seo.keywords
-      .split(",")
-      .map((keyword) => keyword.trim())
-      .filter(Boolean),
-    alternates: {
-      canonical: "/",
-    },
-    robots: data.seo.allowIndexing
-      ? {
-          index: true,
-          follow: true,
-          googleBot: {
-            index: true,
-            follow: true,
-            "max-image-preview": "large",
-            "max-snippet": -1,
-          },
-        }
-      : {
-          index: false,
-          follow: false,
-        },
-    verification: data.seo.googleVerification
-      ? { google: data.seo.googleVerification }
-      : undefined,
-    openGraph: {
-      title,
-      description,
-      type: "website",
-      siteName: "AP Tech Agency",
-      images: imageUrl ? [{ url: imageUrl }] : undefined,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: imageUrl ? [imageUrl] : undefined,
-    },
-    icons: branding.faviconUrl
-      ? {
-          icon: branding.faviconUrl,
-          shortcut: branding.faviconUrl,
-          apple: branding.faviconUrl,
-        }
-      : undefined,
-    other: {
-      "business:contact_data:email": data.seo.email,
-      "business:contact_data:phone_number": data.seo.phone,
-      "business:contact_data:street_address": data.seo.address,
-      "geo.placename": data.seo.address,
-    },
-  };
+  return buildLandingMetadata(data, branding, { path: "/" });
 }
 
 export default async function RootPage() {

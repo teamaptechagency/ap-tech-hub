@@ -19,7 +19,16 @@ const PUBLIC_PATHS = [
   "/api/cron",
 ];
 
-const PUBLIC_EXACT_PATHS = ["/", "/landing"];
+const PUBLIC_EXACT_PATHS = [
+  "/",
+  "/landing",
+  "/services",
+  "/portfolio",
+  "/team",
+  "/testimonials",
+  "/about",
+  "/contact",
+];
 
 export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
