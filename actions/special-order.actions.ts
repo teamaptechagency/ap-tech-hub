@@ -1327,9 +1327,11 @@ export async function updateSpecialOrderConversationBreak(
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 
+  const REGULAR_BREAK_MAX_MINUTES = 5;
   if (!Number.isFinite(minutes) || minutes < 0) {
     return { error: "Enter a valid break duration" };
   }
+  minutes = Math.min(minutes, REGULAR_BREAK_MAX_MINUTES);
 
   const order = await prisma.specialOrder.findUnique({
     where: { id: orderId },

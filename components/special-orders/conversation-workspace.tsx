@@ -47,6 +47,17 @@ type ScriptMessage = {
   breakMinutes?: number;
 };
 
+// Regular break: uniform gap applied between every message pair.
+// Capped small (max 5m) so the script doesn't stall for long by default.
+const REGULAR_BREAK_MAX_MINUTES = 5;
+const REGULAR_BREAK_PRESETS = [
+  { label: "1 minute", minutes: 1 },
+  { label: "3 minutes", minutes: 3 },
+  { label: "5 minutes", minutes: 5 },
+];
+
+// Special break: one-off pause insertable at a specific point in the
+// script, can be much longer since it's used deliberately.
 const BREAK_PRESETS = [
   { label: "1 minute", minutes: 1 },
   { label: "10 minutes", minutes: 10 },
@@ -221,10 +232,11 @@ export function ConversationWorkspace({
 
   async function saveBreak(minutes: number) {
     if (!Number.isFinite(minutes) || minutes < 0) return;
+    const clamped = Math.min(minutes, REGULAR_BREAK_MAX_MINUTES);
     const previous = breakMinutes;
-    setBreakMinutes(minutes);
-    setCustomBreak(String(minutes));
-    const result = await updateSpecialOrderConversationBreak(orderId, minutes);
+    setBreakMinutes(clamped);
+    setCustomBreak(String(clamped));
+    const result = await updateSpecialOrderConversationBreak(orderId, clamped);
     if (result?.error) {
       toast.error(result.error);
       setBreakMinutes(previous);
@@ -438,7 +450,7 @@ export function ConversationWorkspace({
                 <span className="text-muted-foreground">
                   Regular break between messages:
                 </span>
-                {BREAK_PRESETS.map((preset) => (
+                {REGULAR_BREAK_PRESETS.map((preset) => (
                   <button
                     key={preset.minutes}
                     type="button"
@@ -456,6 +468,7 @@ export function ConversationWorkspace({
                   <Input
                     type="number"
                     min={0}
+                    max={REGULAR_BREAK_MAX_MINUTES}
                     value={customBreak}
                     onChange={(event) => setCustomBreak(event.target.value)}
                     onBlur={() => {
@@ -464,7 +477,9 @@ export function ConversationWorkspace({
                     }}
                     className="h-6 w-16 text-xs"
                   />
-                  <span className="text-muted-foreground">min (custom)</span>
+                  <span className="text-muted-foreground">
+                    min (custom, max {REGULAR_BREAK_MAX_MINUTES})
+                  </span>
                 </div>
               </div>
             )}
