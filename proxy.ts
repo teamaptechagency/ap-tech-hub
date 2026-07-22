@@ -26,6 +26,7 @@ const PUBLIC_EXACT_PATHS = [
   "/portfolio",
   "/team",
   "/testimonials",
+  "/process",
   "/about",
   "/contact",
 ];

@@ -245,6 +245,7 @@ export type LandingPageKey =
   | "portfolio"
   | "team"
   | "testimonials"
+  | "process"
   | "about"
   | "contact";
 
@@ -254,6 +255,7 @@ const sectionRoutes: Record<string, string> = {
   portfolio: "/portfolio",
   team: "/team",
   testimonials: "/testimonials",
+  process: "/process",
   about: "/about",
   contact: "/contact",
 };
@@ -309,6 +311,12 @@ const pageHeaderContent: Record<
     description:
       "Real feedback our clients have left about the team on Fiverr, Upwork and other marketplaces, plus direct projects.",
   },
+  process: {
+    eyebrow: "How We Work",
+    title: "Our Working Process",
+    description:
+      "From your first brief to 60 days of free support after delivery — here's exactly how we take a project from idea to launch.",
+  },
   about: {
     eyebrow: "About Us",
     title: "About AP Tech Agency",
@@ -321,6 +329,51 @@ const pageHeaderContent: Record<
       "Have a project in mind or need consultation? Send a message and the team will get back to you.",
   },
 };
+
+const processSteps: { number: string; title: string; description: string }[] = [
+  {
+    number: "01",
+    title: "Client Brief & Project Details",
+    description:
+      "You share your project brief, goals and requirements with us so the team knows exactly what you need.",
+  },
+  {
+    number: "02",
+    title: "Business Research & Sitemap",
+    description:
+      "Nazmul Hasan and the web team research the full scope of your business, then prepare a sitemap and send it over for your review.",
+  },
+  {
+    number: "03",
+    title: "Sitemap Revision & Finalization",
+    description:
+      "Based on your feedback, we revise the sitemap until it's approved, then lock in the final version.",
+  },
+  {
+    number: "04",
+    title: "UI Design",
+    description:
+      "Our UI team designs the complete interface for your project, screen by screen.",
+  },
+  {
+    number: "05",
+    title: "UI Approval & Development",
+    description:
+      "Once you approve the UI, our development team starts building the project.",
+  },
+  {
+    number: "06",
+    title: "QA & Final Analysis",
+    description:
+      "For applicable services, our QA team runs a full analysis of the finished project before handover.",
+  },
+  {
+    number: "07",
+    title: "Delivery + 60 Days Free Support",
+    description:
+      "After QA sign-off, we deliver your project along with 60 days of free service support.",
+  },
+];
 
 function PageHeader({ page }: { page: Exclude<LandingPageKey, "home"> }) {
   const content = pageHeaderContent[page];
@@ -1524,11 +1577,12 @@ export function LandingPage({
               AP Tech <span className="text-[#c6613f]">Agency</span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-7 text-sm font-semibold text-[#6b7280] lg:flex">
+          <nav className="hidden items-center gap-5 text-sm font-semibold text-[#6b7280] lg:flex">
             {(
               [
                 ["Home", "home"],
                 ["Services", "services"],
+                ["Process", "process"],
                 ["Portfolio", "portfolio"],
                 ["Our Team", "team"],
                 ["Testimonials", "testimonials"],
@@ -2185,6 +2239,105 @@ export function LandingPage({
           </div>
         </div>
       </section>
+      )}
+
+      {page === "home" && (
+        <section className="border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <SectionLabel
+              eyebrow="How We Work"
+              title="Our Working Process"
+              action={
+                <Link
+                  href="/process"
+                  className="hidden text-sm font-bold text-[#c6613f] md:inline"
+                >
+                  See our full process →
+                </Link>
+              }
+            />
+            <p className="-mt-4 max-w-2xl text-sm leading-7 text-[#6b7280]">
+              For a single service, our related specialist works with you
+              directly. For a full A2Z website design and development
+              project, a complete team takes it from brief to launch.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {processSteps.slice(0, 4).map((step) => (
+                <div
+                  key={step.title}
+                  className="rounded-[14px] border border-[#e8e3dc] bg-white p-4"
+                >
+                  <span className="text-xs font-extrabold text-[#c6613f]">
+                    {step.number}
+                  </span>
+                  <h3 className="mt-1 text-sm font-extrabold leading-5 text-[#101623]">
+                    {step.title}
+                  </h3>
+                </div>
+              ))}
+            </div>
+            <Link
+              href="/process"
+              className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
+            >
+              See our full process →
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {page === "process" && (
+        <section id="process" className="scroll-mt-24 py-[72px]">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <SectionLabel eyebrow="How We Work" title="Our Working Process" />
+            <p className="-mt-4 mb-10 max-w-2xl text-sm leading-7 text-[#6b7280]">
+              For a single, specific service, the directly related expert
+              works on it for you. For a full A2Z website design and
+              development project, a complete team works on it together,
+              following the process below from your first brief to launch.
+            </p>
+            <div className="space-y-4">
+              {processSteps.map((step, index) => (
+                <div
+                  key={step.title}
+                  className="flex gap-4 rounded-[14px] border border-[#e8e3dc] bg-white p-5 sm:gap-6 sm:p-6"
+                >
+                  <div className="flex shrink-0 flex-col items-center">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#101623] text-sm font-extrabold text-[#f5a83c]">
+                      {step.number}
+                    </span>
+                    {index < processSteps.length - 1 && (
+                      <span className="mt-1 hidden w-px flex-1 bg-[#e8e3dc] sm:block" />
+                    )}
+                  </div>
+                  <div className="pb-2">
+                    <h3 className="text-base font-extrabold text-[#101623] sm:text-lg">
+                      {step.title}
+                    </h3>
+                    <p className="mt-1.5 text-sm leading-6 text-[#6b7280]">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-10 rounded-[18px] border border-[#e8e3dc] bg-[#fff8f3] p-6 text-center sm:p-8">
+              <p className="text-lg font-extrabold text-[#101623]">
+                Ready to start your project?
+              </p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#6b7280]">
+                Tell us your brief and we&apos;ll walk you through this exact
+                process, step by step.
+              </p>
+              <Link
+                href="/contact"
+                className="mt-5 inline-flex items-center gap-2 rounded-[10px] bg-[#c6613f] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#a94e30]"
+              >
+                Contact us <Send size={16} />
+              </Link>
+            </div>
+          </div>
+        </section>
       )}
 
       {page === "home" && (
