@@ -58,6 +58,17 @@ async function main() {
     "SEO",
     "Branding",
     "Video Editing",
+    "Web Development",
+    "Digital Marketing",
+    "Social Media Marketing",
+    "Lead Generation",
+    "3D Interior Modeling",
+    "3D Exterior Modeling",
+    "Architecture Design",
+    "Graphics Design",
+    "Logo Design",
+    "Virtual Assistance",
+    "Accounting & Bookkeeping",
   ]) {
     await prisma.skill.upsert({
       where: { name },
