@@ -5,6 +5,7 @@ export type UserPortfolioItem = {
   thumbnailUrl: string;
   linkUrl: string;
   brief: string;
+  seoTags?: string[];
   galleryUrls?: string[];
 };
 
@@ -55,15 +56,21 @@ export function parseUserPortfolio(value: string | null | undefined): UserPortfo
               const thumbnailUrl = String(record.thumbnailUrl ?? "").trim();
               const linkUrl = String(record.linkUrl ?? "").trim();
               const brief = String(record.brief ?? "").trim();
+              const seoTags = Array.isArray(record.seoTags)
+                ? record.seoTags
+                    .map((tag) => String(tag).trim().slice(0, 20))
+                    .filter(Boolean)
+                    .slice(0, 3)
+                : [];
               const galleryUrls = Array.isArray(record.galleryUrls)
                 ? record.galleryUrls
                     .map((url) => String(url).trim())
                     .filter(Boolean)
                 : [];
-              if (!title && !thumbnailUrl && !linkUrl && !brief && !galleryUrls.length) {
+              if (!title && !thumbnailUrl && !linkUrl && !brief && !seoTags.length && !galleryUrls.length) {
                 return null;
               }
-              return { title, thumbnailUrl, linkUrl, brief, galleryUrls };
+              return { title, thumbnailUrl, linkUrl, brief, seoTags, galleryUrls };
             })
             .filter((item): item is UserPortfolioItem => Boolean(item))
         : [];

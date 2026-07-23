@@ -778,6 +778,18 @@ function LandingModal({
                             {project.brief}
                           </p>
                         )}
+                        {Boolean(project.seoTags?.length) && (
+                          <div className="flex flex-wrap gap-1">
+                            {project.seoTags?.map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         <span className="inline-flex items-center gap-1 text-xs font-black text-[#c6613f]">
                           Live <ArrowRight size={13} />
                         </span>
@@ -821,6 +833,18 @@ function LandingModal({
                             {project.brief}
                           </p>
                         )}
+                        {Boolean(project.seoTags?.length) && (
+                          <div className="flex flex-wrap gap-1">
+                            {project.seoTags?.map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         <span className="inline-flex items-center gap-1 text-xs font-black text-[#c6613f]">
                           Figma <ArrowRight size={13} />
                         </span>
@@ -860,6 +884,18 @@ function LandingModal({
                           <p className="text-xs leading-5 text-slate-500">
                             {project.brief}
                           </p>
+                        )}
+                        {Boolean(project.seoTags?.length) && (
+                          <div className="flex flex-wrap gap-1">
+                            {project.seoTags?.map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         )}
                         {Boolean(project.galleryUrls?.length) && (
                           <div className="grid grid-cols-4 gap-2 pt-1">
@@ -909,6 +945,18 @@ function LandingModal({
                           <p className="text-xs leading-5 text-slate-500">
                             {project.brief}
                           </p>
+                        )}
+                        {Boolean(project.seoTags?.length) && (
+                          <div className="flex flex-wrap gap-1">
+                            {project.seoTags?.map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         )}
                         {Boolean(project.galleryUrls?.length) && (
                           <div className="grid grid-cols-4 gap-2 pt-1">

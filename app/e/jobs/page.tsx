@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Briefcase } from "lucide-react";
+import { ArrowRight, Briefcase, Clock, Compass } from "lucide-react";
 
 const typeBadge: Record<string, string> = {
   MONTHLY: "bg-blue-100 text-blue-700",
@@ -20,9 +20,16 @@ const statusBadge: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-600",
 };
 
-export default async function MyJobsPage() {
+type MyJobsPageProps = {
+  searchParams?: Promise<{ view?: string }>;
+};
+
+export default async function MyJobsPage({ searchParams }: MyJobsPageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  const params = await searchParams;
+  const view = params?.view === "hourly" ? "hourly" : "all";
 
   const memberships = await prisma.jobMember.findMany({
     where: { userId: session.user.id },
@@ -47,7 +54,7 @@ export default async function MyJobsPage() {
     (membership) => membership.job.status === "COMPLETED"
   ).length;
 
-  const jobs = memberships
+  const allJobs = memberships
     .map((membership) => ({
       ...membership.job,
       workerValue: Number(membership.workerValue),
@@ -62,22 +69,52 @@ export default async function MyJobsPage() {
       );
     });
 
+  const jobs =
+    view === "hourly"
+      ? allJobs.filter((job) => job.type === "HOURLY")
+      : allJobs;
+  const hourlyCount = allJobs.filter((job) => job.type === "HOURLY").length;
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">My jobs</h1>
           <p className="text-sm text-muted-foreground">
-            {activeCount} active · {completedCount} completed · {jobs.length} total
+            {activeCount} active - {completedCount} completed - {allJobs.length} total
           </p>
         </div>
 
-        <Link
-          href="/e/find-work"
-          className="rounded-md border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          Find work
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/e/jobs"
+            className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+              view === "all"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            All jobs
+          </Link>
+          <Link
+            href="/e/find-work"
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Compass className="h-4 w-4" />
+            Find job
+          </Link>
+          <Link
+            href="/e/jobs?view=hourly"
+            className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+              view === "hourly"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Clock className="h-4 w-4" />
+            Hourly jobs ({hourlyCount})
+          </Link>
+        </div>
       </div>
 
       {jobs.length === 0 ? (
@@ -85,10 +122,14 @@ export default async function MyJobsPage() {
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <Briefcase className="mb-3 h-10 w-10 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              You&apos;re not assigned to any jobs yet -{" "}
-              <Link href="/e/find-work" className="text-primary underline">
-                find work
-              </Link>
+              {view === "hourly"
+                ? "No hourly jobs assigned yet."
+                : "You're not assigned to any jobs yet - "}
+              {view !== "hourly" && (
+                <Link href="/e/find-work" className="text-primary underline">
+                  find job
+                </Link>
+              )}
             </p>
           </CardContent>
         </Card>

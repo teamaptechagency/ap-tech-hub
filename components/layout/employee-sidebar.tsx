@@ -19,6 +19,7 @@ import {
   Clock,
   Compass,
   FileText,
+  Images,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -64,6 +65,11 @@ export const employeeNavItems: EmployeeNavItem[] = [
     label: "My applications",
     href: "/e/applications",
     icon: FileText,
+  },
+  {
+    label: "Portfolio",
+    href: "/e/portfolio",
+    icon: Images,
   },
   {
     label: "Messages",

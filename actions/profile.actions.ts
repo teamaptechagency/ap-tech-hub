@@ -299,6 +299,14 @@ export async function updatePortfolio(formData: {
 }) {
   const session = await auth();
   if (!session?.user) return { error: "You must be signed in" };
+  const me = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      role: true,
+      skills: { select: { id: true } },
+    },
+  });
+  if (!me) return { error: "User not found" };
 
   const workSamples = String(formData.workSamples ?? "")
     .split("\n")
@@ -309,15 +317,22 @@ export async function updatePortfolio(formData: {
     String(value ?? "")
       .split("\n")
       .map((line) => {
-        const [title = "", thumbnailUrl = "", linkUrl = "", ...briefParts] =
+        const [title = "", thumbnailUrl = "", linkUrl = "", brief = "", tags = ""] =
           line.split("|").map((item) => item.trim());
-        const brief = briefParts.join(" | ").trim();
-        if (!title && !thumbnailUrl && !linkUrl && !brief) return null;
+        const seoTags = tags
+          .split(",")
+          .map((tag) => tag.trim().slice(0, 20))
+          .filter(Boolean)
+          .slice(0, 3);
+        if (!title && !thumbnailUrl && !linkUrl && !brief && !seoTags.length) {
+          return null;
+        }
         return {
           title: title.slice(0, 120),
           thumbnailUrl: thumbnailUrl.slice(0, 500),
           linkUrl: linkUrl.slice(0, 500),
           brief: brief.slice(0, 500),
+          seoTags,
         };
       })
       .filter(
@@ -328,6 +343,7 @@ export async function updatePortfolio(formData: {
           thumbnailUrl: string;
           linkUrl: string;
           brief: string;
+          seoTags: string[];
         } => Boolean(item)
       )
       .slice(0, 12);
@@ -335,19 +351,25 @@ export async function updatePortfolio(formData: {
     String(value ?? "")
       .split("\n")
       .map((line) => {
-        const [title = "", thumbnailUrl = "", brief = "", gallery = ""] =
+        const [title = "", thumbnailUrl = "", brief = "", gallery = "", tags = ""] =
           line.split("|").map((item) => item.trim());
         const galleryUrls = gallery
           .split(",")
           .map((url) => url.trim())
           .filter(Boolean)
           .slice(0, 8);
-        if (!title && !thumbnailUrl && !brief && !galleryUrls.length) return null;
+        const seoTags = tags
+          .split(",")
+          .map((tag) => tag.trim().slice(0, 20))
+          .filter(Boolean)
+          .slice(0, 3);
+        if (!title && !thumbnailUrl && !brief && !galleryUrls.length && !seoTags.length) return null;
         return {
           title: title.slice(0, 120),
           thumbnailUrl: thumbnailUrl.slice(0, 500),
           linkUrl: "",
           brief: brief.slice(0, 500),
+          seoTags,
           galleryUrls,
         };
       })
@@ -359,10 +381,28 @@ export async function updatePortfolio(formData: {
           thumbnailUrl: string;
           linkUrl: string;
           brief: string;
+          seoTags: string[];
           galleryUrls: string[];
         } => Boolean(item)
       )
       .slice(0, 12);
+
+  const webProjects = parseProjectLines(formData.webProjects);
+  const designProjects = parseProjectLines(formData.designProjects);
+  const graphicsProjects = parseVisualProjectLines(formData.graphicsProjects);
+  const architectureProjects = parseVisualProjectLines(
+    formData.architectureProjects
+  );
+  const hasPortfolioContent =
+    workSamples.length > 0 ||
+    webProjects.length > 0 ||
+    designProjects.length > 0 ||
+    graphicsProjects.length > 0 ||
+    architectureProjects.length > 0 ||
+    Boolean(formData.portfolioUrl?.trim()) ||
+    Boolean(formData.figmaUrl?.trim()) ||
+    Boolean(formData.liveUrl?.trim());
+  const hasPublicSkill = me.skills.length > 0 || ADMIN_ROLES.includes(me.role);
 
   const payload = {
     headline: String(formData.headline ?? "").trim().slice(0, 120),
@@ -371,11 +411,11 @@ export async function updatePortfolio(formData: {
     figmaUrl: String(formData.figmaUrl ?? "").trim().slice(0, 500),
     liveUrl: String(formData.liveUrl ?? "").trim().slice(0, 500),
     workSamples,
-    webProjects: parseProjectLines(formData.webProjects),
-    designProjects: parseProjectLines(formData.designProjects),
-    graphicsProjects: parseVisualProjectLines(formData.graphicsProjects),
-    architectureProjects: parseVisualProjectLines(formData.architectureProjects),
-    visible: Boolean(formData.visible),
+    webProjects,
+    designProjects,
+    graphicsProjects,
+    architectureProjects,
+    visible: hasPublicSkill && hasPortfolioContent,
   };
 
   await prisma.setting.upsert({

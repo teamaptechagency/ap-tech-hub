@@ -90,14 +90,20 @@ export function ClearCacheButton() {
         return;
       }
 
+      await fetch("/api/clear-site-data", {
+        method: "POST",
+        cache: "no-store",
+        credentials: "include",
+      }).catch(() => null);
+
       await clearBrowserSiteData();
       toast.success("Site data cleared. Reloading fresh...");
       router.refresh();
 
       window.setTimeout(() => {
-        window.location.replace(
-          `${window.location.pathname}?fresh=${Date.now()}`
-        );
+        const freshUrl = new URL(window.location.href);
+        freshUrl.searchParams.set("fresh", Date.now().toString());
+        window.location.replace(freshUrl.toString());
       }, 350);
     });
   }
