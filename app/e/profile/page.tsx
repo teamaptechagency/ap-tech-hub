@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { getUserLoginDevices } from "@/lib/login-security";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function EmployeeProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");

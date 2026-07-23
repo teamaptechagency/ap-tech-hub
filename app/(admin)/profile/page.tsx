@@ -1,14 +1,24 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
+import { CLIENT_ROLES, PARTNER_ROLES, ADMIN_ROLES } from "@/lib/roles";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { getUserLoginDevices } from "@/lib/login-security";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  if (!ADMIN_ROLES.includes(session.user.role)) {
+    if (CLIENT_ROLES.includes(session.user.role)) redirect("/c/profile");
+    if (PARTNER_ROLES.includes(session.user.role)) redirect("/p/profile");
+    redirect("/e/profile");
+  }
 
   const me = await prisma.user.findUnique({
     where: { id: session.user.id },

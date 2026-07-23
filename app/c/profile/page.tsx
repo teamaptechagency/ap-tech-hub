@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { getUserLoginDevices } from "@/lib/login-security";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ClientProfilePage() {
   const session = await auth();
   if (!session?.user?.clientId) notFound();

@@ -12,6 +12,75 @@ export function ClearCacheButton() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
+  async function clearBrowserSiteData() {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {
+      // Some privacy modes can block storage access.
+    }
+
+    try {
+      document.cookie.split(";").forEach((cookie) => {
+        const name = cookie.split("=")[0]?.trim();
+        if (!name) return;
+
+        const expires = "expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = `${name}=; ${expires}; path=/`;
+        document.cookie = `${name}=; ${expires}; path=/; domain=${window.location.hostname}`;
+
+        const parts = window.location.hostname.split(".");
+        if (parts.length > 2) {
+          document.cookie = `${name}=; ${expires}; path=/; domain=.${parts
+            .slice(-2)
+            .join(".")}`;
+        }
+      });
+    } catch {
+      // HttpOnly cookies cannot be cleared from browser JavaScript.
+    }
+
+    try {
+      if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      }
+    } catch {
+      // Cache API may be unavailable in older/private browsers.
+    }
+
+    try {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+      }
+    } catch {
+      // Service worker access can fail on unsupported browsers.
+    }
+
+    try {
+      if ("indexedDB" in window && "databases" in indexedDB) {
+        const databases = await indexedDB.databases();
+        await Promise.all(
+          databases
+            .map((database) => database.name)
+            .filter((name): name is string => Boolean(name))
+            .map(
+              (name) =>
+                new Promise<void>((resolve) => {
+                  const request = indexedDB.deleteDatabase(name);
+                  request.onsuccess = () => resolve();
+                  request.onerror = () => resolve();
+                  request.onblocked = () => resolve();
+                })
+            )
+        );
+      }
+    } catch {
+      // IndexedDB database listing is browser-dependent.
+    }
+  }
+
   function handleClick() {
     startTransition(async () => {
       const result = await clearAppCache();
@@ -21,8 +90,15 @@ export function ClearCacheButton() {
         return;
       }
 
-      toast.success("Cache cleared");
+      await clearBrowserSiteData();
+      toast.success("Site data cleared. Reloading fresh...");
       router.refresh();
+
+      window.setTimeout(() => {
+        window.location.replace(
+          `${window.location.pathname}?fresh=${Date.now()}`
+        );
+      }, 350);
     });
   }
 

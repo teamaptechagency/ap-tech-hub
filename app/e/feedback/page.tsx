@@ -4,6 +4,9 @@ import { auth } from "@/lib/auth";
 import { getSupportTickets, mapSupportTickets } from "@/lib/support-tickets";
 import { SupportShell } from "@/components/support/support-shell";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function EmployeeFeedbackPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
