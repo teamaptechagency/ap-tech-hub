@@ -967,9 +967,10 @@ function CookieNotice({
   onOpenTerms: () => void;
 }) {
   const [visible, setVisible] = useState(false);
+  const publicConsentKey = "ap-tech-public-cookie-consent-v1";
 
   useEffect(() => {
-    setVisible(localStorage.getItem("ap-tech-cookie-consent") !== "accepted");
+    setVisible(localStorage.getItem(publicConsentKey) !== "accepted");
   }, []);
 
   if (!visible) return null;
@@ -980,8 +981,10 @@ function CookieNotice({
         <div>
           <p className="text-sm font-extrabold">Cookies & privacy</p>
           <p className="mt-1 text-xs leading-5 text-[#6b7280]">
-            We use essential cookies to keep the public portal, login and chat
-            experience working smoothly.
+            AP Tech Agency uses essential public-site cookies for visitor
+            preferences, live chat, lead forms and service inquiry experience.
+            Hub login/session cookies are handled separately inside the private
+            portal.
           </p>
           <div className="mt-2 flex gap-3 text-xs font-bold text-[#c6613f]">
             <button type="button" onClick={onOpenPrivacy}>
@@ -995,7 +998,7 @@ function CookieNotice({
         <button
           type="button"
           onClick={() => {
-            localStorage.setItem("ap-tech-cookie-consent", "accepted");
+            localStorage.setItem(publicConsentKey, "accepted");
             setVisible(false);
           }}
           className="shrink-0 rounded-[10px] bg-[#c6613f] px-5 py-3 text-sm font-extrabold text-white transition hover:bg-[#a94e30]"

@@ -60,6 +60,30 @@ export const proxy = auth((req) => {
 
   const role = user.role;
 
+  if (pathname === "/profile" && !ADMIN_ROLES.includes(role)) {
+    if (CLIENT_ROLES.includes(role)) {
+      return NextResponse.redirect(new URL("/c/profile", req.url));
+    }
+
+    if (PARTNER_ROLES.includes(role)) {
+      return NextResponse.redirect(new URL("/p/profile", req.url));
+    }
+
+    return NextResponse.redirect(new URL("/e/profile", req.url));
+  }
+
+  if (pathname === "/feedback" && !ADMIN_ROLES.includes(role)) {
+    if (CLIENT_ROLES.includes(role)) {
+      return NextResponse.redirect(new URL("/c/feedback", req.url));
+    }
+
+    if (PARTNER_ROLES.includes(role)) {
+      return NextResponse.redirect(new URL("/p/feedback", req.url));
+    }
+
+    return NextResponse.redirect(new URL("/e/feedback", req.url));
+  }
+
   // Portal guards
   if (pathname.startsWith("/e/") && !WORKER_ROLES.includes(role)) {
     return NextResponse.redirect(new URL(homeFor(role), req.url));
