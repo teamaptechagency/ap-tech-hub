@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { parseUserPortfolio, type UserPortfolioItem } from "@/lib/user-portfolio";
 
 export type LandingHeroSlideData = {
   id: string;
@@ -61,6 +62,10 @@ export type LandingTeamMemberData = {
   photoUrl?: string | null;
   skills: string[];
   jobs: string[];
+  webProjects?: UserPortfolioItem[];
+  designProjects?: UserPortfolioItem[];
+  graphicsProjects?: UserPortfolioItem[];
+  architectureProjects?: UserPortfolioItem[];
   socialLinks: Record<string, string>;
   hidden?: boolean | null;
 };
@@ -1372,6 +1377,7 @@ export async function getLandingPageData(): Promise<LandingPageData> {
       reviews,
       content,
       users,
+      portfolioSettings,
     ] = await Promise.all([
       landingPrisma.landingHeroSlide.findMany({
         where: { active: true },
@@ -1410,24 +1416,56 @@ export async function getLandingPageData(): Promise<LandingPageData> {
             take: 12,
           })
         : Promise.resolve([]),
+      landingPrisma.setting
+        ? landingPrisma.setting.findMany({
+            where: { key: { startsWith: "employee.portfolio." } },
+            select: { key: true, value: true },
+          })
+        : Promise.resolve([]),
     ]);
 
-    const teamFromUsers: LandingTeamMemberData[] = users.map((user) => ({
-      id: `user-${user.id}`,
-      name: user.name,
-      role:
-        user.profession ||
-        user.role
-          .toLowerCase()
-          .split("_")
-          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-          .join(" "),
-      bio: user.bio,
-      photoUrl: user.photoUrl || user.image,
-      skills: user.skills.map((skill) => skill.name),
-      jobs: user.profession ? [user.profession] : [],
-      socialLinks: {},
-    }));
+    const portfolioMap = new Map(
+      portfolioSettings.map((setting) => [
+        setting.key.replace("employee.portfolio.", ""),
+        parseUserPortfolio(setting.value),
+      ])
+    );
+
+    const teamFromUsers: LandingTeamMemberData[] = users.map((user) => {
+      const portfolio = portfolioMap.get(user.id);
+      return {
+        id: `user-${user.id}`,
+        name: user.name,
+        role:
+          portfolio?.headline ||
+          user.profession ||
+          user.role
+            .toLowerCase()
+            .split("_")
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" "),
+        bio: portfolio?.visible && portfolio.summary ? portfolio.summary : user.bio,
+        photoUrl: user.photoUrl || user.image,
+        skills: user.skills.map((skill) => skill.name),
+        jobs:
+          portfolio?.visible && portfolio.workSamples.length
+            ? portfolio.workSamples
+            : user.profession
+              ? [user.profession]
+              : [],
+        webProjects: portfolio?.visible ? portfolio.webProjects : [],
+        designProjects: portfolio?.visible ? portfolio.designProjects : [],
+        graphicsProjects: portfolio?.visible ? portfolio.graphicsProjects : [],
+        architectureProjects: portfolio?.visible
+          ? portfolio.architectureProjects
+          : [],
+        socialLinks: {
+          portfolio: portfolio?.visible ? portfolio.portfolioUrl : "",
+          figma: portfolio?.visible ? portfolio.figmaUrl : "",
+          live: portfolio?.visible ? portfolio.liveUrl : "",
+        },
+      };
+    });
 
     const databaseTeam: LandingTeamMemberData[] = team.map((member) => ({
       id: member.id,

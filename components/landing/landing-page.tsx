@@ -745,16 +745,205 @@ function LandingModal({
             </div>
           </div>
         ) : (
-          <ul className="space-y-3 text-sm text-slate-600">
-            {(modal.item.jobs.length ? modal.item.jobs : ["Work portfolio will be updated soon."]).map(
-              (job) => (
+          <div className="space-y-5">
+            {Boolean(modal.item.webProjects?.length) && (
+              <div className="space-y-3">
+                <p className="text-sm font-black text-slate-950">Web work</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {modal.item.webProjects?.map((project, index) => (
+                    <a
+                      key={`${project.title}-${index}`}
+                      href={project.linkUrl || "#contact"}
+                      target={project.linkUrl ? "_blank" : undefined}
+                      rel={project.linkUrl ? "noreferrer" : undefined}
+                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:-translate-y-0.5 hover:border-[#c6613f] hover:shadow-lg"
+                    >
+                      {project.thumbnailUrl ? (
+                        <img
+                          src={project.thumbnailUrl}
+                          alt={project.title || "Web project"}
+                          className="h-28 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-28 items-center justify-center bg-slate-950 text-sm font-black text-white">
+                          Web
+                        </div>
+                      )}
+                      <div className="space-y-2 p-3">
+                        <p className="font-black text-slate-950">
+                          {project.title || "Web project"}
+                        </p>
+                        {project.brief && (
+                          <p className="text-xs leading-5 text-slate-500">
+                            {project.brief}
+                          </p>
+                        )}
+                        <span className="inline-flex items-center gap-1 text-xs font-black text-[#c6613f]">
+                          Live <ArrowRight size={13} />
+                        </span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            {Boolean(modal.item.designProjects?.length) && (
+              <div className="space-y-3">
+                <p className="text-sm font-black text-slate-950">
+                  Design / Figma work
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {modal.item.designProjects?.map((project, index) => (
+                    <a
+                      key={`${project.title}-${index}`}
+                      href={project.linkUrl || "#contact"}
+                      target={project.linkUrl ? "_blank" : undefined}
+                      rel={project.linkUrl ? "noreferrer" : undefined}
+                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:-translate-y-0.5 hover:border-[#c6613f] hover:shadow-lg"
+                    >
+                      {project.thumbnailUrl ? (
+                        <img
+                          src={project.thumbnailUrl}
+                          alt={project.title || "Design project"}
+                          className="h-28 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-28 items-center justify-center bg-[#c6613f] text-sm font-black text-white">
+                          Figma
+                        </div>
+                      )}
+                      <div className="space-y-2 p-3">
+                        <p className="font-black text-slate-950">
+                          {project.title || "Design project"}
+                        </p>
+                        {project.brief && (
+                          <p className="text-xs leading-5 text-slate-500">
+                            {project.brief}
+                          </p>
+                        )}
+                        <span className="inline-flex items-center gap-1 text-xs font-black text-[#c6613f]">
+                          Figma <ArrowRight size={13} />
+                        </span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            {Boolean(modal.item.graphicsProjects?.length) && (
+              <div className="space-y-3">
+                <p className="text-sm font-black text-slate-950">
+                  Graphics / branding work
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {modal.item.graphicsProjects?.map((project, index) => (
+                    <div
+                      key={`${project.title}-${index}`}
+                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left"
+                    >
+                      {project.thumbnailUrl ? (
+                        <img
+                          src={project.thumbnailUrl}
+                          alt={project.title || "Graphics project"}
+                          className="h-28 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-28 items-center justify-center bg-[#1f2a44] text-sm font-black text-white">
+                          Graphics
+                        </div>
+                      )}
+                      <div className="space-y-2 p-3">
+                        <p className="font-black text-slate-950">
+                          {project.title || "Graphics project"}
+                        </p>
+                        {project.brief && (
+                          <p className="text-xs leading-5 text-slate-500">
+                            {project.brief}
+                          </p>
+                        )}
+                        {Boolean(project.galleryUrls?.length) && (
+                          <div className="grid grid-cols-4 gap-2 pt-1">
+                            {project.galleryUrls?.slice(0, 8).map((url) => (
+                              <img
+                                key={url}
+                                src={url}
+                                alt={`${project.title || "Graphics gallery"} preview`}
+                                className="h-12 rounded-lg object-cover"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {Boolean(modal.item.architectureProjects?.length) && (
+              <div className="space-y-3">
+                <p className="text-sm font-black text-slate-950">
+                  Architecture / 3D work
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {modal.item.architectureProjects?.map((project, index) => (
+                    <div
+                      key={`${project.title}-${index}`}
+                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left"
+                    >
+                      {project.thumbnailUrl ? (
+                        <img
+                          src={project.thumbnailUrl}
+                          alt={project.title || "Architecture project"}
+                          className="h-28 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-28 items-center justify-center bg-emerald-800 text-sm font-black text-white">
+                          3D
+                        </div>
+                      )}
+                      <div className="space-y-2 p-3">
+                        <p className="font-black text-slate-950">
+                          {project.title || "Architecture project"}
+                        </p>
+                        {project.brief && (
+                          <p className="text-xs leading-5 text-slate-500">
+                            {project.brief}
+                          </p>
+                        )}
+                        {Boolean(project.galleryUrls?.length) && (
+                          <div className="grid grid-cols-4 gap-2 pt-1">
+                            {project.galleryUrls?.slice(0, 8).map((url) => (
+                              <img
+                                key={url}
+                                src={url}
+                                alt={`${project.title || "Architecture gallery"} preview`}
+                                className="h-12 rounded-lg object-cover"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <ul className="space-y-3 text-sm text-slate-600">
+              {(modal.item.jobs.length ||
+              modal.item.webProjects?.length ||
+              modal.item.designProjects?.length ||
+              modal.item.graphicsProjects?.length ||
+              modal.item.architectureProjects?.length
+                ? modal.item.jobs
+                : ["Work portfolio will be updated soon."]
+              ).map((job) => (
                 <li key={job} className="flex gap-2">
                   <CheckCircle2 className="mt-0.5 text-emerald-600" size={16} />
                   <span>{job}</span>
                 </li>
-              )
-            )}
-          </ul>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     );

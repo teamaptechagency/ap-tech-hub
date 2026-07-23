@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { getUserLoginDevices } from "@/lib/login-security";
+import { getUserPortfolio } from "@/lib/user-portfolio";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -31,7 +32,10 @@ export default async function AdminProfilePage() {
     },
   });
   if (!me) redirect("/login");
-  const loginDevices = await getUserLoginDevices(me.id);
+  const [loginDevices, portfolio] = await Promise.all([
+    getUserLoginDevices(me.id),
+    getUserPortfolio(me.id),
+  ]);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -107,6 +111,7 @@ export default async function AdminProfilePage() {
           lastSeenAt: device.lastSeenAt.toISOString(),
           createdAt: device.createdAt.toISOString(),
         }))}
+        portfolio={portfolio}
       />
     </div>
   );

@@ -146,6 +146,7 @@ export default async function ClientProfilePage() {
           createdAt: device.createdAt.toISOString(),
         }))}
         showPayment={false}
+        showPortfolio={false}
       />
     </div>
   );

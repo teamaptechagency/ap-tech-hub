@@ -83,11 +83,6 @@ export default async function EmployeeLayout({
       icon: "dashboard",
     },
     {
-      label: "My jobs",
-      href: "/e/jobs",
-      icon: "jobs",
-    },
-    {
       label: "Find job",
       href: "/e/find-work",
       icon: "find-work",

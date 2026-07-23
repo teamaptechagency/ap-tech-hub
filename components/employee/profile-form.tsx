@@ -8,6 +8,7 @@ import {
   enableAuthenticator,
   setTwoFactorEnabled,
   setupAuthenticator,
+  updatePortfolio,
   updateProfile,
 } from "@/actions/profile.actions";
 import { Button } from "@/components/ui/button";
@@ -51,8 +52,40 @@ type LoginDevice = {
   createdAt: string;
 };
 
-type ProfileTab = "personal" | "security" | "payment";
+type ProfileTab = "personal" | "portfolio" | "security" | "payment";
 type TwoFactorMethod = "EMAIL" | "WHATSAPP" | "AUTHENTICATOR";
+type PortfolioItem = {
+  title: string;
+  thumbnailUrl: string;
+  linkUrl: string;
+  brief: string;
+  galleryUrls?: string[];
+};
+
+function portfolioItemsToLines(items: PortfolioItem[]) {
+  return items
+    .map((item) =>
+      [item.title, item.thumbnailUrl, item.linkUrl, item.brief]
+        .map((value) => value.trim())
+        .join(" | ")
+    )
+    .join("\n");
+}
+
+function visualPortfolioItemsToLines(items: PortfolioItem[]) {
+  return items
+    .map((item) =>
+      [
+        item.title,
+        item.thumbnailUrl,
+        item.brief,
+        (item.galleryUrls ?? []).join(", "),
+      ]
+        .map((value) => value.trim())
+        .join(" | ")
+    )
+    .join("\n");
+}
 
 function parseTwoFactorMethods(value: string) {
   return value
@@ -86,6 +119,20 @@ export function ProfileForm({
   pendingChanges = [],
   loginDevices = [],
   showPayment = true,
+  showPortfolio = true,
+  portfolio = {
+    headline: "",
+    summary: "",
+    portfolioUrl: "",
+    figmaUrl: "",
+    liveUrl: "",
+    workSamples: [],
+    webProjects: [],
+    designProjects: [],
+    graphicsProjects: [],
+    architectureProjects: [],
+    visible: false,
+  },
 }: {
   name: string;
   email: string;
@@ -109,6 +156,20 @@ export function ProfileForm({
   pendingChanges?: PendingChange[];
   loginDevices?: LoginDevice[];
   showPayment?: boolean;
+  showPortfolio?: boolean;
+  portfolio?: {
+    headline: string;
+    summary: string;
+    portfolioUrl: string;
+    figmaUrl: string;
+    liveUrl: string;
+    workSamples: string[];
+    webProjects?: PortfolioItem[];
+    designProjects?: PortfolioItem[];
+    graphicsProjects?: PortfolioItem[];
+    architectureProjects?: PortfolioItem[];
+    visible: boolean;
+  };
 }) {
   const [fullName, setFullName] = useState(name);
   const [nextEmail, setNextEmail] = useState(email);
@@ -142,6 +203,27 @@ export function ProfileForm({
   const [pwBusy, setPwBusy] = useState(false);
   const [twoFactorOffPassword, setTwoFactorOffPassword] = useState("");
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
+  const [portfolioHeadline, setPortfolioHeadline] = useState(portfolio.headline);
+  const [portfolioSummary, setPortfolioSummary] = useState(portfolio.summary);
+  const [portfolioUrl, setPortfolioUrl] = useState(portfolio.portfolioUrl);
+  const [portfolioFigmaUrl, setPortfolioFigmaUrl] = useState(portfolio.figmaUrl);
+  const [portfolioLiveUrl, setPortfolioLiveUrl] = useState(portfolio.liveUrl);
+  const [portfolioWork, setPortfolioWork] = useState(
+    portfolio.workSamples.join("\n")
+  );
+  const [portfolioWebProjects, setPortfolioWebProjects] = useState(
+    portfolioItemsToLines(portfolio.webProjects ?? [])
+  );
+  const [portfolioDesignProjects, setPortfolioDesignProjects] = useState(
+    portfolioItemsToLines(portfolio.designProjects ?? [])
+  );
+  const [portfolioGraphicsProjects, setPortfolioGraphicsProjects] = useState(
+    visualPortfolioItemsToLines(portfolio.graphicsProjects ?? [])
+  );
+  const [portfolioArchitectureProjects, setPortfolioArchitectureProjects] =
+    useState(visualPortfolioItemsToLines(portfolio.architectureProjects ?? []));
+  const [portfolioVisible, setPortfolioVisible] = useState(portfolio.visible);
+  const [portfolioBusy, setPortfolioBusy] = useState(false);
   const authQrUrl = authUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(authUrl)}`
     : "";
@@ -318,6 +400,27 @@ export function ProfileForm({
     toast.success("Password changed");
   }
 
+  async function savePortfolio(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPortfolioBusy(true);
+    const result = await updatePortfolio({
+      headline: portfolioHeadline,
+      summary: portfolioSummary,
+      portfolioUrl,
+      figmaUrl: portfolioFigmaUrl,
+      liveUrl: portfolioLiveUrl,
+      workSamples: portfolioWork,
+      webProjects: portfolioWebProjects,
+      designProjects: portfolioDesignProjects,
+      graphicsProjects: portfolioGraphicsProjects,
+      architectureProjects: portfolioArchitectureProjects,
+      visible: portfolioVisible,
+    });
+    setPortfolioBusy(false);
+    if (result.error) return toast.error(result.error);
+    toast.success("Portfolio saved");
+  }
+
   return (
     <>
       <div className="flex flex-wrap gap-2 rounded-lg border bg-card p-1">
@@ -327,6 +430,14 @@ export function ProfileForm({
         >
           Personal details
         </ProfileTabButton>
+        {showPortfolio && (
+          <ProfileTabButton
+            active={activeTab === "portfolio"}
+            onClick={() => setActiveTab("portfolio")}
+          >
+            Portfolio
+          </ProfileTabButton>
+        )}
         <ProfileTabButton
           active={activeTab === "security"}
           onClick={() => setActiveTab("security")}
@@ -460,6 +571,165 @@ export function ProfileForm({
           </form>
         </CardContent>
       </Card>
+      )}
+
+      {showPortfolio && activeTab === "portfolio" && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Portfolio and work samples</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={savePortfolio} className="space-y-4">
+              <Field
+                label="Portfolio headline"
+                id="portfolioHeadline"
+                value={portfolioHeadline}
+                onChange={setPortfolioHeadline}
+                placeholder="e.g. WordPress and React website specialist"
+              />
+              <div className="space-y-2">
+                <Label htmlFor="portfolioSummary">Portfolio summary</Label>
+                <textarea
+                  id="portfolioSummary"
+                  value={portfolioSummary}
+                  onChange={(event) => setPortfolioSummary(event.target.value)}
+                  placeholder="Short public profile summary, experience and service focus."
+                  className="min-h-28 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field
+                  label="Portfolio URL"
+                  id="portfolioUrl"
+                  value={portfolioUrl}
+                  onChange={setPortfolioUrl}
+                  placeholder="https://..."
+                />
+                <Field
+                  label="Figma URL"
+                  id="portfolioFigmaUrl"
+                  value={portfolioFigmaUrl}
+                  onChange={setPortfolioFigmaUrl}
+                  placeholder="https://figma.com/..."
+                />
+                <Field
+                  label="Live project URL"
+                  id="portfolioLiveUrl"
+                  value={portfolioLiveUrl}
+                  onChange={setPortfolioLiveUrl}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                  <Label htmlFor="portfolioWebProjects">
+                    Web projects
+                  </Label>
+                  <textarea
+                    id="portfolioWebProjects"
+                    value={portfolioWebProjects}
+                    onChange={(event) =>
+                      setPortfolioWebProjects(event.target.value)
+                    }
+                    placeholder="Title | Thumbnail URL | Live link | Short brief"
+                    className="min-h-36 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    One project per line. Use for website/app work with a live
+                    link.
+                  </p>
+                </div>
+                <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                  <Label htmlFor="portfolioDesignProjects">
+                    Design / Figma projects
+                  </Label>
+                  <textarea
+                    id="portfolioDesignProjects"
+                    value={portfolioDesignProjects}
+                    onChange={(event) =>
+                      setPortfolioDesignProjects(event.target.value)
+                    }
+                    placeholder="Title | Thumbnail URL | Figma prototype link | Short brief"
+                    className="min-h-36 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    One project per line. Use for UI/UX, graphics and design
+                    prototypes.
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                  <Label htmlFor="portfolioGraphicsProjects">
+                    Graphics / branding work
+                  </Label>
+                  <textarea
+                    id="portfolioGraphicsProjects"
+                    value={portfolioGraphicsProjects}
+                    onChange={(event) =>
+                      setPortfolioGraphicsProjects(event.target.value)
+                    }
+                    placeholder="Title | Thumbnail URL | Short brief | Gallery URL 1, Gallery URL 2"
+                    className="min-h-36 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Use for logo, social banner, brand identity, flyer and
+                    graphic design samples. Gallery is optional.
+                  </p>
+                </div>
+                <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                  <Label htmlFor="portfolioArchitectureProjects">
+                    Architecture / 3D work
+                  </Label>
+                  <textarea
+                    id="portfolioArchitectureProjects"
+                    value={portfolioArchitectureProjects}
+                    onChange={(event) =>
+                      setPortfolioArchitectureProjects(event.target.value)
+                    }
+                    placeholder="Title | Thumbnail URL | Short brief | Gallery URL 1, Gallery URL 2"
+                    className="min-h-36 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Use for interior, exterior, architectural render, model and
+                    visualization samples. Gallery is optional.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="portfolioWork">Other work notes</Label>
+                <textarea
+                  id="portfolioWork"
+                  value={portfolioWork}
+                  onChange={(event) => setPortfolioWork(event.target.value)}
+                  placeholder="One extra note per line"
+                  className="min-h-24 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Extra notes can appear below Web and Design work when public
+                  portfolio is enabled.
+                </p>
+              </div>
+              <label className="flex items-start gap-2 rounded-md border bg-muted/20 p-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={portfolioVisible}
+                  onChange={(event) => setPortfolioVisible(event.target.checked)}
+                  className="mt-1 h-4 w-4 accent-primary"
+                />
+                <span>
+                  Show this portfolio on public team profile
+                  <span className="block text-xs text-muted-foreground">
+                    Admin can still hide or override team cards from Public Portal manager.
+                  </span>
+                </span>
+              </label>
+              <Button type="submit" size="sm" disabled={portfolioBusy}>
+                {portfolioBusy ? "Saving..." : "Save portfolio"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {showPayment && activeTab === "payment" && (

@@ -12,6 +12,7 @@ import {
 } from "@/lib/totp";
 import { getEmailConfig } from "@/lib/email-config";
 import { sendWhatsAppOtp } from "@/lib/whatsapp";
+import { portfolioSettingKey } from "@/lib/user-portfolio";
 
 const FIXED_SUPER_ADMIN_EMAIL = "nazmulha30@gmail.com";
 type TwoFactorMethod = "EMAIL" | "WHATSAPP" | "AUTHENTICATOR";
@@ -281,6 +282,128 @@ export async function updateProfile(formData: {
         ? "Sensitive changes are under review. Withdrawal requests are allowed, but payment needs 24 hours verification unless admin approves earlier."
         : null,
   };
+}
+
+export async function updatePortfolio(formData: {
+  headline?: string;
+  summary?: string;
+  portfolioUrl?: string;
+  figmaUrl?: string;
+  liveUrl?: string;
+  workSamples?: string;
+  webProjects?: string;
+  designProjects?: string;
+  graphicsProjects?: string;
+  architectureProjects?: string;
+  visible?: boolean;
+}) {
+  const session = await auth();
+  if (!session?.user) return { error: "You must be signed in" };
+
+  const workSamples = String(formData.workSamples ?? "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+  const parseProjectLines = (value: string | undefined) =>
+    String(value ?? "")
+      .split("\n")
+      .map((line) => {
+        const [title = "", thumbnailUrl = "", linkUrl = "", ...briefParts] =
+          line.split("|").map((item) => item.trim());
+        const brief = briefParts.join(" | ").trim();
+        if (!title && !thumbnailUrl && !linkUrl && !brief) return null;
+        return {
+          title: title.slice(0, 120),
+          thumbnailUrl: thumbnailUrl.slice(0, 500),
+          linkUrl: linkUrl.slice(0, 500),
+          brief: brief.slice(0, 500),
+        };
+      })
+      .filter(
+        (
+          item
+        ): item is {
+          title: string;
+          thumbnailUrl: string;
+          linkUrl: string;
+          brief: string;
+        } => Boolean(item)
+      )
+      .slice(0, 12);
+  const parseVisualProjectLines = (value: string | undefined) =>
+    String(value ?? "")
+      .split("\n")
+      .map((line) => {
+        const [title = "", thumbnailUrl = "", brief = "", gallery = ""] =
+          line.split("|").map((item) => item.trim());
+        const galleryUrls = gallery
+          .split(",")
+          .map((url) => url.trim())
+          .filter(Boolean)
+          .slice(0, 8);
+        if (!title && !thumbnailUrl && !brief && !galleryUrls.length) return null;
+        return {
+          title: title.slice(0, 120),
+          thumbnailUrl: thumbnailUrl.slice(0, 500),
+          linkUrl: "",
+          brief: brief.slice(0, 500),
+          galleryUrls,
+        };
+      })
+      .filter(
+        (
+          item
+        ): item is {
+          title: string;
+          thumbnailUrl: string;
+          linkUrl: string;
+          brief: string;
+          galleryUrls: string[];
+        } => Boolean(item)
+      )
+      .slice(0, 12);
+
+  const payload = {
+    headline: String(formData.headline ?? "").trim().slice(0, 120),
+    summary: String(formData.summary ?? "").trim().slice(0, 1200),
+    portfolioUrl: String(formData.portfolioUrl ?? "").trim().slice(0, 500),
+    figmaUrl: String(formData.figmaUrl ?? "").trim().slice(0, 500),
+    liveUrl: String(formData.liveUrl ?? "").trim().slice(0, 500),
+    workSamples,
+    webProjects: parseProjectLines(formData.webProjects),
+    designProjects: parseProjectLines(formData.designProjects),
+    graphicsProjects: parseVisualProjectLines(formData.graphicsProjects),
+    architectureProjects: parseVisualProjectLines(formData.architectureProjects),
+    visible: Boolean(formData.visible),
+  };
+
+  await prisma.setting.upsert({
+    where: { key: portfolioSettingKey(session.user.id) },
+    update: { value: JSON.stringify(payload) },
+    create: {
+      key: portfolioSettingKey(session.user.id),
+      value: JSON.stringify(payload),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorId: session.user.id,
+      action: "PORTFOLIO_UPDATED",
+      entity: "User",
+      entityId: session.user.id,
+      meta: payload.headline || "portfolio",
+    },
+  });
+
+  revalidatePath("/e/profile");
+  revalidatePath("/p/profile");
+  revalidatePath("/profile");
+  revalidatePath("/landing-manager");
+  revalidatePath("/");
+
+  return { success: true };
 }
 
 export async function requestEmailChange(email: string) {
