@@ -72,7 +72,7 @@ export function MobileNav({
       {/* Drawer */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-background shadow-xl transition-transform duration-200 md:hidden",
+          "fixed left-0 top-0 bottom-16 z-50 flex w-72 flex-col bg-background shadow-xl transition-transform duration-200 md:hidden",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -87,7 +87,7 @@ export function MobileNav({
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
           {items.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(item.href + "/");
@@ -109,7 +109,7 @@ export function MobileNav({
           })}
         </nav>
 
-        <div className="border-t p-3">
+        <div className="shrink-0 border-t bg-background p-3">
           <div className="mb-2 flex items-center gap-3 px-2">
             <UserAvatar
               name={userName}
