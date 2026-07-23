@@ -20,7 +20,7 @@ export default async function AdminProfilePage() {
       },
     },
   });
-  if (!me) notFound();
+  if (!me) redirect("/login");
   const loginDevices = await getUserLoginDevices(me.id);
 
   return (

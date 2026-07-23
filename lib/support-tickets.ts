@@ -35,19 +35,24 @@ export async function getSupportTickets({
   const db = supportDb();
   if (!db.supportTicket) return [];
 
-  return db.supportTicket.findMany({
-    where: reporterId ? { reporterId } : undefined,
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-    include: {
-      reporter: {
-        select: {
-          name: true,
-          email: true,
-          role: true,
+  try {
+    return await db.supportTicket.findMany({
+      where: reporterId ? { reporterId } : undefined,
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      include: {
+        reporter: {
+          select: {
+            name: true,
+            email: true,
+            role: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Support tickets could not load:", error);
+    return [];
+  }
 }
 
 export function mapSupportTickets(rows: SupportTicketQueryRow[]) {
