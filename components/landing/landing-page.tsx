@@ -1448,7 +1448,7 @@ function getDefaultCountdownEnd(key: string) {
 }
 
 function StatPill({
-  icon,
+  icon: _icon,
   label,
   value,
   muted = false,
@@ -1458,6 +1458,12 @@ function StatPill({
   value?: number;
   muted?: boolean;
 }) {
+  if (label !== "Total visitors" && label !== "Active visitors") {
+    return null;
+  }
+
+  const isLive = label === "Active visitors";
+
   return (
     <span
       className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-black ${
@@ -1468,7 +1474,17 @@ function StatPill({
       title={`${label}: ${(value ?? 0).toLocaleString()}`}
       aria-label={`${label}: ${(value ?? 0).toLocaleString()}`}
     >
-      <span className="text-sm leading-none">{icon}</span>
+      <span
+        className={`grid h-4 w-4 place-items-center rounded-full ${
+          isLive ? "bg-emerald-400/20" : "bg-[#f5a83c]/20"
+        }`}
+      >
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${
+            isLive ? "bg-emerald-300" : "bg-[#f5a83c]"
+          }`}
+        />
+      </span>
       <span>{(value ?? 0).toLocaleString()}</span>
     </span>
   );
