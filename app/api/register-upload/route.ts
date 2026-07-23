@@ -24,6 +24,10 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
   const email = (formData.get("email") as string) || "";
+  const assetKind =
+    typeof formData.get("assetKind") === "string"
+      ? String(formData.get("assetKind")).trim()
+      : "";
 
   // Guard: only OTP-verified emails can upload
   const otp = await prisma.emailOtp.findUnique({ where: { email } });
@@ -46,10 +50,17 @@ export async function POST(req: Request) {
   }
 
   try {
+    const isProfilePhoto = assetKind === "profile-photo";
+    const folder = isProfilePhoto ? "public-assets/profile-photo" : "registrations";
     const blob = await put(
-      `registrations/${email.replace(/[^a-z0-9]/gi, "_")}/${Date.now()}-${file.name}`,
+      `${folder}/${email.replace(/[^a-z0-9]/gi, "_")}/${Date.now()}-${file.name}`,
       file,
-      { access: "private", token: process.env.private_READ_WRITE_TOKEN }
+      {
+        access: isProfilePhoto ? "public" : "private",
+        token: isProfilePhoto
+          ? process.env.BLOB_READ_WRITE_TOKEN
+          : process.env.private_READ_WRITE_TOKEN,
+      }
     );
 
     return NextResponse.json({ url: blob.url });

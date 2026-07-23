@@ -506,7 +506,7 @@ export function ProfileForm({
                   uploading={uploading === "photo"}
                   accept="image/*"
                   onFile={(file) => uploadIdentityFile(file, "photo")}
-                  onOpen={() => photoUrlValue && window.open(photoUrlValue, "_blank")}
+                  onOpen={() => photoUrlValue && window.open(fileViewUrl(photoUrlValue), "_blank")}
                 />
                 <UploadBox
                   label="NID copy"

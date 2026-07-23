@@ -307,7 +307,24 @@ export async function POST(request: Request) {
 
     const safeFileName =
       cleanFileName(file.name) || "attachment";
-    const isPublicAsset = visibility === "public";
+    const publicAssetKinds = new Set([
+      "profile-photo",
+      "hubLogo",
+      "publicLogo",
+      "favicon",
+      "landing-image",
+      "support-ticket",
+    ]);
+    const privateAssetKinds = new Set([
+      "identity-doc",
+      "nid",
+      "birth-certificate",
+      "passport",
+    ]);
+    const normalizedAssetKind = assetKind || "";
+    const isPublicAsset =
+      publicAssetKinds.has(normalizedAssetKind) ||
+      (visibility === "public" && !privateAssetKinds.has(normalizedAssetKind));
     const folder = isPublicAsset
       ? `public-assets/${assetKind || "general"}`
       : `attachments/${session.user.id}`;

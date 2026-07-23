@@ -96,6 +96,8 @@ export default function RegisterPage() {
     const fd = new FormData();
     fd.append("file", file);
     fd.append("email", email);
+    fd.append("assetKind", which === "photo" ? "profile-photo" : "identity-doc");
+    fd.append("visibility", which === "photo" ? "public" : "private");
     try {
       const res = await fetch("/api/register-upload", {
         method: "POST",
