@@ -143,7 +143,9 @@ export function SupportShell({
     });
   }
 
-  const openCount = tickets.filter((ticket) => ticket.status !== "CLOSED").length;
+  const openCount = tickets.filter(
+    (ticket) => !["RESOLVED", "CLOSED"].includes(ticket.status)
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -328,6 +330,7 @@ function TicketCard({
   const [adminNote, setAdminNote] = useState(ticket.adminNote ?? "");
   const [pending, startTransition] = useTransition();
   const Icon = typeIcon[ticket.type as keyof typeof typeIcon] ?? MessageSquareText;
+  const isTerminal = ["RESOLVED", "CLOSED"].includes(ticket.status);
 
   function update() {
     startTransition(async () => {
@@ -409,6 +412,7 @@ function TicketCard({
           <NativeSelect
             value={status}
             onChange={(event) => setStatus(event.target.value)}
+            disabled={isTerminal}
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -420,9 +424,10 @@ function TicketCard({
             value={adminNote}
             onChange={(event) => setAdminNote(event.target.value)}
             placeholder="Admin note"
+            disabled={isTerminal}
           />
-          <Button type="button" onClick={update} disabled={pending}>
-            {pending ? "Saving..." : "Update"}
+          <Button type="button" onClick={update} disabled={pending || isTerminal}>
+            {isTerminal ? "Closed" : pending ? "Saving..." : "Update"}
           </Button>
         </div>
       )}

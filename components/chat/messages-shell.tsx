@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getOrCreateDirect } from "@/actions/message.actions";
 import { sendEmployeeReminder } from "@/actions/presence.actions";
 import { ChatPanel } from "@/components/chat/chat-panel";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,18 +45,22 @@ const FILTERS = [
 
 export function MessagesShell({
   conversations,
-  people,
+  people = [],
   currentUserId,
   initialOpenId,
   maskAsDisplaySender = false,
+  newConversationHref,
 }: {
   conversations: ConvoRow[];
-  people: Person[];
+  people?: Person[];
   currentUserId: string;
   initialOpenId?: string | null;
   // True for client viewers: hides ghost-send
   // identity so they only see the team member.
   maskAsDisplaySender?: boolean;
+  // When set, "New message" links here (e.g. Find Expert) instead of
+  // opening the plain people-picker dialog.
+  newConversationHref?: string;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<ConvoRow | null>(
@@ -128,10 +133,17 @@ export function MessagesShell({
             {conversations.filter((c) => c.unread).length} unread
           </p>
         </div>
-        <Button onClick={() => setNewOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New message
-        </Button>
+        {newConversationHref ? (
+          <Link href={newConversationHref} className={buttonVariants()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Find Expert
+          </Link>
+        ) : (
+          <Button onClick={() => setNewOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New message
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]">
@@ -251,6 +263,7 @@ export function MessagesShell({
       </div>
 
       {/* New direct message dialog */}
+      {!newConversationHref && (
       <Dialog open={newOpen} onOpenChange={setNewOpen}>
         <DialogContent>
           <DialogHeader>
@@ -281,6 +294,7 @@ export function MessagesShell({
           </div>
         </DialogContent>
       </Dialog>
+      )}
     </div>
   );
 }

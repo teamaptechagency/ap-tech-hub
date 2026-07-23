@@ -19,6 +19,7 @@ export default async function ClientTeamPage() {
       accountStatus: true,
       lastActiveAt: true,
       presenceBusy: true,
+      skills: { select: { name: true } },
     },
   });
 
@@ -32,6 +33,7 @@ export default async function ClientTeamPage() {
         accountStatus: member.accountStatus,
         lastActiveAt: member.lastActiveAt?.toISOString() ?? null,
         presenceBusy: member.presenceBusy,
+        skills: member.skills.map((skill) => skill.name),
       }))}
     />
   );

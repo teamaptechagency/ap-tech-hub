@@ -5,7 +5,9 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Globe2,
+  HeadphonesIcon,
   Menu,
   MessageCircle,
   Send,
@@ -1838,6 +1840,41 @@ export function LandingPage({
           </div>
         </div>
       </section>
+      )}
+
+      {page === "home" && (
+        <section className="bg-[#101623] py-8">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <div className="grid gap-4 rounded-[18px] border border-[#c6613f]/30 bg-[linear-gradient(120deg,#1c2438_0%,#241a15_100%)] p-6 sm:grid-cols-2 sm:p-7">
+              <div className="flex items-center gap-4">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#c6613f]/15 text-[#f5a83c]">
+                  <HeadphonesIcon size={22} />
+                </div>
+                <div>
+                  <p className="font-extrabold text-white">24/7 Support</p>
+                  <p className="mt-0.5 text-sm text-[#cbd2df]">
+                    Real people, ready around the clock for urgent fixes and questions.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 sm:border-l sm:border-white/10 sm:pl-6">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#c6613f]/15 text-[#f5a83c]">
+                  <ShieldCheck size={22} />
+                </div>
+                <div>
+                  <p className="font-extrabold text-white">60 Days Free Support</p>
+                  <p className="mt-0.5 text-sm text-[#cbd2df]">
+                    Free bug fixes and tweaks for 60 days after delivery, on us.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-[11px] text-[#6b7280]">
+              <Clock size={12} />
+              *Terms & conditions apply
+            </p>
+          </div>
+        </section>
       )}
 
       {page === "home" && (

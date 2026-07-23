@@ -128,7 +128,8 @@ export async function updateSupportTicketStatus(input: {
   }
 
   const ticketId = cleanText(input.ticketId, 80);
-  const status = pick(statuses, input.status, "OPEN") as TicketStatus;
+  const statusInput = pick(statuses, input.status, "OPEN") as TicketStatus;
+  const status = statusInput === "RESOLVED" ? "CLOSED" : statusInput;
   const adminNote = cleanText(input.adminNote, 1200);
 
   const existing = await db.supportTicket.findUnique({
@@ -148,7 +149,7 @@ export async function updateSupportTicketStatus(input: {
       status,
       adminNote: adminNote || null,
       assignedToId: session.user.id,
-      resolvedAt: status === "RESOLVED" || status === "CLOSED" ? new Date() : null,
+      resolvedAt: status === "CLOSED" ? new Date() : null,
     },
   });
 

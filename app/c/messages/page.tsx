@@ -29,7 +29,17 @@ export default async function ClientMessagesPage({
             clientId: session.user.clientId,
           },
         },
-        { isDirect: true, participants: { some: { userId: myId } } },
+        {
+          isDirect: true,
+          participants: { some: { userId: myId } },
+          NOT: {
+            participants: {
+              some: {
+                user: { role: "TEAM_MEMBER" },
+              },
+            },
+          },
+        },
       ],
     },
     orderBy: { updatedAt: "desc" },
@@ -99,20 +109,13 @@ export default async function ClientMessagesPage({
     };
   });
 
-  // Clients can start directs with admins and team members
-  const people = await prisma.user.findMany({
-    where: { role: { in: ["SUPER_ADMIN", "ADMIN", "CEO", "TEAM_MEMBER"] } },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, role: true },
-  });
-
   return (
     <MessagesShell
       conversations={rows}
-      people={people}
       currentUserId={myId}
       initialOpenId={openId}
       maskAsDisplaySender
+      newConversationHref="/c/team"
     />
   );
 }

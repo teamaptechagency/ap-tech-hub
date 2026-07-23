@@ -1144,12 +1144,29 @@ export async function getOrCreateDirect(
       },
       select: {
         id: true,
+        role: true,
+        clientId: true,
       },
     });
 
   if (!otherUser) {
     return {
       error: "User not found",
+    };
+  }
+
+  const currentIsClient = Boolean(session.user.clientId);
+  const otherIsClient = Boolean(otherUser.clientId);
+  const currentIsTeamMember = session.user.role === "TEAM_MEMBER";
+  const otherIsTeamMember = otherUser.role === "TEAM_MEMBER";
+
+  if (
+    (currentIsClient && otherIsTeamMember) ||
+    (currentIsTeamMember && otherIsClient)
+  ) {
+    return {
+      error:
+        "Client and employee can only talk inside an assigned project/job conversation",
     };
   }
 

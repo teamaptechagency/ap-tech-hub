@@ -33,14 +33,14 @@ export default async function AdminLayout({
   // Only admin-side roles may access admin routes.
   if (!ADMIN_ROLES.includes(role)) {
     if (CLIENT_ROLES.includes(role)) {
-      redirect("/c/dashboard");
+      redirect("/c/profile");
     }
 
     if (PARTNER_ROLES.includes(role)) {
-      redirect("/p/dashboard");
+      redirect("/p/profile");
     }
 
-    redirect("/e/dashboard");
+    redirect("/e/profile");
   }
 
   const userName =

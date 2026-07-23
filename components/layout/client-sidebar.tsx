@@ -64,7 +64,7 @@ export const clientNavItems: ClientNavItem[] = [
     icon: MessageCircle,
   },
   {
-    label: "Our Team",
+    label: "Find Expert",
     href: "/c/team",
     icon: Users,
   },

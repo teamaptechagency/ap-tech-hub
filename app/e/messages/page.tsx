@@ -13,7 +13,17 @@ export default async function EmployeeMessagesPage() {
       OR: [
         { job: { members: { some: { userId: myId } } } },
         { specialOrderPartner: { partnerId: myId } },
-        { isDirect: true, participants: { some: { userId: myId } } },
+        {
+          isDirect: true,
+          participants: { some: { userId: myId } },
+          NOT: {
+            participants: {
+              some: {
+                user: { clientId: { not: null } },
+              },
+            },
+          },
+        },
       ],
     },
     orderBy: { updatedAt: "desc" },
