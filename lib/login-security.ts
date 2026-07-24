@@ -428,6 +428,32 @@ export async function getUserLoginDevices(userId: string) {
   `;
 }
 
+/**
+ * Drops a remembered device so its token no longer counts as trusted. Used
+ * when someone loses a phone or spots a login they don't recognise — the
+ * device history is useless if you can't act on what it shows.
+ *
+ * Scoped by userId so a device id from another account cannot be revoked.
+ */
+export async function revokeLoginDevice(userId: string, deviceId: string) {
+  await ensureLoginSecurityTables();
+  const result = await prisma.$executeRaw`
+    DELETE FROM "UserLoginDevice"
+    WHERE "id" = ${deviceId} AND "userId" = ${userId}
+  `;
+  return result > 0;
+}
+
+/** Forgets every remembered device for this account. */
+export async function revokeAllLoginDevices(userId: string) {
+  await ensureLoginSecurityTables();
+  const result = await prisma.$executeRaw`
+    DELETE FROM "UserLoginDevice"
+    WHERE "userId" = ${userId}
+  `;
+  return result;
+}
+
 function loginKey(email: string, ipAddress: string) {
   return `${email.toLowerCase()}|${ipAddress}`;
 }

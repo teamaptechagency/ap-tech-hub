@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   changePassword,
   requestEmailChange,
   requestSecurityVerificationCode,
   enableAuthenticator,
+  revokeMyLoginDevice,
+  revokeMyOtherLoginDevices,
   setTwoFactorEnabled,
   setupAuthenticator,
   updatePortfolio,
@@ -202,6 +205,8 @@ export function ProfileForm({
   const [pwCodeSending, setPwCodeSending] = useState(false);
   const [pwBusy, setPwBusy] = useState(false);
   const [twoFactorOffPassword, setTwoFactorOffPassword] = useState("");
+  const [deviceBusy, setDeviceBusy] = useState(false);
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
   const [portfolioHeadline, setPortfolioHeadline] = useState(portfolio.headline);
   const [portfolioSummary, setPortfolioSummary] = useState(portfolio.summary);
@@ -379,6 +384,48 @@ export function ProfileForm({
   const phonePending = pendingChanges.filter((change) => change.type === "PHONE");
   const payoutPending = pendingChanges.filter((change) => change.type === "PAYOUT");
   const emailPending = pendingChanges.filter((change) => change.type === "EMAIL");
+
+  async function revokeDevice(deviceId: string) {
+    if (
+      !window.confirm(
+        "Remove this device? It will need to verify again on the next sign-in."
+      )
+    ) {
+      return;
+    }
+
+    setDeviceBusy(true);
+    const result = await revokeMyLoginDevice(deviceId);
+    setDeviceBusy(false);
+
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Device removed");
+    router.refresh();
+  }
+
+  async function revokeAllDevices() {
+    if (
+      !window.confirm(
+        "Remove every remembered device? Each one will have to verify again."
+      )
+    ) {
+      return;
+    }
+
+    setDeviceBusy(true);
+    const result = await revokeMyOtherLoginDevices();
+    setDeviceBusy(false);
+
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("All devices removed");
+    router.refresh();
+  }
 
   async function sendPasswordChangeCode() {
     setPwCodeSending(true);
@@ -975,6 +1022,21 @@ export function ProfileForm({
           <CardTitle className="text-base">Device login history</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Devices that have signed in to your account. Remove any you do not
+            recognise — that device will have to verify from scratch next time.
+          </p>
+          {loginDevices.length > 0 && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={deviceBusy}
+              onClick={revokeAllDevices}
+            >
+              {deviceBusy ? "Working..." : "Remove all devices"}
+            </Button>
+          )}
           {loginDevices.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No trusted device history yet.
@@ -1015,6 +1077,16 @@ export function ProfileForm({
                       timeStyle: "short",
                     })}
                   </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 h-8 text-red-500 hover:text-red-600"
+                    disabled={deviceBusy}
+                    onClick={() => revokeDevice(device.id)}
+                  >
+                    Remove device
+                  </Button>
                 </div>
               );
             })
