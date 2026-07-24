@@ -8,6 +8,14 @@ import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES, PARTNER_ROLES } from "@/lib/roles";
 import { pusherServer } from "@/lib/pusher-server";
+import { notify } from "@/lib/notify";
+
+function formatRoleLabel(role: string) {
+  return role
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
 
 // ============================================
 // LOCAL TYPES
@@ -563,6 +571,7 @@ async function canAccessConversation(
   const isAdmin = ADMIN_ROLES.includes(
     session.user.role
   );
+  const isSuperAdmin = session.user.role === "SUPER_ADMIN";
   const isPartnerManager =
     session.user.role === "PARTNER_MANAGER" &&
     (await hasPermission({
@@ -572,7 +581,9 @@ async function canAccessConversation(
       action: "read",
     }));
 
-  // Direct conversation access
+  // Direct conversation access. Only super admin gets a blanket
+  // bypass here (oversight of every employee<->client direct chat) —
+  // admin/CEO can only open directs they're actually part of.
   if (conversation.isDirect) {
     const isParticipant =
       conversation.participants.some(
@@ -581,7 +592,7 @@ async function canAccessConversation(
         ) => participant.userId === userId
       );
 
-    if (!isParticipant && !isAdmin) {
+    if (!isParticipant && !isSuperAdmin) {
       return null;
     }
 
@@ -707,9 +718,9 @@ export async function sendMessage(
   let displaySenderId: string | null = null;
   const cleanOnBehalfId = onBehalfOfUserId?.trim() || null;
   if (cleanOnBehalfId) {
-    if (!ADMIN_ROLES.includes(access.session.user.role)) {
+    if (access.session.user.role !== "SUPER_ADMIN") {
       return {
-        error: "Only an admin can send a message on behalf of someone else",
+        error: "Only the super admin can send a message on behalf of someone else",
       };
     }
     if (!access.conversation.isDirect) {
@@ -888,6 +899,18 @@ export async function sendMessage(
     );
 
     revalidateMessagePaths();
+
+    if (displaySenderId) {
+      const senderRoleLabel = formatRoleLabel(access.session.user.role);
+      await notify({
+        userId: displaySenderId,
+        title: "A message was sent on your behalf",
+        body: `${access.session.user.name} (${senderRoleLabel}) replied to your client on your behalf: "${cleanBody.slice(0, 140)}"`,
+        href: "/e/messages",
+      }).catch((error) => {
+        console.error("Ghost-send notify failed:", error);
+      });
+    }
 
     return {
       success: true,

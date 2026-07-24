@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -7,32 +8,37 @@ export default async function MessagesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const myId = session.user.id;
+  const isSuperAdmin = session.user.role === "SUPER_ADMIN";
 
-  // All conversations relevant to admins:
-  // job conversations + directs I'm part of +
-  // every client<->team member direct chat (so
-  // admins can find and reply on a team member's
-  // behalf even when they're not a participant)
-  const conversations = await prisma.conversation.findMany({
-    where: {
-      OR: [
-        { jobId: { not: null } },
-        { specialOrderClientId: { not: null } },
-        { specialOrderPartnerId: { not: null } },
-        { isDirect: true, participants: { some: { userId: myId } } },
+  const conversationOr: Prisma.ConversationWhereInput[] = [
+    { jobId: { not: null } },
+    { specialOrderClientId: { not: null } },
+    { specialOrderPartnerId: { not: null } },
+    { isDirect: true, participants: { some: { userId: myId } } },
+  ];
+
+  // Only the super admin additionally sees every client<->team
+  // member direct chat (so they alone can find and reply on a
+  // team member's behalf even when they're not a participant) —
+  // admin/CEO don't get this.
+  if (isSuperAdmin) {
+    conversationOr.push({
+      isDirect: true,
+      AND: [
+        { participants: { some: { user: { role: "TEAM_MEMBER" } } } },
         {
-          isDirect: true,
-          AND: [
-            { participants: { some: { user: { role: "TEAM_MEMBER" } } } },
-            {
-              participants: {
-                some: { user: { role: { in: ["CLIENT", "CLIENT_MANAGER"] } } },
-              },
-            },
-          ],
+          participants: {
+            some: { user: { role: { in: ["CLIENT", "CLIENT_MANAGER"] } } },
+          },
         },
       ],
-    },
+    });
+  }
+
+  // All conversations relevant to admins: job conversations +
+  // directs I'm part of, plus the super-admin oversight above.
+  const conversations = await prisma.conversation.findMany({
+    where: { OR: conversationOr },
     orderBy: { updatedAt: "desc" },
     include: {
       job: {
@@ -104,9 +110,9 @@ export default async function MessagesPage() {
       if (teamMember && clientUser) {
         name = `${clientUser.user.name} ↔ ${teamMember.user.name}`;
         subtitle = "Client · Team member";
-        onBehalfOptions = [
-          { id: teamMember.user.id, name: teamMember.user.name },
-        ];
+        onBehalfOptions = isSuperAdmin
+          ? [{ id: teamMember.user.id, name: teamMember.user.name }]
+          : undefined;
       } else {
         const other = c.participants.find((p) => p.userId !== myId);
         name = other?.user.name ?? "Direct message";
