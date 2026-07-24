@@ -46,6 +46,51 @@ function StatCard({
   );
 }
 
+type CountryVisitorRow = {
+  country: string;
+  visitors: number | bigint;
+};
+
+async function getVisitorCountryStats() {
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+
+  try {
+    const [month, year] = await Promise.all([
+      prisma.$queryRaw<CountryVisitorRow[]>`
+        SELECT COALESCE(NULLIF("country", ''), 'Unknown') AS "country", COUNT(*)::int AS "visitors"
+        FROM "LandingVisitorEvent"
+        WHERE "createdAt" >= ${monthStart}
+        GROUP BY 1
+        ORDER BY "visitors" DESC, "country" ASC
+        LIMIT 8
+      `,
+      prisma.$queryRaw<CountryVisitorRow[]>`
+        SELECT COALESCE(NULLIF("country", ''), 'Unknown') AS "country", COUNT(*)::int AS "visitors"
+        FROM "LandingVisitorEvent"
+        WHERE "createdAt" >= ${yearStart}
+        GROUP BY 1
+        ORDER BY "visitors" DESC, "country" ASC
+        LIMIT 8
+      `,
+    ]);
+
+    return {
+      month: month.map((row) => ({
+        country: row.country,
+        visitors: Number(row.visitors),
+      })),
+      year: year.map((row) => ({
+        country: row.country,
+        visitors: Number(row.visitors),
+      })),
+    };
+  } catch {
+    return { month: [], year: [] };
+  }
+}
+
 export default async function AdminDashboard() {
   const session = await auth();
 
@@ -73,6 +118,7 @@ export default async function AdminDashboard() {
     recentPartnerPayments,
     virtualJobEarnings,
     visitorCounter,
+    visitorCountryStats,
   ] = await Promise.all([
     prisma.earning.aggregate({ _sum: { amountBdt: true } }),
     prisma.expense.aggregate({ _sum: { amountBdt: true } }),
@@ -167,6 +213,7 @@ export default async function AdminDashboard() {
         select: { value: true },
       })
       .catch(() => null),
+    getVisitorCountryStats(),
   ]);
 
   const earningsHistory = [...savedEarningsHistory, ...virtualJobEarnings]
@@ -263,6 +310,19 @@ export default async function AdminDashboard() {
           value={websiteVisitors.toLocaleString()}
           href="/leads"
           hint="Public portal visits"
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <CountryVisitorsCard
+          title="Visitor countries - this month"
+          rows={visitorCountryStats.month}
+          empty="No country data for this month yet"
+        />
+        <CountryVisitorsCard
+          title="Visitor countries - this year"
+          rows={visitorCountryStats.year}
+          empty="No country data for this year yet"
         />
       </div>
 
@@ -504,6 +564,71 @@ function HistoryCard({
             </div>
           );
         })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function formatCountry(country: string) {
+  if (country === "Unknown") return "Unknown";
+
+  try {
+    const displayNames = new Intl.DisplayNames(["en"], { type: "region" });
+    const name = country.length === 2 ? displayNames.of(country) : country;
+    return name ? `${name} (${country})` : country;
+  } catch {
+    return country;
+  }
+}
+
+function CountryVisitorsCard({
+  title,
+  rows,
+  empty,
+}: {
+  title: string;
+  rows: { country: string; visitors: number }[];
+  empty: string;
+}) {
+  const maxVisitors = Math.max(...rows.map((row) => row.visitors), 1);
+  const totalVisitors = rows.reduce((sum, row) => sum + row.visitors, 0);
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-base">{title}</CardTitle>
+          <Badge variant="secondary" className="text-[10px]">
+            {totalVisitors.toLocaleString()} visits
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {rows.length === 0 && (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            {empty}
+          </p>
+        )}
+        {rows.map((row) => (
+          <div key={row.country} className="space-y-1.5">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="truncate font-medium">
+                {formatCountry(row.country)}
+              </span>
+              <span className="shrink-0 font-semibold text-primary">
+                {row.visitors.toLocaleString()}
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{
+                  width: `${Math.max((row.visitors / maxVisitors) * 100, 7)}%`,
+                }}
+              />
+            </div>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );

@@ -1207,6 +1207,21 @@ model LandingChatMessage {
   createdAt DateTime        @default(now())
 }
 
+model LandingVisitorEvent {
+  id        String   @id @default(cuid())
+  path      String   @default("/")
+  country   String   @default("Unknown")
+  city      String?
+  region    String?
+  ipHash    String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([country])
+  @@index([country, createdAt])
+}
+
 // ============================================
 // LEAD COLLECTIONS + FOLLOW-UP CRM
 // ============================================

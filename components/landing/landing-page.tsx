@@ -1753,10 +1753,10 @@ export function LandingPage({
     if (window.sessionStorage.getItem(key)) return;
 
     window.sessionStorage.setItem(key, "1");
-    recordLandingVisit().catch(() => {
+    recordLandingVisit(pathname || "/").catch(() => {
       window.sessionStorage.removeItem(key);
     });
-  }, []);
+  }, [pathname]);
 
   const filteredServices = useMemo(() => {
     const visibleServices = data.services.filter((service) => !service.hidden);

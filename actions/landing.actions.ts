@@ -1,7 +1,8 @@
 "use server";
 
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import { prisma } from "@/lib/prisma";
 
@@ -37,6 +38,37 @@ function clean(value: FormDataEntryValue | null) {
 
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function firstHeader(headerList: Headers, keys: string[]) {
+  for (const key of keys) {
+    const value = headerList.get(key);
+    if (value) return value.trim();
+  }
+
+  return "";
+}
+
+function decodeHeaderValue(value: string) {
+  if (!value) return null;
+
+  try {
+    return decodeURIComponent(value).slice(0, 120);
+  } catch {
+    return value.slice(0, 120);
+  }
+}
+
+function normalizeCountry(value: string) {
+  const country = value.trim();
+  if (!country || country === "XX") return "Unknown";
+  return country.length === 2 ? country.toUpperCase() : country.slice(0, 80);
+}
+
+function hashIp(value: string) {
+  const ip = value.split(",")[0]?.trim();
+  if (!ip) return null;
+  return createHash("sha256").update(ip).digest("hex");
 }
 
 type FallbackChat = {
@@ -480,7 +512,7 @@ export async function sendLandingChatAdminReply(leadId: string, body: string) {
   return { success: true };
 }
 
-export async function recordLandingVisit() {
+export async function recordLandingVisit(path = "/") {
   const key = "landing.visitor.count";
   const current = await prisma.setting
     .findUnique({
@@ -490,6 +522,36 @@ export async function recordLandingVisit() {
     .catch(() => null);
 
   const nextCount = Number(current?.value ?? 0) + 1;
+  const headerList = await headers();
+  const country = normalizeCountry(
+    firstHeader(headerList, [
+      "x-vercel-ip-country",
+      "cf-ipcountry",
+      "x-country",
+      "x-client-country",
+    ])
+  );
+  const city = decodeHeaderValue(
+    firstHeader(headerList, ["x-vercel-ip-city", "x-city"])
+  );
+  const region = decodeHeaderValue(
+    firstHeader(headerList, [
+      "x-vercel-ip-country-region",
+      "x-region",
+      "x-vercel-ip-region",
+    ])
+  );
+  const ipHash = hashIp(
+    firstHeader(headerList, [
+      "x-forwarded-for",
+      "x-real-ip",
+      "cf-connecting-ip",
+      "x-client-ip",
+    ])
+  );
+  const userAgent =
+    firstHeader(headerList, ["user-agent"]).slice(0, 500) || null;
+  const cleanPath = path.startsWith("/") ? path.slice(0, 180) : "/";
 
   await prisma.setting
     .upsert({
@@ -497,6 +559,12 @@ export async function recordLandingVisit() {
       update: { value: String(nextCount) },
       create: { key, value: String(nextCount) },
     })
+    .catch(() => null);
+  await prisma
+    .$executeRaw`
+      INSERT INTO "LandingVisitorEvent" ("id", "path", "country", "city", "region", "ipHash", "userAgent")
+      VALUES (${randomUUID()}, ${cleanPath}, ${country}, ${city}, ${region}, ${ipHash}, ${userAgent})
+    `
     .catch(() => null);
 
   revalidatePath("/dashboard");
