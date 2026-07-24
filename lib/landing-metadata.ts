@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import type { LandingPageData } from "@/lib/landing-data";
 import type { BrandingSettings } from "@/lib/branding";
 
+const GOOGLE_SITE_VERIFICATION = "vWP7NPu2sJCPiScFDNefDH8mTvQU6-Uf86TQXWRCuQo";
+
 function readMetadataBase(siteUrl: string) {
   try {
     return siteUrl ? new URL(siteUrl) : undefined;
@@ -55,9 +57,9 @@ export function buildLandingMetadata(
           index: false,
           follow: false,
         },
-    verification: data.seo.googleVerification
-      ? { google: data.seo.googleVerification }
-      : undefined,
+    verification: {
+      google: data.seo.googleVerification || GOOGLE_SITE_VERIFICATION,
+    },
     openGraph: {
       title,
       description,
