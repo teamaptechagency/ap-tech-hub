@@ -10,6 +10,10 @@ import {
   generateTotpSecret,
   verifyTotp,
 } from "@/lib/totp";
+import {
+  revokeAllLoginDevices,
+  revokeLoginDevice,
+} from "@/lib/login-security";
 import { getEmailConfig } from "@/lib/email-config";
 import { sendWhatsAppOtp } from "@/lib/whatsapp";
 import { portfolioSettingKey } from "@/lib/user-portfolio";
@@ -758,4 +762,74 @@ export async function changePassword(formData: {
   });
 
   return { success: true };
+}
+
+// ============================================
+// LOGIN DEVICES
+//
+// The device history is only useful if the owner can act on it: losing a
+// phone or spotting an unfamiliar login should be fixable from the profile
+// without waiting for an admin.
+// ============================================
+
+export async function revokeMyLoginDevice(deviceId: string) {
+  const session = await auth();
+  if (!session?.user) return { error: "Please sign in first" };
+
+  try {
+    const removed = await revokeLoginDevice(session.user.id, deviceId);
+    if (!removed) return { error: "Device not found" };
+
+    await prisma.auditLog
+      .create({
+        data: {
+          actorId: session.user.id,
+          action: "LOGIN_DEVICE_REVOKED",
+          entity: "User",
+          entityId: session.user.id,
+          meta: deviceId,
+        },
+      })
+      .catch(() => null);
+
+    revalidateProfilePaths();
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to revoke login device:", error);
+    return { error: "Could not remove this device" };
+  }
+}
+
+export async function revokeMyOtherLoginDevices() {
+  const session = await auth();
+  if (!session?.user) return { error: "Please sign in first" };
+
+  try {
+    const count = await revokeAllLoginDevices(session.user.id);
+
+    await prisma.auditLog
+      .create({
+        data: {
+          actorId: session.user.id,
+          action: "LOGIN_DEVICES_CLEARED",
+          entity: "User",
+          entityId: session.user.id,
+          meta: `${count}`,
+        },
+      })
+      .catch(() => null);
+
+    revalidateProfilePaths();
+    return { success: true, count };
+  } catch (error) {
+    console.error("Failed to clear login devices:", error);
+    return { error: "Could not clear your devices" };
+  }
+}
+
+function revalidateProfilePaths() {
+  revalidatePath("/profile");
+  revalidatePath("/e/profile");
+  revalidatePath("/c/profile");
+  revalidatePath("/p/profile");
 }
