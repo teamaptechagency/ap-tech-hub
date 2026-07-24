@@ -9,6 +9,7 @@ import {
   updateTeamMemberIdentityStatus,
   updateTeamMemberStatus,
 } from "@/actions/settings.actions";
+import { startUserImpersonation } from "@/actions/impersonation.actions";
 import { adjustWorkerBalance, applyPenalty } from "@/actions/worker.actions";
 import { SensitiveDeleteDialog } from "@/components/shared/sensitive-delete-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -197,6 +198,17 @@ export function WorkerBalances({
     router.refresh();
   }
 
+  async function viewAsSelected() {
+    if (!selected) return;
+    setError("");
+    setBusy(true);
+    const result = await startUserImpersonation(selected.id);
+    setBusy(false);
+    if (result.error) return setError(result.error);
+    router.push("/profile");
+    router.refresh();
+  }
+
   function statusButtonClass(status: "ACTIVE" | "HOLD" | "LOCKED" | "SUSPENDED") {
     if (selected?.accountStatus !== status) return "";
     if (status === "ACTIVE") return "border-green-500 bg-green-500 text-white hover:bg-green-600";
@@ -364,6 +376,17 @@ export function WorkerBalances({
                 <Button size="sm" variant="outline" onClick={resetPasswordForSelected} disabled={busy}>
                   Reset password
                 </Button>
+                {isSuperAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-primary/40 text-primary hover:bg-primary/10"
+                    onClick={viewAsSelected}
+                    disabled={busy}
+                  >
+                    View as user
+                  </Button>
+                )}
               </div>
               {resetPassword && (
                 <div className="mb-3 rounded-md border bg-muted/50 p-3 text-sm">

@@ -7,6 +7,16 @@ declare module "next-auth" {
       role: string;
       clientId: string | null;
     } & DefaultSession["user"];
+    impersonation?: {
+      active: boolean;
+      adminId: string;
+      adminName: string;
+      adminEmail: string;
+      targetId: string;
+      targetName: string;
+      targetEmail: string;
+      targetRole: string;
+    };
   }
 
   interface User {

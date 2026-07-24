@@ -54,6 +54,7 @@ export default async function ClientsPage() {
       createdAt: client.createdAt.toISOString(),
 
       hasLogin: Boolean(portalUser),
+      loginUserId: portalUser?.id ?? null,
       loginEmail: portalUser?.email ?? null,
       loginRole: portalUser?.role ?? null,
 

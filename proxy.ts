@@ -34,6 +34,11 @@ const PUBLIC_EXACT_PATHS = [
 export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
   const user = req.auth?.user;
+  const impersonatedRole =
+    user?.role === "SUPER_ADMIN"
+      ? req.cookies.get("ap_impersonate_user_role")?.value
+      : null;
+  const effectiveRole = impersonatedRole || user?.role;
 
   // Public routes
   if (
@@ -45,7 +50,7 @@ export const proxy = auth((req) => {
       user &&
       (pathname.startsWith("/login") || pathname.startsWith("/register"))
     ) {
-      return NextResponse.redirect(new URL(homeFor(user.role), req.url));
+      return NextResponse.redirect(new URL(homeFor(effectiveRole ?? user.role), req.url));
     }
     return NextResponse.next();
   }
@@ -58,7 +63,7 @@ export const proxy = auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = user.role;
+  const role = effectiveRole ?? user.role;
 
   if (pathname === "/profile" && !ADMIN_ROLES.includes(role)) {
     if (CLIENT_ROLES.includes(role)) {

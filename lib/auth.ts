@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { verifyTotp } from "@/lib/totp";
+import { cookies } from "next/headers";
 
 function hasTwoFactorMethod(value: string | null | undefined, method: string) {
   return (value ?? "")
@@ -11,7 +12,7 @@ function hasTwoFactorMethod(value: string | null | undefined, method: string) {
     .includes(method);
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const nextAuth = NextAuth({
   trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
@@ -143,3 +144,65 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+export const { handlers, signIn, signOut } = nextAuth;
+export const rawAuth = nextAuth.auth;
+
+async function getEffectiveSession() {
+  const session = await nextAuth.auth();
+  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
+    return session;
+  }
+
+  const cookieStore = await cookies();
+  const targetId = cookieStore.get("ap_impersonate_user_id")?.value;
+  if (!targetId || targetId === session.user.id) return session;
+
+  const target = await prisma.user
+    .findUnique({
+      where: { id: targetId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        clientId: true,
+        image: true,
+        photoUrl: true,
+      },
+    })
+    .catch(() => null);
+
+  if (!target) return session;
+
+  return {
+    ...session,
+    user: {
+      ...session.user,
+      id: target.id,
+      name: target.name,
+      email: target.email,
+      image: target.photoUrl ?? target.image ?? session.user.image,
+      role: target.role,
+      clientId: target.clientId ?? null,
+    },
+    impersonation: {
+      active: true,
+      adminId: session.user.id,
+      adminName: session.user.name ?? "Super admin",
+      adminEmail: session.user.email ?? "",
+      targetId: target.id,
+      targetName: target.name,
+      targetEmail: target.email,
+      targetRole: target.role,
+    },
+  };
+}
+
+export const auth = ((...args: unknown[]) => {
+  if (args.length > 0) {
+    return (nextAuth.auth as (...authArgs: unknown[]) => unknown)(...args);
+  }
+
+  return getEffectiveSession();
+}) as typeof nextAuth.auth;

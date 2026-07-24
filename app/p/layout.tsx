@@ -15,6 +15,7 @@ import {
   BottomNav,
   type BottomNavItem,
 } from "@/components/layout/bottom-nav";
+import { ImpersonationBanner } from "@/components/auth/impersonation-banner";
 
 export default async function PartnerLayout({
   children,
@@ -81,6 +82,14 @@ export default async function PartnerLayout({
 
       <main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-4 pb-20 md:p-8 md:pb-8">
         <div className="mx-auto w-full max-w-[1600px]">
+          {session.impersonation && (
+            <ImpersonationBanner
+              adminName={session.impersonation.adminName}
+              targetName={session.impersonation.targetName}
+              targetEmail={session.impersonation.targetEmail}
+              targetRole={session.impersonation.targetRole}
+            />
+          )}
           {termsGate}
           {children}
         </div>

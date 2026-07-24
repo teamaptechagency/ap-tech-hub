@@ -103,6 +103,7 @@ export default async function AccountsOverviewPage() {
 
   const tabs = [
     { label: "Overview", href: "/accounts", active: true },
+    { label: "All users", href: "/accounts/users" },
     { label: "Employees", href: "/accounts/employees" },
     { label: "Partners", href: "/accounts/partners" },
     {

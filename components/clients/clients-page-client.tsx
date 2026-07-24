@@ -10,6 +10,7 @@ import {
   deleteClient,
   resetClientLogin,
 } from "@/actions/client.actions";
+import { startUserImpersonation } from "@/actions/impersonation.actions";
 
 import { ClientDialog } from "@/components/clients/client-dialog";
 import { SensitiveDeleteDialog } from "@/components/shared/sensitive-delete-dialog";
@@ -65,6 +66,7 @@ export type ClientListItem = {
   createdAt: string;
 
   hasLogin: boolean;
+  loginUserId: string | null;
   loginEmail: string | null;
   loginRole: string | null;
 
@@ -274,6 +276,28 @@ export function ClientsPageClient({
     } catch (error) {
       console.error("Reset client login failed:", error);
       toast.error("Client login could not be reset.");
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function handleViewAsClient(client: ClientListItem) {
+    if (!client.loginUserId) return;
+    const key = `view-as-${client.id}`;
+    setBusyAction(key);
+
+    try {
+      const result = await startUserImpersonation(client.loginUserId);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      router.push("/profile");
+      router.refresh();
+    } catch (error) {
+      console.error("View as client failed:", error);
+      toast.error("Could not open this client portal.");
     } finally {
       setBusyAction(null);
     }
@@ -620,18 +644,32 @@ export function ClientsPageClient({
                     </div>
 
                     {client.hasLogin ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={Boolean(busyAction)}
-                        onClick={() => handleResetLogin(client)}
-                      >
-                        <RotateCcw className="mr-2 h-3.5 w-3.5" />
-                        {resetLoginBusy
-                          ? "Resetting..."
-                          : "Reset login"}
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        {isSuperAdmin && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="border-primary/40 text-primary hover:bg-primary/10"
+                            disabled={Boolean(busyAction)}
+                            onClick={() => handleViewAsClient(client)}
+                          >
+                            {busyAction === `view-as-${client.id}`
+                              ? "Opening..."
+                              : "View as user"}
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={Boolean(busyAction)}
+                          onClick={() => handleResetLogin(client)}
+                        >
+                          <RotateCcw className="mr-2 h-3.5 w-3.5" />
+                          {resetLoginBusy ? "Resetting..." : "Reset login"}
+                        </Button>
+                      </div>
                     ) : (
                       <Button
                         type="button"
