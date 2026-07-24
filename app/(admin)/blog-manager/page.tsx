@@ -1,0 +1,41 @@
+import { BlogManager } from "@/components/blog/blog-manager";
+import { getAllBlogCategories, getAllBlogPosts } from "@/lib/blog";
+import { getLandingPageData } from "@/lib/landing-data";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Blog manager",
+};
+
+export default async function BlogAdminPage() {
+  const [posts, categories, landing, authors] = await Promise.all([
+    getAllBlogPosts(),
+    getAllBlogCategories(),
+    getLandingPageData(),
+    prisma.user.findMany({
+      where: {
+        role: { in: ["SUPER_ADMIN", "ADMIN", "CEO", "TEAM_MEMBER"] },
+        accountStatus: "ACTIVE",
+      },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+      take: 100,
+    }),
+  ]);
+
+  return (
+    <BlogManager
+      initialPosts={posts.map((post) => ({
+        ...post,
+        publishedAt: post.publishedAt?.toISOString() ?? null,
+        updatedAt: post.updatedAt.toISOString(),
+        createdAt: post.createdAt.toISOString(),
+      }))}
+      initialCategories={categories}
+      authors={authors}
+      siteUrl={landing.seo.siteUrl}
+    />
+  );
+}

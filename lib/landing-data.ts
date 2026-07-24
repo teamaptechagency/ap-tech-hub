@@ -117,6 +117,7 @@ export type LandingPageData = {
     socialImageUrl: string;
     importantLinks: string;
     googleVerification: string;
+    bingVerification: string;
     allowIndexing: boolean;
   };
   about: {
@@ -1041,6 +1042,7 @@ export const defaultLandingData: LandingPageData = {
     importantLinks:
       "https://aptechagency.com, https://aptechagency.com/landing, https://aptechagency.com/login, https://aptechagency.com/register",
     googleVerification: "",
+    bingVerification: "",
     allowIndexing: true,
   },
   about: {

@@ -868,11 +868,15 @@ export function LandingContentManager({
           <ImageField label="Social preview image / SEO image" value={data.seo.socialImageUrl} onChange={(value) => setData((current) => ({ ...current, seo: { ...current.seo, socialImageUrl: value } }))} hint="Recommended Open Graph image: 1200x630. This appears when the public portal link is shared." />
           <Field label="Important links / backlink notes" value={data.seo.importantLinks} textarea onChange={(value) => setData((current) => ({ ...current, seo: { ...current.seo, importantLinks: value } }))} />
           <Field label="Google Search Console verification code" value={data.seo.googleVerification} onChange={(value) => setData((current) => ({ ...current, seo: { ...current.seo, googleVerification: value } }))} />
+          <Field label="Bing Webmaster Tools verification code" value={data.seo.bingVerification} onChange={(value) => setData((current) => ({ ...current, seo: { ...current.seo, bingVerification: value } }))} />
           <ToggleField label="Allow Google indexing" checked={data.seo.allowIndexing} onChange={(value) => setData((current) => ({ ...current, seo: { ...current.seo, allowIndexing: value } }))} />
           <div className="rounded-lg border bg-muted/40 p-3 text-sm md:col-span-2">
-            <p className="font-semibold">Google setup</p>
+            <p className="font-semibold">Search engine setup</p>
             <p className="mt-1 text-muted-foreground">
-              Add only the code from Google meta verification. Sitemap and robots are available automatically after saving: /sitemap.xml and /robots.txt. Keep indexing on for production and off for test/private domains.
+              Paste either the bare verification code or the whole meta tag — both work. Sitemap and robots are available automatically after saving: /sitemap.xml and /robots.txt. Keep indexing on for production and off for test/private domains.
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              Bing: sign in at bing.com/webmasters, add {data.seo.siteUrl || "your site"}, choose the HTML meta tag option and paste the code above. You can also import the site directly from Google Search Console.
             </p>
           </div>
         </Panel>

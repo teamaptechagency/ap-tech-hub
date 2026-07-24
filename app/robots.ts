@@ -17,7 +17,18 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   return {
     rules: {
       userAgent: "*",
-      allow: data.seo.allowIndexing ? ["/", "/landing"] : [],
+      allow: data.seo.allowIndexing
+        ? [
+            "/",
+            "/landing",
+            "/blog",
+            "/services",
+            "/portfolio",
+            "/team",
+            "/about",
+            "/contact",
+          ]
+        : [],
       disallow: data.seo.allowIndexing
         ? [
             "/accounts",

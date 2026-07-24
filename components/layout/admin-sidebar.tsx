@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessageCircle,
+  Newspaper,
   Receipt,
   Settings,
   ShieldCheck,
@@ -67,6 +68,11 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Public Portal",
     href: "/landing-manager",
     icon: GalleryHorizontalEnd,
+  },
+  {
+    label: "Blog",
+    href: "/blog-manager",
+    icon: Newspaper,
   },
   {
     label: "Jobs",

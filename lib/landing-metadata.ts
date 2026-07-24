@@ -4,17 +4,21 @@ import type { BrandingSettings } from "@/lib/branding";
 
 const GOOGLE_SITE_VERIFICATION = "vWP7NPu2sJCPiScFDNefDH8mTvQU6-Uf86TQXWRCuQo";
 
-function readGoogleVerification(value?: string | null) {
+// Admins paste whatever Search Console / Bing hands them — sometimes the bare
+// token, sometimes the whole <meta> tag. Pull the token out either way.
+function readVerificationToken(value?: string | null) {
   const raw = value?.trim() ?? "";
-  if (!raw) return GOOGLE_SITE_VERIFICATION;
+  if (!raw) return "";
 
   const contentMatch = raw.match(/content=["']([^"']+)["']/i);
-  const token = (contentMatch?.[1] ?? raw)
+  return (contentMatch?.[1] ?? raw)
     .replace(/^<meta\s+/i, "")
     .replace(/\/?>$/i, "")
     .trim();
+}
 
-  return token || GOOGLE_SITE_VERIFICATION;
+function readGoogleVerification(value?: string | null) {
+  return readVerificationToken(value) || GOOGLE_SITE_VERIFICATION;
 }
 
 function readMetadataBase(siteUrl: string) {
@@ -26,7 +30,7 @@ function readMetadataBase(siteUrl: string) {
 }
 
 // Shared metadata builder for the public site's Home + dedicated
-// section pages (services/portfolio/team/testimonials/about/contact).
+// section pages (services/portfolio/team/about/contact/blog).
 // `titleSuffix` distinguishes each page's <title>/canonical while
 // reusing the same admin-configured SEO settings.
 export function buildLandingMetadata(
@@ -43,6 +47,7 @@ export function buildLandingMetadata(
   const siteUrl = data.seo.siteUrl.trim();
   const metadataBase = readMetadataBase(siteUrl);
   const path = options?.path ?? "/";
+  const bingVerification = readVerificationToken(data.seo.bingVerification);
 
   return {
     metadataBase,
@@ -72,12 +77,16 @@ export function buildLandingMetadata(
         },
     verification: {
       google: readGoogleVerification(data.seo.googleVerification),
+      // Bing Webmaster Tools verifies with a msvalidate.01 meta tag.
+      ...(bingVerification ? { other: { "msvalidate.01": bingVerification } } : {}),
     },
     openGraph: {
       title,
       description,
       type: "website",
       siteName: "AP Tech Agency",
+      url: siteUrl ? new URL(path, `${siteUrl.replace(/\/$/, "")}/`).toString() : undefined,
+      locale: "en_US",
       images: imageUrl ? [{ url: imageUrl }] : undefined,
     },
     twitter: {
@@ -86,13 +95,9 @@ export function buildLandingMetadata(
       description,
       images: imageUrl ? [imageUrl] : undefined,
     },
-    icons: branding.faviconUrl
-      ? {
-          icon: branding.faviconUrl,
-          shortcut: branding.faviconUrl,
-          apple: branding.faviconUrl,
-        }
-      : undefined,
+    // Icons come from app/icon.tsx + app/apple-icon.tsx. File-based metadata
+    // outranks anything set here, and a same-origin /icon is what Google's
+    // favicon crawler can actually fetch.
     other: {
       "business:contact_data:email": data.seo.email,
       "business:contact_data:phone_number": data.seo.phone,

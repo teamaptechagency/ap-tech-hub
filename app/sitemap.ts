@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { getBlogSitemapEntries } from "@/lib/blog";
 import { getLandingPageData } from "@/lib/landing-data";
 
 function publicBaseUrl(siteUrl: string) {
@@ -27,14 +28,17 @@ function readImportantUrls(value: string, baseUrl: string) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const data = await getLandingPageData();
+  const [data, blogPosts] = await Promise.all([
+    getLandingPageData(),
+    getBlogSitemapEntries(),
+  ]);
   const baseUrl = publicBaseUrl(data.seo.siteUrl.trim());
   const lastModified = new Date();
   const importantUrls = Array.from(
     new Set(readImportantUrls(data.seo.importantLinks, baseUrl))
   );
 
-  return [
+  const entries: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified,
@@ -47,21 +51,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.9,
     },
-    ...(
-      [
-        "services",
-        "portfolio",
-        "team",
-        "testimonials",
-        "process",
-        "about",
-        "contact",
-      ] as const
-    ).map((path) => ({
-      url: `${baseUrl}/${path}`,
-      lastModified,
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
+    // /process and /testimonials redirect now, so they stay out of the sitemap.
+    ...(["services", "portfolio", "team", "about", "contact"] as const).map(
+      (path) => ({
+        url: `${baseUrl}/${path}`,
+        lastModified,
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      })
+    ),
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: blogPosts[0]?.lastModified ?? lastModified,
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    // Individual articles carry the long-tail keywords, so each published
+    // post gets its own entry with a real last-modified date.
+    ...blogPosts.map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: post.lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
     })),
     {
       url: `${baseUrl}/login`,
@@ -75,13 +86,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.4,
     },
+  ];
+
+  // Admin-entered "important links" only add value when they aren't already
+  // listed above — a duplicated URL in a sitemap is a wasted crawl hint.
+  const known = new Set(entries.map((entry) => entry.url.replace(/\/$/, "")));
+
+  return [
+    ...entries,
     ...importantUrls
-      .filter(
-        (url) =>
-          ![baseUrl, `${baseUrl}/landing`, `${baseUrl}/login`, `${baseUrl}/register`].includes(
-            url.replace(/\/$/, "")
-          )
-      )
+      .filter((url) => !known.has(url.replace(/\/$/, "")))
       .map((url) => ({
         url,
         lastModified,
