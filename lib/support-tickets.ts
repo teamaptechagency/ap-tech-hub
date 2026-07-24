@@ -27,6 +27,21 @@ function supportDb() {
   };
 }
 
+// Work still needing attention sorts first; finished tickets drop to the
+// bottom. `status` is a plain string column, so ordering it in SQL would sort
+// alphabetically and put CLOSED at the very top — hence the explicit ranking.
+const STATUS_ORDER: Record<string, number> = {
+  OPEN: 0,
+  REVIEWING: 1,
+  PLANNED: 2,
+  RESOLVED: 8,
+  CLOSED: 9,
+};
+
+function statusRank(status: string) {
+  return STATUS_ORDER[status] ?? 5;
+}
+
 export async function getSupportTickets({
   reporterId,
 }: {
@@ -36,9 +51,9 @@ export async function getSupportTickets({
   if (!db.supportTicket) return [];
 
   try {
-    return await db.supportTicket.findMany({
+    const tickets = await db.supportTicket.findMany({
       where: reporterId ? { reporterId } : undefined,
-      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      orderBy: { createdAt: "desc" },
       include: {
         reporter: {
           select: {
@@ -49,6 +64,10 @@ export async function getSupportTickets({
         },
       },
     });
+
+    return [...tickets].sort(
+      (a, b) => statusRank(a.status) - statusRank(b.status)
+    );
   } catch (error) {
     console.error("Support tickets could not load:", error);
     return [];

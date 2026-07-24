@@ -5,6 +5,40 @@ import { prisma } from "@/lib/prisma";
 // module pulls in Prisma.
 export * from "@/lib/blog-content";
 
+/** Prisma "table does not exist" — the blog migration has not been applied. */
+const MISSING_TABLE = "P2021";
+
+function isMissingTable(error: unknown) {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: string }).code === MISSING_TABLE
+  );
+}
+
+let warnedAboutMigration = false;
+
+/**
+ * The blog degrades to "no posts" when its tables are absent, which keeps the
+ * public site and sitemap serving normally on a database that hasn't been
+ * migrated yet. That case is expected and gets one short line — not a Prisma
+ * stack trace on every request. Anything else is a real fault and is logged.
+ */
+function reportBlogError(context: string, error: unknown) {
+  if (isMissingTable(error)) {
+    if (!warnedAboutMigration) {
+      warnedAboutMigration = true;
+      console.warn(
+        "[blog] Blog tables are missing — serving an empty blog. Run `npx prisma migrate deploy` to enable it."
+      );
+    }
+    return;
+  }
+
+  console.error(`${context}:`, error);
+}
+
 export type BlogStatusValue = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
 export type BlogCategorySummary = {
@@ -156,7 +190,7 @@ export async function getBlogCategories(): Promise<BlogCategorySummary[]> {
       postCount: countByCategory.get(category.id) ?? 0,
     }));
   } catch (error) {
-    console.error("Failed to load blog categories:", error);
+    reportBlogError("Failed to load blog categories", error);
     return [];
   }
 }
@@ -202,7 +236,7 @@ export async function getPublishedBlogPosts(options?: {
 
     return { posts: posts.map(toSummary), total };
   } catch (error) {
-    console.error("Failed to load blog posts:", error);
+    reportBlogError("Failed to load blog posts", error);
     return { posts: [], total: 0 };
   }
 }
@@ -221,7 +255,7 @@ export async function getBlogPostBySlug(
 
     return toDetail(post);
   } catch (error) {
-    console.error("Failed to load blog post:", error);
+    reportBlogError("Failed to load blog post", error);
     return null;
   }
 }
@@ -264,7 +298,7 @@ export async function getRelatedBlogPosts(
 
     return [...sameCategory, ...filler].map(toSummary);
   } catch (error) {
-    console.error("Failed to load related blog posts:", error);
+    reportBlogError("Failed to load related blog posts", error);
     return [];
   }
 }
@@ -288,7 +322,7 @@ export async function getBlogSitemapEntries() {
       lastModified: post.updatedAt ?? post.publishedAt ?? new Date(),
     }));
   } catch (error) {
-    console.error("Failed to load blog sitemap entries:", error);
+    reportBlogError("Failed to load blog sitemap entries", error);
     return [];
   }
 }
@@ -305,7 +339,7 @@ export async function getAllBlogPosts(): Promise<BlogPostDetail[]> {
 
     return posts.map(toDetail);
   } catch (error) {
-    console.error("Failed to load blog posts for admin:", error);
+    reportBlogError("Failed to load blog posts for admin", error);
     return [];
   }
 }
@@ -325,7 +359,7 @@ export async function getAllBlogCategories(): Promise<BlogCategorySummary[]> {
       postCount: category._count.posts,
     }));
   } catch (error) {
-    console.error("Failed to load blog categories for admin:", error);
+    reportBlogError("Failed to load blog categories for admin", error);
     return [];
   }
 }
