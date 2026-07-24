@@ -1,9 +1,12 @@
 import { LandingPage } from "@/components/landing/landing-page";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getLandingPageData } from "@/lib/landing-data";
 import { getBrandingSettings } from "@/lib/branding";
 import { buildLandingMetadata } from "@/lib/landing-metadata";
 import { auth } from "@/lib/auth";
+import { getPublishedBlogPosts } from "@/lib/blog";
 import { homeFor } from "@/lib/roles";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/structured-data";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -17,65 +20,35 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootPage() {
-  const [data, session, branding] = await Promise.all([
+  const [data, session, branding, blog] = await Promise.all([
     getLandingPageData(),
     auth(),
     getBrandingSettings(),
+    getPublishedBlogPosts({ take: 3 }),
   ]);
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    name: "AP Tech Agency",
-    url: data.seo.siteUrl || "https://aptechagency.com",
-    description: data.seo.description,
-    email: data.seo.email,
-    telephone: data.seo.phone,
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: data.seo.address,
-    },
-    areaServed: data.seo.targetMarkets
-      .split(",")
-      .map((market) => market.trim())
-      .filter(Boolean),
-    image: data.seo.socialImageUrl || data.heroSlides[0]?.imageUrl,
-    knowsAbout: data.seo.keywords
-      .split(",")
-      .map((keyword) => keyword.trim())
-      .filter(Boolean)
-      .slice(0, 20),
-    hasOfferCatalog: {
-      "@type": "OfferCatalog",
-      name: "AP Tech Agency Services",
-      itemListElement: data.services
-        .filter((service) => !service.hidden)
-        .slice(0, 20)
-        .map((service) => ({
-          "@type": "Offer",
-          name: service.title,
-          description: service.description,
-          priceSpecification: service.priceRange
-            ? {
-                "@type": "PriceSpecification",
-                priceCurrency: "USD",
-                description: service.priceRange,
-              }
-            : undefined,
-        })),
-    },
-  };
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      <JsonLd
+        data={[
+          organizationJsonLd(data, { detailed: true }),
+          websiteJsonLd(data),
+        ]}
       />
       <LandingPage
         data={data}
         portalHref={session?.user ? homeFor(session.user.role) : null}
         publicLogoUrl={branding.publicLogoUrl}
+        latestPosts={blog.posts.map((post) => ({
+          id: post.id,
+          slug: post.slug,
+          title: post.title,
+          excerpt: post.excerpt,
+          coverImageUrl: post.coverImageUrl,
+          coverImageAlt: post.coverImageAlt,
+          categoryName: post.category?.name ?? null,
+          readingMinutes: post.readingMinutes,
+        }))}
       />
     </>
   );

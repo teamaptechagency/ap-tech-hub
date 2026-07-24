@@ -34,6 +34,7 @@ import {
   startLandingChat,
   submitLandingContact,
 } from "@/actions/landing.actions";
+import { PUBLIC_NAV_LINKS } from "@/lib/public-nav";
 import type {
   LandingPageData,
   LandingAdData,
@@ -247,8 +248,6 @@ export type LandingPageKey =
   | "services"
   | "portfolio"
   | "team"
-  | "testimonials"
-  | "process"
   | "about"
   | "contact";
 
@@ -257,10 +256,13 @@ const sectionRoutes: Record<string, string> = {
   services: "/services",
   portfolio: "/portfolio",
   team: "/team",
-  testimonials: "/testimonials",
-  process: "/process",
+  blog: "/blog",
   about: "/about",
   contact: "/contact",
+  // Merged sections: existing "#testimonials" / "#process" CTA targets now
+  // land on the page that hosts them.
+  testimonials: "/about",
+  process: "/services",
 };
 
 // Every internal "section" link (nav, hero CTAs, modal buttons, ad
@@ -294,7 +296,7 @@ const pageHeaderContent: Record<
     eyebrow: "What We Do",
     title: "Popular Services",
     description:
-      "Web, design, marketing and support services built around what your business actually needs.",
+      "Web, design, marketing and support services built around what your business actually needs — and the process we follow to deliver them.",
   },
   portfolio: {
     eyebrow: "Our Work",
@@ -308,22 +310,11 @@ const pageHeaderContent: Record<
     description:
       "The people behind AP Tech Agency — designers, developers and specialists working on your project.",
   },
-  testimonials: {
-    eyebrow: "Testimonials",
-    title: "What Our Clients Say",
-    description:
-      "Real feedback our clients have left about the team on Fiverr, Upwork and other marketplaces, plus direct projects.",
-  },
-  process: {
-    eyebrow: "How We Work",
-    title: "Our Working Process",
-    description:
-      "From your first brief to 60 days of free support after delivery — here's exactly how we take a project from idea to launch.",
-  },
   about: {
     eyebrow: "About Us",
     title: "About AP Tech Agency",
-    description: "Who we are and how we work with clients.",
+    description:
+      "Who we are, how we work with clients, and what those clients say about the result.",
   },
   contact: {
     eyebrow: "Get In Touch",
@@ -1703,16 +1694,29 @@ function PopupAd({ ad }: { ad: LandingAdData }) {
   );
 }
 
+export type LandingBlogTeaser = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  coverImageUrl: string | null;
+  coverImageAlt: string | null;
+  categoryName: string | null;
+  readingMinutes: number;
+};
+
 export function LandingPage({
   data,
   portalHref,
   publicLogoUrl,
   page = "home",
+  latestPosts = [],
 }: {
   data: LandingPageData;
   portalHref?: string | null;
   publicLogoUrl?: string | null;
   page?: LandingPageKey;
+  latestPosts?: LandingBlogTeaser[];
 }) {
   const [heroIndex, setHeroIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -1824,28 +1828,15 @@ export function LandingPage({
             </span>
           </Link>
           <nav className="hidden items-center gap-5 text-sm font-semibold text-[#6b7280] lg:flex">
-            {(
-              [
-                ["Home", "home"],
-                ["Services", "services"],
-                ["Process", "process"],
-                ["Portfolio", "portfolio"],
-                ["Our Team", "team"],
-                ["Testimonials", "testimonials"],
-                ["About Us", "about"],
-                ["Contact", "contact"],
-              ] as [string, LandingPageKey][]
-            ).map(([label, key]) => (
+            {PUBLIC_NAV_LINKS.map((link) => (
               <Link
-                key={key}
-                href={sectionRoutes[key]}
+                key={link.href}
+                href={link.href}
                 className={`transition hover:text-[#101623] ${
-                  pathname === sectionRoutes[key]
-                    ? "text-[#101623]"
-                    : ""
+                  pathname === link.href ? "text-[#101623]" : ""
                 }`}
               >
-                {label}
+                {link.label}
               </Link>
             ))}
           </nav>
@@ -1916,29 +1907,16 @@ export function LandingPage({
             </button>
           </div>
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4 text-[15px] font-semibold text-[#3a4152]">
-            {(
-              [
-                ["Home", "home"],
-                ["Services", "services"],
-                ["Process", "process"],
-                ["Portfolio", "portfolio"],
-                ["Our Team", "team"],
-                ["Testimonials", "testimonials"],
-                ["About Us", "about"],
-                ["Contact", "contact"],
-              ] as [string, LandingPageKey][]
-            ).map(([label, key]) => (
+            {PUBLIC_NAV_LINKS.map((link) => (
               <Link
-                key={key}
-                href={sectionRoutes[key]}
+                key={link.href}
+                href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`rounded-[10px] px-3 py-2.5 transition hover:bg-[#faf8f5] ${
-                  pathname === sectionRoutes[key]
-                    ? "bg-[#faf8f5] text-[#101623]"
-                    : ""
+                  pathname === link.href ? "bg-[#faf8f5] text-[#101623]" : ""
                 }`}
               >
-                {label}
+                {link.label}
               </Link>
             ))}
           </nav>
@@ -2518,7 +2496,7 @@ export function LandingPage({
               title="What Our Clients Say"
               action={
                 <Link
-                  href="/testimonials"
+                  href="/about#testimonials"
                   className="hidden text-sm font-bold text-[#c6613f] md:inline"
                 >
                   Read all reviews →
@@ -2563,87 +2541,13 @@ export function LandingPage({
               ))}
             </div>
             <Link
-              href="/testimonials"
+              href="/about#testimonials"
               className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
             >
               Read all reviews →
             </Link>
           </div>
         </section>
-      )}
-
-      {page === "testimonials" && (
-      <section id="testimonials" className="scroll-mt-24 border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
-        <div className="mx-auto max-w-[1140px] px-4">
-          <SectionLabel eyebrow="Testimonials" title="What Our Clients Say" />
-          <p className="-mt-4 mb-7 flex items-center gap-1.5 text-xs text-[#6b7280]">
-            <ShieldCheck size={14} className="shrink-0 text-[#c6613f]" />
-            Real feedback our clients have left about the team on Fiverr,
-            Upwork and other marketplaces, plus direct projects — collected
-            in one place so it reflects what people actually say working
-            with us.
-          </p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleReviews.map((review) => (
-              <button
-                key={review.id}
-                type="button"
-                onClick={() => setModal({ type: "review", item: review })}
-                className="flex h-[242px] flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
-              >
-                <div className="mb-4 flex items-center justify-between gap-2">
-                  <div className="flex gap-1 text-amber-400">
-                    {Array.from({ length: ratingStars(review.rating).stars }).map((_, index) => (
-                      <Star key={index} size={16} fill="currentColor" />
-                    ))}
-                    <span className="ml-1 text-xs font-black text-[#64748b]">
-                      {ratingStars(review.rating).label}
-                    </span>
-                  </div>
-                  {review.country && (
-                    <span className="shrink-0 whitespace-nowrap rounded-full bg-[#faf8f5] px-2 py-1 text-[11px] font-bold text-[#6b7280]">
-                      {countryFlag(review.country)} {review.country}
-                    </span>
-                  )}
-                </div>
-                <p className="line-clamp-4 min-h-24 text-sm leading-6 text-slate-700">
-                  {review.quote}
-                </p>
-                <div className="mt-auto flex items-center gap-3 pt-5">
-                  <div className="relative">
-                    <ReviewAvatar name={review.clientName} />
-                    {review.orderNumber && review.orderNumber > 1 && (
-                      <span
-                        className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-[#c6613f] text-[10px] font-black text-white ring-2 ring-white"
-                        title={`${review.orderNumber}${
-                          review.orderNumber === 2
-                            ? "nd"
-                            : review.orderNumber === 3
-                              ? "rd"
-                              : "th"
-                        } project with us`}
-                      >
-                        {review.orderNumber}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-black">{review.clientName}</p>
-                    {review.service && (
-                      <p className="text-[11px] font-bold text-[#c6613f]">
-                        {review.service}
-                      </p>
-                    )}
-                    <p className="text-xs text-slate-500">
-                      {[review.clientRole, review.company].filter(Boolean).join(", ")}
-                    </p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
       )}
 
       {page === "home" && (
@@ -2654,7 +2558,7 @@ export function LandingPage({
               title="Our Working Process"
               action={
                 <Link
-                  href="/process"
+                  href="/services#process"
                   className="hidden text-sm font-bold text-[#c6613f] md:inline"
                 >
                   See our full process →
@@ -2682,7 +2586,7 @@ export function LandingPage({
               ))}
             </div>
             <Link
-              href="/process"
+              href="/services#process"
               className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
             >
               See our full process →
@@ -2691,7 +2595,7 @@ export function LandingPage({
         </section>
       )}
 
-      {page === "process" && (
+      {page === "services" && (
         <section id="process" className="scroll-mt-24 py-[72px]">
           <div className="mx-auto max-w-[1140px] px-4">
             <SectionLabel eyebrow="How We Work" title="Our Working Process" />
@@ -2820,6 +2724,80 @@ export function LandingPage({
       </section>
       )}
 
+      {page === "about" && (
+      <section id="testimonials" className="scroll-mt-24 border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
+        <div className="mx-auto max-w-[1140px] px-4">
+          <SectionLabel eyebrow="Testimonials" title="What Our Clients Say" />
+          <p className="-mt-4 mb-7 flex items-center gap-1.5 text-xs text-[#6b7280]">
+            <ShieldCheck size={14} className="shrink-0 text-[#c6613f]" />
+            Real feedback our clients have left about the team on Fiverr,
+            Upwork and other marketplaces, plus direct projects — collected
+            in one place so it reflects what people actually say working
+            with us.
+          </p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleReviews.map((review) => (
+              <button
+                key={review.id}
+                type="button"
+                onClick={() => setModal({ type: "review", item: review })}
+                className="flex h-[242px] flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
+              >
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <div className="flex gap-1 text-amber-400">
+                    {Array.from({ length: ratingStars(review.rating).stars }).map((_, index) => (
+                      <Star key={index} size={16} fill="currentColor" />
+                    ))}
+                    <span className="ml-1 text-xs font-black text-[#64748b]">
+                      {ratingStars(review.rating).label}
+                    </span>
+                  </div>
+                  {review.country && (
+                    <span className="shrink-0 whitespace-nowrap rounded-full bg-[#faf8f5] px-2 py-1 text-[11px] font-bold text-[#6b7280]">
+                      {countryFlag(review.country)} {review.country}
+                    </span>
+                  )}
+                </div>
+                <p className="line-clamp-4 min-h-24 text-sm leading-6 text-slate-700">
+                  {review.quote}
+                </p>
+                <div className="mt-auto flex items-center gap-3 pt-5">
+                  <div className="relative">
+                    <ReviewAvatar name={review.clientName} />
+                    {review.orderNumber && review.orderNumber > 1 && (
+                      <span
+                        className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-[#c6613f] text-[10px] font-black text-white ring-2 ring-white"
+                        title={`${review.orderNumber}${
+                          review.orderNumber === 2
+                            ? "nd"
+                            : review.orderNumber === 3
+                              ? "rd"
+                              : "th"
+                        } project with us`}
+                      >
+                        {review.orderNumber}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-black">{review.clientName}</p>
+                    {review.service && (
+                      <p className="text-[11px] font-bold text-[#c6613f]">
+                        {review.service}
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-500">
+                      {[review.clientRole, review.company].filter(Boolean).join(", ")}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+      )}
+
       {page === "home" && (
         <section className="border-t border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
           <div className="mx-auto max-w-[1140px] px-4">
@@ -2887,11 +2865,99 @@ export function LandingPage({
       </section>
       )}
 
+      {/* Home-page teaser: gives every new article an internal link from the
+          site's strongest page, and gives visitors a reason to keep reading. */}
+      {page === "home" && latestPosts.length > 0 && (
+        <section id="blog" className="scroll-mt-24 bg-[#faf8f5] py-[72px]">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <SectionLabel
+              eyebrow="From The Blog"
+              title="Guides & Insights"
+              action={
+                <Link
+                  href="/blog"
+                  className="hidden rounded-[10px] border border-[#e8e3dc] px-4 py-2 text-sm font-bold text-[#101623] transition hover:border-[#101623] md:inline-flex"
+                >
+                  View all posts
+                </Link>
+              }
+            />
+            <div className="grid gap-6 md:grid-cols-3">
+              {latestPosts.map((post) => (
+                <article
+                  key={post.id}
+                  className="flex flex-col overflow-hidden rounded-2xl border border-[#e8e3dc] bg-white transition hover:border-[#c6613f]"
+                >
+                  <Link href={`/blog/${post.slug}`} className="block">
+                    {post.coverImageUrl ? (
+                      <img
+                        src={post.coverImageUrl}
+                        alt={post.coverImageAlt || post.title}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-40 w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-40 w-full bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)]" />
+                    )}
+                  </Link>
+                  <div className="flex flex-1 flex-col p-5">
+                    <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#c6613f]">
+                      {post.categoryName ? <span>{post.categoryName}</span> : null}
+                      <span className="text-[#9aa3b3]">
+                        {post.readingMinutes} min read
+                      </span>
+                    </div>
+                    <h3 className="text-base font-extrabold leading-snug tracking-tight text-[#101623]">
+                      <Link
+                        href={`/blog/${post.slug}`}
+                        className="transition hover:text-[#c6613f]"
+                      >
+                        {post.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-2 flex-1 text-sm leading-7 text-[#6b7280]">
+                      {post.excerpt}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="mt-7 md:hidden">
+              <Link
+                href="/blog"
+                className="inline-flex rounded-[10px] border border-[#e8e3dc] px-4 py-2 text-sm font-bold text-[#101623] transition hover:border-[#101623]"
+              >
+                View all posts
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       <footer className="bg-[#101623] text-white">
         <div className="px-4 py-20 text-center">
           <p className="text-6xl font-extrabold italic text-[#f5a83c] md:text-8xl">
             {data.footer.thanksText}
           </p>
+        </div>
+        {/* Footer link row: keeps every public page one click from every other,
+            which is how crawlers discover the deeper routes. */}
+        <div className="border-t border-white/10 px-4 py-6">
+          <nav
+            aria-label="Footer"
+            className="mx-auto flex max-w-[1140px] flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-[#9aa3b3]"
+          >
+            {PUBLIC_NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="hover:text-white"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
         </div>
         <div className="bg-[#0b101b] px-4 py-5 text-center md:text-left">
           <div className="mx-auto flex max-w-[1140px] flex-col items-center justify-center gap-4 md:flex-row md:justify-between">

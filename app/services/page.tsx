@@ -1,9 +1,11 @@
 import { LandingPage } from "@/components/landing/landing-page";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getLandingPageData } from "@/lib/landing-data";
 import { getBrandingSettings } from "@/lib/branding";
 import { buildLandingMetadata } from "@/lib/landing-metadata";
 import { auth } from "@/lib/auth";
 import { homeFor } from "@/lib/roles";
+import { publicPageJsonLd, servicesPageJsonLd } from "@/lib/structured-data";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -27,11 +29,19 @@ export default async function ServicesPage() {
   ]);
 
   return (
-    <LandingPage
-      data={data}
-      portalHref={session?.user ? homeFor(session.user.role) : null}
-      publicLogoUrl={branding.publicLogoUrl}
-      page="services"
-    />
+    <>
+      <JsonLd
+        data={[
+          ...publicPageJsonLd(data, { name: "Services", path: "/services" }),
+          servicesPageJsonLd(data),
+        ]}
+      />
+      <LandingPage
+        data={data}
+        portalHref={session?.user ? homeFor(session.user.role) : null}
+        publicLogoUrl={branding.publicLogoUrl}
+        page="services"
+      />
+    </>
   );
 }

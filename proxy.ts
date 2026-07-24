@@ -17,6 +17,9 @@ const PUBLIC_PATHS = [
   "/api/auth",
   "/api/register-upload",
   "/api/cron",
+  // Trailing slash on purpose: "/blog" alone would also match the admin-only
+  // "/blog-manager" route.
+  "/blog/",
 ];
 
 const PUBLIC_EXACT_PATHS = [
@@ -25,10 +28,13 @@ const PUBLIC_EXACT_PATHS = [
   "/services",
   "/portfolio",
   "/team",
-  "/testimonials",
-  "/process",
   "/about",
   "/contact",
+  "/blog",
+  // Generated favicon routes. Search engines fetch these unauthenticated, so
+  // redirecting them to /login would leave the site with no crawlable icon.
+  "/icon",
+  "/apple-icon",
 ];
 
 export const proxy = auth((req) => {

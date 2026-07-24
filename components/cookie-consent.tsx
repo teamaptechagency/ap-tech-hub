@@ -6,22 +6,24 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 const HUB_CONSENT_KEY = "ap-tech-hub-cookie-consent-v1";
+// The public marketing site shows its own notice; this banner is only for the
+// private work portal, so it stays off every public route.
 const PUBLIC_PATHS = new Set([
   "/",
   "/landing",
   "/services",
   "/portfolio",
   "/team",
-  "/testimonials",
-  "/process",
   "/about",
   "/contact",
+  "/blog",
 ]);
 
 export function CookieConsent() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
-  const isPublicPortal = PUBLIC_PATHS.has(pathname);
+  const isPublicPortal =
+    PUBLIC_PATHS.has(pathname) || pathname.startsWith("/blog/");
 
   useEffect(() => {
     if (isPublicPortal) {

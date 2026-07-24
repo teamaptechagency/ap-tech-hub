@@ -1,6 +1,34 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      // /process and /testimonials were folded into /services and /about.
+      // Permanent redirects hand their existing search ranking to the new
+      // pages instead of leaving indexed URLs to 404.
+      {
+        source: "/process",
+        destination: "/services",
+        permanent: true,
+      },
+      {
+        source: "/testimonials",
+        destination: "/about",
+        permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      // The brand favicon is generated per request from admin settings
+      // (app/icon.tsx). Crawlers and older browsers still probe /favicon.ico
+      // directly, so point that at the same generated icon rather than 404.
+      {
+        source: "/favicon.ico",
+        destination: "/icon",
+      },
+    ];
+  },
   async headers() {
     return [
       {

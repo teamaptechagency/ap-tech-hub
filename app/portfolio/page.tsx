@@ -1,9 +1,11 @@
 import { LandingPage } from "@/components/landing/landing-page";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getLandingPageData } from "@/lib/landing-data";
 import { getBrandingSettings } from "@/lib/branding";
 import { buildLandingMetadata } from "@/lib/landing-metadata";
 import { auth } from "@/lib/auth";
 import { homeFor } from "@/lib/roles";
+import { publicPageJsonLd } from "@/lib/structured-data";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -27,11 +29,14 @@ export default async function PortfolioPage() {
   ]);
 
   return (
-    <LandingPage
-      data={data}
-      portalHref={session?.user ? homeFor(session.user.role) : null}
-      publicLogoUrl={branding.publicLogoUrl}
-      page="portfolio"
-    />
+    <>
+      <JsonLd data={publicPageJsonLd(data, { name: "Portfolio", path: "/portfolio" })} />
+      <LandingPage
+        data={data}
+        portalHref={session?.user ? homeFor(session.user.role) : null}
+        publicLogoUrl={branding.publicLogoUrl}
+        page="portfolio"
+      />
+    </>
   );
 }

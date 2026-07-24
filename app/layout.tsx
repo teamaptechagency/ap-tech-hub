@@ -10,16 +10,11 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const branding = await getBrandingSettings();
 
+  // Icons are served by app/icon.tsx / app/apple-icon.tsx (file-based metadata
+  // wins over anything declared here).
   return {
     title: branding.siteName,
     description: "AP Tech Agency management and client portal",
-    icons: branding.faviconUrl
-      ? {
-          icon: branding.faviconUrl,
-          shortcut: branding.faviconUrl,
-          apple: branding.faviconUrl,
-        }
-      : undefined,
   };
 }
 
