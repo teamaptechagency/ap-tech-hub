@@ -15,6 +15,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BalanceAdjuster } from "@/components/clients/balance-adjuster";
 
 const currencySymbol: Record<string, string> = {
   USD: "$",
@@ -264,6 +265,12 @@ export default async function ClientDetailPage({
           ))}
         </CompactList>
       </div>
+
+      <BalanceAdjuster
+        clientId={client.id}
+        currency={client.currency}
+        balance={balance}
+      />
 
       <CompactList title="Wallet ledger" empty="No wallet transactions yet">
         {client.walletTxns.map((txn) => (
