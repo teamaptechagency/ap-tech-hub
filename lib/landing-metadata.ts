@@ -4,6 +4,19 @@ import type { BrandingSettings } from "@/lib/branding";
 
 const GOOGLE_SITE_VERIFICATION = "vWP7NPu2sJCPiScFDNefDH8mTvQU6-Uf86TQXWRCuQo";
 
+function readGoogleVerification(value?: string | null) {
+  const raw = value?.trim() ?? "";
+  if (!raw) return GOOGLE_SITE_VERIFICATION;
+
+  const contentMatch = raw.match(/content=["']([^"']+)["']/i);
+  const token = (contentMatch?.[1] ?? raw)
+    .replace(/^<meta\s+/i, "")
+    .replace(/\/?>$/i, "")
+    .trim();
+
+  return token || GOOGLE_SITE_VERIFICATION;
+}
+
 function readMetadataBase(siteUrl: string) {
   try {
     return siteUrl ? new URL(siteUrl) : undefined;
@@ -58,7 +71,7 @@ export function buildLandingMetadata(
           follow: false,
         },
     verification: {
-      google: data.seo.googleVerification || GOOGLE_SITE_VERIFICATION,
+      google: readGoogleVerification(data.seo.googleVerification),
     },
     openGraph: {
       title,
