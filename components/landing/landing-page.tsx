@@ -1289,7 +1289,8 @@ function weightedJobs(seed: number) {
 
 function weightedActiveVisitors(seed: number) {
   const bucket = seed % 100;
-  if (bucket < 68) return 0;
+  if (bucket < 42) return 1;
+  if (bucket < 68) return 2;
   const values = [3, 5, 7, 15, 20, 27];
   return values[seed % values.length];
 }
