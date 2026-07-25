@@ -177,3 +177,10 @@ export function SensitiveDeleteDialog({
     </Dialog>
   );
 }
+
+/**
+ * Same step-up flow, for money changes that are not deletions (editing an
+ * invoice, adjusting a balance, recording a purchase). Pass a confirmLabel
+ * so the button does not read "Delete permanently".
+ */
+export const SensitiveActionDialog = SensitiveDeleteDialog;

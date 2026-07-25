@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
+import { SensitiveActionDialog } from "@/components/shared/sensitive-delete-dialog";
 
 type Item = { description: string; qty: string; amount: string };
 
@@ -61,6 +62,7 @@ export function EditInvoiceDialog({
   );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
 
   const subtotal = items.reduce(
     (s, i) => s + (parseInt(i.qty) || 1) * (parseFloat(i.amount) || 0),
@@ -75,11 +77,15 @@ export function EditInvoiceDialog({
     );
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // Editing an invoice changes what a client owes, so it now goes through the
+  // super-admin step-up code rather than saving straight away.
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    setBusy(true);
+    setVerifyOpen(true);
+  }
 
+  async function saveWithCode(verificationCode: string) {
     const result = await updateInvoice(invoiceId, {
       title,
       items,
@@ -89,11 +95,12 @@ export function EditInvoiceDialog({
       payoneerInvoiceUrl: payoneerInvoiceUrl || undefined,
       payoneerInvoiceButtonLabel: payoneerInvoiceButtonLabel || undefined,
       payoneerInvoiceNote: payoneerInvoiceNote || undefined,
+      verificationCode,
     });
 
-    setBusy(false);
-    if (result.error) return setError(result.error);
+    if (result.error) return { error: result.error };
 
+    setVerifyOpen(false);
     onOpenChange(false);
     router.refresh();
   }
@@ -277,6 +284,15 @@ export function EditInvoiceDialog({
           </Button>
         </form>
       </DialogContent>
+
+      <SensitiveActionDialog
+        open={verifyOpen}
+        onOpenChange={setVerifyOpen}
+        title="Confirm invoice changes"
+        description="Editing an invoice changes what this client owes. Enter your verification code to save."
+        confirmLabel="Save changes"
+        onConfirm={saveWithCode}
+      />
     </Dialog>
   );
 }

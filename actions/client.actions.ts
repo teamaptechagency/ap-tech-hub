@@ -206,10 +206,20 @@ export async function resetClientLogin(clientId: string) {
 // ============================================
 export async function adjustClientBalance(
   clientId: string,
-  formData: { amount: string; note: string }
+  formData: { amount: string; note: string; verificationCode: string }
 ) {
-  const session = await checkAdmin();
-  if (!session) return { error: "You don't have permission for this action" };
+  // Moving money on a client's balance is held to the same bar as deleting:
+  // super admin only, and a step-up code even if 2FA was never switched on.
+  const session = await checkSuperAdmin();
+  if (!session) {
+    return { error: "Only the super admin can adjust a client balance" };
+  }
+
+  const verified = await verifySensitiveActionCode(
+    session.user.id,
+    formData.verificationCode
+  );
+  if (!verified) return { error: "Verification code is invalid or expired" };
 
   const amount = parseFloat(formData.amount);
   if (isNaN(amount) || amount === 0) {
