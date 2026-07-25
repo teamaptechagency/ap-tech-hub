@@ -691,8 +691,13 @@ model Invoice {
   job                        Job?                @relation(fields: [jobId], references: [id], onDelete: SetNull)
   specialOrderId             String?             @unique
   specialOrder               SpecialOrder?       @relation(fields: [specialOrderId], references: [id], onDelete: SetNull)
-  clientId                   String
-  client                     Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  // Optional: an external project (Fiverr/Upwork/direct) has no Client
+  // record, so it carries the buyer's details inline instead.
+  clientId                   String?
+  client                     Client?             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  externalName               String?
+  externalSource             String?
+  externalCountry            String?
   amount                     Decimal             @db.Decimal(12, 2)
   currency                   String              @default("USD")
   vatPercent                 Decimal?            @db.Decimal(5, 2)
@@ -712,6 +717,7 @@ model Invoice {
   items                      InvoiceItem[]
   paymentMethods             PaymentMethod[]
   paymentSubmissions         PaymentSubmission[]
+  earning                    Earning?
   createdAt                  DateTime            @default(now())
   updatedAt                  DateTime            @updatedAt
 
@@ -1099,7 +1105,10 @@ model Earning {
   source         EntrySource   @default(CUSTOM)
   category       String        @default("Other")
   status         String        @default("POSTED")
+  // Cascade: deleting an invoice must take its earning off the books too,
+  // otherwise revenue lingers for an invoice that no longer exists.
   invoiceId      String?       @unique
+  invoice        Invoice?      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   specialOrderId String?       @unique
   specialOrder   SpecialOrder? @relation(fields: [specialOrderId], references: [id], onDelete: SetNull)
   createdById    String?

@@ -22,6 +22,10 @@ export async function getVirtualCompletedJobEarnings(from?: Date) {
         where: {
           type: "FIXED",
           status: "COMPLETED",
+          // A completed job now raises an invoice, and that invoice is what
+          // books the earning once it is paid. Synthesising a profit row for
+          // an invoiced job as well would count the same work twice.
+          invoices: { none: {} },
           ...(from ? { updatedAt: { gte: from } } : {}),
         },
         orderBy: { updatedAt: "desc" },

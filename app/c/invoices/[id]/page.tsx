@@ -232,23 +232,26 @@ export default async function ClientInvoiceViewPage({
                   BILLED TO
                 </p>
 
+                {/* This page is client-scoped, so a client is always present
+                    here — the optional chaining is only for the shared type,
+                    which now also covers external invoices. */}
                 <p className="text-base font-bold text-slate-900">
-                  {invoice.client.companyName}
+                  {invoice.client?.companyName}
                 </p>
 
                 <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                  {invoice.client.contactName}
+                  {invoice.client?.contactName}
                   <br />
-                  {invoice.client.email}
+                  {invoice.client?.email}
 
-                  {invoice.client.phone && (
+                  {invoice.client?.phone && (
                     <>
                       <br />
                       {invoice.client.phone}
                     </>
                   )}
 
-                  {invoice.client.country && (
+                  {invoice.client?.country && (
                     <>
                       <br />
                       {invoice.client.country}
