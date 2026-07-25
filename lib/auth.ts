@@ -25,6 +25,7 @@ const nextAuth = NextAuth({
         code: {},
         authLogin: {},
         authMethod: {},
+        passkeyToken: {},
       },
       async authorize(credentials) {
         if (!credentials?.email) return null;
@@ -49,6 +50,35 @@ const nextAuth = NextAuth({
         });
         if (!user) return null;
         if (user.accountStatus !== "ACTIVE") return null;
+
+        // Passkey sign-in: the WebAuthn assertion was already verified server
+        // side, which issued this single-use token. Verifying the fingerprint
+        // is itself a two-factor event (device possession + biometric), so it
+        // does not additionally require a password or an OTP.
+        const passkeyToken = String(credentials.passkeyToken ?? "").trim();
+        if (passkeyToken) {
+          const valid =
+            !!user.twoFactorCode &&
+            user.twoFactorCode === passkeyToken &&
+            !!user.twoFactorCodeExp &&
+            user.twoFactorCodeExp >= new Date();
+
+          if (!valid) return null;
+
+          // Burn the token so the same assertion cannot be replayed.
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { twoFactorCode: null, twoFactorCodeExp: null },
+          });
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            clientId: user.clientId,
+          };
+        }
 
         const authLogin = String(credentials.authLogin ?? "") === "true";
         if (authLogin) {

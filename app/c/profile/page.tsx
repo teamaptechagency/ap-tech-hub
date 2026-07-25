@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { getUserLoginDevices } from "@/lib/login-security";
+import { PasskeyManager } from "@/components/auth/passkey-manager";
+import { listUserPasskeys } from "@/lib/passkey";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -35,7 +37,10 @@ export default async function ClientProfilePage() {
     },
   });
   if (!currentUser || !me) notFound();
-  const loginDevices = await getUserLoginDevices(currentUser.id);
+  const [loginDevices, passkeys] = await Promise.all([
+    getUserLoginDevices(currentUser.id),
+    listUserPasskeys(currentUser.id),
+  ]);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -113,6 +118,21 @@ export default async function ClientProfilePage() {
           ))}
         </CardContent>
       </Card>
+
+      <PasskeyManager
+
+        passkeys={passkeys.map((passkey) => ({
+
+          ...passkey,
+
+          lastUsedAt: passkey.lastUsedAt?.toISOString() ?? null,
+
+          createdAt: passkey.createdAt.toISOString(),
+
+        }))}
+
+      />
+
 
       <ProfileForm
         name={currentUser.name}

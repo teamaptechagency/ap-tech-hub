@@ -18,6 +18,7 @@ import {
   recordFailedLogin,
 } from "@/lib/login-security";
 import { notifyAdmins } from "@/lib/notify";
+import { userHasPasskey } from "@/lib/passkey";
 import { sendWhatsAppOtp } from "@/lib/whatsapp";
 
 function hasTwoFactorMethod(value: string | null | undefined, method: string) {
@@ -32,7 +33,11 @@ function preferredCodeMethod(value: string | null | undefined, hasPhone: boolean
   return "";
 }
 
-type PasswordlessMethod = "EMAIL" | "WHATSAPP" | "AUTHENTICATOR";
+type PasswordlessMethod =
+  | "EMAIL"
+  | "WHATSAPP"
+  | "AUTHENTICATOR"
+  | "PASSKEY";
 
 async function sendLoginCode({
   email,
@@ -280,6 +285,79 @@ export async function login(formData: {
   };
 }
 
+/**
+ * Second half of a fingerprint sign-in. `verifyPasskeyAssertion` has already
+ * checked the WebAuthn signature and issued a short-lived single-use token;
+ * this exchanges that token for a session, applying the same lockout and
+ * device-memory rules as a password login.
+ */
+export async function loginWithPasskey(input: {
+  email: string;
+  token: string;
+  deviceToken?: string;
+  next?: string;
+}) {
+  const email = input.email.trim().toLowerCase();
+  const requestHeaders = await headers();
+  const ipAddress = getClientIpFromHeaders(requestHeaders);
+
+  await ensureLoginSecurityTables();
+
+  const loginAllowed = await checkLoginAllowed(email, ipAddress);
+  if (!loginAllowed.allowed) {
+    return {
+      error: loginAllowed.message,
+      contactAdmin: loginAllowed.contactAdmin ?? false,
+    };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, role: true, accountStatus: true },
+  });
+
+  if (!user || user.accountStatus !== "ACTIVE") {
+    return { error: "This account is not active" };
+  }
+
+  try {
+    await signIn("credentials", {
+      email,
+      passkeyToken: input.token,
+      deviceToken: input.deviceToken?.trim() ?? "",
+      redirect: false,
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      const failed = await recordFailedLogin(email, ipAddress);
+      return {
+        error: "Fingerprint sign-in failed. Please try again.",
+        contactAdmin: failed.contactAdmin ?? false,
+      };
+    }
+    throw error;
+  }
+
+  await clearFailedLogin(email, ipAddress);
+
+  const deviceToken = await rememberLoginDevice({
+    userId: user.id,
+    deviceToken: input.deviceToken,
+    ipAddress,
+    headers: requestHeaders,
+  });
+
+  const nextPath =
+    input.next?.startsWith("/") && !input.next.startsWith("//")
+      ? input.next
+      : "";
+
+  return {
+    redirectTo: nextPath || homeFor(user.role),
+    deviceToken,
+  };
+}
+
 export async function getLoginOptions(emailInput: string) {
   const email = emailInput.trim().toLowerCase();
   if (!email || !email.includes("@")) {
@@ -289,6 +367,7 @@ export async function getLoginOptions(emailInput: string) {
   const user = await prisma.user.findUnique({
     where: { email },
     select: {
+      id: true,
       accountStatus: true,
       twoFactorEnabled: true,
       twoFactorMethod: true,
@@ -302,6 +381,9 @@ export async function getLoginOptions(emailInput: string) {
 
   const methods: PasswordlessMethod[] = [];
   methods.push("EMAIL");
+  if (await userHasPasskey(user.id)) {
+    methods.push("PASSKEY");
+  }
   if (
     user.twoFactorEnabled &&
     hasTwoFactorMethod(user.twoFactorMethod, "AUTHENTICATOR") &&
