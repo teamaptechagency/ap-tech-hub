@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "//build": "prisma generate runs here because @prisma/client only generates in its postinstall, which a cached node_modules skips — leaving the build type-checking against a stale schema.",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint"
   },
