@@ -15,6 +15,7 @@ import {
   MessageCircle,
   ShoppingBag,
   User,
+  Users,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -31,6 +32,7 @@ export const partnerNavItems: PartnerNavItem[] = [
   { label: "Messages", href: "/p/messages", icon: MessageCircle },
   { label: "Bug & Feedback", href: "/p/feedback", icon: Bug },
   { label: "My balance", href: "/p/balance", icon: Wallet },
+  { label: "My team", href: "/p/team", icon: Users },
   { label: "Profile", href: "/p/profile", icon: User },
 ];
 

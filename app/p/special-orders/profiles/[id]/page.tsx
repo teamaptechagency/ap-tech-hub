@@ -5,7 +5,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
+import { getPartnerScope, partnerWhere } from "@/lib/partner-scope";
 import { prisma } from "@/lib/prisma";
 
 const statusClass: Record<string, string> = {
@@ -25,19 +25,12 @@ export default async function PartnerSpecialOrderProfilePage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const isManager =
-    session.user.role === "PARTNER_MANAGER" &&
-    (await hasPermission({
-      userId: session.user.id,
-      role: session.user.role,
-      resource: "partnerOrders",
-      action: "read",
-    }));
+  const scope = await getPartnerScope(session.user);
 
   const profile = await prisma.specialOrderProfile.findFirst({
     where: {
       id,
-      orders: isManager ? { some: {} } : { some: { partnerId: session.user.id } },
+      orders: { some: partnerWhere(scope) },
     },
     include: {
       client: { select: { companyName: true } },
@@ -49,7 +42,7 @@ export default async function PartnerSpecialOrderProfilePage({
         },
       },
       orders: {
-        where: isManager ? {} : { partnerId: session.user.id },
+        where: partnerWhere(scope),
         orderBy: [{ plannedDate: "asc" }, { createdAt: "desc" }],
         select: {
           id: true,

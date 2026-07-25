@@ -4,7 +4,7 @@ import type { Prisma, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
+import { getPartnerScope } from "@/lib/partner-scope";
 import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES, PARTNER_ROLES } from "@/lib/roles";
 import { pusherServer } from "@/lib/pusher-server";
@@ -289,14 +289,7 @@ export async function getFloatingConversations() {
     userId: { not: myId },
     user: { role: { in: partnerSupportRoles } },
   };
-  const isPartnerManager =
-    session.user.role === "PARTNER_MANAGER" &&
-    (await hasPermission({
-      userId: myId,
-      role: session.user.role,
-      resource: "partnerOrders",
-      action: "read",
-    }));
+  const partnerScope = await getPartnerScope(session.user);
 
   const where: Prisma.ConversationWhereInput = isAdmin
     ? {
@@ -327,9 +320,12 @@ export async function getFloatingConversations() {
       : isPartner
         ? {
             OR: [
-              isPartnerManager
+              partnerScope.isManager
                 ? {
-                    specialOrderPartnerId: { not: null },
+                    // Scoped to the owning partner, not every partner.
+                    specialOrderPartner: {
+                      partnerId: { in: partnerScope.partnerIds },
+                    },
                     participants: { some: partnerSupportParticipant },
                   }
                 : {
@@ -572,14 +568,7 @@ async function canAccessConversation(
     session.user.role
   );
   const isSuperAdmin = session.user.role === "SUPER_ADMIN";
-  const isPartnerManager =
-    session.user.role === "PARTNER_MANAGER" &&
-    (await hasPermission({
-      userId,
-      role: session.user.role,
-      resource: "partnerOrders",
-      action: "read",
-    }));
+  const partnerScope = await getPartnerScope(session.user);
 
   // Direct conversation access. Only super admin gets a blanket
   // bypass here (oversight of every employee<->client direct chat) —
@@ -649,11 +638,18 @@ async function canAccessConversation(
     };
   }
 
-  const isSpecialOrderPartner =
-    conversation.specialOrderPartner?.partnerId ===
-    userId;
+  const conversationPartnerId =
+    conversation.specialOrderPartner?.partnerId ?? null;
+  const isSpecialOrderPartner = conversationPartnerId === userId;
 
-  if (isSpecialOrderPartner || isPartnerManager) {
+  // A partner manager may only open threads belonging to the partner who
+  // owns their account — never another partner's conversation.
+  const isScopedPartnerManager =
+    partnerScope.isManager &&
+    !!conversationPartnerId &&
+    partnerScope.partnerIds.includes(conversationPartnerId);
+
+  if (isSpecialOrderPartner || isScopedPartnerManager) {
     return {
       session,
       conversation,

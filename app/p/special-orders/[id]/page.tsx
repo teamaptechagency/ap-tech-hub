@@ -15,7 +15,7 @@ import { PartnerDeliveryAction } from "@/components/special-orders/partner-deliv
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
+import { getPartnerScope, partnerWhere } from "@/lib/partner-scope";
 import { prisma } from "@/lib/prisma";
 
 const statusClass: Record<string, string> = {
@@ -85,17 +85,10 @@ export default async function PartnerHubSpecialOrderDetailsPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const isManager =
-    session.user.role === "PARTNER_MANAGER" &&
-    (await hasPermission({
-      userId: session.user.id,
-      role: session.user.role,
-      resource: "partnerOrders",
-      action: "read",
-    }));
+  const scope = await getPartnerScope(session.user);
 
   const order = await prisma.specialOrder.findFirst({
-    where: isManager ? { id } : { id, partnerId: session.user.id },
+    where: { id, ...partnerWhere(scope) },
     include: {
       partner: { select: { name: true, email: true } },
       marketplace: { select: { name: true } },

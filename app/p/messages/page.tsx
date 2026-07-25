@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { MessagesShell } from "@/components/chat/messages-shell";
 import { auth } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
+import { getPartnerScope } from "@/lib/partner-scope";
 import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES } from "@/lib/roles";
 import type { Prisma, Role } from "@prisma/client";
@@ -29,14 +29,7 @@ export default async function PartnerMessagesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const myId = session.user.id;
-  const isManager =
-    session.user.role === "PARTNER_MANAGER" &&
-    (await hasPermission({
-      userId: session.user.id,
-      role: session.user.role,
-      resource: "partnerOrders",
-      action: "read",
-    }));
+  const scope = await getPartnerScope(session.user);
   const partnerSupportRoles = [...ADMIN_ROLES, "PARTNER_MANAGER"] as Role[];
   const partnerSupportParticipant: Prisma.ConversationParticipantWhereInput = {
     userId: { not: myId },
@@ -47,15 +40,12 @@ export default async function PartnerMessagesPage() {
     await prisma.conversation.findMany({
     where: {
       OR: [
-        isManager
-          ? {
-              specialOrderPartnerId: { not: null },
-              participants: { some: partnerSupportParticipant },
-            }
-          : {
-              specialOrderPartner: { partnerId: myId },
-              participants: { some: partnerSupportParticipant },
-            },
+        {
+          // Order threads are limited to the partner(s) in scope — a manager
+          // must not see conversations belonging to other partners.
+          specialOrderPartner: { partnerId: { in: scope.partnerIds } },
+          participants: { some: partnerSupportParticipant },
+        },
         {
           isDirect: true,
           participants: { some: { userId: myId } },
