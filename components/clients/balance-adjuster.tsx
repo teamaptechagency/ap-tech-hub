@@ -2,11 +2,12 @@
 
 import { Minus, Plus, WalletCards } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { adjustClientBalance } from "@/actions/client.actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SensitiveActionDialog } from "@/components/shared/sensitive-delete-dialog";
 
 function money(amount: number, currency: string) {
   const symbol =
@@ -31,7 +32,8 @@ export function BalanceAdjuster({
   // get coerced to 0.
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const [pending, startTransition] = useTransition();
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [pendingSign, setPendingSign] = useState<1 | -1>(1);
   const router = useRouter();
 
   const parsed = Number(amount);
@@ -43,31 +45,32 @@ export function BalanceAdjuster({
       toast.error("Enter a non-zero amount");
       return;
     }
-
     // The buttons decide the direction, so a typed "-50" on "Add advance"
     // still means +50 rather than silently flipping the sign.
-    const signedAmount = Math.abs(parsed) * signMultiplier;
+    setPendingSign(signMultiplier);
+    setVerifyOpen(true);
+  };
 
-    startTransition(async () => {
-      const result = await adjustClientBalance(clientId, {
-        amount: String(signedAmount),
-        note,
-      });
+  const applyWithCode = async (verificationCode: string) => {
+    const signedAmount = Math.abs(parsed) * pendingSign;
 
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-
-      toast.success(
-        signedAmount > 0
-          ? `Added ${money(signedAmount, currency)} advance`
-          : `Recorded ${money(Math.abs(signedAmount), currency)} due`
-      );
-      setAmount("");
-      setNote("");
-      router.refresh();
+    const result = await adjustClientBalance(clientId, {
+      amount: String(signedAmount),
+      note,
+      verificationCode,
     });
+
+    if (result.error) return { error: result.error };
+
+    toast.success(
+      signedAmount > 0
+        ? `Added ${money(signedAmount, currency)} advance`
+        : `Recorded ${money(Math.abs(signedAmount), currency)} due`
+    );
+    setAmount("");
+    setNote("");
+    setVerifyOpen(false);
+    router.refresh();
   };
 
   return (
@@ -116,16 +119,16 @@ export function BalanceAdjuster({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            disabled={pending || !valid}
+            disabled={!valid}
             onClick={() => submit(1)}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
-            {pending ? "Saving..." : "Add advance"}
+            Add advance
           </button>
           <button
             type="button"
-            disabled={pending || !valid}
+            disabled={!valid}
             onClick={() => submit(-1)}
             className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition hover:bg-muted disabled:opacity-50"
           >
@@ -139,6 +142,15 @@ export function BalanceAdjuster({
           audit log.
         </p>
       </CardContent>
+
+      <SensitiveActionDialog
+        open={verifyOpen}
+        onOpenChange={setVerifyOpen}
+        title={pendingSign > 0 ? "Confirm advance" : "Confirm due"}
+        description="Adjusting a client balance moves real money. Enter your verification code to apply it."
+        confirmLabel="Apply adjustment"
+        onConfirm={applyWithCode}
+      />
     </Card>
   );
 }

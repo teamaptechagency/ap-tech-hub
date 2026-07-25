@@ -701,6 +701,10 @@ model Invoice {
   amount                     Decimal             @db.Decimal(12, 2)
   currency                   String              @default("USD")
   vatPercent                 Decimal?            @db.Decimal(5, 2)
+  // An advance/purchase invoice: the client is funding project costs, so
+  // payment lands in their balance instead of the agency's earnings. It only
+  // becomes revenue if and when it is actually earned.
+  creditsClientBalance       Boolean             @default(false)
   balanceApplied             Decimal             @default(0) @db.Decimal(12, 2)
   amountPaid                 Decimal             @default(0) @db.Decimal(12, 2)
   status                     InvoiceStatus       @default(DUE)
@@ -884,6 +888,13 @@ model InvoiceItem {
   description String
   qty         Int     @default(1)
   amount      Decimal @db.Decimal(12, 2)
+
+  // Purchase tracking for project buys (tools, licences, stock). Ticking an
+  // item bought draws its cost down from the client's balance.
+  purchased     Boolean   @default(false)
+  purchasedAt   DateTime?
+  purchasedById String?
+  purchaseNote  String?
 }
 
 model PaymentMethod {

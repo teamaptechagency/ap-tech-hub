@@ -156,27 +156,53 @@ async function applyPaidEffects(
     }
   }
 
+  // An advance invoice funds project costs rather than paying for work
+  // delivered, so the money sits in the client's balance until it is spent.
+  if (invoice.creditsClientBalance && clientId) {
+    ops.push(
+      prisma.clientTxn.create({
+        data: {
+          clientId,
+          amount: paidAmount,
+          kind: "ADVANCE",
+          note: `${invoice.number} · advance for project costs`,
+          invoiceId: invoice.id,
+          createdById: actorId,
+        },
+      }),
+      prisma.client.update({
+        where: { id: clientId },
+        data: { balance: { increment: paidAmount } },
+      })
+    );
+  }
+
   if (ops.length > 0) {
     await prisma.$transaction(ops);
   }
 
-  // Auto earning entry (once per invoice — upsert on unique invoiceId)
-  await prisma.earning.upsert({
-    where: { invoiceId: invoice.id },
-    update: {
-      amount: { increment: paidAmount },
-      amountBdt: { increment: toBdt },
-    },
-    create: {
-      title: `${invoice.number} — ${invoiceBuyerName(invoice)}`,
-      amount: paidAmount,
-      currency: invoice.currency,
-      amountBdt: toBdt,
-      source: "AUTO",
-      invoiceId: invoice.id,
-      createdById: actorId,
-    },
-  });
+  // Advance money is not earnings — it only becomes revenue once it is
+  // actually earned — so the Earning row is skipped. The client is still
+  // notified below that their payment landed.
+  if (!invoice.creditsClientBalance) {
+    // Auto earning entry (once per invoice — upsert on unique invoiceId)
+    await prisma.earning.upsert({
+      where: { invoiceId: invoice.id },
+      update: {
+        amount: { increment: paidAmount },
+        amountBdt: { increment: toBdt },
+      },
+      create: {
+        title: `${invoice.number} — ${invoiceBuyerName(invoice)}`,
+        amount: paidAmount,
+        currency: invoice.currency,
+        amountBdt: toBdt,
+        source: "AUTO",
+        invoiceId: invoice.id,
+        createdById: actorId,
+      },
+    });
+  }
 
   // Notify the client's portal user (external buyers have no portal account)
   const clientUser = clientId
@@ -920,10 +946,19 @@ export async function updateInvoice(
     payoneerInvoiceUrl?: string;
     payoneerInvoiceButtonLabel?: string;
     payoneerInvoiceNote?: string;
+    verificationCode: string;
   }
 ) {
-  const session = await checkAdmin();
-  if (!session) return { error: "You don't have permission for this action" };
+  // Editing an invoice changes what a client owes, so it is held to the same
+  // bar as deleting one: super admin plus a step-up code.
+  const session = await checkSuperAdmin();
+  if (!session) return { error: "Only the super admin can edit an invoice" };
+
+  const verified = await verifySensitiveActionCode(
+    session.user.id,
+    formData.verificationCode
+  );
+  if (!verified) return { error: "Verification code is invalid or expired" };
 
   const existing = await prisma.invoice.findUnique({
     where: { id: invoiceId },
@@ -1006,4 +1041,102 @@ export async function updateInvoice(
   revalidatePath(`/invoices/${invoiceId}`);
   revalidatePath(`/c/invoices/${invoiceId}`);
   return { success: true };
+}
+
+// ============================================
+// PROJECT PURCHASES
+//
+// Line items on an advance invoice represent things bought for a project
+// (tools, licences, stock). Ticking one as bought spends that money out of
+// the client's balance, so it is a real money movement and is gated the same
+// way as adjusting a balance: super admin plus a step-up code.
+// ============================================
+export async function setInvoiceItemPurchased(input: {
+  itemId: string;
+  purchased: boolean;
+  note?: string;
+  verificationCode: string;
+}) {
+  const session = await checkSuperAdmin();
+  if (!session) {
+    return { error: "Only the super admin can record a purchase" };
+  }
+
+  const verified = await verifySensitiveActionCode(
+    session.user.id,
+    input.verificationCode
+  );
+  if (!verified) return { error: "Verification code is invalid or expired" };
+
+  const item = await prisma.invoiceItem.findUnique({
+    where: { id: input.itemId },
+    include: {
+      invoice: {
+        select: { id: true, number: true, clientId: true, currency: true },
+      },
+    },
+  });
+  if (!item) return { error: "Item not found" };
+  if (item.purchased === input.purchased) {
+    return { error: "This item is already in that state" };
+  }
+
+  const clientId = item.invoice.clientId;
+  if (!clientId) {
+    return {
+      error: "This invoice has no client, so there is no balance to draw from.",
+    };
+  }
+
+  const cost = Number(item.amount) * item.qty;
+  const direction = input.purchased ? -1 : 1;
+
+  try {
+    await prisma.$transaction([
+      prisma.invoiceItem.update({
+        where: { id: item.id },
+        data: {
+          purchased: input.purchased,
+          purchasedAt: input.purchased ? new Date() : null,
+          purchasedById: input.purchased ? session.user.id : null,
+          purchaseNote: input.purchased ? (input.note?.trim() || null) : null,
+        },
+      }),
+      prisma.clientTxn.create({
+        data: {
+          clientId,
+          amount: cost * direction,
+          kind: "INVOICE_DEDUCT",
+          note: input.purchased
+            ? `Purchased: ${item.description} (${item.invoice.number})`
+            : `Purchase reversed: ${item.description} (${item.invoice.number})`,
+          invoiceId: item.invoice.id,
+          createdById: session.user.id,
+        },
+      }),
+      prisma.client.update({
+        where: { id: clientId },
+        data: { balance: { increment: cost * direction } },
+      }),
+    ]);
+
+    await audit(
+      session.user.id,
+      input.purchased ? "PURCHASE_RECORDED" : "PURCHASE_REVERSED",
+      "InvoiceItem",
+      item.id,
+      `${item.description} · ${cost}`
+    );
+
+    revalidatePath("/invoices");
+    revalidatePath(`/invoices/${item.invoice.id}`);
+    revalidatePath("/clients");
+    revalidatePath(`/clients/${clientId}`);
+    revalidatePath("/jobs");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to record purchase:", error);
+    return { error: "Could not record this purchase" };
+  }
 }
