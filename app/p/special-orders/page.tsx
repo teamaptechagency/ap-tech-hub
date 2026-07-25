@@ -4,24 +4,18 @@ import { ChevronRight, ShoppingBag } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
+import { getPartnerScope, partnerWhere } from "@/lib/partner-scope";
 import { prisma } from "@/lib/prisma";
 
 export default async function PartnerHubSpecialOrdersPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const isManager =
-    session.user.role === "PARTNER_MANAGER" &&
-    (await hasPermission({
-      userId: session.user.id,
-      role: session.user.role,
-      resource: "partnerOrders",
-      action: "read",
-    }));
+  const scope = await getPartnerScope(session.user);
+  const isManager = scope.isManager;
 
   const orders = await prisma.specialOrder.findMany({
-    where: isManager ? {} : { partnerId: session.user.id },
+    where: partnerWhere(scope),
     orderBy: [{ plannedDate: "asc" }, { createdAt: "desc" }],
     include: {
       partner: { select: { name: true } },
@@ -79,7 +73,7 @@ export default async function PartnerHubSpecialOrdersPage() {
         <h1 className="text-2xl font-bold">Special orders</h1>
         <p className="text-sm text-muted-foreground">
           {isManager
-            ? "All partner-side special orders"
+            ? "Special orders for the partner you manage"
             : "Assigned special-order work and delivery notes"}
         </p>
       </div>

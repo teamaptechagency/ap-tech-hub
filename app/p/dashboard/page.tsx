@@ -3,23 +3,15 @@ import { redirect } from "next/navigation";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
+import { getPartnerScope, partnerWhere } from "@/lib/partner-scope";
 import { prisma } from "@/lib/prisma";
 
 export default async function PartnerDashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const isManager =
-    session.user.role === "PARTNER_MANAGER" &&
-    (await hasPermission({
-      userId: session.user.id,
-      role: session.user.role,
-      resource: "partnerOrders",
-      action: "read",
-    }));
-
-  const where = isManager ? {} : { partnerId: session.user.id };
+  const scope = await getPartnerScope(session.user);
+  const where = partnerWhere(scope);
 
   const [orders, activeCount, pendingCount, totalCount, totals, me] =
     await Promise.all([
