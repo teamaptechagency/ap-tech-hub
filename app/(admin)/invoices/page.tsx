@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { InvoicesBoard } from "@/components/invoices/invoices-board";
+import { invoiceBuyerName } from "@/lib/job-invoice";
 
 export default async function InvoicesPage() {
   const [invoices, clients, jobs] = await Promise.all([
@@ -30,7 +31,7 @@ export default async function InvoicesPage() {
     number: inv.number,
     type: inv.type,
     title: inv.title,
-    clientName: inv.client.companyName,
+    clientName: invoiceBuyerName(inv),
     jobTitle: inv.job?.title ?? null,
     amount: Number(inv.amount),
     amountPaid: Number(inv.amountPaid),

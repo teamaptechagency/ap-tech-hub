@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { notify, notifyAdmins } from "@/lib/notify";
 import type { Prisma } from "@prisma/client";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
+import { invoiceBuyerName } from "@/lib/job-invoice";
 
 // ============================================
 // HELPERS
@@ -116,39 +117,48 @@ async function applyPaidEffects(
   const perAmountUsd = parseInt(sMap.get("loyalty.perAmountUsd") ?? "10");
   const points = Math.floor(toUsd / perAmountUsd) * pointsPer;
 
-  const ops: Prisma.PrismaPromise<unknown>[] = [
-    // Client wallet ledger — payment record
-    prisma.clientTxn.create({
-      data: {
-        clientId: invoice.clientId,
-        amount: paidAmount,
-        kind: "INVOICE_PAYMENT",
-        note: `${invoice.number} · via ${paidVia}`,
-        invoiceId: invoice.id,
-        createdById: actorId,
-      },
-    }),
-  ];
+  // An external marketplace invoice has no Client row, so there is no wallet
+  // ledger and no loyalty account to credit — only the earning below applies.
+  const clientId = invoice.clientId;
+  const ops: Prisma.PrismaPromise<unknown>[] = [];
 
-  if (points > 0) {
+  if (clientId) {
     ops.push(
-      prisma.pointTxn.create({
+      // Client wallet ledger — payment record
+      prisma.clientTxn.create({
         data: {
-          clientId: invoice.clientId,
-          points,
-          kind: "EARN",
-          note: `${invoice.number} payment`,
+          clientId,
+          amount: paidAmount,
+          kind: "INVOICE_PAYMENT",
+          note: `${invoice.number} · via ${paidVia}`,
           invoiceId: invoice.id,
+          createdById: actorId,
         },
-      }),
-      prisma.client.update({
-        where: { id: invoice.clientId },
-        data: { points: { increment: points } },
       })
     );
+
+    if (points > 0) {
+      ops.push(
+        prisma.pointTxn.create({
+          data: {
+            clientId,
+            points,
+            kind: "EARN",
+            note: `${invoice.number} payment`,
+            invoiceId: invoice.id,
+          },
+        }),
+        prisma.client.update({
+          where: { id: clientId },
+          data: { points: { increment: points } },
+        })
+      );
+    }
   }
 
-  await prisma.$transaction(ops);
+  if (ops.length > 0) {
+    await prisma.$transaction(ops);
+  }
 
   // Auto earning entry (once per invoice — upsert on unique invoiceId)
   await prisma.earning.upsert({
@@ -158,7 +168,7 @@ async function applyPaidEffects(
       amountBdt: { increment: toBdt },
     },
     create: {
-      title: `${invoice.number} — ${invoice.client.companyName}`,
+      title: `${invoice.number} — ${invoiceBuyerName(invoice)}`,
       amount: paidAmount,
       currency: invoice.currency,
       amountBdt: toBdt,
@@ -168,10 +178,10 @@ async function applyPaidEffects(
     },
   });
 
-  // Notify the client's portal user
-  const clientUser = await prisma.user.findFirst({
-    where: { clientId: invoice.clientId },
-  });
+  // Notify the client's portal user (external buyers have no portal account)
+  const clientUser = clientId
+    ? await prisma.user.findFirst({ where: { clientId } })
+    : null;
   if (clientUser) {
     await notify({
       userId: clientUser.id,
@@ -366,6 +376,16 @@ export async function submitPayment(
     invoice.clientId !== session.user.clientId
   ) {
     return { error: "Invoice not found" };
+  }
+
+  // Payment submission is a client-portal flow. An external marketplace
+  // invoice has no client to submit on its behalf — it is settled by an admin
+  // recording the payment manually.
+  if (!invoice.clientId) {
+    return {
+      error:
+        "This is an external invoice. Record the payment from the admin invoice page instead.",
+    };
   }
 
   if (["PAID", "CANCELLED"].includes(invoice.status)) {

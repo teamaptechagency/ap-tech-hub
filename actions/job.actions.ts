@@ -7,6 +7,7 @@ import { notify } from "@/lib/notify";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
+import { createInvoiceForCompletedJob } from "@/lib/job-invoice";
 
 // ============================================
 // PERMISSION + AUDIT
@@ -376,9 +377,26 @@ export async function updateJob(
 
   await audit(session.user.id, "JOB_UPDATED", "Job", id, formData.status);
 
+  // Finishing a project raises its invoice — internal client or external
+  // marketplace buyer alike. The earning follows when that invoice is paid.
+  let invoiceNotice: string | undefined;
+  if (job.status !== "COMPLETED" && formData.status === "COMPLETED") {
+    const result = await createInvoiceForCompletedJob(id, session.user.id);
+
+    if (result.created) {
+      invoiceNotice = `Invoice ${result.number} created for this job.`;
+    } else if (result.reason === "no-value") {
+      invoiceNotice =
+        "No invoice was created because this job has no client budget set.";
+    }
+
+    revalidatePath("/invoices");
+    revalidatePath("/accounts");
+  }
+
   revalidatePath("/jobs");
   revalidatePath(`/jobs/${id}`);
-  return { success: true };
+  return { success: true, invoiceNotice };
 }
 
 // ============================================

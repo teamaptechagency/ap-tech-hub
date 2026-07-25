@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { invoiceBuyerName } from "@/lib/job-invoice";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PaymentActions } from "@/components/invoices/payment-actions";
@@ -162,16 +163,32 @@ export default async function InvoiceViewPage({
                   BILLED TO
                 </p>
                 <p className="text-base font-bold text-slate-900">
-                  {invoice.client.companyName}
+                  {invoiceBuyerName(invoice)}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  {invoice.client.contactName}
-                  <br />
-                  {invoice.client.email}
-                  {invoice.client.country && (
+                  {invoice.client ? (
                     <>
+                      {invoice.client.contactName}
                       <br />
-                      {invoice.client.country}
+                      {invoice.client.email}
+                      {invoice.client.country && (
+                        <>
+                          <br />
+                          {invoice.client.country}
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {/* External buyer: no client record, so show whatever
+                          the job carried over. */}
+                      {invoice.externalSource && (
+                        <>
+                          {invoice.externalSource}
+                          <br />
+                        </>
+                      )}
+                      {invoice.externalCountry}
                     </>
                   )}
                 </p>
