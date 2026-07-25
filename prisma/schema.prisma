@@ -72,6 +72,17 @@ model User {
   lastActiveAt  DateTime?
   presenceBusy  Boolean   @default(false)
 
+  // Partner-facing: what this partner's business does. Replaces the
+  // admin-managed Skill list, which only makes sense for team members.
+  businessBrief String?
+
+  // A PARTNER_MANAGER belongs to exactly one BUSINESS_PARTNER, who creates
+  // the account and controls its permissions. Null on a manager means the
+  // account predates this link and is not yet assigned to a partner.
+  managedByPartnerId String?
+  managedByPartner   User?   @relation("PartnerManagers", fields: [managedByPartnerId], references: [id], onDelete: Cascade)
+  partnerManagers    User[]  @relation("PartnerManagers")
+
   skills               Skill[]
   jobMemberships       JobMember[]
   workSessions         WorkSession[]
@@ -101,6 +112,7 @@ model User {
   defaultMarketplaces  Marketplace[]             @relation("MarketplaceDefaultPartner")
   permissions          UserPermission[]
   blogPosts            BlogPost[]                @relation("BlogPostAuthor")
+  passkeys             UserPasskey[]
   createdAt            DateTime                  @default(now())
   updatedAt            DateTime                  @updatedAt
 }
@@ -235,6 +247,48 @@ model UserPermission {
   @@unique([userId, resource])
   @@index([userId])
   @@index([resource])
+}
+
+// ============================================
+// PASSKEYS (WebAuthn / fingerprint, Face ID, Windows Hello)
+// ============================================
+
+model UserPasskey {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Base64URL credential ID returned by the authenticator.
+  credentialId String @unique
+  publicKey    Bytes
+  // Signature counter; a value that fails to advance signals a cloned key.
+  counter      Int    @default(0)
+  // Comma-separated AuthenticatorTransport values ("internal,hybrid").
+  transports   String?
+  deviceType   String?
+  backedUp     Boolean @default(false)
+  // User-facing name so someone with several devices can tell them apart.
+  label        String  @default("Passkey")
+
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model WebAuthnChallenge {
+  id String @id @default(cuid())
+  // Random handle held in a short-lived httpOnly cookie, so a challenge can
+  // only be completed by the browser that requested it.
+  handle    String   @unique
+  userId    String?
+  challenge String
+  // REGISTER | LOGIN | STEP_UP
+  purpose   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 model EmailOtp {

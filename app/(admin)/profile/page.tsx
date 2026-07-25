@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { getUserLoginDevices } from "@/lib/login-security";
+import { PasskeyManager } from "@/components/auth/passkey-manager";
+import { listUserPasskeys } from "@/lib/passkey";
 import { getUserPortfolio } from "@/lib/user-portfolio";
 
 export const dynamic = "force-dynamic";
@@ -32,9 +34,10 @@ export default async function AdminProfilePage() {
     },
   });
   if (!me) redirect("/login");
-  const [loginDevices, portfolio] = await Promise.all([
+  const [loginDevices, portfolio, passkeys] = await Promise.all([
     getUserLoginDevices(me.id),
     getUserPortfolio(me.id),
+    listUserPasskeys(me.id),
   ]);
 
   return (
@@ -71,6 +74,21 @@ export default async function AdminProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      <PasskeyManager
+
+        passkeys={passkeys.map((passkey) => ({
+
+          ...passkey,
+
+          lastUsedAt: passkey.lastUsedAt?.toISOString() ?? null,
+
+          createdAt: passkey.createdAt.toISOString(),
+
+        }))}
+
+      />
+
 
       <ProfileForm
         name={me.name}

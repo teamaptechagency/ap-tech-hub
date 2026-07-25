@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { startAuthentication } from "@simplewebauthn/browser";
+import { Fingerprint } from "lucide-react";
 import {
   getLoginOptions,
   login,
+  loginWithPasskey,
   requestLoginHelp,
   requestPasswordlessLoginCode,
 } from "@/actions/auth.actions";
+import {
+  startPasskeyLogin,
+  verifyPasskeyAssertion,
+} from "@/actions/passkey.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,8 +36,11 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [deviceToken, setDeviceToken] = useState("");
   const [loginMode, setLoginMode] = useState<
-    "password" | "authenticator" | "email" | "whatsapp"
+    "password" | "authenticator" | "email" | "whatsapp" | "passkey"
   >("password");
+  // Browsers without WebAuthn (or an older in-app webview) must not be shown
+  // a fingerprint button that cannot work.
+  const [passkeySupported, setPasskeySupported] = useState(false);
   const [passwordlessMethods, setPasswordlessMethods] = useState<string[]>([]);
   const [passwordlessCodeSent, setPasswordlessCodeSent] = useState(false);
   const [code, setCode] = useState("");
@@ -46,7 +56,70 @@ export function LoginForm({
   useEffect(() => {
     const savedToken = window.localStorage.getItem("aptech_login_device") ?? "";
     setDeviceToken(savedToken);
+    setPasskeySupported(
+      typeof window !== "undefined" && !!window.PublicKeyCredential
+    );
   }, []);
+
+  async function handlePasskeyLogin() {
+    setError("");
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const started = await startPasskeyLogin(email);
+      if (started.error || !started.options) {
+        setError(started.error ?? "Could not start fingerprint sign-in");
+        setLoading(false);
+        return;
+      }
+
+      // Opens the device prompt (Touch ID, Windows Hello, Android fingerprint).
+      const assertion = await startAuthentication({
+        optionsJSON: started.options,
+      });
+
+      const verified = await verifyPasskeyAssertion(assertion);
+      if (verified.error || !verified.token || !verified.email) {
+        setError(verified.error ?? "Fingerprint could not be verified");
+        setLoading(false);
+        return;
+      }
+
+      const result = await loginWithPasskey({
+        email: verified.email,
+        token: verified.token,
+        deviceToken,
+        next: nextPath,
+      });
+
+      if (result?.error) {
+        setError(result.error);
+        if (result.contactAdmin) setShowHelp(true);
+        setLoading(false);
+        return;
+      }
+
+      if (result?.redirectTo) {
+        if (result.deviceToken) {
+          window.localStorage.setItem("aptech_login_device", result.deviceToken);
+        }
+        window.location.replace(result.redirectTo);
+        return;
+      }
+
+      setError("Fingerprint sign-in failed. Please try again.");
+      setLoading(false);
+    } catch (passkeyError) {
+      // Cancelling the OS prompt lands here; it is not an error worth shouting
+      // about, so keep the copy calm and let the user pick another method.
+      console.error("Passkey sign-in failed:", passkeyError);
+      setError(
+        "Fingerprint sign-in was cancelled or is not available on this device."
+      );
+      setLoading(false);
+    }
+  }
 
   async function refreshLoginOptions(nextEmail = email) {
     if (!nextEmail.includes("@")) {
@@ -70,10 +143,19 @@ export function LoginForm({
     if (loginMode === "whatsapp" && !result.methods.includes("WHATSAPP")) {
       setLoginMode("password");
     }
+    if (loginMode === "passkey" && !result.methods.includes("PASSKEY")) {
+      setLoginMode("password");
+    }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (loginMode === "passkey") {
+      await handlePasskeyLogin();
+      return;
+    }
+
     setError("");
     setMessage("");
     setLoading(true);
@@ -161,6 +243,10 @@ export function LoginForm({
                   [
                     { value: "password", label: "Password" },
                     { value: "email", label: "Email OTP" },
+                    ...(passkeySupported &&
+                    passwordlessMethods.includes("PASSKEY")
+                      ? [{ value: "passkey", label: "Fingerprint" }]
+                      : []),
                     ...(passwordlessMethods.includes("WHATSAPP")
                       ? [{ value: "whatsapp", label: "WhatsApp OTP" }]
                       : []),
@@ -209,7 +295,19 @@ export function LoginForm({
             />
           </div>
 
-            {loginMode === "authenticator" ? (
+            {loginMode === "passkey" ? (
+              <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Fingerprint className="h-4 w-4" />
+                  Fingerprint sign-in
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Apnar device er fingerprint, Face ID ba Windows Hello diye
+                  login korun. Password lagbe na. Age Profile theke ei device
+                  register kora thakte hobe.
+                </p>
+              </div>
+            ) : loginMode === "authenticator" ? (
               <div className="space-y-2">
                 <Label htmlFor="auth-code">Authenticator code</Label>
                 <Input
@@ -287,15 +385,17 @@ export function LoginForm({
             <Button type="submit" className="w-full" disabled={loading}>
               {loading
                 ? "Signing in..."
-                : loginMode === "authenticator"
-                  ? "Login with Authenticator"
-                  : loginMode === "email" || loginMode === "whatsapp"
-                    ? passwordlessCodeSent
-                      ? "Verify OTP and login"
-                      : "Send login OTP"
-                  : needsCode
-                    ? "Verify and sign in"
-                    : "Sign in"}
+                : loginMode === "passkey"
+                  ? "Use fingerprint"
+                  : loginMode === "authenticator"
+                    ? "Login with Authenticator"
+                    : loginMode === "email" || loginMode === "whatsapp"
+                      ? passwordlessCodeSent
+                        ? "Verify OTP and login"
+                        : "Send login OTP"
+                    : needsCode
+                      ? "Verify and sign in"
+                      : "Sign in"}
             </Button>
 
             <Button
