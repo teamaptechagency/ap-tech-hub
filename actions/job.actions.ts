@@ -80,8 +80,9 @@ const createJobSchema = z.object({
   description: z.string().optional(),
   type: z.enum(["MONTHLY", "FIXED", "HOURLY"]),
 
-  // Internal client OR external (Fiverr/Upwork)
-  clientMode: z.enum(["INTERNAL", "EXTERNAL"]),
+  // Internal client, external marketplace (Fiverr/Upwork), or a local
+  // walk-in customer where recording a client at all is optional.
+  clientMode: z.enum(["INTERNAL", "EXTERNAL", "LOCAL"]),
   clientId: z.string().optional(),
   externalSource: z.string().optional(),
   externalName: z.string().optional(),
@@ -184,6 +185,8 @@ export async function createJob(formData: CreateJobInput) {
   if (data.clientMode === "EXTERNAL" && !data.externalName) {
     return { error: "Please enter the external client's name" };
   }
+  // LOCAL deliberately validates nothing: a local job may be logged before
+  // the customer's details are known, so every client field is optional.
 
   // Type-specific validation
   if (data.type === "MONTHLY") {
@@ -237,13 +240,24 @@ export async function createJob(formData: CreateJobInput) {
       type: data.type,
       status: data.members.length === 0 ? "OPEN" : "PENDING",
 
-      clientId: data.clientMode === "INTERNAL" ? data.clientId : null,
+      // A local job may optionally be tied to an existing client; an external
+      // one never is, since the buyer lives on the marketplace instead.
+      clientId:
+        data.clientMode === "EXTERNAL" ? null : data.clientId || null,
       externalSource:
-        data.clientMode === "EXTERNAL" ? data.externalSource || "Other" : null,
+        data.clientMode === "EXTERNAL"
+          ? data.externalSource || "Other"
+          : data.clientMode === "LOCAL"
+            ? "Local"
+            : null,
       externalName:
-        data.clientMode === "EXTERNAL" ? data.externalName : null,
+        data.clientMode === "INTERNAL"
+          ? null
+          : data.externalName?.trim() || null,
       externalCountry:
-        data.clientMode === "EXTERNAL" ? data.externalCountry || null : null,
+        data.clientMode === "INTERNAL"
+          ? null
+          : data.externalCountry?.trim() || null,
 
       clientValue,
       clientCurrency: data.clientCurrency,

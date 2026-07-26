@@ -86,7 +86,9 @@ export default async function JobsPage() {
         (job.externalName
           ? `${job.externalName} (${job.externalSource})`
           : "—"),
-      isExternal: !job.clientId,
+      // A local job also has no client record, so "external" is decided by the
+      // source rather than by the absence of a client.
+      isExternal: !job.clientId && job.externalSource !== "Local",
       clientValue: job.clientValue ? Number(job.clientValue) : null,
       clientCurrency: job.clientCurrency,
       workerValue: job.workerValue ? Number(job.workerValue) : null,
