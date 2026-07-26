@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
+import { notifyClientActivity } from "@/lib/client-activity";
 
 // ============================================
 // PERMISSION
@@ -256,6 +257,19 @@ export async function adjustClientBalance(
     clientId,
     `${amount}`
   );
+
+  // Money moving on someone's account is not something they should have to
+  // log in to discover.
+  await notifyClientActivity({
+    clientId,
+    title:
+      amount > 0 ? "Balance added to your account" : "Amount due recorded",
+    body:
+      amount > 0
+        ? `${amount.toFixed(2)} has been added to your balance. Reason: ${reason}`
+        : `${Math.abs(amount).toFixed(2)} has been recorded as due. Reason: ${reason}`,
+    href: "/c/wallet",
+  });
 
   revalidatePath("/clients");
   revalidatePath(`/clients/${clientId}`);
