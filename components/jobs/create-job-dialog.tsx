@@ -43,7 +43,7 @@ type SelectedMember = {
 
 type JobType = "MONTHLY" | "FIXED" | "HOURLY";
 
-type ClientMode = "INTERNAL" | "EXTERNAL";
+type ClientMode = "INTERNAL" | "EXTERNAL" | "LOCAL";
 
 type Currency = "USD" | "EUR" | "GBP" | "BDT";
 
@@ -339,22 +339,20 @@ export function CreateJobDialog({
         description: cleanDescription,
         type,
         clientMode,
+        // LOCAL may optionally carry a client link and/or a written-in name,
+        // so it passes through whatever the user filled in.
         clientId:
-          clientMode === "INTERNAL" && clientId
-            ? clientId
-            : undefined,
+          clientMode !== "EXTERNAL" && clientId ? clientId : undefined,
         externalSource:
           clientMode === "EXTERNAL"
             ? externalSource
-            : undefined,
+            : clientMode === "LOCAL"
+              ? "Local"
+              : undefined,
         externalName:
-          clientMode === "EXTERNAL"
-            ? cleanExternalName
-            : "",
+          clientMode === "INTERNAL" ? "" : cleanExternalName,
         externalCountry:
-          clientMode === "EXTERNAL"
-            ? cleanExternalCountry
-            : "",
+          clientMode === "INTERNAL" ? "" : cleanExternalCountry,
         clientValue,
         clientCurrency,
         workerValue,
@@ -523,6 +521,19 @@ export function CreateJobDialog({
               >
                 External client
               </button>
+
+              <button
+                type="button"
+                onClick={() => handleClientModeChange("LOCAL")}
+                disabled={loading}
+                className={`flex-1 rounded-md border px-3 py-1.5 text-sm transition-colors ${
+                  clientMode === "LOCAL"
+                    ? "border-primary bg-primary/5 font-medium"
+                    : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                Local client
+              </button>
             </div>
 
             {clientMode === "INTERNAL" ? (
@@ -550,6 +561,59 @@ export function CreateJobDialog({
                   ))}
                 </SelectContent>
               </Select>
+            ) : clientMode === "LOCAL" ? (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Everything here is optional — a local job can be logged
+                  before you know who the customer is, and filled in later.
+                </p>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Input
+                    value={externalName}
+                    onChange={(event) => setExternalName(event.target.value)}
+                    placeholder="Customer name (optional)"
+                    disabled={loading}
+                  />
+                  <Input
+                    value={externalCountry}
+                    onChange={(event) =>
+                      setExternalCountry(event.target.value)
+                    }
+                    placeholder="Area / city (optional)"
+                    disabled={loading}
+                  />
+                </div>
+
+                <Select
+                  value={clientId}
+                  onValueChange={(value) => {
+                    if (value !== null) setClientId(value);
+                  }}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Link an existing client (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {clientId && (
+                  <button
+                    type="button"
+                    onClick={() => setClientId("")}
+                    className="text-xs text-muted-foreground underline"
+                  >
+                    Clear linked client
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="grid gap-2 sm:grid-cols-3">
                 <Select
