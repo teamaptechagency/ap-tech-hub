@@ -74,6 +74,15 @@ export default async function InvoiceViewPage({
   const balanceApplied = Number(invoice.balanceApplied);
   const remaining = amount - amountPaid;
   const vat = invoice.vatPercent ? Number(invoice.vatPercent) : null;
+  const methodCharge = invoice.methodChargePercent
+    ? Number(invoice.methodChargePercent)
+    : null;
+  // The surcharge sits on top of the post-VAT figure, matching how the total
+  // was built when the invoice was created.
+  const methodChargeAmount = methodCharge
+    ? amount - amount / (1 + methodCharge / 100)
+    : 0;
+  const writtenOff = Number(invoice.writtenOffAmount ?? 0);
   const subtotal = vat ? amount / (1 + vat / 100) : amount;
 
   const displayStatus =
@@ -279,6 +288,15 @@ export default async function InvoiceViewPage({
                     </span>
                   </div>
                 )}
+                {methodCharge !== null && (
+                  <div className="flex justify-between text-slate-500">
+                    <span>
+                      {invoice.methodChargeLabel ?? "Payment charge"} (
+                      {methodCharge}%)
+                    </span>
+                    <span>{sym}{methodChargeAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 {balanceApplied > 0 && (
                   <div className="flex justify-between text-emerald-600">
                     <span>Balance applied</span>
@@ -297,6 +315,15 @@ export default async function InvoiceViewPage({
                     </span>
                   </div>
                 )}
+                {writtenOff > 0 && (
+                  <div className="flex justify-between font-medium text-red-600">
+                    <span>Adjusted &amp; cleared</span>
+                    <span>
+                      −{sym}
+                      {writtenOff.toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 <div className="mt-2 flex items-center justify-between rounded-md bg-slate-900 px-3 py-2.5">
                   <span className="text-[11px] font-bold tracking-widest text-slate-300">
                     TOTAL DUE
@@ -306,6 +333,17 @@ export default async function InvoiceViewPage({
                     {Math.max(0, remaining).toFixed(2)}
                   </span>
                 </div>
+                {writtenOff > 0 && (
+                  <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-700">
+                    {sym}
+                    {writtenOff.toFixed(2)} was short and has been cleared by
+                    adjustment — this invoice is settled at the amount actually
+                    received.
+                    {invoice.writtenOffNote
+                      ? ` ${invoice.writtenOffNote}`
+                      : ""}
+                  </p>
+                )}
               </div>
             </div>
 

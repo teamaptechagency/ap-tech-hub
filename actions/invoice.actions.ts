@@ -40,6 +40,36 @@ async function audit(
   });
 }
 
+/**
+ * Percentage surcharge for a payment method, from Settings.
+ *
+ * bKash cash-out costs the agency a fee, so an invoice the client intends to
+ * pay that way can carry it. Returns null when no charge is configured, which
+ * keeps every other method behaving exactly as before.
+ */
+export const METHOD_CHARGE_SETTING_KEYS: Record<string, string> = {
+  BKASH: "payment.bkashChargePercent",
+  NAGAD: "payment.nagadChargePercent",
+};
+
+async function resolveMethodCharge(methodKey?: string | null) {
+  const key = methodKey?.trim().toUpperCase();
+  if (!key) return null;
+
+  const settingKey = METHOD_CHARGE_SETTING_KEYS[key];
+  if (!settingKey) return null;
+
+  const setting = await prisma.setting
+    .findUnique({ where: { key: settingKey }, select: { value: true } })
+    .catch(() => null);
+
+  const percent = parseFloat(setting?.value ?? "");
+  if (!Number.isFinite(percent) || percent <= 0) return null;
+
+  const label = key.charAt(0) + key.slice(1).toLowerCase();
+  return { percent, label: `${label} charge` };
+}
+
 // INV-2026-0001 style numbering
 async function nextInvoiceNumber() {
   const year = new Date().getFullYear();
@@ -235,6 +265,8 @@ export async function createCustomInvoice(formData: {
   vatPercent?: string;
   dueDate: string;
   deductFromBalance: boolean;
+  /** Payment method whose Settings surcharge should be added (e.g. BKASH). */
+  chargeMethodKey?: string;
   payoneerInvoiceUrl?: string;
   payoneerInvoiceButtonLabel?: string;
   payoneerInvoiceNote?: string;
@@ -277,7 +309,15 @@ export async function createCustomInvoice(formData: {
 
   const subtotal = items.reduce((s, i) => s + i.qty * i.amount, 0);
   const vat = formData.vatPercent ? parseFloat(formData.vatPercent) : null;
-  const total = vat ? subtotal * (1 + vat / 100) : subtotal;
+  const afterVat = vat ? subtotal * (1 + vat / 100) : subtotal;
+
+  // Payment-method surcharge (the bKash cash-out fee, for example). The rate
+  // is read from Settings now and stored on the invoice, so changing the
+  // setting later never rewrites an invoice that has already gone out.
+  const methodCharge = await resolveMethodCharge(formData.chargeMethodKey);
+  const total = methodCharge
+    ? Math.round(afterVat * (1 + methodCharge.percent / 100) * 100) / 100
+    : afterVat;
 
   // Balance deduction (only positive client balance applies)
   let balanceApplied = 0;
@@ -304,6 +344,8 @@ export async function createCustomInvoice(formData: {
       amount: total,
       currency: formData.currency,
       vatPercent: vat,
+      methodChargePercent: methodCharge?.percent ?? null,
+      methodChargeLabel: methodCharge?.label ?? null,
       balanceApplied,
       amountPaid: balanceApplied,
       status: fullyCovered ? "PAID" : "DUE",
@@ -767,7 +809,20 @@ export async function rejectPayment(invoiceId: string) {
 // ============================================
 export async function recordManualPayment(
   invoiceId: string,
-  formData: { amount: string; method: string; reference: string }
+  formData: {
+    amount: string;
+    method: string;
+    reference: string;
+    /**
+     * What to do with the shortfall when the client pays less than the full
+     * invoice. "DUE" leaves it owing; "CLEAR" absorbs it so what they actually
+     * paid settles the invoice.
+     */
+    settleRemainder?: "DUE" | "CLEAR";
+    /** Draw the shortfall from the client's balance before deciding. */
+    useClientBalance?: boolean;
+    writeOffNote?: string;
+  }
 ) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
@@ -787,8 +842,27 @@ export async function recordManualPayment(
   }
   if (!formData.method) return { error: "Select the payment method" };
 
-  const newPaid = Number(invoice.amountPaid) + amount;
-  const fullyPaid = newPaid >= Number(invoice.amount) - 0.01;
+  // Settlement order: cash received first, then the client's own balance if
+  // asked for, and only what is still missing after that can be written off.
+  let balanceUsed = 0;
+  let shortfall = Math.round((remaining - amount) * 100) / 100;
+
+  if (formData.useClientBalance && shortfall > 0 && invoice.clientId) {
+    const client = await prisma.client.findUnique({
+      where: { id: invoice.clientId },
+      select: { balance: true },
+    });
+    const available = Math.max(0, Number(client?.balance ?? 0));
+    balanceUsed = Math.min(available, shortfall);
+    shortfall = Math.round((shortfall - balanceUsed) * 100) / 100;
+  }
+
+  const writeOff =
+    formData.settleRemainder === "CLEAR" && shortfall > 0 ? shortfall : 0;
+
+  const newPaid = Number(invoice.amountPaid) + amount + balanceUsed;
+  const fullyPaid =
+    newPaid + writeOff >= Number(invoice.amount) - 0.01;
   const via = `${formData.method}${
     formData.reference ? ` (${formData.reference})` : ""
   } — recorded manually`;
@@ -797,13 +871,55 @@ export async function recordManualPayment(
     where: { id: invoiceId },
     data: {
       amountPaid: newPaid,
+      balanceApplied: { increment: balanceUsed },
       status: fullyPaid ? "PAID" : "PARTIALLY_PAID",
       paidVia: via,
       approvedById: session.user.id,
+      ...(writeOff > 0
+        ? {
+            writtenOffAmount: { increment: writeOff },
+            writtenOffNote:
+              formData.writeOffNote?.trim() ||
+              "Cleared by adjustment — settled at the amount received",
+            writtenOffAt: new Date(),
+            writtenOffById: session.user.id,
+          }
+        : {}),
     },
   });
 
-  await applyPaidEffects(invoiceId, amount, session.user.id, via);
+  // Spending the client's balance is a ledger movement in its own right, so
+  // it gets its own entry rather than hiding inside the payment.
+  if (balanceUsed > 0 && invoice.clientId) {
+    await prisma.$transaction([
+      prisma.clientTxn.create({
+        data: {
+          clientId: invoice.clientId,
+          amount: -balanceUsed,
+          kind: "INVOICE_DEDUCT",
+          note: `${invoice.number} · applied from balance`,
+          invoiceId: invoice.id,
+          createdById: session.user.id,
+        },
+      }),
+      prisma.client.update({
+        where: { id: invoice.clientId },
+        data: { balance: { decrement: balanceUsed } },
+      }),
+    ]);
+  }
+
+  await applyPaidEffects(invoiceId, amount + balanceUsed, session.user.id, via);
+
+  if (writeOff > 0) {
+    await audit(
+      session.user.id,
+      "INVOICE_SHORTFALL_CLEARED",
+      "Invoice",
+      invoiceId,
+      `${writeOff.toFixed(2)} ${invoice.currency}`
+    );
+  }
 
   await audit(
     session.user.id,
