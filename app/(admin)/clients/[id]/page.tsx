@@ -100,13 +100,14 @@ export default async function ClientDetailPage({
       },
       walletTxns: {
         orderBy: { createdAt: "desc" },
-        take: 8,
+        take: 20,
         select: {
           id: true,
           amount: true,
           kind: true,
           note: true,
           createdAt: true,
+          createdById: true,
         },
       },
       _count: {
@@ -120,6 +121,23 @@ export default async function ClientDetailPage({
   });
 
   if (!client) notFound();
+
+  // ClientTxn stores only the actor's id, so resolve the names in one query
+  // rather than leaving the ledger saying "who knows who did this".
+  const actorIds = Array.from(
+    new Set(
+      client.walletTxns
+        .map((txn) => txn.createdById)
+        .filter((actorId): actorId is string => Boolean(actorId))
+    )
+  );
+  const actors = actorIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: actorIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const actorNames = new Map(actors.map((actor) => [actor.id, actor.name]));
 
   const portalUser = client.users[0] ?? null;
   const balance = Number(client.balance);
@@ -282,8 +300,15 @@ export default async function ClientDetailPage({
               <p className="font-medium">{txn.kind.replaceAll("_", " ").toLowerCase()}</p>
               <p className="text-xs text-muted-foreground">
                 {dateLabel(txn.createdAt)}
-                {txn.note ? ` · ${txn.note}` : ""}
+                {txn.createdById && actorNames.get(txn.createdById)
+                  ? ` · by ${actorNames.get(txn.createdById)}`
+                  : ""}
               </p>
+              {txn.note ? (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {txn.note}
+                </p>
+              ) : null}
             </div>
             <p
               className={
