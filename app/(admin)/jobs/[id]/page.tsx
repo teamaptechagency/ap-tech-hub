@@ -18,6 +18,7 @@ import { CompleteJobButton } from "@/components/jobs/complete-job-button";
 import { PublishToggle } from "@/components/jobs/publish-toggle";
 import { JobPricingEditor } from "@/components/jobs/job-pricing-editor";
 import { DeleteJobButton } from "@/components/jobs/delete-job-button";
+import { JobPurchases } from "@/components/jobs/job-purchases";
 import { ChatPanel } from "@/components/chat/chat-panel";
 
 import { hoursThisWeek } from "@/actions/session.actions";
@@ -70,6 +71,30 @@ export default async function JobDetailsPage({
       client: {
         select: {
           companyName: true,
+        },
+      },
+
+      // Invoices raised against this job, for the purchases section below.
+      invoices: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          number: true,
+          currency: true,
+          status: true,
+          amountPaid: true,
+          creditsClientBalance: true,
+          items: {
+            select: {
+              id: true,
+              description: true,
+              qty: true,
+              amount: true,
+              purchased: true,
+              purchasedAt: true,
+              purchaseNote: true,
+            },
+          },
         },
       },
 
@@ -472,6 +497,30 @@ export default async function JobDetailsPage({
           )}
         </div>
       </div>
+
+      {/* Things bought for this project. Separate from weeks and tasks on
+          purpose — buying a tool is not delivery work. */}
+      <JobPurchases
+        clientName={job.client?.companyName ?? null}
+        isSuperAdmin={session.user.role === "SUPER_ADMIN"}
+        invoices={job.invoices.map((invoice) => ({
+          id: invoice.id,
+          number: invoice.number,
+          currency: invoice.currency,
+          status: invoice.status,
+          amountPaid: Number(invoice.amountPaid),
+          creditsClientBalance: invoice.creditsClientBalance,
+          items: invoice.items.map((item) => ({
+            id: item.id,
+            description: item.description,
+            qty: item.qty,
+            amount: Number(item.amount),
+            purchased: item.purchased,
+            purchasedAt: item.purchasedAt?.toISOString() ?? null,
+            purchaseNote: item.purchaseNote,
+          })),
+        }))}
+      />
     </div>
   );
 }
