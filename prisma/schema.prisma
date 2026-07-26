@@ -959,8 +959,16 @@ model BankPaymentAccount {
 
 model PaymentSubmission {
   id                    String              @id @default(cuid())
-  invoiceId             String
-  invoice               Invoice             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  // INVOICE — paying an invoice. TOPUP — the client adding money to their own
+  // balance, which has no invoice behind it.
+  purpose               String              @default("INVOICE")
+  invoiceId             String?
+  invoice               Invoice?            @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  // Set when a reviewer turns the submission down, so the client can be told
+  // why rather than just seeing it disappear.
+  reviewNote            String?
+  reviewedById          String?
+  reviewedAt            DateTime?
   clientId              String
   client                Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
   paymentMethodId       String?
