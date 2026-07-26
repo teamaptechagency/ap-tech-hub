@@ -226,13 +226,20 @@ export async function adjustClientBalance(
     return { error: "Enter a non-zero amount (negative = due)" };
   }
 
+  // A balance movement without a stated reason is unauditable months later,
+  // so the note is required rather than optional.
+  const reason = formData.note?.trim() ?? "";
+  if (reason.length < 3) {
+    return { error: "Write a reason for this adjustment" };
+  }
+
   await prisma.$transaction([
     prisma.clientTxn.create({
       data: {
         clientId,
         amount,
         kind: "ADJUSTMENT",
-        note: formData.note || null,
+        note: reason,
         createdById: session.user.id,
       },
     }),

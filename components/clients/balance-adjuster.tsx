@@ -37,12 +37,20 @@ export function BalanceAdjuster({
   const router = useRouter();
 
   const parsed = Number(amount);
-  const valid = amount.trim() !== "" && Number.isFinite(parsed) && parsed !== 0;
-  const preview = valid ? balance + parsed : balance;
+  const amountOk =
+    amount.trim() !== "" && Number.isFinite(parsed) && parsed !== 0;
+  // A reason is required: months later the ledger has to explain itself.
+  const reasonOk = note.trim().length >= 3;
+  const valid = amountOk && reasonOk;
+  const preview = amountOk ? balance + parsed : balance;
 
   const submit = (signMultiplier: 1 | -1) => {
-    if (!valid) {
+    if (!amountOk) {
       toast.error("Enter a non-zero amount");
+      return;
+    }
+    if (!reasonOk) {
+      toast.error("Write a reason for this adjustment");
       return;
     }
     // The buttons decide the direction, so a typed "-50" on "Add advance"
@@ -96,23 +104,31 @@ export function BalanceAdjuster({
             />
           </label>
           <label className="grid gap-1.5 text-sm">
-            <span className="font-medium">Note</span>
+            <span className="font-medium">
+              Reason <span className="text-red-500">*</span>
+            </span>
             <input
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              placeholder="Reason for this adjustment"
+              placeholder="Why is this balance changing?"
               className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
             />
           </label>
         </div>
 
-        {valid && (
+        {amountOk && (
           <p className="text-sm text-muted-foreground">
             New balance would be{" "}
             <span className="font-semibold text-foreground">
               {money(preview, currency)}
             </span>{" "}
             (currently {money(balance, currency)})
+          </p>
+        )}
+
+        {amountOk && !reasonOk && (
+          <p className="text-xs text-amber-600">
+            Add a reason before you can apply this adjustment.
           </p>
         )}
 
