@@ -701,6 +701,20 @@ model Invoice {
   amount                     Decimal             @db.Decimal(12, 2)
   currency                   String              @default("USD")
   vatPercent                 Decimal?            @db.Decimal(5, 2)
+  // Payment-method surcharge (e.g. the bKash cash-out fee), folded into the
+  // total the same way VAT is. Percentage comes from Settings at the time the
+  // invoice is raised, and is stored here so a later settings change never
+  // rewrites an invoice that already went out.
+  methodChargePercent        Decimal?            @db.Decimal(5, 2)
+  methodChargeLabel          String?
+
+  // Shortfall the admin chose to absorb rather than chase. Kept explicit so
+  // the gap between what was billed and what was received is never invisible.
+  writtenOffAmount           Decimal             @default(0) @db.Decimal(12, 2)
+  writtenOffNote             String?
+  writtenOffAt               DateTime?
+  writtenOffById             String?
+
   // An advance/purchase invoice: the client is funding project costs, so
   // payment lands in their balance instead of the agency's earnings. It only
   // becomes revenue if and when it is actually earned.

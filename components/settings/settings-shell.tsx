@@ -280,6 +280,12 @@ export function SettingsShell({
   const [receivedUsdRate, setReceivedUsdRate] = useState(
     settings["finance.receivedUsdRate"] ?? "118"
   );
+  const [bkashChargePercent, setBkashChargePercent] = useState(
+    settings["payment.bkashChargePercent"] ?? "0"
+  );
+  const [nagadChargePercent, setNagadChargePercent] = useState(
+    settings["payment.nagadChargePercent"] ?? "0"
+  );
   const [receivedEurRate, setReceivedEurRate] = useState(
     settings["finance.receivedEurRate"] ?? "130"
   );
@@ -501,6 +507,14 @@ export function SettingsShell({
         {
           key: "finance.receivedUsdRate",
           value: receivedUsdRate,
+        },
+        {
+          key: "payment.bkashChargePercent",
+          value: bkashChargePercent,
+        },
+        {
+          key: "payment.nagadChargePercent",
+          value: nagadChargePercent,
         },
         {
           key: "finance.receivedEurRate",
@@ -1448,6 +1462,50 @@ export function SettingsShell({
                 <span className="text-sm text-muted-foreground">
                   BDT
                 </span>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-md border bg-muted/20 p-3">
+              <p className="text-sm font-medium">Mobile wallet charge</p>
+              <p className="text-xs text-muted-foreground">
+                Cash-out fee added on top of an invoice when the client will pay
+                by that wallet. Set 0 to charge nothing. The rate is copied onto
+                the invoice when it is created, so changing it here never alters
+                an invoice that has already gone out.
+              </p>
+              <div className="mt-3 grid max-w-md gap-3 sm:grid-cols-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-14 text-sm text-muted-foreground">
+                    bKash
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={bkashChargePercent}
+                    onChange={(event) =>
+                      setBkashChargePercent(event.target.value)
+                    }
+                    disabled={busy}
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-14 text-sm text-muted-foreground">
+                    Nagad
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={nagadChargePercent}
+                    onChange={(event) =>
+                      setNagadChargePercent(event.target.value)
+                    }
+                    disabled={busy}
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
               </div>
             </div>
 
