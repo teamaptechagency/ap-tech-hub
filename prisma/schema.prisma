@@ -17,8 +17,12 @@ enum Role {
   ADMIN
   CEO
   TEAM_MEMBER
+  // Special Order partner (marketplace delivery work) — the /p/ portal.
   BUSINESS_PARTNER
   PARTNER_MANAGER
+  // Referral/reseller partner who brings clients in — the /r/ portal.
+  // Deliberately a separate role: it must never reach Special Order data.
+  REFERRAL_PARTNER
   CLIENT
   CLIENT_MANAGER
 }
@@ -113,6 +117,7 @@ model User {
   permissions          UserPermission[]
   blogPosts            BlogPost[]                @relation("BlogPostAuthor")
   passkeys             UserPasskey[]
+  referralPartner      ReferralPartner?          @relation("ReferralPartnerAccount")
   createdAt            DateTime                  @default(now())
   updatedAt            DateTime                  @updatedAt
 }
@@ -334,6 +339,7 @@ model Client {
   jobs               Job[]
   invoices           Invoice[]
   walletTxns         ClientTxn[]
+  referrals          Referral[]
   pointTxns          PointTxn[]
   paymentSubmissions PaymentSubmission[]
   exchangeRequests   PointExchangeRequest[]
@@ -1317,6 +1323,144 @@ model LandingVisitorEvent {
   @@index([createdAt])
   @@index([country])
   @@index([country, createdAt])
+}
+
+// ============================================
+// REFERRAL / BUSINESS PARTNER
+//
+// Entirely separate from the Special Order partner system: a referral
+// partner brings clients in, they do not deliver marketplace work.
+// ============================================
+
+enum ReferralApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  CONTACTED
+  INFO_REQUIRED
+  APPROVED
+  REJECTED
+  CLOSED
+}
+
+model ReferralPartnerApplication {
+  id            String  @id @default(cuid())
+  fullName      String
+  businessName  String?
+  email         String
+  phone         String?
+  country       String?
+  website       String?
+  socialProfile String?
+
+  businessType       String?
+  servicesOffered    String?
+  industries         String?
+  expectedClientType String?
+  expectedReferrals  String?
+  preferredContact   String?
+  note               String?
+
+  status       ReferralApplicationStatus @default(SUBMITTED)
+  adminNote    String?
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  // Set once the application has been turned into a real partner account.
+  // Submitting alone never grants access.
+  partnerId String?          @unique
+  partner   ReferralPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([email])
+}
+
+model ReferralPartner {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation("ReferralPartnerAccount", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Unique referral identity used in links and codes.
+  code        String  @unique
+  displayName String?
+
+  // Agreement terms. Admin-controlled: a partner must never be able to edit
+  // their own commission.
+  commissionPercent     Decimal @default(10) @db.Decimal(5, 2)
+  clientDiscountPercent Decimal @default(5) @db.Decimal(5, 2)
+  // ORIGINAL | DISCOUNTED | RECEIVED | NET | MANUAL — how commission is worked
+  // out. Default RECEIVED: only money actually collected earns commission.
+  commissionBasis String @default("RECEIVED")
+
+  // REFERRAL — commission per referral. RESELLER — partner sets their own
+  // client price and keeps the margin, which AP Tech does not see.
+  mode String @default("REFERRAL")
+
+  brandingEnabled   Boolean @default(false)
+  brandingStatement String?
+
+  agreementNote String?
+  agreementUrl  String?
+  // ACTIVE | SUSPENDED | CLOSED
+  status        String  @default("ACTIVE")
+
+  application ReferralPartnerApplication?
+  referrals   Referral[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+enum ReferralStatus {
+  PENDING
+  VERIFIED
+  APPROVED
+  REJECTED
+  DUPLICATE
+  INVALID
+  EXPIRED
+  CANCELLED
+}
+
+model Referral {
+  id        String          @id @default(cuid())
+  partnerId String
+  partner   ReferralPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  // Null until the referred person actually becomes a client.
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  // Captured at signup, before any Client row exists.
+  leadEmail String?
+  leadName  String?
+
+  code   String
+  status ReferralStatus @default(PENDING)
+
+  reviewNote   String?
+  verifiedById String?
+  verifiedAt   DateTime?
+
+  // Terms are snapshotted when the referral is made, so later changes to the
+  // partner's agreement never silently rewrite an existing referral.
+  clientDiscountPercent Decimal? @db.Decimal(5, 2)
+  commissionPercent     Decimal? @db.Decimal(5, 2)
+
+  referredAt   DateTime  @default(now())
+  registeredAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([partnerId, clientId])
+  @@index([status])
+  @@index([code])
+  @@index([leadEmail])
 }
 
 // ============================================

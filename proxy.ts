@@ -6,6 +6,7 @@ import {
   WORKER_ROLES,
   CLIENT_ROLES,
   PARTNER_ROLES,
+  REFERRAL_ROLES,
 } from "@/lib/roles";
 
 // Routes anyone can visit without logging in
@@ -31,6 +32,10 @@ const PUBLIC_EXACT_PATHS = [
   "/about",
   "/contact",
   "/blog",
+  // Referral partner recruitment: the pitch and the application form are
+  // public, since applicants have no account yet.
+  "/partners",
+  "/partners/apply",
   // Generated favicon routes. Search engines fetch these unauthenticated, so
   // redirecting them to /login would leave the site with no crawlable icon.
   "/icon",
@@ -102,14 +107,20 @@ export const proxy = auth((req) => {
   if (pathname.startsWith("/c/") && !CLIENT_ROLES.includes(role)) {
     return NextResponse.redirect(new URL(homeFor(role), req.url));
   }
+  // A referral partner is not a Special Order partner: this check keeps them
+  // out of /p/ entirely, which is the whole point of the separate role.
   if (pathname.startsWith("/p/") && !PARTNER_ROLES.includes(role)) {
     return NextResponse.redirect(new URL(homeFor(role), req.url));
   }
-  // Admin portal = everything not /e/, /c/ or /p/
+  if (pathname.startsWith("/r/") && !REFERRAL_ROLES.includes(role)) {
+    return NextResponse.redirect(new URL(homeFor(role), req.url));
+  }
+  // Admin portal = everything not /e/, /c/, /p/ or /r/
   if (
     !pathname.startsWith("/e/") &&
     !pathname.startsWith("/c/") &&
     !pathname.startsWith("/p/") &&
+    !pathname.startsWith("/r/") &&
     !ADMIN_ROLES.includes(role)
   ) {
     return NextResponse.redirect(new URL(homeFor(role), req.url));
