@@ -3,7 +3,12 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ADMIN_ROLES, CLIENT_ROLES, PARTNER_ROLES } from "@/lib/roles";
+import {
+  ADMIN_ROLES,
+  CLIENT_ROLES,
+  PARTNER_ROLES,
+  REFERRAL_ROLES,
+} from "@/lib/roles";
 import { getFloatingConversations } from "@/actions/message.actions";
 import { getBrandingSettings } from "@/lib/branding";
 
@@ -39,6 +44,10 @@ export default async function AdminLayout({
 
     if (PARTNER_ROLES.includes(role)) {
       redirect("/p/profile");
+    }
+
+    if (REFERRAL_ROLES.includes(role)) {
+      redirect("/r/dashboard");
     }
 
     redirect("/e/profile");
