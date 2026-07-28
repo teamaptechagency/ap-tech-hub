@@ -35,6 +35,14 @@ import {
   startLandingChat,
   submitLandingContact,
 } from "@/actions/landing.actions";
+import { PartnerApplicationForm } from "@/components/referral/partner-application-form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PUBLIC_NAV_LINKS } from "@/lib/public-nav";
 import type {
   LandingPageData,
@@ -1633,6 +1641,7 @@ export function LandingPage({
   const [contactPending, startContactTransition] = useTransition();
   const [trustStats, setTrustStats] = useState<TrustStats | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [partnerApplyOpen, setPartnerApplyOpen] = useState(false);
   const goToSection = useSectionNav();
   const pathname = usePathname();
 
@@ -2027,6 +2036,55 @@ export function LandingPage({
               <Clock size={12} />
               *Terms & conditions apply
             </p>
+          </div>
+        </section>
+      )}
+
+      {page === "home" && (
+        <section className="border-b border-[#e8e3dc] bg-[#faf8f5] py-10">
+          <div className="mx-auto max-w-[1140px] px-4">
+            <div className="grid gap-6 rounded-[18px] border border-[#e8e3dc] bg-white p-6 shadow-[0_18px_45px_rgba(16,22,35,.06)] md:grid-cols-[1fr_auto] md:items-center md:p-8">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#c6613f]">
+                  Referral & Business Partner Program
+                </p>
+                <h2 className="mt-2 max-w-2xl text-2xl font-extrabold tracking-tight text-[#101623] md:text-3xl">
+                  Bring clients to AP Tech and earn from approved projects.
+                </h2>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-[#6b7280]">
+                  Freelancers, agencies, consultants and resellers can apply to
+                  become AP Tech partners. Your referred client can receive a
+                  discount, and you can earn commission after the project and
+                  payment are approved.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#3a4152]">
+                  <span className="rounded-full bg-[#faf8f5] px-3 py-1.5">
+                    Client discount
+                  </span>
+                  <span className="rounded-full bg-[#faf8f5] px-3 py-1.5">
+                    Partner commission
+                  </span>
+                  <span className="rounded-full bg-[#faf8f5] px-3 py-1.5">
+                    Reseller option
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 md:min-w-[220px]">
+                <button
+                  type="button"
+                  onClick={() => setPartnerApplyOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#c6613f] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#a94e30]"
+                >
+                  Become a Partner <ArrowRight size={16} />
+                </button>
+                <Link
+                  href="/partners"
+                  className="inline-flex items-center justify-center rounded-[10px] border border-[#e8e3dc] px-6 py-3 text-sm font-bold text-[#101623] transition hover:border-[#101623]"
+                >
+                  View partner details
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
       )}
@@ -2912,6 +2970,21 @@ export function LandingPage({
         onOpenPrivacy={() => setModal({ type: "privacy" })}
         onOpenTerms={() => setModal({ type: "terms" })}
       />
+      <Dialog open={partnerApplyOpen} onOpenChange={setPartnerApplyOpen}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-extrabold text-[#101623]">
+              Partner application
+            </DialogTitle>
+            <DialogDescription>
+              This is a reviewed application, not regular registration. If
+              approved, AP Tech will email the partner ID and temporary login
+              details.
+            </DialogDescription>
+          </DialogHeader>
+          <PartnerApplicationForm />
+        </DialogContent>
+      </Dialog>
       <LandingModal modal={modal} data={data} onClose={() => setModal(null)} />
     </main>
   );
