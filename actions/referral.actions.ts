@@ -8,12 +8,18 @@ import { auth } from "@/lib/auth";
 import { notifyAdmins } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 import {
+  getMinimumReferralWithdrawal,
+  getReferralPartnerBalance,
+} from "@/lib/referral-finance";
+import {
   findPartnerByCode,
   REFERRAL_APPLICATION_STATUSES,
   REFERRAL_COOKIE,
   REFERRAL_COOKIE_DAYS,
+  REFERRAL_STATUSES,
   uniqueReferralCode,
   type ReferralApplicationStatusValue,
+  type ReferralStatusValue,
 } from "@/lib/referral";
 import { ADMIN_ROLES } from "@/lib/roles";
 
@@ -21,6 +27,19 @@ async function checkAdmin() {
   const session = await auth();
   if (!session?.user || !ADMIN_ROLES.includes(session.user.role)) return null;
   return session;
+}
+
+async function checkReferralPartner() {
+  const session = await auth();
+  if (!session?.user) return null;
+
+  const partner = await prisma.referralPartner.findUnique({
+    where: { userId: session.user.id },
+    select: { id: true, code: true, status: true },
+  });
+
+  if (!partner || partner.status !== "ACTIVE") return null;
+  return { session, partner };
 }
 
 async function audit(
@@ -174,9 +193,15 @@ export async function captureReferralForSignup(input: {
     });
     if (existing) return { captured: false };
 
+    const client = await prisma.client.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+
     await prisma.referral.create({
       data: {
         partnerId: partner.id,
+        clientId: client?.id ?? null,
         leadEmail: email,
         leadName: input.name?.trim() || null,
         code: partner.code,
@@ -193,6 +218,104 @@ export async function captureReferralForSignup(input: {
   } catch (error) {
     console.error("Failed to capture referral:", error);
     return { captured: false };
+  }
+}
+
+// ============================================
+// REFERRAL PARTNER - SUBMIT CLIENT
+// ============================================
+
+export async function submitReferredClient(input: {
+  clientName: string;
+  companyName?: string;
+  email: string;
+  phone?: string;
+  country?: string;
+  service?: string;
+  budget?: string;
+  deadline?: string;
+  note?: string;
+}) {
+  const context = await checkReferralPartner();
+  if (!context) return { error: "Your partner profile is not active" };
+
+  const clientName = input.clientName?.trim();
+  const email = input.email?.trim().toLowerCase();
+  if (!clientName || clientName.length < 2) return { error: "Enter the client name" };
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "Enter a valid client email" };
+  }
+
+  const existing = await prisma.referral.findFirst({
+    where: {
+      OR: [{ leadEmail: email }, { client: { email } }],
+    },
+    select: { id: true, partnerId: true },
+  });
+
+  if (existing) {
+    return {
+      error:
+        existing.partnerId === context.partner.id
+          ? "This client is already in your referrals."
+          : "This client already has a referral record.",
+    };
+  }
+
+  const partner = await prisma.referralPartner.findUnique({
+    where: { id: context.partner.id },
+    select: { clientDiscountPercent: true, commissionPercent: true },
+  });
+  if (!partner) return { error: "Partner profile not found" };
+
+  const details = [
+    input.companyName ? `Company: ${input.companyName.trim()}` : null,
+    input.phone ? `Phone: ${input.phone.trim()}` : null,
+    input.country ? `Country: ${input.country.trim()}` : null,
+    input.service ? `Service: ${input.service.trim()}` : null,
+    input.budget ? `Budget: ${input.budget.trim()}` : null,
+    input.deadline ? `Deadline: ${input.deadline.trim()}` : null,
+    input.note ? `Note: ${input.note.trim()}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    const referral = await prisma.referral.create({
+      data: {
+        partnerId: context.partner.id,
+        leadName: clientName,
+        leadEmail: email,
+        code: context.partner.code,
+        status: "PENDING",
+        reviewNote: details || null,
+        clientDiscountPercent: partner.clientDiscountPercent,
+        commissionPercent: partner.commissionPercent,
+      },
+      select: { id: true },
+    });
+
+    await notifyAdmins({
+      title: "New referred client",
+      body: `${clientName} was submitted by a referral partner.`,
+      href: "/referrals",
+    }).catch(() => null);
+
+    await audit(
+      context.session.user.id,
+      "REFERRAL_CLIENT_SUBMITTED",
+      "Referral",
+      referral.id,
+      email
+    );
+
+    revalidatePath("/r/dashboard");
+    revalidatePath("/r/referrals");
+    revalidatePath("/referrals");
+    return { success: true, id: referral.id };
+  } catch (error) {
+    console.error("Failed to submit referred client:", error);
+    return { error: "Could not submit this client" };
   }
 }
 
@@ -434,5 +557,177 @@ export async function updateReferralPartnerTerms(input: {
   } catch (error) {
     console.error("Failed to update partner terms:", error);
     return { error: "Could not update this partner" };
+  }
+}
+
+export async function updateReferralStatus(input: {
+  referralId: string;
+  status: ReferralStatusValue;
+  reviewNote?: string;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+  if (!REFERRAL_STATUSES.includes(input.status)) return { error: "Unknown status" };
+
+  try {
+    await prisma.referral.update({
+      where: { id: input.referralId },
+      data: {
+        status: input.status,
+        reviewNote: input.reviewNote?.trim() || undefined,
+        verifiedById: ["VERIFIED", "APPROVED"].includes(input.status)
+          ? session.user.id
+          : undefined,
+        verifiedAt: ["VERIFIED", "APPROVED"].includes(input.status)
+          ? new Date()
+          : undefined,
+      },
+    });
+
+    await audit(
+      session.user.id,
+      "REFERRAL_STATUS_UPDATED",
+      "Referral",
+      input.referralId,
+      input.status
+    );
+
+    revalidatePath("/referrals");
+    revalidatePath("/r/dashboard");
+    revalidatePath("/r/referrals");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update referral status:", error);
+    return { error: "Could not update this referral" };
+  }
+}
+
+export async function requestReferralWithdrawal(input: {
+  amount: string;
+  method: string;
+  accountInfo: string;
+  note?: string;
+}) {
+  const context = await checkReferralPartner();
+  if (!context) return { error: "Your partner profile is not active" };
+
+  const amount = parseFloat(input.amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { error: "Enter a valid withdrawal amount" };
+  }
+  if (!input.method?.trim()) return { error: "Select a payment method" };
+  if (!input.accountInfo?.trim()) return { error: "Enter account details" };
+
+  const [balance, minimum] = await Promise.all([
+    getReferralPartnerBalance(context.partner.id),
+    getMinimumReferralWithdrawal(),
+  ]);
+
+  if (minimum > 0 && amount < minimum) {
+    return { error: `Minimum withdrawal amount is ${minimum.toFixed(2)}` };
+  }
+  if (amount > balance.withdrawable + 0.01) {
+    return {
+      error: `Withdrawable balance is only ${balance.withdrawable.toFixed(2)}`,
+    };
+  }
+
+  try {
+    const withdrawal = await prisma.referralWithdrawal.create({
+      data: {
+        partnerId: context.partner.id,
+        amount,
+        currency: balance.currency,
+        method: input.method.trim(),
+        accountInfo: input.accountInfo.trim(),
+        note: input.note?.trim() || null,
+      },
+      select: { id: true },
+    });
+
+    await notifyAdmins({
+      title: "Referral withdrawal requested",
+      body: `${context.session.user.name} requested ${balance.currency} ${amount.toFixed(2)}.`,
+      href: "/referrals",
+    }).catch(() => null);
+
+    await audit(
+      context.session.user.id,
+      "REFERRAL_WITHDRAWAL_REQUESTED",
+      "ReferralWithdrawal",
+      withdrawal.id,
+      `${balance.currency} ${amount.toFixed(2)}`
+    );
+
+    revalidatePath("/r/withdrawals");
+    revalidatePath("/r/commission");
+    revalidatePath("/referrals");
+    return { success: true, id: withdrawal.id };
+  } catch (error) {
+    console.error("Failed to request referral withdrawal:", error);
+    return { error: "Could not submit this withdrawal request" };
+  }
+}
+
+export async function processReferralWithdrawal(input: {
+  withdrawalId: string;
+  status:
+    | "UNDER_REVIEW"
+    | "APPROVED"
+    | "PROCESSING"
+    | "PAID"
+    | "REJECTED"
+    | "CANCELLED";
+  reference?: string;
+  adminNote?: string;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const withdrawal = await prisma.referralWithdrawal.findUnique({
+    where: { id: input.withdrawalId },
+    select: { id: true, partnerId: true, amount: true, currency: true, status: true },
+  });
+  if (!withdrawal) return { error: "Withdrawal not found" };
+
+  if (withdrawal.status === "PAID") {
+    return { error: "This withdrawal is already paid" };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.referralWithdrawal.update({
+        where: { id: withdrawal.id },
+        data: {
+          status: input.status,
+          reference: input.reference?.trim() || undefined,
+          adminNote: input.adminNote?.trim() || undefined,
+          processedById: session.user.id,
+          processedAt: ["PAID", "REJECTED", "CANCELLED"].includes(input.status)
+            ? new Date()
+            : undefined,
+        },
+      });
+
+      // The withdrawal row is the payout ledger. Commission rows stay as the
+      // earned source records, so partial withdrawals do not require splitting
+      // a commission entry.
+    });
+
+    await audit(
+      session.user.id,
+      "REFERRAL_WITHDRAWAL_UPDATED",
+      "ReferralWithdrawal",
+      withdrawal.id,
+      input.status
+    );
+
+    revalidatePath("/referrals");
+    revalidatePath("/r/withdrawals");
+    revalidatePath("/r/commission");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to process referral withdrawal:", error);
+    return { error: "Could not update this withdrawal" };
   }
 }

@@ -6,6 +6,7 @@ import crypto from "crypto";
 import { Resend } from "resend";
 import { notifyAdmins } from "@/lib/notify";
 import { isEmailVerified } from "@/actions/otp.actions";
+import { captureReferralForSignup } from "@/actions/referral.actions";
 
 // ============================================
 // PUBLIC REGISTRATION
@@ -104,6 +105,7 @@ export async function registerAccount(formData: {
         },
       },
     });
+    await captureReferralForSignup({ email, name }).catch(() => null);
   } else {
     await prisma.user.create({
       data: {

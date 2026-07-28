@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { sendOtp, verifyOtp } from "@/actions/otp.actions";
 import {
   registerAccount,
   getPublicSkills,
   getSignupRequirements,
 } from "@/actions/register.actions";
+import { rememberReferralCode } from "@/actions/referral.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +25,7 @@ import {
 type Skill = { id: string; name: string };
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [kind, setKind] = useState<"CLIENT" | "WORKER">("CLIENT");
 
@@ -63,6 +66,17 @@ export default function RegisterPage() {
   useEffect(() => {
     getSignupRequirements().then((r) => setNidRequirement(r.nidRequirement));
   }, []);
+
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      rememberReferralCode(ref).then((result) => {
+        if (result.success && result.partnerName) {
+          setInfo(`Referral code saved from ${result.partnerName}.`);
+        }
+      });
+    }
+  }, [searchParams]);
 
   async function handleSendOtp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

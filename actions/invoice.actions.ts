@@ -8,6 +8,7 @@ import { notify, notifyAdmins } from "@/lib/notify";
 import type { Prisma } from "@prisma/client";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
 import { invoiceBuyerName } from "@/lib/job-invoice";
+import { createReferralCommissionForPayment } from "@/lib/referral-finance";
 
 // ============================================
 // HELPERS
@@ -249,6 +250,15 @@ async function applyPaidEffects(
       href: `/c/invoices/${invoice.id}`,
     });
   }
+
+  await createReferralCommissionForPayment({
+    invoiceId,
+    paidAmount,
+    actorId,
+    source: "PAYMENT_APPROVAL",
+  }).catch((error) => {
+    console.error("Failed to create referral commission:", error);
+  });
 }
 
 // ============================================

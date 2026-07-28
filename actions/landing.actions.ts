@@ -514,14 +514,6 @@ export async function sendLandingChatAdminReply(leadId: string, body: string) {
 
 export async function recordLandingVisit(path = "/") {
   const key = "landing.visitor.count";
-  const current = await prisma.setting
-    .findUnique({
-      where: { key },
-      select: { value: true },
-    })
-    .catch(() => null);
-
-  const nextCount = Number(current?.value ?? 0) + 1;
   const headerList = await headers();
   const country = normalizeCountry(
     firstHeader(headerList, [
@@ -553,13 +545,22 @@ export async function recordLandingVisit(path = "/") {
     firstHeader(headerList, ["user-agent"]).slice(0, 500) || null;
   const cleanPath = path.startsWith("/") ? path.slice(0, 180) : "/";
 
-  await prisma.setting
-    .upsert({
-      where: { key },
-      update: { value: String(nextCount) },
-      create: { key, value: String(nextCount) },
+  const nextCount = await prisma
+    .$transaction(async (tx) => {
+      const current = await tx.setting.findUnique({
+        where: { key },
+        select: { value: true },
+      });
+      const count = Number(current?.value ?? 0) + 1;
+      await tx.setting.upsert({
+        where: { key },
+        update: { value: String(count) },
+        create: { key, value: String(count) },
+      });
+      return count;
     })
     .catch(() => null);
+
   await prisma
     .$executeRaw`
       INSERT INTO "LandingVisitorEvent" ("id", "path", "country", "city", "region", "ipHash", "userAgent")
@@ -569,5 +570,45 @@ export async function recordLandingVisit(path = "/") {
 
   revalidatePath("/dashboard");
 
-  return { count: nextCount };
+  return { count: nextCount ?? 0, stats: await getLandingVisitorStats() };
+}
+
+export async function getLandingVisitorStats() {
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const [setting, dbTotal, todayVisits, recentEvents] = await Promise.all([
+    prisma.setting
+      .findUnique({
+        where: { key: "landing.visitor.count" },
+        select: { value: true },
+      })
+      .catch(() => null),
+    prisma.landingVisitorEvent.count().catch(() => 0),
+    prisma.landingVisitorEvent
+      .count({ where: { createdAt: { gte: startOfDay } } })
+      .catch(() => 0),
+    prisma.landingVisitorEvent
+      .findMany({
+        where: { createdAt: { gte: fiveMinutesAgo } },
+        select: { ipHash: true, userAgent: true },
+        take: 500,
+      })
+      .catch(() => []),
+  ]);
+
+  const settingTotal = Number(setting?.value ?? 0);
+  const uniqueActive = new Set(
+    recentEvents.map((event) => event.ipHash || event.userAgent || randomUUID())
+  ).size;
+
+  return {
+    totalVisitors: Math.max(settingTotal, dbTotal),
+    todayVisits,
+    activeVisitors: uniqueActive,
+    activeJobs: 0,
+    completedJobs: 0,
+    cancelledJobs: 0,
+  };
 }

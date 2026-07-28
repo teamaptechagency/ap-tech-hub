@@ -44,7 +44,7 @@ export default async function ReferralLayout({
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <PortalMobileNav
-        portal="partner"
+        portal="referral"
         userName={userName}
         userSub="referral partner"
         userImageUrl={userImageUrl}
