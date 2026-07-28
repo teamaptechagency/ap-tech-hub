@@ -1,10 +1,12 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
+import { getEmailConfig, getEmailErrorMessage } from "@/lib/email-config";
 import { notifyAdmins } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 import {
@@ -52,6 +54,111 @@ async function audit(
   await prisma.auditLog
     .create({ data: { actorId, action, entity, entityId, meta } })
     .catch(() => null);
+}
+
+function appBaseUrl() {
+  return (
+    process.env.APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://aptechagency.com"
+  ).replace(/\/$/, "");
+}
+
+function generateTemporaryPassword() {
+  const alphabet =
+    "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+  return Array.from(randomBytes(14), (byte) => alphabet[byte % alphabet.length]).join(
+    ""
+  );
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function sendEmail(input: { to: string; subject: string; html: string }) {
+  const emailConfig = await getEmailConfig();
+  if (!emailConfig.resendApiKey) {
+    console.log(`[DEV] Email skipped for ${input.to}: ${input.subject}`);
+    return false;
+  }
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(emailConfig.resendApiKey);
+    await resend.emails.send({
+      from: emailConfig.emailFrom,
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+    });
+    return true;
+  } catch (error) {
+    console.error("Referral email failed:", getEmailErrorMessage(error));
+    return false;
+  }
+}
+
+async function sendPartnerWelcomeEmail(input: {
+  to: string;
+  name: string;
+  code: string;
+  temporaryPassword?: string;
+}) {
+  const portalUrl = `${appBaseUrl()}/login`;
+  const safeName = escapeHtml(input.name);
+  const safeEmail = escapeHtml(input.to);
+  const safeCode = escapeHtml(input.code);
+  const safePassword = input.temporaryPassword
+    ? escapeHtml(input.temporaryPassword)
+    : "";
+  return sendEmail({
+    to: input.to,
+    subject: "Welcome to the AP Tech Partner Program",
+    html: `
+      <p>Hi ${safeName},</p>
+      <p>Your AP Tech partner application has been approved. Your partner account is ready.</p>
+      <p><strong>Partner ID:</strong> ${safeCode}<br />
+      <strong>Login email:</strong> ${safeEmail}${
+        safePassword
+          ? `<br /><strong>Temporary password:</strong> ${safePassword}`
+          : ""
+      }</p>
+      ${
+        safePassword
+          ? "<p>Please log in and change this password from your profile.</p>"
+          : "<p>Please log in with your existing AP Tech Hub password.</p>"
+      }
+      <p><a href="${portalUrl}">Open AP Tech Hub</a></p>
+    `,
+  });
+}
+
+async function sendApplicationDecisionEmail(input: {
+  to: string;
+  name: string;
+  status: ReferralApplicationStatusValue;
+  reason: string;
+}) {
+  const safeName = escapeHtml(input.name);
+  const safeStatus = escapeHtml(input.status.replaceAll("_", " "));
+  const safeReason = escapeHtml(input.reason).replaceAll("\n", "<br />");
+  return sendEmail({
+    to: input.to,
+    subject: "AP Tech partner application update",
+    html: `
+      <p>Hi ${safeName},</p>
+      <p>Your AP Tech partner application has been marked as <strong>${safeStatus}</strong>.</p>
+      <p><strong>Reason / note:</strong></p>
+      <p>${safeReason}</p>
+    `,
+  });
 }
 
 // ============================================
@@ -335,16 +442,39 @@ export async function updateReferralApplicationStatus(input: {
     return { error: "Unknown status" };
   }
 
+  const adminNote = input.adminNote?.trim() || "";
+  if (["REJECTED", "CLOSED"].includes(input.status) && adminNote.length < 3) {
+    return { error: "Please add a cancellation/rejection reason first." };
+  }
+
   try {
-    await prisma.referralPartnerApplication.update({
+    const application = await prisma.referralPartnerApplication.update({
       where: { id: input.applicationId },
       data: {
         status: input.status,
-        adminNote: input.adminNote?.trim() || undefined,
+        adminNote: adminNote || undefined,
         reviewedById: session.user.id,
         reviewedAt: new Date(),
       },
+      select: {
+        fullName: true,
+        email: true,
+        status: true,
+        adminNote: true,
+      },
     });
+
+    const shouldEmailDecision = ["INFO_REQUIRED", "REJECTED", "CLOSED"].includes(
+      input.status
+    );
+    if (shouldEmailDecision && adminNote) {
+      await sendApplicationDecisionEmail({
+        to: application.email,
+        name: application.fullName,
+        status: application.status,
+        reason: adminNote,
+      });
+    }
 
     await audit(
       session.user.id,
@@ -428,10 +558,16 @@ export async function createReferralPartner(input: {
 
   try {
     let userId = input.userId;
+    let loginEmail = input.email?.trim().toLowerCase() || "";
+    let loginName = input.name?.trim() || "";
+    const temporaryPassword =
+      input.password && input.password.length >= 8
+        ? input.password
+        : generateTemporaryPassword();
 
     if (!userId) {
-      const email = input.email?.trim().toLowerCase();
-      const name = input.name?.trim();
+      const email = loginEmail;
+      const name = loginName;
 
       if (!name) return { error: "Enter the partner's name" };
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -447,14 +583,11 @@ export async function createReferralPartner(input: {
         // Same person, not a second account.
         userId = existing.id;
       } else {
-        if (!input.password || input.password.length < 8) {
-          return { error: "Password must be at least 8 characters" };
-        }
         const created = await prisma.user.create({
           data: {
             name,
             email,
-            password: await bcrypt.hash(input.password, 10),
+            password: await bcrypt.hash(temporaryPassword, 10),
             role: "REFERRAL_PARTNER",
             accountStatus: "ACTIVE",
           },
@@ -474,9 +607,11 @@ export async function createReferralPartner(input: {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, role: true },
+      select: { id: true, name: true, email: true, role: true },
     });
     if (!user) return { error: "User not found" };
+    loginEmail = user.email;
+    loginName = user.name;
 
     const partner = await prisma.referralPartner.create({
       data: {
@@ -489,10 +624,15 @@ export async function createReferralPartner(input: {
 
     // Give the account the role unless it is an admin one — an admin who also
     // refers should keep their admin access.
-    if (!ADMIN_ROLES.includes(user.role)) {
+    const canSetTemporaryPassword = !ADMIN_ROLES.includes(user.role);
+    if (canSetTemporaryPassword) {
       await prisma.user.update({
         where: { id: user.id },
-        data: { role: "REFERRAL_PARTNER" },
+        data: {
+          role: "REFERRAL_PARTNER",
+          password: await bcrypt.hash(temporaryPassword, 10),
+          accountStatus: "ACTIVE",
+        },
       });
     }
 
@@ -508,6 +648,13 @@ export async function createReferralPartner(input: {
       });
     }
 
+    const welcomeEmailSent = await sendPartnerWelcomeEmail({
+      to: loginEmail,
+      name: loginName,
+      code: partner.code,
+      temporaryPassword: canSetTemporaryPassword ? temporaryPassword : undefined,
+    });
+
     await audit(
       session.user.id,
       "REFERRAL_PARTNER_CREATED",
@@ -517,7 +664,12 @@ export async function createReferralPartner(input: {
     );
 
     revalidatePath("/referrals");
-    return { success: true, id: partner.id, code: partner.code };
+    return {
+      success: true,
+      id: partner.id,
+      code: partner.code,
+      welcomeEmailSent,
+    };
   } catch (error) {
     console.error("Failed to create referral partner:", error);
     return { error: "Could not create this partner" };

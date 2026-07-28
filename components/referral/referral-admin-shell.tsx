@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   COMMISSION_BASES,
   PARTNER_MODES,
@@ -132,6 +133,15 @@ export function ReferralAdminShell({
     mode: "REFERRAL",
     agreementNote: "",
   });
+  const [applicationNotes, setApplicationNotes] = useState<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        applications.map((application) => [
+          application.id,
+          application.adminNote ?? "",
+        ])
+      )
+  );
 
   function updateApplication(
     applicationId: string,
@@ -168,7 +178,11 @@ export function ReferralAdminShell({
       });
       if (result.error) toast.error(result.error);
       else {
-        toast.success(`Partner created: ${result.code}`);
+        toast.success(
+          result.welcomeEmailSent
+            ? `Partner created and welcome email sent: ${result.code}`
+            : `Partner created: ${result.code}`
+        );
         setManual((current) => ({ ...current, name: "", email: "", password: "" }));
       }
     });
@@ -199,7 +213,6 @@ export function ReferralAdminShell({
       const result = await createReferralPartner({
         name: application.fullName,
         email: application.email,
-        password: `APT-${application.id.slice(0, 10)}`,
         applicationId: application.id,
         terms: {
           commissionPercent: "10",
@@ -211,7 +224,13 @@ export function ReferralAdminShell({
         },
       });
       if (result.error) toast.error(result.error);
-      else toast.success(`Partner approved: ${result.code}`);
+      else {
+        toast.success(
+          result.welcomeEmailSent
+            ? `Partner approved and welcome email sent: ${result.code}`
+            : `Partner approved: ${result.code}`
+        );
+      }
     });
   }
 
@@ -268,9 +287,10 @@ export function ReferralAdminShell({
               />
             </div>
             <div className="space-y-2">
-              <Label>Password for new account</Label>
+              <Label>Temporary password (optional)</Label>
               <Input
                 type="password"
+                placeholder="Leave blank to auto-generate"
                 value={manual.password}
                 onChange={(event) => setManual({ ...manual, password: event.target.value })}
               />
@@ -358,6 +378,23 @@ export function ReferralAdminShell({
                   </div>
                   <Badge variant="outline">{application.status}</Badge>
                 </div>
+                <div className="mt-4 space-y-2">
+                  <Label htmlFor={`application-note-${application.id}`}>
+                    Admin review note / cancellation reason
+                  </Label>
+                  <Textarea
+                    id={`application-note-${application.id}`}
+                    value={applicationNotes[application.id] ?? ""}
+                    onChange={(event) =>
+                      setApplicationNotes((current) => ({
+                        ...current,
+                        [application.id]: event.target.value,
+                      }))
+                    }
+                    placeholder="Required when cancelling or rejecting. This note is sent to the applicant."
+                    className="min-h-20"
+                  />
+                </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -376,7 +413,13 @@ export function ReferralAdminShell({
                       size="sm"
                       variant="outline"
                       disabled={pending}
-                      onClick={() => updateApplication(application.id, status)}
+                      onClick={() =>
+                        updateApplication(
+                          application.id,
+                          status,
+                          applicationNotes[application.id]
+                        )
+                      }
                     >
                       {status.replaceAll("_", " ")}
                     </Button>
