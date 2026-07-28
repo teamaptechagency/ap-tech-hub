@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 
 import {
+  getLandingVisitorStats,
   recordLandingVisit,
   sendLandingChatMessage,
   startLandingChat,
@@ -1247,98 +1248,6 @@ type TrustStats = {
   cancelledJobs: number;
 };
 
-function dateKey(date = new Date()) {
-  return date.toISOString().slice(0, 10);
-}
-
-function seededNumber(input: string) {
-  let hash = 2166136261;
-  for (let index = 0; index < input.length; index += 1) {
-    hash ^= input.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return Math.abs(hash >>> 0);
-}
-
-function weightedDailyVisits(seed: number) {
-  const bucket = seed % 100;
-  if (bucket < 42) return 10 + (seed % 6);
-  if (bucket < 76) return 16 + (seed % 15);
-  if (bucket < 94) return 31 + (seed % 10);
-  return 41 + (seed % 10);
-}
-
-function weightedJobs(seed: number) {
-  const bucket = seed % 100;
-  if (bucket < 36) return 1;
-  if (bucket < 62) return 2;
-  if (bucket < 80) return 3;
-  if (bucket < 92) return 5;
-  if (bucket < 98) return 8;
-  return 15;
-}
-
-function weightedActiveVisitors(seed: number) {
-  const bucket = seed % 100;
-  if (bucket < 42) return 1;
-  if (bucket < 68) return 2;
-  const values = [3, 5, 7, 15, 20, 27];
-  return values[seed % values.length];
-}
-
-function buildTrustStats(): TrustStats {
-  const now = new Date();
-  const key = dateKey(now);
-  const seed = seededNumber(`ap-tech-${key}`);
-  const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
-  const dayProgress = Math.max(
-    0.04,
-    Math.min(1, (now.getTime() - startOfDay.getTime()) / 86400000)
-  );
-  const dailyTarget = weightedDailyVisits(seed);
-  const todayVisits = Math.max(1, Math.floor(dailyTarget * dayProgress));
-  const storedKey = "ap-tech-public-trust-stats";
-  const stored = JSON.parse(localStorage.getItem(storedKey) || "{}") as {
-    date?: string;
-    totalVisitors?: number;
-    completedJobs?: number;
-    cancelledJobs?: number;
-  };
-  const previousTotal = Number(stored.totalVisitors ?? 4200 + (seed % 900));
-  const totalVisitors =
-    stored.date === key ? previousTotal : previousTotal + todayVisits;
-  const activeVisitors = weightedActiveVisitors(
-    seed + Math.floor(now.getMinutes() / 12)
-  );
-  const activeJobs = weightedJobs(seed + Math.floor(now.getHours() / 4));
-  const completedJobs =
-    Number(stored.completedJobs ?? 312) +
-    Math.floor(todayVisits / 18) +
-    (seed % 7 === 0 ? 1 : 0);
-  const cancelledJobs =
-    Number(stored.cancelledJobs ?? 7) + (seed % 41 === 0 ? 1 : 0);
-
-  localStorage.setItem(
-    storedKey,
-    JSON.stringify({
-      date: key,
-      totalVisitors,
-      completedJobs,
-      cancelledJobs,
-    })
-  );
-
-  return {
-    totalVisitors,
-    todayVisits,
-    activeVisitors,
-    activeJobs,
-    completedJobs,
-    cancelledJobs,
-  };
-}
-
 function PublicTopBar({
   topBar,
   stats,
@@ -1378,15 +1287,15 @@ function PublicTopBar({
 
   return (
     <div className="border-b border-[#2c3548] bg-[#101623] text-white">
-      <div className="mx-auto flex max-w-[1140px] flex-col gap-2 px-4 py-2 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 overflow-hidden">
-          <div className="animate-[landing-marquee_22s_linear_infinite] whitespace-nowrap text-[11px] font-black uppercase tracking-[0.14em] text-[#f5a83c] md:text-xs">
+      <div className="mx-auto flex h-9 max-w-[1140px] items-center gap-2 overflow-hidden px-3 sm:px-4">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="animate-[landing-marquee_22s_linear_infinite] whitespace-nowrap text-[10px] font-black uppercase tracking-[0.08em] text-[#f5a83c] sm:text-[11px] md:text-xs md:tracking-[0.14em]">
             {topBar.offerText ? `${topBar.offerText} - ` : ""}
             {countdown ? `remaining ${countdown} - ` : ""}
             {marqueeText}
           </div>
         </div>
-        <div className="flex min-w-fit gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <StatPill icon="👁" label="Total visitors" value={stats?.totalVisitors} />
           <StatPill icon="☀" label="Today visits" value={stats?.todayVisits} />
           <StatPill icon="●" label="Active visitors" value={stats?.activeVisitors} />
@@ -1458,7 +1367,7 @@ function StatPill({
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-black ${
+      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full border px-2 text-[10px] font-black sm:gap-1.5 sm:px-3 sm:text-xs ${
         muted
           ? "border-white/10 bg-white/5 text-[#aeb6c4]"
           : "border-[#f5a83c]/30 bg-[#f5a83c]/10 text-[#f8d28b]"
@@ -1467,7 +1376,7 @@ function StatPill({
       aria-label={`${label}: ${(value ?? 0).toLocaleString()}`}
     >
       <span
-        className={`grid h-4 w-4 place-items-center rounded-full ${
+        className={`grid h-3.5 w-3.5 place-items-center rounded-full sm:h-4 sm:w-4 ${
           isLive ? "bg-emerald-400/20" : "bg-[#f5a83c]/20"
         }`}
       >
@@ -1740,12 +1649,20 @@ export function LandingPage({
 
   useEffect(() => {
     if (page !== "home") return;
-    setTrustStats(buildTrustStats());
+    let mounted = true;
+    getLandingVisitorStats().then((stats) => {
+      if (mounted) setTrustStats(stats);
+    });
     const timer = window.setInterval(() => {
-      setTrustStats(buildTrustStats());
+      getLandingVisitorStats().then((stats) => {
+        if (mounted) setTrustStats(stats);
+      });
     }, 45000);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      mounted = false;
+      window.clearInterval(timer);
+    };
   }, [page]);
 
   useEffect(() => {
@@ -1757,7 +1674,9 @@ export function LandingPage({
     if (window.sessionStorage.getItem(key)) return;
 
     window.sessionStorage.setItem(key, "1");
-    recordLandingVisit(pathname || "/").catch(() => {
+    recordLandingVisit(pathname || "/").then((result) => {
+      if (result.stats) setTrustStats(result.stats);
+    }).catch(() => {
       window.sessionStorage.removeItem(key);
     });
   }, [pathname]);

@@ -29,23 +29,29 @@ export type ReferralNavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** False until the page exists — shown greyed rather than 404-ing. */
+  ready?: boolean;
 };
 
 /**
  * Referral partner menu. Deliberately contains no Special Order entries —
  * that system is separate and this role must never see it.
+ *
+ * The full menu is listed so the shape of the portal is visible, but items
+ * whose pages are not built yet render as disabled instead of linking to a
+ * 404.
  */
 export const referralNavItems: ReferralNavItem[] = [
-  { label: "Dashboard", href: "/r/dashboard", icon: LayoutDashboard },
-  { label: "My referral link", href: "/r/link", icon: Link2 },
-  { label: "Submit a client", href: "/r/submit", icon: UserPlus },
-  { label: "My referrals", href: "/r/referrals", icon: Users },
-  { label: "Commission", href: "/r/commission", icon: Coins },
-  { label: "Withdrawals", href: "/r/withdrawals", icon: Wallet },
-  { label: "Documents", href: "/r/documents", icon: FileText },
-  { label: "Messages", href: "/r/messages", icon: MessageCircle },
-  { label: "Support", href: "/r/support", icon: LifeBuoy },
-  { label: "Profile", href: "/r/profile", icon: User },
+  { label: "Dashboard", href: "/r/dashboard", icon: LayoutDashboard, ready: true },
+  { label: "My referral link", href: "/r/link", icon: Link2, ready: true },
+  { label: "Submit a client", href: "/r/submit", icon: UserPlus, ready: true },
+  { label: "My referrals", href: "/r/referrals", icon: Users, ready: true },
+  { label: "Commission", href: "/r/commission", icon: Coins, ready: true },
+  { label: "Withdrawals", href: "/r/withdrawals", icon: Wallet, ready: true },
+  { label: "Documents", href: "/r/documents", icon: FileText, ready: true },
+  { label: "Messages", href: "/r/messages", icon: MessageCircle, ready: true },
+  { label: "Support", href: "/r/support", icon: LifeBuoy, ready: true },
+  { label: "Profile", href: "/r/profile", icon: User, ready: true },
 ];
 
 export function ReferralSidebar({
@@ -69,6 +75,23 @@ export function ReferralSidebar({
           const active =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
+
+          if (!item.ready) {
+            return (
+              <span
+                key={item.href}
+                aria-disabled="true"
+                title="Coming soon"
+                className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground/50"
+              >
+                <Icon className="h-4 w-4" />
+                <span className="flex-1">{item.label}</span>
+                <span className="rounded-full border px-1.5 py-0.5 text-[10px] uppercase">
+                  soon
+                </span>
+              </span>
+            );
+          }
 
           return (
             <Link

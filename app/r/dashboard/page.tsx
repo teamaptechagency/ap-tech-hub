@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { getLandingPageData } from "@/lib/landing-data";
 import { prisma } from "@/lib/prisma";
+import { getReferralPartnerBalance } from "@/lib/referral-finance";
 import { getMyReferralPartner, referralLinkFor } from "@/lib/referral";
 
 export const dynamic = "force-dynamic";
@@ -32,13 +33,14 @@ export default async function ReferralDashboardPage() {
   }
 
   // A partner only ever sees their own referrals.
-  const [counts, landing] = await Promise.all([
+  const [counts, landing, balance] = await Promise.all([
     prisma.referral.groupBy({
       by: ["status"],
       where: { partnerId: partner.id },
       _count: { _all: true },
     }),
     getLandingPageData(),
+    getReferralPartnerBalance(partner.id),
   ]);
 
   const countFor = (status: string) =>
@@ -52,7 +54,10 @@ export default async function ReferralDashboardPage() {
     { label: "Pending", value: countFor("PENDING") },
     { label: "Verified", value: countFor("VERIFIED") },
     { label: "Approved", value: countFor("APPROVED") },
-    { label: "Rejected", value: countFor("REJECTED") },
+    {
+      label: "Withdrawable",
+      value: `${balance.currency} ${balance.withdrawable.toFixed(2)}`,
+    },
   ];
 
   return (
@@ -114,8 +119,9 @@ export default async function ReferralDashboardPage() {
       </Card>
 
       <p className="text-xs text-muted-foreground">
-        Commission tracking, withdrawals and project records are being built
-        and will appear here as they are released.
+        Commission is released from verified referrals after approved client
+        payments. Project records will appear as the referral project workflow
+        is expanded.
       </p>
     </div>
   );

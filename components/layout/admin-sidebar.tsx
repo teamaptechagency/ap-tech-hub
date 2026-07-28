@@ -18,6 +18,7 @@ import {
   Bug,
   ContactRound,
   GalleryHorizontalEnd,
+  Handshake,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -63,6 +64,11 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Leads",
     href: "/leads",
     icon: ContactRound,
+  },
+  {
+    label: "Referrals",
+    href: "/referrals",
+    icon: Handshake,
   },
   {
     label: "Public Portal",

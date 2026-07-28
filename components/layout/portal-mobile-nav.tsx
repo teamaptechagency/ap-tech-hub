@@ -6,9 +6,10 @@ import { adminNavItems } from "@/components/layout/admin-sidebar";
 import { employeeNavItems } from "@/components/layout/employee-sidebar";
 import { clientNavItems } from "@/components/layout/client-sidebar";
 import { partnerNavItems } from "@/components/layout/partner-sidebar";
+import { referralNavItems } from "@/components/layout/referral-sidebar";
 import type { BrandingSettings } from "@/lib/branding";
 
-type PortalType = "admin" | "employee" | "client" | "partner";
+type PortalType = "admin" | "employee" | "client" | "partner" | "referral";
 
 type PortalMobileNavProps = {
   portal: PortalType;
@@ -30,8 +31,10 @@ export function PortalMobileNav({
       ? adminNavItems
       : portal === "employee"
         ? employeeNavItems
-        : portal === "partner"
-          ? partnerNavItems
+      : portal === "partner"
+        ? partnerNavItems
+        : portal === "referral"
+          ? referralNavItems.filter((item) => item.ready)
           : clientNavItems;
 
   return (
