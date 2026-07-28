@@ -106,6 +106,11 @@ export const adminNavItems: AdminNavItem[] = [
     icon: ShoppingBag,
   },
   {
+    label: "Partners",
+    href: "/accounts/partners",
+    icon: Handshake,
+  },
+  {
     label: "HR / Accounts",
     href: "/accounts",
     icon: Wallet,
@@ -141,6 +146,7 @@ function formatRole(role: string) {
 
 export function AdminSidebar({ user, branding }: AdminSidebarProps) {
   const pathname = usePathname();
+  const exactActiveItem = adminNavItems.find((item) => item.href === pathname);
 
   const userName = user.name.trim() || "Admin User";
   const formattedRole = formatRole(user.role);
@@ -166,8 +172,8 @@ export function AdminSidebar({ user, branding }: AdminSidebarProps) {
           const Icon = item.icon;
 
           const isActive =
-            pathname === item.href ||
-            pathname.startsWith(`${item.href}/`);
+            exactActiveItem?.href === item.href ||
+            (!exactActiveItem && pathname.startsWith(`${item.href}/`));
 
           return (
             <Link

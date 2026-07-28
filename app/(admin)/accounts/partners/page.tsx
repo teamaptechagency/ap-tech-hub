@@ -32,8 +32,8 @@ export default async function PartnersPage() {
 
   return (
     <WorkerBalances
-      title="Partner list"
-      subtitle="Partners"
+      title="Partner section"
+      subtitle="List, type & profile control"
       emptyLabel="No partners yet"
       createLabel="Add partner"
       createRoles={[
