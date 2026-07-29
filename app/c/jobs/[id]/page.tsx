@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { RatingForm } from "@/components/client-portal/rating-form";
+import { TaskRequestButton } from "@/components/client-portal/task-request-button";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -173,7 +174,8 @@ export default async function ClientJobDetailsPage({
       </Link>
 
       {/* Job header */}
-      <div>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
         <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold">
           {job.title}
 
@@ -210,6 +212,9 @@ export default async function ClientJobDetailsPage({
             {job.description}
           </p>
         )}
+        </div>
+
+        <TaskRequestButton jobId={job.id} />
       </div>
 
       {/* Client rating form */}
