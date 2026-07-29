@@ -9,6 +9,8 @@ export const PUBLIC_NAV_LINKS: { label: string; href: string }[] = [
   { label: "Portfolio", href: "/portfolio" },
   { label: "Our Team", href: "/team" },
   { label: "Partners", href: "/partners" },
+  { label: "Company", href: "/company" },
+  { label: "Compliance", href: "/compliance" },
   { label: "Blog", href: "/blog" },
   { label: "About Us", href: "/about" },
   { label: "Contact", href: "/contact" },

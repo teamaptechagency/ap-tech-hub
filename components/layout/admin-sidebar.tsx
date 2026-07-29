@@ -19,6 +19,7 @@ import {
   ContactRound,
   GalleryHorizontalEnd,
   Handshake,
+  Landmark,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -74,6 +75,11 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Public Portal",
     href: "/landing-manager",
     icon: GalleryHorizontalEnd,
+  },
+  {
+    label: "Business Settings",
+    href: "/business-settings",
+    icon: Landmark,
   },
   {
     label: "Blog",

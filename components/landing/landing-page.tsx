@@ -336,45 +336,113 @@ const pageHeaderContent: Record<
 const processSteps: { number: string; title: string; description: string }[] = [
   {
     number: "01",
-    title: "Client Brief & Project Details",
+    title: "Project Discussion",
     description:
-      "You share your project brief, goals and requirements with us so the team knows exactly what you need.",
+      "We discuss the goals, features, design direction, budget, and timeline.",
   },
   {
     number: "02",
-    title: "Business Research & Sitemap",
+    title: "Proposal and Agreement",
     description:
-      "Nazmul Hasan and the web team research the full scope of your business, then prepare a sitemap and send it over for your review.",
+      "We provide a clear proposal, project scope, cost, and working terms.",
   },
   {
     number: "03",
-    title: "Sitemap Revision & Finalization",
+    title: "Design and Planning",
     description:
-      "Based on your feedback, we revise the sitemap until it's approved, then lock in the final version.",
+      "Our team prepares the structure, user experience, design direction, and development plan.",
   },
   {
     number: "04",
-    title: "UI Design",
+    title: "Development",
     description:
-      "Our UI team designs the complete interface for your project, screen by screen.",
+      "The approved solution is developed using the agreed technology.",
   },
   {
     number: "05",
-    title: "UI Approval & Development",
+    title: "Review and Testing",
     description:
-      "Once you approve the UI, our development team starts building the project.",
+      "We test the design, responsiveness, functionality, speed, and user experience.",
   },
   {
     number: "06",
-    title: "QA & Final Analysis",
+    title: "Delivery and Support",
     description:
-      "For applicable services, our QA team runs a full analysis of the finished project before handover.",
+      "The project is delivered with required files, access, documentation, and support details.",
+  },
+];
+
+const businessTrustCards = [
+  {
+    title: "Clear Agreements",
+    text: "Every project starts with an agreed scope, budget, timeline, and delivery process.",
   },
   {
-    number: "07",
-    title: "Delivery + 60 Days Free Support",
-    description:
-      "After QA sign-off, we deliver your project along with 60 days of free service support.",
+    title: "Professional Invoices",
+    text: "Clients receive clear invoices with project details, payment information, and transaction records.",
+  },
+  {
+    title: "Secure Project Management",
+    text: "Project communication, files, milestones, revisions, and approvals are managed through an organized system.",
+  },
+  {
+    title: "International Client Support",
+    text: "We support international clients with remote meetings, digital contracts, milestone-based projects, and accepted payment methods.",
+  },
+];
+
+const internationalFeatures = [
+  "Remote project meetings",
+  "Written project proposals",
+  "Digital agreements",
+  "Milestone-based delivery",
+  "International invoices",
+  "Project progress updates",
+  "Secure file sharing",
+  "Post-delivery support",
+];
+
+const footerGroups = [
+  {
+    title: "Company",
+    links: [
+      ["About Us", "/about"],
+      ["Company Information", "/company"],
+      ["Our Process", "/services#process"],
+      ["Team", "/team"],
+      ["Contact", "/contact"],
+    ],
+  },
+  {
+    title: "Services",
+    links: [
+      ["WordPress Development", "/services"],
+      ["UI/UX Design", "/services"],
+      ["Custom Software", "/services"],
+      ["eCommerce Development", "/services"],
+      ["React Development", "/services"],
+      ["Maintenance and Support", "/services"],
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      ["Portfolio", "/portfolio"],
+      ["Case Studies", "/portfolio"],
+      ["Blog", "/blog"],
+      ["Client Documents", "/client-documents"],
+      ["Request a Project", "/contact"],
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      ["Privacy Policy", "/privacy-policy"],
+      ["Terms and Conditions", "/terms-and-conditions"],
+      ["Refund Policy", "/refund-policy"],
+      ["Payment Policy", "/payment-policy"],
+      ["Compliance", "/compliance"],
+    ],
   },
 ];
 
@@ -2042,6 +2110,58 @@ export function LandingPage({
 
       {page === "home" && (
         <section className="border-b border-[#e8e3dc] bg-[#faf8f5] py-10">
+          <div className="mx-auto mb-8 max-w-[1140px] px-4">
+            <SectionLabel
+              eyebrow="Transparent Delivery"
+              title="A Professional and Transparent Working Process"
+            />
+            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {businessTrustCards.map((card) => (
+                <div
+                  key={card.title}
+                  className="rounded-[14px] border border-[#e8e3dc] bg-white p-5 shadow-[0_14px_35px_rgba(16,22,35,.05)]"
+                >
+                  <h3 className="text-base font-extrabold text-[#101623]">
+                    {card.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-7 text-[#6b7280]">
+                    {card.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mx-auto mb-8 max-w-[1140px] px-4">
+            <div className="rounded-[18px] border border-[#e8e3dc] bg-white p-6 md:p-8">
+              <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr] lg:items-start">
+                <div>
+                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#c6613f]">
+                    International Clients
+                  </p>
+                  <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#101623] md:text-3xl">
+                    Working with Clients Worldwide
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-[#6b7280]">
+                    AP Tech Agency is operated from Bangladesh and works
+                    remotely with businesses, agencies, entrepreneurs, and
+                    organizations from different countries. Projects are managed
+                    through online meetings, written agreements, invoices,
+                    milestones, and secure digital communication.
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {internationalFeatures.map((feature) => (
+                    <div
+                      key={feature}
+                      className="rounded-[10px] bg-[#faf8f5] px-3 py-2 text-sm font-semibold text-[#3a4152]"
+                    >
+                      {feature}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
           <div className="mx-auto max-w-[1140px] px-4">
             <div className="grid gap-6 rounded-[18px] border border-[#e8e3dc] bg-white p-6 shadow-[0_18px_45px_rgba(16,22,35,.06)] md:grid-cols-[1fr_auto] md:items-center md:p-8">
               <div>
@@ -2821,13 +2941,44 @@ export function LandingPage({
             </div>
             <form
               onSubmit={submitContact}
+              encType="multipart/form-data"
               className="rounded-2xl border border-[#e8e3dc] bg-white p-6"
             >
               <div className="grid gap-4 md:grid-cols-2">
-                <input name="name" placeholder="Your name" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <input name="email" type="email" placeholder="Your email" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <input name="subject" placeholder="Subject" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f] md:col-span-2" />
-                <textarea name="message" placeholder="Write your message..." rows={5} className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f] md:col-span-2" />
+                <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
+                <input name="name" required placeholder="Full name" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
+                <input name="company" placeholder="Company name" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
+                <input name="email" required type="email" placeholder="Email address" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
+                <input name="phone" required placeholder="Phone or WhatsApp" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
+                <input name="country" required placeholder="Country" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
+                <select name="service" required className="rounded-[9px] border border-[#e8e3dc] bg-white px-4 py-3 text-sm outline-none focus:border-[#c6613f]">
+                  <option value="">Required service</option>
+                  <option>WordPress Development</option>
+                  <option>WooCommerce Development</option>
+                  <option>UI/UX Design</option>
+                  <option>Website Redesign</option>
+                  <option>Custom Software</option>
+                  <option>React or Next.js Development</option>
+                  <option>PHP or Laravel Development</option>
+                  <option>Website Maintenance</option>
+                  <option>Technical Consulting</option>
+                  <option>Other</option>
+                </select>
+                <input name="budget" placeholder="Estimated budget" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
+                <input name="startDate" type="date" placeholder="Expected start date" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
+                <input name="existingWebsite" placeholder="Existing website" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
+                <select name="communication" className="rounded-[9px] border border-[#e8e3dc] bg-white px-4 py-3 text-sm outline-none focus:border-[#c6613f]">
+                  <option>Email</option>
+                  <option>WhatsApp</option>
+                  <option>Google Meet</option>
+                  <option>Client portal</option>
+                </select>
+                <input name="file" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f] md:col-span-2" />
+                <textarea name="message" required placeholder="Project description..." rows={5} className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f] md:col-span-2" />
+                <label className="flex gap-2 text-xs leading-6 text-[#6b7280] md:col-span-2">
+                  <input name="privacy" value="yes" type="checkbox" required className="mt-1 h-4 w-4" />
+                  <span>I agree that AP Tech Agency may use this information to respond to my project request according to the privacy policy.</span>
+                </label>
               </div>
               <button
                 type="submit"
@@ -2918,43 +3069,54 @@ export function LandingPage({
             {data.footer.thanksText}
           </p>
         </div>
-        {/* Footer link row: keeps every public page one click from every other,
-            which is how crawlers discover the deeper routes. */}
-        <div className="border-t border-white/10 px-4 py-6">
-          <nav
-            aria-label="Footer"
-            className="mx-auto flex max-w-[1140px] flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-[#9aa3b3]"
-          >
-            {PUBLIC_NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="hover:text-white"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+        <div className="border-t border-white/10 px-4 py-12">
+          <div className="mx-auto grid max-w-[1140px] gap-10 lg:grid-cols-[1.05fr_2fr]">
+            <div>
+              <p className="text-base font-extrabold">AP Tech Agency</p>
+              <p className="mt-3 max-w-sm text-sm leading-7 text-[#9aa3b3]">
+                A Bangladesh-based digital service agency supporting local and
+                international clients with transparent project delivery.
+              </p>
+            </div>
+            <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+              {footerGroups.map((group) => (
+                <div key={group.title}>
+                  <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-white">
+                    {group.title}
+                  </p>
+                  <div className="mt-4 grid gap-2">
+                    {group.links.map(([label, href]) => (
+                      <Link
+                        key={`${group.title}-${href}-${label}`}
+                        href={href}
+                        className="text-sm text-[#9aa3b3] transition hover:text-white"
+                      >
+                        {label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="bg-[#0b101b] px-4 py-5 text-center md:text-left">
           <div className="mx-auto flex max-w-[1140px] flex-col items-center justify-center gap-4 md:flex-row md:justify-between">
             <p className="text-xs text-[#9aa3b3]">{data.footer.copyright}</p>
-          <div className="flex justify-center gap-3 md:justify-end">
-            <button
-              type="button"
-              onClick={() => setModal({ type: "privacy" })}
-              className="text-xs text-[#9aa3b3] hover:text-white"
-            >
-              Privacy Policy
-            </button>
-            <button
-              type="button"
-              onClick={() => setModal({ type: "terms" })}
-              className="text-xs text-[#9aa3b3] hover:text-white"
-            >
-              Terms & Conditions
-            </button>
-          </div>
+            <div className="flex flex-wrap justify-center gap-3 md:justify-end">
+              <Link href="/privacy-policy" className="text-xs text-[#9aa3b3] hover:text-white">
+                Privacy Policy
+              </Link>
+              <Link href="/terms-and-conditions" className="text-xs text-[#9aa3b3] hover:text-white">
+                Terms & Conditions
+              </Link>
+              <Link href="/refund-policy" className="text-xs text-[#9aa3b3] hover:text-white">
+                Refund Policy
+              </Link>
+              <Link href="/cookie-policy" className="text-xs text-[#9aa3b3] hover:text-white">
+                Cookie Policy
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

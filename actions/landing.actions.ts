@@ -4,6 +4,7 @@ import { createHash, randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
+import { notifyAdmins } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 
 type LeadCapablePrisma = typeof prisma & {
@@ -258,16 +259,101 @@ async function addWebsiteLeadActivity({
 export async function submitLandingContact(formData: FormData) {
   const name = clean(formData.get("name"));
   const email = clean(formData.get("email"));
-  const subject = clean(formData.get("subject"));
+  const company = clean(formData.get("company"));
+  const phone = clean(formData.get("phone"));
+  const country = clean(formData.get("country"));
+  const service = clean(formData.get("service"));
+  const budget = clean(formData.get("budget"));
+  const startDate = clean(formData.get("startDate"));
+  const existingWebsite = clean(formData.get("existingWebsite"));
+  const communication = clean(formData.get("communication"));
+  const subject = service ? `Project request: ${service}` : clean(formData.get("subject"));
   const message = clean(formData.get("message"));
+  const privacy = clean(formData.get("privacy"));
+  const website = clean(formData.get("website"));
+  const file = formData.get("file");
 
-  if (!name || !email || !subject || !message) {
-    return { error: "Please fill in all fields." };
+  if (website) {
+    return { error: "Submission could not be accepted." };
+  }
+
+  if (!name || !email || !phone || !country || !service || !message) {
+    return { error: "Please fill in all required fields." };
   }
 
   if (!isEmail(email)) {
     return { error: "Please enter a valid email address." };
   }
+
+  if (message.length < 20) {
+    return { error: "Please describe the project in at least 20 characters." };
+  }
+
+  if (privacy !== "yes") {
+    return { error: "Please agree to the privacy policy before submitting." };
+  }
+
+  const headerList = await headers();
+  const ipHash = hashIp(
+    firstHeader(headerList, [
+      "x-forwarded-for",
+      "x-real-ip",
+      "cf-connecting-ip",
+    ])
+  );
+
+  if (ipHash) {
+    const key = `landing.contact.rate.${ipHash.slice(0, 32)}`;
+    const now = Date.now();
+    const recent = await prisma.setting.findUnique({
+      where: { key },
+      select: { value: true },
+    });
+    const lastSubmission = Number(recent?.value ?? 0);
+
+    if (Number.isFinite(lastSubmission) && now - lastSubmission < 60_000) {
+      return {
+        error: "Please wait a minute before sending another project request.",
+      };
+    }
+
+    await prisma.setting.upsert({
+      where: { key },
+      update: { value: String(now) },
+      create: { key, value: String(now) },
+    });
+  }
+
+  let fileNote = "";
+  if (file instanceof File && file.size > 0) {
+    const allowedTypes = new Set([
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+    ]);
+    if (file.size > 10 * 1024 * 1024) {
+      return { error: "Maximum file size is 10 MB." };
+    }
+    if (file.type && !allowedTypes.has(file.type)) {
+      return { error: "Please upload PDF, DOC, DOCX, PNG, JPG or WebP files only." };
+    }
+    fileNote = `\nFile supplied: ${file.name} (${Math.round(file.size / 1024)} KB). Upload storage is reviewed by the team before use.`;
+  }
+
+  const details = [
+    company ? `Company: ${company}` : null,
+    `Phone/WhatsApp: ${phone}`,
+    `Country: ${country}`,
+    `Required service: ${service}`,
+    budget ? `Estimated budget: ${budget}` : null,
+    startDate ? `Expected start date: ${startDate}` : null,
+    existingWebsite ? `Existing website: ${existingWebsite}` : null,
+    communication ? `Preferred communication: ${communication}` : null,
+  ].filter(Boolean);
+  const fullMessage = `${details.join("\n")}\n\nProject description:\n${message}${fileNote}`;
 
   const db = prisma as LeadCapablePrisma;
 
@@ -277,7 +363,7 @@ export async function submitLandingContact(formData: FormData) {
         name,
         email,
         subject,
-        message,
+        message: fullMessage,
       },
     });
   }
@@ -286,8 +372,14 @@ export async function submitLandingContact(formData: FormData) {
     name,
     email,
     subject,
-    message,
+    message: fullMessage,
     tag: "contact-form",
+  });
+
+  await notifyAdmins({
+    title: "New project request",
+    body: `${name} (${email}) requested ${service}. Country: ${country}.`,
+    href: "/leads",
   });
 
   revalidatePath("/");

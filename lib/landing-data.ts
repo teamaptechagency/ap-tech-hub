@@ -204,15 +204,15 @@ export const defaultLandingData: LandingPageData = {
   heroSlides: [
     {
       id: "hero-1",
-      badge: "We Build Digital Success",
-      title: "Creative Solutions That Drive Results",
+      badge: "Bangladesh-based digital service agency",
+      title: "Digital Solutions for Growing Businesses",
       description:
-        "We help businesses grow with smart digital solutions, modern technologies and a results-driven approach.",
+        "AP Tech Agency provides website development, WordPress, UI/UX design, custom software, React development, and digital business solutions for clients in Bangladesh and around the world.",
       imageUrl: image("photo-1556761175-b413da4baf72"),
-      primaryLabel: "Our Services",
-      primaryTarget: "#services",
-      secondaryLabel: "View Portfolio",
-      secondaryTarget: "#portfolio",
+      primaryLabel: "Start a Project",
+      primaryTarget: "#contact",
+      secondaryLabel: "View Our Services",
+      secondaryTarget: "#services",
     },
     {
       id: "hero-web",
@@ -1029,7 +1029,7 @@ export const defaultLandingData: LandingPageData = {
   seo: {
     title: "AP Tech Agency - Creative Solutions That Drive Results",
     description:
-      "AP Tech Agency provides web development, UI/UX design, digital marketing, SEO, support, graphics design, branding, office support, accounting, 3D modeling and architecture services for growing businesses.",
+      "AP Tech Agency is a Bangladesh-based digital agency providing WordPress development, UI/UX design, custom software, React development, eCommerce solutions, and international project support.",
     keywords:
       "AP Tech Agency, web development agency, website development service, UI UX design agency, digital marketing services, SEO services, graphics design service, logo design service, branding service, virtual office support, accounting and bookkeeping service, interior 3D modeling, exterior 3D modeling, architecture service, ecommerce website development, business website design, remote agency support",
     siteUrl: "https://aptechagency.com",
