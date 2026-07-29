@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   addMilestone,
   setMilestoneStatus,
@@ -56,6 +58,7 @@ export function MilestonesSection({
   isManager: boolean;
   canWork: boolean;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -77,21 +80,37 @@ export function MilestonesSection({
     e.preventDefault();
     setError("");
     setBusy(true);
-    const result = await addMilestone(jobId, {
-      title,
-      description,
-      deadline,
-      charge,
-      assigneeId: assigneeId ?? undefined,
-    });
-    setBusy(false);
-    if (result.error) return setError(result.error);
-    setTitle("");
-    setDescription("");
-    setDeadline("");
-    setCharge("");
-    setAssigneeId(null);
-    setOpen(false);
+    try {
+      const result = await addMilestone(jobId, {
+        title,
+        description,
+        deadline,
+        charge,
+        assigneeId: assigneeId ?? undefined,
+      });
+
+      if (result.error) {
+        setError(result.error);
+        toast.error(result.error);
+        return;
+      }
+
+      setTitle("");
+      setDescription("");
+      setDeadline("");
+      setCharge("");
+      setAssigneeId(null);
+      setOpen(false);
+      toast.success("Task added");
+      router.refresh();
+    } catch (error) {
+      console.error("Add milestone failed:", error);
+      const message = "Could not add this task.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   function nextStatus(status: string): "IN_PROGRESS" | "COMPLETED" | null {
