@@ -54,7 +54,7 @@ const clientSchema = z.object({
   phone: z.string().optional(),
   country: z.string().optional(),
   clientType: z.enum(["LOCAL", "WEBSITE", "MARKETPLACE"]).default("WEBSITE"),
-  marketplace: z.enum(["FIVERR", "UPWORK", "FREELANCER"]).optional(),
+  marketplace: z.enum(["FIVERR", "UPWORK", "FREELANCER", "OTHER"]).optional(),
   currency: z.enum(["USD", "EUR", "GBP", "BDT"]),
   timezone: z.string().min(1),
 });
@@ -77,6 +77,7 @@ function marketplaceName(marketplace?: string | null) {
   if (marketplace === "FIVERR") return "Fiverr";
   if (marketplace === "UPWORK") return "Upwork";
   if (marketplace === "FREELANCER") return "Freelancer";
+  if (marketplace === "OTHER") return "Other";
   return "Marketplace";
 }
 

@@ -39,7 +39,7 @@ type Option = {
 type ClientOption = Option & {
   country: string | null;
   clientType: "LOCAL" | "WEBSITE" | "MARKETPLACE";
-  marketplace: "FIVERR" | "UPWORK" | "FREELANCER" | null;
+  marketplace: "FIVERR" | "UPWORK" | "FREELANCER" | "OTHER" | null;
 };
 
 type SelectedMember = {
@@ -248,6 +248,7 @@ export function CreateJobDialog({
     if (client.marketplace === "FIVERR") return "Fiverr";
     if (client.marketplace === "UPWORK") return "Upwork";
     if (client.marketplace === "FREELANCER") return "Freelancer";
+    if (client.marketplace === "OTHER") return "Other";
     return externalSource;
   }
 

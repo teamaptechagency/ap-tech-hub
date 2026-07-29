@@ -29,7 +29,7 @@ import {
 
 type Currency = "USD" | "EUR" | "GBP" | "BDT";
 type ClientType = "LOCAL" | "WEBSITE" | "MARKETPLACE";
-type ClientMarketplace = "FIVERR" | "UPWORK" | "FREELANCER";
+type ClientMarketplace = "FIVERR" | "UPWORK" | "FREELANCER" | "OTHER";
 
 type ClientData = {
   id: string;
@@ -393,6 +393,9 @@ export function ClientDialog({
                         </SelectItem>
                         <SelectItem value="FREELANCER">
                           Freelancer
+                        </SelectItem>
+                        <SelectItem value="OTHER">
+                          Other
                         </SelectItem>
                       </SelectContent>
                     </Select>
