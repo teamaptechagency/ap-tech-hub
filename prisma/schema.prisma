@@ -1202,6 +1202,161 @@ model Setting {
 }
 
 // ============================================
+// BUSINESS PROFILE + COMPLIANCE SETTINGS
+// ============================================
+
+enum BusinessVisibility {
+  PUBLIC
+  PRIVATE
+  MASKED
+  DRAFT
+}
+
+enum BusinessVerificationStatus {
+  VERIFIED
+  PENDING_VERIFICATION
+  NOT_PUBLISHED
+  EXPIRED
+  RENEWAL_REQUIRED
+}
+
+enum BusinessEntityType {
+  BANGLADESH_SOLE_PROPRIETORSHIP
+  BANGLADESH_PRIVATE_LIMITED_COMPANY
+  UK_LIMITED_COMPANY
+  US_LLC
+  OTHER
+}
+
+enum BusinessEntityStatus {
+  PLANNED
+  REGISTRATION_IN_PROGRESS
+  ACTIVE
+  DORMANT
+  CLOSED
+}
+
+enum ComplianceReminderStatus {
+  OPEN
+  DONE
+  SNOOZED
+  CANCELLED
+}
+
+model BusinessProfile {
+  id                 String                     @id @default(cuid())
+  legalName          String?
+  tradingName        String                     @default("AP Tech Agency")
+  legalStructure     String?
+  businessType       String                     @default("Digital services, software development, website development, UI/UX design, WordPress development, and technology consulting")
+  country            String                     @default("Bangladesh")
+  address            String?
+  email              String?
+  phone              String?
+  whatsapp           String?
+  website            String?
+  establishedYear    Int?
+  description        String?
+  verificationStatus BusinessVerificationStatus @default(NOT_PUBLISHED)
+  fieldVisibility    Json?
+  registrations      BusinessRegistration[]
+  entities           InternationalEntity[]
+  documents          BusinessDocument[]
+  reminders          ComplianceReminder[]
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+}
+
+model BusinessRegistration {
+  id                 String                     @id @default(cuid())
+  businessProfileId  String
+  businessProfile    BusinessProfile            @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  registrationType   String
+  registrationNumber String?
+  issuingAuthority   String?
+  issueDate          DateTime?
+  expiryDate         DateTime?
+  verificationStatus BusinessVerificationStatus @default(NOT_PUBLISHED)
+  visibility         BusinessVisibility         @default(PRIVATE)
+  documentUrl        String?
+  notes              String?
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  @@index([businessProfileId])
+  @@index([visibility])
+  @@index([verificationStatus])
+}
+
+model InternationalEntity {
+  id                      String                     @id @default(cuid())
+  businessProfileId       String
+  businessProfile         BusinessProfile            @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  entityName              String
+  country                 String
+  entityType              BusinessEntityType
+  registrationNumber      String?
+  incorporationDate       DateTime?
+  registeredAddress       String?
+  taxReference            String?
+  businessStatus          BusinessEntityStatus       @default(PLANNED)
+  entityPurpose           String?
+  websiteUrl              String?
+  verificationDocumentUrl String?
+  visibility              BusinessVisibility         @default(PRIVATE)
+  verificationStatus      BusinessVerificationStatus @default(NOT_PUBLISHED)
+  documents               BusinessDocument[]
+  reminders               ComplianceReminder[]
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+
+  @@index([businessProfileId])
+  @@index([businessStatus])
+  @@index([visibility])
+}
+
+model ComplianceReminder {
+  id                String                   @id @default(cuid())
+  businessProfileId String
+  businessProfile   BusinessProfile          @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  entityId          String?
+  entity            InternationalEntity?     @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  reminderType      String
+  dueDate           DateTime
+  recurrence        String?
+  assignedUserId    String?
+  status            ComplianceReminderStatus @default(OPEN)
+  notes             String?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  @@index([businessProfileId])
+  @@index([entityId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+model BusinessDocument {
+  id                 String                     @id @default(cuid())
+  businessProfileId  String
+  businessProfile    BusinessProfile            @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  entityId           String?
+  entity             InternationalEntity?       @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  documentType       String
+  documentName       String
+  fileUrl            String?
+  visibility         BusinessVisibility         @default(PRIVATE)
+  expiryDate         DateTime?
+  verificationStatus BusinessVerificationStatus @default(NOT_PUBLISHED)
+  uploadedAt         DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  @@index([businessProfileId])
+  @@index([entityId])
+  @@index([visibility])
+}
+
+// ============================================
 // PUBLIC LANDING PAGE CMS
 // ============================================
 
