@@ -39,6 +39,7 @@ const nextAuth = NextAuth({
             email: true,
             password: true,
             role: true,
+            partnerType: true,
             clientId: true,
             accountStatus: true,
             twoFactorEnabled: true,
@@ -76,6 +77,7 @@ const nextAuth = NextAuth({
             name: user.name,
             email: user.email,
             role: user.role,
+            partnerType: user.partnerType,
             clientId: user.clientId,
           };
         }
@@ -111,6 +113,7 @@ const nextAuth = NextAuth({
             name: user.name,
             email: user.email,
             role: user.role,
+            partnerType: user.partnerType,
             clientId: user.clientId,
           };
         }
@@ -152,6 +155,7 @@ const nextAuth = NextAuth({
           name: user.name,
           email: user.email,
           role: user.role,
+          partnerType: user.partnerType,
           clientId: user.clientId,
         };
       },
@@ -162,6 +166,7 @@ const nextAuth = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.partnerType = user.partnerType;
         token.clientId = user.clientId;
       }
       return token;
@@ -169,6 +174,7 @@ const nextAuth = NextAuth({
     session({ session, token }) {
       session.user.id = token.id as string;
       session.user.role = token.role as string;
+      session.user.partnerType = (token.partnerType as string | null) ?? null;
       session.user.clientId = (token.clientId as string) ?? null;
       return session;
     },
@@ -196,6 +202,7 @@ async function getEffectiveSession() {
         name: true,
         email: true,
         role: true,
+        partnerType: true,
         clientId: true,
         image: true,
         photoUrl: true,
@@ -214,6 +221,7 @@ async function getEffectiveSession() {
       email: target.email,
       image: target.photoUrl ?? target.image ?? session.user.image,
       role: target.role,
+      partnerType: target.partnerType,
       clientId: target.clientId ?? null,
     },
     impersonation: {

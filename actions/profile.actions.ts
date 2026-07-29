@@ -15,6 +15,7 @@ import {
   revokeLoginDevice,
 } from "@/lib/login-security";
 import { getEmailConfig } from "@/lib/email-config";
+import { renderEmail } from "@/lib/email-template";
 import { sendWhatsAppOtp } from "@/lib/whatsapp";
 import { portfolioSettingKey } from "@/lib/user-portfolio";
 
@@ -127,7 +128,15 @@ export async function requestSecurityVerificationCode() {
         from: emailConfig.emailFrom,
         to: user.email,
         subject: "Your AP Tech verification code",
-        html: `<p>Your verification code is <strong>${code}</strong>.</p><p>This code expires in 10 minutes.</p>`,
+        html: renderEmail({
+          title: "Your verification code",
+          eyebrow: "Account security",
+          intro:
+            "Use this code to confirm the security change on your AP Tech Hub account.",
+          code,
+          codeLabel: "Verification code",
+          note: "This code expires in 10 minutes. If you did not request this, please secure your account.",
+        }),
       });
     } catch (error) {
       console.error("Security code email failed:", error);

@@ -35,6 +35,7 @@ export async function startUserImpersonation(userId: string) {
       name: true,
       email: true,
       role: true,
+      partnerType: true,
       accountStatus: true,
     },
   });
@@ -59,7 +60,7 @@ export async function startUserImpersonation(userId: string) {
 
   return {
     success: true,
-    href: homeFor(target.role),
+    href: homeFor(target.role, target.partnerType),
     targetName: target.name,
     targetEmail: target.email,
     targetStatus: target.accountStatus,

@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
 import { getEmailConfig, getEmailErrorMessage } from "@/lib/email-config";
+import { renderEmail } from "@/lib/email-template";
 import { notifyAdmins } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 import {
@@ -19,6 +20,7 @@ import {
   REFERRAL_COOKIE,
   REFERRAL_COOKIE_DAYS,
   REFERRAL_STATUSES,
+  getMyReferralPartner,
   uniqueReferralCode,
   type ReferralApplicationStatusValue,
   type ReferralStatusValue,
@@ -35,13 +37,13 @@ async function checkReferralPartner() {
   const session = await auth();
   if (!session?.user) return null;
 
-  const partner = await prisma.referralPartner.findUnique({
-    where: { userId: session.user.id },
-    select: { id: true, code: true, status: true },
-  });
+  const partner = await getMyReferralPartner(session.user.id);
 
   if (!partner || partner.status !== "ACTIVE") return null;
-  return { session, partner };
+  return {
+    session,
+    partner: { id: partner.id, code: partner.code, status: partner.status },
+  };
 }
 
 async function audit(
@@ -71,15 +73,6 @@ function generateTemporaryPassword() {
   return Array.from(randomBytes(14), (byte) => alphabet[byte % alphabet.length]).join(
     ""
   );
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 async function sendEmail(input: { to: string; subject: string; html: string }) {
@@ -112,31 +105,27 @@ async function sendPartnerWelcomeEmail(input: {
   temporaryPassword?: string;
 }) {
   const portalUrl = `${appBaseUrl()}/login`;
-  const safeName = escapeHtml(input.name);
-  const safeEmail = escapeHtml(input.to);
-  const safeCode = escapeHtml(input.code);
-  const safePassword = input.temporaryPassword
-    ? escapeHtml(input.temporaryPassword)
-    : "";
   return sendEmail({
     to: input.to,
     subject: "Welcome to the AP Tech Partner Program",
-    html: `
-      <p>Hi ${safeName},</p>
-      <p>Your AP Tech partner application has been approved. Your partner account is ready.</p>
-      <p><strong>Partner ID:</strong> ${safeCode}<br />
-      <strong>Login email:</strong> ${safeEmail}${
-        safePassword
-          ? `<br /><strong>Temporary password:</strong> ${safePassword}`
-          : ""
-      }</p>
-      ${
-        safePassword
-          ? "<p>Please log in and change this password from your profile.</p>"
-          : "<p>Please log in with your existing AP Tech Hub password.</p>"
-      }
-      <p><a href="${portalUrl}">Open AP Tech Hub</a></p>
-    `,
+    html: renderEmail({
+      title: "Welcome to the Partner Program",
+      eyebrow: "Partner approved",
+      greeting: `Hi ${input.name},`,
+      intro:
+        "Your AP Tech partner application has been approved. Your partner account is ready.",
+      details: [
+        { label: "Partner ID", value: input.code },
+        { label: "Login email", value: input.to },
+        ...(input.temporaryPassword
+          ? [{ label: "Temporary password", value: input.temporaryPassword }]
+          : []),
+      ],
+      action: { label: "Open AP Tech Hub", href: portalUrl },
+      note: input.temporaryPassword
+        ? "Please log in and change this temporary password from your profile."
+        : "Please log in with your existing AP Tech Hub password.",
+    }),
   });
 }
 
@@ -146,18 +135,20 @@ async function sendApplicationDecisionEmail(input: {
   status: ReferralApplicationStatusValue;
   reason: string;
 }) {
-  const safeName = escapeHtml(input.name);
-  const safeStatus = escapeHtml(input.status.replaceAll("_", " "));
-  const safeReason = escapeHtml(input.reason).replaceAll("\n", "<br />");
   return sendEmail({
     to: input.to,
     subject: "AP Tech partner application update",
-    html: `
-      <p>Hi ${safeName},</p>
-      <p>Your AP Tech partner application has been marked as <strong>${safeStatus}</strong>.</p>
-      <p><strong>Reason / note:</strong></p>
-      <p>${safeReason}</p>
-    `,
+    html: renderEmail({
+      title: "Partner application update",
+      eyebrow: "Application review",
+      greeting: `Hi ${input.name},`,
+      intro: `Your AP Tech partner application has been marked as ${input.status.replaceAll(
+        "_",
+        " "
+      )}.`,
+      details: [{ label: "Review note", value: input.reason }],
+      note: "You can reply to AP Tech support if you need clarification.",
+    }),
   });
 }
 

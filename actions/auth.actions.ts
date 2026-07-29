@@ -8,6 +8,7 @@ import { homeFor } from "@/lib/roles";
 import bcrypt from "bcryptjs";
 import { verifyTotp } from "@/lib/totp";
 import { getEmailConfig } from "@/lib/email-config";
+import { renderEmail } from "@/lib/email-template";
 import { headers } from "next/headers";
 import {
   checkLoginAllowed,
@@ -64,7 +65,14 @@ async function sendLoginCode({
         from: emailConfig.emailFrom,
         to: email,
         subject: "Your AP Tech login code",
-        html: `<p>Your login code is <strong>${code}</strong>.</p><p>This code expires in 10 minutes.</p>`,
+        html: renderEmail({
+          title: "Your login code",
+          eyebrow: "Secure sign-in",
+          intro: "Use this code to finish signing in to AP Tech Hub.",
+          code,
+          codeLabel: "Login code",
+          note: "This code expires in 10 minutes. If this was not you, secure your account or contact AP Tech support.",
+        }),
       });
     } catch (error) {
       console.error("2FA email failed:", error);
@@ -115,6 +123,7 @@ export async function login(formData: {
       phone: true,
       password: true,
       role: true,
+      partnerType: true,
       twoFactorEnabled: true,
       twoFactorMethod: true,
       twoFactorCode: true,
@@ -280,7 +289,7 @@ export async function login(formData: {
       : "";
 
   return {
-    redirectTo: nextPath || (user ? homeFor(user.role) : "/login"),
+    redirectTo: nextPath || (user ? homeFor(user.role, user.partnerType) : "/login"),
     deviceToken,
   };
 }
@@ -313,7 +322,7 @@ export async function loginWithPasskey(input: {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, role: true, accountStatus: true },
+    select: { id: true, role: true, partnerType: true, accountStatus: true },
   });
 
   if (!user || user.accountStatus !== "ACTIVE") {
@@ -353,7 +362,7 @@ export async function loginWithPasskey(input: {
       : "";
 
   return {
-    redirectTo: nextPath || homeFor(user.role),
+    redirectTo: nextPath || homeFor(user.role, user.partnerType),
     deviceToken,
   };
 }

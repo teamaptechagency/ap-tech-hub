@@ -17,7 +17,10 @@ const RESOURCE_KEYS = new Set<string>(
 
 async function checkPartner() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "BUSINESS_PARTNER") {
+  if (
+    !session?.user ||
+    !["BUSINESS_PARTNER", "REFERRAL_PARTNER"].includes(session.user.role)
+  ) {
     return null;
   }
   return session;
@@ -53,6 +56,7 @@ async function audit(
 
 function revalidateTeam() {
   revalidatePath("/p/team");
+  revalidatePath("/r/team");
 }
 
 export async function createPartnerManager(input: {
@@ -63,7 +67,7 @@ export async function createPartnerManager(input: {
 }) {
   const session = await checkPartner();
   if (!session) {
-    return { error: "Only a business partner can add managers" };
+    return { error: "Only a partner can add managers" };
   }
 
   const name = input.name?.trim();
@@ -85,6 +89,11 @@ export async function createPartnerManager(input: {
   if (existing) return { error: "An account already uses this email" };
 
   try {
+    const owner = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { partnerType: true },
+    });
+
     const manager = await prisma.user.create({
       data: {
         name,
@@ -92,6 +101,11 @@ export async function createPartnerManager(input: {
         phone: input.phone?.trim() || null,
         password: await bcrypt.hash(password, 10),
         role: "PARTNER_MANAGER",
+        partnerType:
+          owner?.partnerType ??
+          (session.user.role === "REFERRAL_PARTNER"
+            ? "REFERENCE_PARTNER"
+            : "SO_PARTNER"),
         accountStatus: "ACTIVE",
         managedByPartnerId: session.user.id,
         // New managers start with read access to orders only; the partner

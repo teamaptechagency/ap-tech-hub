@@ -29,6 +29,11 @@ type JobRow = {
 };
 
 type Option = { id: string; name: string };
+type ClientOption = Option & {
+  country: string | null;
+  clientType: "LOCAL" | "WEBSITE" | "MARKETPLACE";
+  marketplace: "FIVERR" | "UPWORK" | "FREELANCER" | null;
+};
 
 const FILTERS = [
   { key: "ALL", label: "All" },
@@ -77,7 +82,7 @@ export function JobsBoard({
   receivedGbpRate,
 }: {
   jobs: JobRow[];
-  clients: Option[];
+  clients: ClientOption[];
   teamMembers: Option[];
   skills: Option[];
   receivedUsdRate: number;

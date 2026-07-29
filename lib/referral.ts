@@ -124,8 +124,17 @@ export async function findPartnerByCode(code: string) {
 /** The signed-in user's partner profile, if they have one. */
 export async function getMyReferralPartner(userId: string) {
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, managedByPartnerId: true },
+    });
+    const ownerUserId =
+      user?.role === "PARTNER_MANAGER" && user.managedByPartnerId
+        ? user.managedByPartnerId
+        : userId;
+
     return await prisma.referralPartner.findUnique({
-      where: { userId },
+      where: { userId: ownerUserId },
     });
   } catch (error) {
     console.error("Failed to load referral partner:", error);

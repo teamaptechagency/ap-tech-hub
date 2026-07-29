@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { getEmailConfig, getEmailErrorMessage } from "@/lib/email-config";
+import { renderEmail } from "@/lib/email-template";
 import { sendWhatsAppOtp } from "@/lib/whatsapp";
 
 export async function sendOtp(email: string, phone?: string) {
@@ -56,14 +57,14 @@ export async function sendOtp(email: string, phone?: string) {
       from: emailConfig.emailFrom,
       to: email,
       subject: `${code} - your AP Tech Hub verification code`,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;text-align:center">
-          <h2 style="margin:0 0 8px">AP Tech <span style="color:#c6613f">Hub</span></h2>
-          <p style="font-size:14px;color:#444">Your verification code:</p>
-          <p style="font-size:32px;font-weight:bold;letter-spacing:8px;margin:16px 0">${code}</p>
-          <p style="font-size:12px;color:#999">Expires in 10 minutes. If you did not request this, ignore this email.</p>
-        </div>
-      `,
+      html: renderEmail({
+        title: "Verify your email",
+        eyebrow: "Account verification",
+        intro: "Use this code to continue your AP Tech Hub registration.",
+        code,
+        codeLabel: "6-digit code",
+        note: "This code expires in 10 minutes. If you did not request this, you can ignore this email.",
+      }),
     });
   } catch (e) {
     console.error("OTP email failed:", e);

@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { notifyAdmins } from "@/lib/notify";
 import { isEmailVerified } from "@/actions/otp.actions";
 import { captureReferralForSignup } from "@/actions/referral.actions";
+import { renderEmail } from "@/lib/email-template";
 
 // ============================================
 // PUBLIC REGISTRATION
@@ -32,6 +33,107 @@ async function getNidRequirement(): Promise<NidRequirement> {
 // ============================================
 export async function getSignupRequirements() {
   return { nidRequirement: await getNidRequirement() };
+}
+
+async function sendRegistrationWelcomeEmail(input: {
+  kind: "CLIENT" | "WORKER";
+  name: string;
+  email: string;
+  companyName?: string;
+  profession?: string;
+}) {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.log(
+        `[DEV] Registration welcome mail to ${input.email}: ${input.kind}`
+      );
+      return;
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const base = process.env.APP_URL ?? "http://localhost:3000";
+    const isClient = input.kind === "CLIENT";
+
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM ?? "AP Tech Hub <onboarding@resend.dev>",
+      to: input.email,
+      subject: isClient
+        ? "Welcome to AP Tech Hub"
+        : "Your AP Tech Hub registration was received",
+      html: renderEmail({
+        title: isClient ? "Welcome to AP Tech Hub" : "Registration received",
+        eyebrow: isClient ? "Account ready" : "Application review",
+        greeting: `Hi ${input.name},`,
+        intro: isClient
+          ? "Your client account is ready. You can sign in now and start managing projects, messages, payments, and support from your portal."
+          : "Thanks for registering with AP Tech Hub. Your team member profile is now waiting for admin review.",
+        details: [
+          { label: "Email", value: input.email },
+          ...(input.companyName
+            ? [{ label: "Company", value: input.companyName }]
+            : []),
+          ...(input.profession
+            ? [{ label: "Profession", value: input.profession }]
+            : []),
+          {
+            label: "Status",
+            value: isClient ? "Active" : "Pending approval",
+          },
+        ],
+        action: isClient
+          ? { label: "Sign in to your portal", href: `${base}/login` }
+          : undefined,
+        note: isClient
+          ? "For security, never share your password or verification codes with anyone."
+          : "We will notify you after the review is complete. If approved, you can sign in with the email and password used during registration.",
+      }),
+    });
+  } catch (error) {
+    console.error("Registration welcome email failed:", error);
+  }
+}
+
+async function sendRegistrationDecisionEmail(input: {
+  action: "APPROVE" | "REJECT";
+  name: string | null;
+  email: string;
+}) {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.log(
+        `[DEV] Registration decision mail to ${input.email}: ${input.action}`
+      );
+      return;
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const base = process.env.APP_URL ?? "http://localhost:3000";
+    const approved = input.action === "APPROVE";
+
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM ?? "AP Tech Hub <onboarding@resend.dev>",
+      to: input.email,
+      subject: approved
+        ? "Your AP Tech Hub account is approved"
+        : "AP Tech Hub registration update",
+      html: renderEmail({
+        title: approved ? "Your account is approved" : "Registration update",
+        eyebrow: approved ? "Welcome aboard" : "Application review",
+        greeting: input.name ? `Hi ${input.name},` : undefined,
+        intro: approved
+          ? "Your AP Tech Hub account has been approved. You can now sign in and use your portal."
+          : "Thanks for your interest in AP Tech Hub. After review, this registration was not approved.",
+        action: approved
+          ? { label: "Sign in now", href: `${base}/login` }
+          : undefined,
+        note: approved
+          ? "For security, update your profile information after your first sign-in and keep your login details private."
+          : "If you believe this was a mistake, please contact AP Tech Agency support with the same email address.",
+      }),
+    });
+  } catch (error) {
+    console.error("Registration decision email failed:", error);
+  }
 }
 
 export async function registerAccount(formData: {
@@ -128,6 +230,14 @@ export async function registerAccount(formData: {
 
   await prisma.emailOtp.delete({ where: { email } }).catch(() => {});
 
+  await sendRegistrationWelcomeEmail({
+    kind,
+    name,
+    email,
+    companyName: formData.companyName,
+    profession: formData.profession,
+  });
+
   await notifyAdmins({
     title: `New ${kind === "CLIENT" ? "client" : "team member"} registration`,
     body: `${name} (${email})${
@@ -164,23 +274,30 @@ export async function processRegistration(
     return { error: "You don't have permission for this action" };
   }
 
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       accountStatus: action === "APPROVE" ? "ACTIVE" : "REJECTED",
       identityStatus: action === "APPROVE" ? "VERIFIED" : "REJECTED",
     },
+    select: { name: true, email: true },
   });
 
   const { notify } = await import("@/lib/notify");
   if (action === "APPROVE") {
     await notify({
       userId,
-      title: "Your account is approved — welcome! 🎉",
+      title: "Your account is approved - welcome!",
       body: "You can now sign in to AP Tech Hub.",
       href: "/login",
     });
   }
+
+  await sendRegistrationDecisionEmail({
+    action,
+    name: updatedUser.name,
+    email: updatedUser.email,
+  });
 
   await prisma.auditLog.create({
     data: {
@@ -221,14 +338,18 @@ export async function requestPasswordReset(email: string) {
             process.env.EMAIL_FROM ?? "AP Tech Hub <onboarding@resend.dev>",
           to: email,
           subject: "Reset your AP Tech Hub password",
-          html: `
-            <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
-              <h2 style="margin:0 0 12px">AP Tech <span style="color:#c6613f">Hub</span></h2>
-              <p style="font-size:14px;color:#444">Click below to set a new password. This link expires in 1 hour.</p>
-              <a href="${base}/reset-password?token=${token}" style="display:inline-block;background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:6px;font-size:13px;text-decoration:none">Reset password</a>
-              <p style="font-size:11px;color:#999;margin-top:20px">If you didn't request this, ignore this email.</p>
-            </div>
-          `,
+          html: renderEmail({
+            title: "Reset your password",
+            eyebrow: "Password reset",
+            greeting: `Hi ${user.name},`,
+            intro:
+              "We received a request to reset your AP Tech Hub password. Use the button below to set a new one.",
+            action: {
+              label: "Reset password",
+              href: `${base}/reset-password?token=${token}`,
+            },
+            note: "This link expires in 1 hour. If you did not request this, you can safely ignore this email.",
+          }),
         });
       }
     } catch (e) {

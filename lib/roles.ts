@@ -17,9 +17,12 @@ export const REFERRAL_ROLES = ["REFERRAL_PARTNER"];
 export const CLIENT_ROLES = ["CLIENT", "CLIENT_MANAGER"];
 
 // Where each role lands after login
-export function homeFor(role: string): string {
+export function homeFor(role: string, partnerType?: string | null): string {
   if (ADMIN_ROLES.includes(role)) return "/dashboard";
   if (WORKER_ROLES.includes(role)) return "/e/dashboard";
+  if (role === "PARTNER_MANAGER" && partnerType === "REFERENCE_PARTNER") {
+    return "/r/dashboard";
+  }
   if (PARTNER_ROLES.includes(role)) return "/p/dashboard";
   if (REFERRAL_ROLES.includes(role)) return "/r/dashboard";
   return "/c/dashboard";

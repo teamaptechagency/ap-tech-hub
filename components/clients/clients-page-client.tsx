@@ -58,6 +58,8 @@ export type ClientListItem = {
   email: string;
   phone: string | null;
   country: string | null;
+  clientType: "LOCAL" | "WEBSITE" | "MARKETPLACE";
+  marketplace: "FIVERR" | "UPWORK" | "FREELANCER" | null;
   currency: string;
   timezone: string;
   status: string;
@@ -131,6 +133,22 @@ function formatRole(role: string | null) {
     .replaceAll("_", " ")
     .toLowerCase()
     .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function formatClientSource(client: ClientListItem) {
+  if (client.clientType === "LOCAL") return "Local client";
+  if (client.clientType === "MARKETPLACE") {
+    const marketplace =
+      client.marketplace === "FIVERR"
+        ? "Fiverr"
+        : client.marketplace === "UPWORK"
+          ? "Upwork"
+          : client.marketplace === "FREELANCER"
+            ? "Freelancer"
+            : "Marketplace";
+    return `${marketplace} client`;
+  }
+  return "Website client";
 }
 
 export function ClientsPageClient({
@@ -539,6 +557,9 @@ export function ClientsPageClient({
                       <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                         <UserRound className="h-3.5 w-3.5" />
                         {client.contactName}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {formatClientSource(client)}
                       </p>
                     </div>
 
