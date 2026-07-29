@@ -59,7 +59,7 @@ export type ClientListItem = {
   phone: string | null;
   country: string | null;
   clientType: "LOCAL" | "WEBSITE" | "MARKETPLACE";
-  marketplace: "FIVERR" | "UPWORK" | "FREELANCER" | null;
+  marketplace: "FIVERR" | "UPWORK" | "FREELANCER" | "OTHER" | null;
   currency: string;
   timezone: string;
   status: string;
@@ -143,8 +143,10 @@ function formatClientSource(client: ClientListItem) {
         ? "Fiverr"
         : client.marketplace === "UPWORK"
           ? "Upwork"
-          : client.marketplace === "FREELANCER"
-            ? "Freelancer"
+        : client.marketplace === "FREELANCER"
+          ? "Freelancer"
+          : client.marketplace === "OTHER"
+            ? "Other"
             : "Marketplace";
     return `${marketplace} client`;
   }

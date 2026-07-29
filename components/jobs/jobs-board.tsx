@@ -32,7 +32,7 @@ type Option = { id: string; name: string };
 type ClientOption = Option & {
   country: string | null;
   clientType: "LOCAL" | "WEBSITE" | "MARKETPLACE";
-  marketplace: "FIVERR" | "UPWORK" | "FREELANCER" | null;
+  marketplace: "FIVERR" | "UPWORK" | "FREELANCER" | "OTHER" | null;
 };
 
 const FILTERS = [

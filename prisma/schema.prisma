@@ -333,6 +333,7 @@ enum ClientMarketplace {
   FIVERR
   UPWORK
   FREELANCER
+  OTHER
 }
 
 model Client {
