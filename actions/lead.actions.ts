@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
+import { renderEmail } from "@/lib/email-template";
 import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES } from "@/lib/roles";
 
@@ -137,10 +138,13 @@ async function sendPlainEmail(to: string, subject: string, body: string) {
       from: process.env.EMAIL_FROM,
       to,
       subject,
-      html: `<div style="font-family:Arial,sans-serif;line-height:1.6">${body
-        .split("\n")
-        .map((line) => `<p>${line.replace(/[<>&]/g, "")}</p>`)
-        .join("")}</div>`,
+      html: renderEmail({
+        title: subject,
+        eyebrow: "AP Tech Agency",
+        body,
+        footerNote:
+          "You received this email because you contacted or were contacted by AP Tech Agency.",
+      }),
     });
     return "SENT";
   } catch (error) {
@@ -486,10 +490,14 @@ export async function sendLeadBulkEmail(input: {
           from: process.env.EMAIL_FROM,
           to: lead.email,
           subject,
-          html: `<div style="font-family:Arial,sans-serif;line-height:1.6">${body
-            .split("\n")
-            .map((line) => `<p>${line.replace(/[<>&]/g, "")}</p>`)
-            .join("")}</div>`,
+          html: renderEmail({
+            title: subject,
+            eyebrow: "AP Tech Agency",
+            greeting: lead.name ? `Hi ${lead.name},` : undefined,
+            body,
+            footerNote:
+              "You received this email because you contacted or were contacted by AP Tech Agency.",
+          }),
         });
       }
     } catch (error) {

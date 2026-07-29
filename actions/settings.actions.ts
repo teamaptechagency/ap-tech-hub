@@ -3,6 +3,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { uniqueReferralCode } from "@/lib/referral";
 import { ADMIN_ROLES } from "@/lib/roles";
 import { revalidatePath } from "next/cache";
 
@@ -720,7 +721,13 @@ export async function inviteTeamMember(formData: {
     | "CEO"
     | "TEAM_MEMBER"
     | "BUSINESS_PARTNER"
-    | "PARTNER_MANAGER";
+    | "PARTNER_MANAGER"
+    | "REFERRAL_PARTNER";
+  partnerType?:
+    | "SO_PARTNER"
+    | "REFERENCE_PARTNER"
+    | "REGULAR_CONTRACT_PARTNER";
+  managedByPartnerId?: string;
 }) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
@@ -734,6 +741,41 @@ export async function inviteTeamMember(formData: {
   });
   if (exists) return { error: "A user with this email already exists" };
 
+  const isPartnerRole = ["BUSINESS_PARTNER", "REFERRAL_PARTNER"].includes(
+    formData.role
+  );
+  const partnerType = isPartnerRole
+    ? formData.partnerType ??
+      (formData.role === "BUSINESS_PARTNER" ? "SO_PARTNER" : undefined)
+    : undefined;
+
+  if (formData.role === "BUSINESS_PARTNER" && !partnerType) {
+    return { error: "Select the partner type" };
+  }
+  if (
+    formData.role === "REFERRAL_PARTNER" &&
+    partnerType !== "REFERENCE_PARTNER"
+  ) {
+    return { error: "Reference partner must use the reference partner type" };
+  }
+  if (formData.role === "PARTNER_MANAGER" && !formData.managedByPartnerId) {
+    return { error: "Select which partner this manager belongs to" };
+  }
+
+  let ownerPartner:
+    | { id: string; role: string; partnerType: string | null }
+    | null = null;
+  if (formData.role === "PARTNER_MANAGER") {
+    ownerPartner = await prisma.user.findFirst({
+      where: {
+        id: formData.managedByPartnerId,
+        role: { in: ["BUSINESS_PARTNER", "REFERRAL_PARTNER"] },
+      },
+      select: { id: true, role: true, partnerType: true },
+    });
+    if (!ownerPartner) return { error: "Owner partner not found" };
+  }
+
   const bcrypt = (await import("bcryptjs")).default;
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
   let password = "";
@@ -741,13 +783,30 @@ export async function inviteTeamMember(formData: {
     password += chars[Math.floor(Math.random() * chars.length)];
   }
 
-  const user = await prisma.user.create({
-    data: {
-      name: formData.name,
-      email: formData.email,
-      password: await bcrypt.hash(password, 10),
-      role: formData.role,
-    },
+  const user = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: {
+        name: formData.name,
+        email: formData.email,
+        password: await bcrypt.hash(password, 10),
+        role: formData.role,
+        partnerType: partnerType ?? ownerPartner?.partnerType ?? null,
+        managedByPartnerId:
+          formData.role === "PARTNER_MANAGER" ? ownerPartner?.id : null,
+      },
+    });
+
+    if (formData.role === "REFERRAL_PARTNER") {
+      await tx.referralPartner.create({
+        data: {
+          userId: created.id,
+          code: await uniqueReferralCode(formData.name),
+          mode: "REFERRAL",
+        },
+      });
+    }
+
+    return created;
   });
 
   await audit(
@@ -762,8 +821,103 @@ export async function inviteTeamMember(formData: {
   revalidatePath("/accounts");
   revalidatePath("/accounts/employees");
   revalidatePath("/accounts/partners");
+  revalidatePath("/referrals");
   revalidatePath("/dashboard");
   return { success: true, password };
+}
+
+export async function updatePartnerAccount(formData: {
+  userId: string;
+  partnerType: "SO_PARTNER" | "REFERENCE_PARTNER" | "REGULAR_CONTRACT_PARTNER";
+  managedByPartnerId?: string;
+  phone?: string;
+  profession?: string;
+  businessBrief?: string;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const partner = await prisma.user.findUnique({
+    where: { id: formData.userId },
+    select: { id: true, name: true, role: true },
+  });
+  if (!partner) return { error: "Partner not found" };
+
+  if (
+    !["BUSINESS_PARTNER", "REFERRAL_PARTNER", "PARTNER_MANAGER"].includes(
+      partner.role
+    )
+  ) {
+    return { error: "This account is not a partner account" };
+  }
+
+  const role =
+    partner.role === "PARTNER_MANAGER"
+      ? "PARTNER_MANAGER"
+      : formData.partnerType === "REFERENCE_PARTNER"
+        ? "REFERRAL_PARTNER"
+        : "BUSINESS_PARTNER";
+
+  let ownerPartner:
+    | { id: string; partnerType: string | null }
+    | null = null;
+  if (role === "PARTNER_MANAGER") {
+    if (!formData.managedByPartnerId) {
+      return { error: "Select which partner this manager belongs to" };
+    }
+    ownerPartner = await prisma.user.findFirst({
+      where: {
+        id: formData.managedByPartnerId,
+        role: { in: ["BUSINESS_PARTNER", "REFERRAL_PARTNER"] },
+      },
+      select: { id: true, partnerType: true },
+    });
+    if (!ownerPartner) return { error: "Owner partner not found" };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: partner.id },
+      data: {
+        role,
+        partnerType:
+          role === "PARTNER_MANAGER"
+            ? (ownerPartner?.partnerType ?? formData.partnerType)
+            : formData.partnerType,
+        managedByPartnerId:
+          role === "PARTNER_MANAGER" ? ownerPartner?.id : null,
+        phone: cleanOptional(formData.phone),
+        profession: cleanOptional(formData.profession),
+        businessBrief: cleanOptional(formData.businessBrief),
+      },
+    });
+
+    if (role === "REFERRAL_PARTNER") {
+      await tx.referralPartner.upsert({
+        where: { userId: partner.id },
+        update: {},
+        create: {
+          userId: partner.id,
+          code: await uniqueReferralCode(partner.name),
+          mode: "REFERRAL",
+        },
+      });
+    }
+  });
+
+  await audit(
+    session.user.id,
+    "PARTNER_ACCOUNT_UPDATED",
+    "User",
+    partner.id,
+    `${role} ${formData.partnerType}`
+  );
+
+  revalidatePath("/accounts/partners");
+  revalidatePath("/referrals");
+  revalidatePath("/p/profile");
+  revalidatePath("/r/profile");
+  return { success: true };
 }
 
 export async function updateTeamMemberStatus(

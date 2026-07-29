@@ -80,7 +80,7 @@ const createJobSchema = z.object({
   description: z.string().optional(),
   type: z.enum(["MONTHLY", "FIXED", "HOURLY"]),
 
-  // Internal client, external marketplace (Fiverr/Upwork), or a local
+  // Internal client, marketplace client (Fiverr/Upwork/Freelancer), or a local
   // walk-in customer where recording a client at all is optional.
   clientMode: z.enum(["INTERNAL", "EXTERNAL", "LOCAL"]),
   clientId: z.string().optional(),
@@ -182,8 +182,8 @@ export async function createJob(formData: CreateJobInput) {
   if (data.clientMode === "INTERNAL" && !data.clientId) {
     return { error: "Please select a client" };
   }
-  if (data.clientMode === "EXTERNAL" && !data.externalName) {
-    return { error: "Please enter the external client's name" };
+  if (data.clientMode === "EXTERNAL" && !data.clientId && !data.externalName) {
+    return { error: "Please select or enter the marketplace client's name" };
   }
   // LOCAL deliberately validates nothing: a local job may be logged before
   // the customer's details are known, so every client field is optional.
@@ -233,6 +233,30 @@ export async function createJob(formData: CreateJobInput) {
     };
   }
 
+  const selectedClient = data.clientId
+    ? await prisma.client.findUnique({
+        where: { id: data.clientId },
+        select: {
+          id: true,
+          contactName: true,
+          country: true,
+          marketplace: true,
+        },
+      })
+    : null;
+
+  if (data.clientId && !selectedClient) {
+    return { error: "Selected client was not found" };
+  }
+
+  const marketplaceSource =
+    data.externalSource ||
+    (selectedClient?.marketplace
+      ? selectedClient.marketplace
+          .toLowerCase()
+          .replace(/\b\w/g, (character) => character.toUpperCase())
+      : "Other");
+
   const job = await prisma.job.create({
     data: {
       title: data.title,
@@ -240,24 +264,23 @@ export async function createJob(formData: CreateJobInput) {
       type: data.type,
       status: data.members.length === 0 ? "OPEN" : "PENDING",
 
-      // A local job may optionally be tied to an existing client; an external
-      // one never is, since the buyer lives on the marketplace instead.
-      clientId:
-        data.clientMode === "EXTERNAL" ? null : data.clientId || null,
+      // Marketplace clients may now be tied to a Client row so portal access,
+      // invoices and messages can still use the same account.
+      clientId: data.clientId || null,
       externalSource:
         data.clientMode === "EXTERNAL"
-          ? data.externalSource || "Other"
+          ? marketplaceSource
           : data.clientMode === "LOCAL"
             ? "Local"
             : null,
       externalName:
         data.clientMode === "INTERNAL"
           ? null
-          : data.externalName?.trim() || null,
+          : selectedClient?.contactName || data.externalName?.trim() || null,
       externalCountry:
         data.clientMode === "INTERNAL"
           ? null
-          : data.externalCountry?.trim() || null,
+          : selectedClient?.country || data.externalCountry?.trim() || null,
 
       clientValue,
       clientCurrency: data.clientCurrency,

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { verifyTotp } from "@/lib/totp";
 import { getEmailConfig, getEmailErrorMessage } from "@/lib/email-config";
+import { renderEmail } from "@/lib/email-template";
 import { sendWhatsAppOtp } from "@/lib/whatsapp";
 
 // ============================================
@@ -91,7 +92,15 @@ export async function requestSensitiveActionCode(
         from: emailConfig.emailFrom,
         to: user.email,
         subject: "Confirm this action - AP Tech Hub",
-        html: `<p>Your confirmation code is <strong>${code}</strong>.</p><p>This code confirms a sensitive action (delete) on your AP Tech Hub admin account. If you did not request this, secure your account immediately. This code expires in 10 minutes.</p>`,
+        html: renderEmail({
+          title: "Confirm this sensitive action",
+          eyebrow: "Admin security",
+          intro:
+            "Use this code to confirm the sensitive action requested from your AP Tech Hub admin account.",
+          code,
+          codeLabel: "Confirmation code",
+          note: "This code expires in 10 minutes. If you did not request this, secure your account immediately.",
+        }),
       });
     } catch (error) {
       console.error("Sensitive action email failed:", getEmailErrorMessage(error));

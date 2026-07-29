@@ -205,8 +205,8 @@ export function PartnerTeamManager({
         <div>
           <h1 className="text-2xl font-bold">My team</h1>
           <p className="text-sm text-muted-foreground">
-            Add managers to help run your orders. Each manager only ever sees
-            your work — never another partner&apos;s.
+            Add managers to help run your partner portal. Each manager is tied
+            to your account - never another partner&apos;s.
           </p>
         </div>
         <Button onClick={() => setShowCreate((open) => !open)}>
@@ -291,8 +291,8 @@ export function PartnerTeamManager({
             <Users className="mb-3 h-10 w-10 text-muted-foreground" />
             <p className="font-medium">No managers yet</p>
             <p className="mt-1 max-w-md text-sm text-muted-foreground">
-              A manager can watch your special orders and reply to messages on
-              your behalf. You decide exactly what they can see and do.
+              A manager can help with partner work and messages on your behalf.
+              You decide exactly what they can see and do.
             </p>
           </CardContent>
         </Card>

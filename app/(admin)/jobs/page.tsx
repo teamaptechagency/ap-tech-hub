@@ -22,8 +22,15 @@ export default async function JobsPage() {
     }),
     prisma.client.findMany({
       where: { status: "ACTIVE" },
-      orderBy: { companyName: "asc" },
-      select: { id: true, companyName: true },
+      orderBy: { contactName: "asc" },
+      select: {
+        id: true,
+        companyName: true,
+        contactName: true,
+        country: true,
+        clientType: true,
+        marketplace: true,
+      },
     }),
     prisma.user.findMany({
       where: { role: { in: [...WORKER_ROLES, ...ADMIN_ROLES] as any } },
@@ -107,7 +114,16 @@ export default async function JobsPage() {
   return (
     <JobsBoard
       jobs={rows}
-      clients={clients.map((c) => ({ id: c.id, name: c.companyName }))}
+      clients={clients.map((c) => ({
+        id: c.id,
+        name:
+          c.companyName && c.companyName !== c.contactName
+            ? `${c.contactName} - ${c.companyName}`
+            : c.contactName,
+        country: c.country,
+        clientType: c.clientType,
+        marketplace: c.marketplace,
+      }))}
       teamMembers={teamMembers}
       skills={skills}
       receivedUsdRate={Number(receivedUsdRate?.value ?? 118)}

@@ -1,4 +1,5 @@
 import { getEmailConfig } from "@/lib/email-config";
+import { renderEmail } from "@/lib/email-template";
 import { notify } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 
@@ -62,30 +63,30 @@ export async function notifyClientActivity({
 
     const { Resend } = await import("resend");
     const resend = new Resend(config.resendApiKey);
+    const base = process.env.APP_URL ?? "http://localhost:3000";
+    const actionHref = href
+      ? href.startsWith("http")
+        ? href
+        : `${base}${href}`
+      : undefined;
 
     await resend.emails.send({
       from: config.emailFrom,
       to: recipients,
       subject: title,
-      html: `
-        <div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:520px">
-          <h2 style="margin:0 0 12px;font-size:18px;color:#101623">${escapeHtml(title)}</h2>
-          <p style="margin:0 0 16px;line-height:1.6;color:#3a4152">${escapeHtml(body)}</p>
-          <p style="margin:0;font-size:12px;color:#6b7280">
-            AP Tech Agency · ${escapeHtml(client.companyName)}
-          </p>
-        </div>
-      `,
+      html: renderEmail({
+        title,
+        eyebrow: "Client account update",
+        body,
+        details: [{ label: "Client", value: client.companyName }],
+        action: actionHref
+          ? { label: "View details", href: actionHref }
+          : undefined,
+        footerNote:
+          "You received this email because there was an update on your AP Tech Hub client account.",
+      }),
     });
   } catch (error) {
     console.error("Client activity notice failed:", error);
   }
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
 }

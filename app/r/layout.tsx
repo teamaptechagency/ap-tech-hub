@@ -24,10 +24,14 @@ export default async function ReferralLayout({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  if (!REFERRAL_ROLES.includes(session.user.role)) {
+  const isReferenceManager =
+    session.user.role === "PARTNER_MANAGER" &&
+    session.user.partnerType === "REFERENCE_PARTNER";
+
+  if (!REFERRAL_ROLES.includes(session.user.role) && !isReferenceManager) {
     // Admins can look in; everyone else goes back where they belong.
     if (!ADMIN_ROLES.includes(session.user.role)) {
-      redirect(homeFor(session.user.role));
+      redirect(homeFor(session.user.role, session.user.partnerType));
     }
   }
 
@@ -46,7 +50,7 @@ export default async function ReferralLayout({
       <PortalMobileNav
         portal="referral"
         userName={userName}
-        userSub="referral partner"
+        userSub={isReferenceManager ? "reference partner manager" : "referral partner"}
         userImageUrl={userImageUrl}
         branding={branding}
       />

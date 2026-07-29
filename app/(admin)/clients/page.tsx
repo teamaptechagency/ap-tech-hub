@@ -46,6 +46,8 @@ export default async function ClientsPage() {
       email: client.email,
       phone: client.phone,
       country: client.country,
+      clientType: client.clientType,
+      marketplace: client.marketplace,
       currency: client.currency,
       timezone: client.timezone,
       status: client.status,

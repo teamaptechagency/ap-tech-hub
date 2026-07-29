@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/select";
 
 type Currency = "USD" | "EUR" | "GBP" | "BDT";
+type ClientType = "LOCAL" | "WEBSITE" | "MARKETPLACE";
+type ClientMarketplace = "FIVERR" | "UPWORK" | "FREELANCER";
 
 type ClientData = {
   id: string;
@@ -36,6 +38,8 @@ type ClientData = {
   email: string;
   phone: string | null;
   country: string | null;
+  clientType: ClientType;
+  marketplace: ClientMarketplace | null;
   currency: string;
   timezone: string;
 };
@@ -84,6 +88,9 @@ export function ClientDialog({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("");
+  const [clientType, setClientType] = useState<ClientType>("WEBSITE");
+  const [marketplace, setMarketplace] =
+    useState<ClientMarketplace>("FIVERR");
   const [currency, setCurrency] =
     useState<Currency>("USD");
   const [timezone, setTimezone] = useState("UTC");
@@ -102,6 +109,8 @@ export function ClientDialog({
     setEmail(client?.email ?? "");
     setPhone(client?.phone ?? "");
     setCountry(client?.country ?? "");
+    setClientType(client?.clientType ?? "WEBSITE");
+    setMarketplace(client?.marketplace ?? "FIVERR");
     setCurrency(getValidCurrency(client?.currency));
     setTimezone(client?.timezone ?? "UTC");
     setCreateLogin(true);
@@ -143,7 +152,12 @@ export function ClientDialog({
     }
 
     if (cleanContactName.length < 2) {
-      setError("Please enter the contact person's name.");
+      setError("Please enter the client name.");
+      return;
+    }
+
+    if (clientType === "MARKETPLACE" && !marketplace) {
+      setError("Please select the marketplace.");
       return;
     }
 
@@ -158,6 +172,8 @@ export function ClientDialog({
       email: cleanEmail,
       phone: cleanPhone,
       country: cleanCountry,
+      clientType,
+      marketplace: clientType === "MARKETPLACE" ? marketplace : undefined,
       currency,
       timezone,
     };
@@ -231,8 +247,8 @@ export function ClientDialog({
               </DialogTitle>
 
               <DialogDescription>
-                Share these credentials with the client. The
-                temporary password is shown only once.
+                These credentials were emailed to the client. The
+                temporary password is also shown here only once.
               </DialogDescription>
             </DialogHeader>
 
@@ -283,6 +299,25 @@ export function ClientDialog({
               className="space-y-4"
             >
               <div className="space-y-2">
+                <Label htmlFor="contact-name">
+                  Client name
+                </Label>
+
+                <Input
+                  id="contact-name"
+                  name="contactName"
+                  value={contactName}
+                  onChange={(event) =>
+                    setContactName(event.target.value)
+                  }
+                  disabled={loading}
+                  minLength={2}
+                  maxLength={150}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="company-name">
                   Company name
                 </Label>
@@ -301,23 +336,68 @@ export function ClientDialog({
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="contact-name">
-                  Contact person
-                </Label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="client-type">
+                    Client source
+                  </Label>
 
-                <Input
-                  id="contact-name"
-                  name="contactName"
-                  value={contactName}
-                  onChange={(event) =>
-                    setContactName(event.target.value)
-                  }
-                  disabled={loading}
-                  minLength={2}
-                  maxLength={150}
-                  required
-                />
+                  <Select
+                    value={clientType}
+                    onValueChange={(value) =>
+                      setClientType(value as ClientType)
+                    }
+                    disabled={loading}
+                  >
+                    <SelectTrigger id="client-type">
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="LOCAL">
+                        Local client
+                      </SelectItem>
+                      <SelectItem value="WEBSITE">
+                        Website client
+                      </SelectItem>
+                      <SelectItem value="MARKETPLACE">
+                        Marketplace client
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {clientType === "MARKETPLACE" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="client-marketplace">
+                      Marketplace
+                    </Label>
+
+                    <Select
+                      value={marketplace}
+                      onValueChange={(value) =>
+                        setMarketplace(value as ClientMarketplace)
+                      }
+                      disabled={loading}
+                    >
+                      <SelectTrigger id="client-marketplace">
+                        <SelectValue />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        <SelectItem value="FIVERR">
+                          Fiverr
+                        </SelectItem>
+                        <SelectItem value="UPWORK">
+                          Upwork
+                        </SelectItem>
+                        <SelectItem value="FREELANCER">
+                          Freelancer
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">

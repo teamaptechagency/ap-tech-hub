@@ -6,6 +6,7 @@ declare module "next-auth" {
       id: string;
       role: string;
       clientId: string | null;
+      partnerType?: string | null;
     } & DefaultSession["user"];
     impersonation?: {
       active: boolean;
@@ -22,6 +23,7 @@ declare module "next-auth" {
   interface User {
     role: string;
     clientId?: string | null;
+    partnerType?: string | null;
   }
 }
 
@@ -30,5 +32,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: string;
     clientId?: string | null;
+    partnerType?: string | null;
   }
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   inviteTeamMember,
   resetTeamMemberPassword,
+  updatePartnerAccount,
   updateTeamMemberIdentityStatus,
   updateTeamMemberStatus,
 } from "@/actions/settings.actions";
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -48,9 +50,12 @@ type WorkerRow = {
   id: string;
   name: string;
   role?: string;
+  partnerType?: string | null;
+  managedByPartner?: { id: string; name: string; email: string } | null;
   email?: string;
   phone?: string | null;
   profession?: string | null;
+  businessBrief?: string | null;
   accountStatus: string;
   identityStatus: string;
   nidNumber?: string | null;
@@ -63,11 +68,28 @@ type WorkerRow = {
   txns: Txn[];
 };
 
-type CreateRole = "TEAM_MEMBER" | "BUSINESS_PARTNER" | "PARTNER_MANAGER";
+type CreateRole =
+  | "TEAM_MEMBER"
+  | "BUSINESS_PARTNER"
+  | "PARTNER_MANAGER"
+  | "REFERRAL_PARTNER";
+
+type PartnerType =
+  | "SO_PARTNER"
+  | "REFERENCE_PARTNER"
+  | "REGULAR_CONTRACT_PARTNER";
 
 type CreateOption = {
   label: string;
   role: CreateRole;
+  partnerType?: PartnerType;
+};
+
+type ManagerOwnerOption = {
+  id: string;
+  name: string;
+  email: string;
+  partnerType?: string | null;
 };
 
 const kindLabel: Record<string, string> = {
@@ -79,6 +101,12 @@ const kindLabel: Record<string, string> = {
   WITHDRAWAL: "Withdrawal",
   ADJUSTMENT: "Adjustment",
   PENALTY: "Penalty",
+};
+
+const partnerTypeLabel: Record<string, string> = {
+  SO_PARTNER: "SO partner",
+  REFERENCE_PARTNER: "Reference partner",
+  REGULAR_CONTRACT_PARTNER: "Regular contract partner",
 };
 
 function bdt(amount: number) {
@@ -93,6 +121,7 @@ export function WorkerBalances({
   emptyLabel = "No employees yet",
   createLabel,
   createRoles,
+  managerOwners = [],
   isSuperAdmin = false,
   onDelete,
 }: {
@@ -103,6 +132,7 @@ export function WorkerBalances({
   emptyLabel?: string;
   createLabel?: string;
   createRoles?: CreateOption[];
+  managerOwners?: ManagerOwnerOption[];
   isSuperAdmin?: boolean;
   onDelete?: (userId: string, code: string) => Promise<{ error?: string }>;
 }) {
@@ -111,19 +141,74 @@ export function WorkerBalances({
     workers[0] ?? null
   );
   const [dialog, setDialog] = useState<"adjust" | "penalty" | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [profileDraft, setProfileDraft] = useState({
+    partnerType: workers[0]?.partnerType ?? "SO_PARTNER",
+    managedByPartnerId: workers[0]?.managedByPartner?.id ?? "",
+    phone: workers[0]?.phone ?? "",
+    profession: workers[0]?.profession ?? "",
+    businessBrief: workers[0]?.businessBrief ?? "",
+  });
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createEmail, setCreateEmail] = useState("");
-  const [createRole, setCreateRole] = useState<CreateRole>(
-    createRoles?.[0]?.role ?? "TEAM_MEMBER"
+  const [createType, setCreateType] = useState(
+    createRoles?.[0]
+      ? `${createRoles[0].role}:${createRoles[0].partnerType ?? ""}`
+      : "TEAM_MEMBER:"
   );
+  const selectedCreateOption =
+    createRoles?.find(
+      (option) =>
+        `${option.role}:${option.partnerType ?? ""}` === createType
+    ) ?? createRoles?.[0];
+  const [ownerPartnerId, setOwnerPartnerId] = useState("");
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const filteredWorkers = workers.filter((worker) => {
+    const keyword = search.trim().toLowerCase();
+    const haystack = [
+      worker.name,
+      worker.email ?? "",
+      worker.phone ?? "",
+      worker.profession ?? "",
+      worker.partnerType ?? "",
+      worker.role ?? "",
+      worker.managedByPartner?.name ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
+    const matchesSearch = !keyword || haystack.includes(keyword);
+    const matchesType =
+      typeFilter === "ALL" ||
+      (typeFilter === "MANAGER" && worker.role === "PARTNER_MANAGER") ||
+      worker.partnerType === typeFilter;
+    const matchesStatus =
+      statusFilter === "ALL" || worker.accountStatus === statusFilter;
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  function selectWorker(worker: WorkerRow) {
+    setSelected(worker);
+    setResetPassword(null);
+    setError("");
+    setProfileDraft({
+      partnerType: worker.partnerType ?? "SO_PARTNER",
+      managedByPartnerId: worker.managedByPartner?.id ?? "",
+      phone: worker.phone ?? "",
+      profession: worker.profession ?? "",
+      businessBrief: worker.businessBrief ?? "",
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -148,7 +233,12 @@ export function WorkerBalances({
     const result = await inviteTeamMember({
       name: createName.trim(),
       email: createEmail.trim(),
-      role: createRole,
+      role: selectedCreateOption?.role ?? "TEAM_MEMBER",
+      partnerType: selectedCreateOption?.partnerType,
+      managedByPartnerId:
+        selectedCreateOption?.role === "PARTNER_MANAGER"
+          ? ownerPartnerId
+          : undefined,
     });
     setBusy(false);
     if (result.error) return setError(result.error);
@@ -162,7 +252,12 @@ export function WorkerBalances({
     if (!open) {
       setCreateName("");
       setCreateEmail("");
-      setCreateRole(createRoles?.[0]?.role ?? "TEAM_MEMBER");
+      setCreateType(
+        createRoles?.[0]
+          ? `${createRoles[0].role}:${createRoles[0].partnerType ?? ""}`
+          : "TEAM_MEMBER:"
+      );
+      setOwnerPartnerId("");
       setTempPassword(null);
       setError("");
     }
@@ -209,6 +304,30 @@ export function WorkerBalances({
     router.refresh();
   }
 
+  async function saveProfileControl(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) return;
+
+    setError("");
+    setBusy(true);
+    const result = await updatePartnerAccount({
+      userId: selected.id,
+      partnerType: profileDraft.partnerType as PartnerType,
+      managedByPartnerId:
+        selected.role === "PARTNER_MANAGER"
+          ? profileDraft.managedByPartnerId
+          : undefined,
+      phone: profileDraft.phone,
+      profession: profileDraft.profession,
+      businessBrief: profileDraft.businessBrief,
+    });
+    setBusy(false);
+
+    if (result.error) return setError(result.error);
+    setProfileOpen(false);
+    router.refresh();
+  }
+
   function statusButtonClass(status: "ACTIVE" | "HOLD" | "LOCKED" | "SUSPENDED") {
     if (selected?.accountStatus !== status) return "";
     if (status === "ACTIVE") return "border-green-500 bg-green-500 text-white hover:bg-green-600";
@@ -243,20 +362,60 @@ export function WorkerBalances({
         </div>
       </div>
 
+      <div className="grid gap-3 rounded-lg border bg-background p-3 md:grid-cols-[1fr_180px_180px]">
+        <Input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search partner, manager, email, phone or type"
+        />
+        <Select
+          value={typeFilter}
+          onValueChange={(value) => value && setTypeFilter(value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All types</SelectItem>
+            <SelectItem value="SO_PARTNER">SO partner</SelectItem>
+            <SelectItem value="REFERENCE_PARTNER">Reference partner</SelectItem>
+            <SelectItem value="REGULAR_CONTRACT_PARTNER">
+              Regular contract
+            </SelectItem>
+            <SelectItem value="MANAGER">Managers</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => value && setStatusFilter(value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All statuses</SelectItem>
+            <SelectItem value="ACTIVE">Active</SelectItem>
+            <SelectItem value="HOLD">Hold</SelectItem>
+            <SelectItem value="LOCKED">Locked</SelectItem>
+            <SelectItem value="SUSPENDED">Suspended</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
         <div className="space-y-2">
-          {workers.length === 0 && (
+          {filteredWorkers.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center text-sm text-muted-foreground">
                 {emptyLabel}
               </CardContent>
             </Card>
           )}
-          {workers.map((worker) => (
+          {filteredWorkers.map((worker) => (
             <button
               key={worker.id}
               type="button"
-              onClick={() => setSelected(worker)}
+              onClick={() => selectWorker(worker)}
               className="w-full text-left"
             >
               <Card
@@ -285,11 +444,23 @@ export function WorkerBalances({
                       </p>
                       {(worker.phone || worker.profession || worker.role) && (
                         <p className="truncate text-[10px] text-muted-foreground">
-                          {[worker.phone, worker.profession, worker.role]
+                          {[
+                            worker.phone,
+                            worker.profession,
+                            worker.partnerType
+                              ? partnerTypeLabel[worker.partnerType] ??
+                                worker.partnerType
+                              : worker.role,
+                          ]
                             .filter(Boolean)
                             .join(" / ")}
                         </p>
                       )}
+                      {worker.managedByPartner ? (
+                        <p className="truncate text-[10px] text-muted-foreground">
+                          Manager for {worker.managedByPartner.name}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
@@ -320,9 +491,25 @@ export function WorkerBalances({
                   <Badge variant="secondary" className="text-[10px]">
                     {selected.accountStatus.toLowerCase()}
                   </Badge>
+                  {selected.partnerType ? (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {partnerTypeLabel[selected.partnerType] ??
+                        selected.partnerType}
+                    </Badge>
+                  ) : null}
                   <Badge variant="secondary" className="text-[10px]">
                     ID {selected.identityStatus.toLowerCase()}
                   </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      selectWorker(selected);
+                      setProfileOpen(true);
+                    }}
+                  >
+                    Profile control
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -396,6 +583,23 @@ export function WorkerBalances({
                   <p className="break-all font-mono font-semibold">{resetPassword}</p>
                 </div>
               )}
+              {selected.managedByPartner ? (
+                <div className="mb-3 rounded-md border bg-muted/30 p-3 text-xs">
+                  <p className="font-medium">Manager assignment</p>
+                  <p className="text-muted-foreground">
+                    This manager belongs to {selected.managedByPartner.name} (
+                    {selected.managedByPartner.email}).
+                  </p>
+                </div>
+              ) : null}
+              {selected.businessBrief ? (
+                <div className="mb-3 rounded-md border bg-muted/30 p-3 text-xs">
+                  <p className="font-medium">Business brief</p>
+                  <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+                    {selected.businessBrief}
+                  </p>
+                </div>
+              ) : null}
               <div className="mb-3 rounded-md border bg-muted/30 p-3 text-xs">
                 <p className="font-medium">Identity documents</p>
                 <p className="text-muted-foreground">
@@ -538,6 +742,125 @@ export function WorkerBalances({
         </DialogContent>
       </Dialog>
 
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Partner profile control</DialogTitle>
+            <DialogDescription>
+              Control the partner type, manager assignment and public business
+              profile details for {selected?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={saveProfileControl} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Partner type</Label>
+              <Select
+                value={profileDraft.partnerType}
+                onValueChange={(value) =>
+                  value &&
+                  setProfileDraft((current) => ({
+                    ...current,
+                    partnerType: value,
+                  }))
+                }
+                disabled={busy || selected?.role === "PARTNER_MANAGER"}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SO_PARTNER">SO partner</SelectItem>
+                  <SelectItem value="REFERENCE_PARTNER">
+                    Reference partner
+                  </SelectItem>
+                  <SelectItem value="REGULAR_CONTRACT_PARTNER">
+                    Regular contract partner
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {selected?.role === "PARTNER_MANAGER" && (
+              <div className="space-y-2">
+                <Label>Manager for</Label>
+                <Select
+                  value={profileDraft.managedByPartnerId}
+                  onValueChange={(value) =>
+                    value &&
+                    setProfileDraft((current) => ({
+                      ...current,
+                      managedByPartnerId: value,
+                    }))
+                  }
+                  disabled={busy}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select partner owner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managerOwners.map((owner) => (
+                      <SelectItem key={owner.id} value={owner.id}>
+                        {owner.name} -{" "}
+                        {owner.partnerType
+                          ? partnerTypeLabel[owner.partnerType] ??
+                            owner.partnerType
+                          : "Partner"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input
+                  value={profileDraft.phone}
+                  onChange={(event) =>
+                    setProfileDraft((current) => ({
+                      ...current,
+                      phone: event.target.value,
+                    }))
+                  }
+                  disabled={busy}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Profession / contract note</Label>
+                <Input
+                  value={profileDraft.profession}
+                  onChange={(event) =>
+                    setProfileDraft((current) => ({
+                      ...current,
+                      profession: event.target.value,
+                    }))
+                  }
+                  disabled={busy}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Business brief</Label>
+              <Textarea
+                value={profileDraft.businessBrief}
+                onChange={(event) =>
+                  setProfileDraft((current) => ({
+                    ...current,
+                    businessBrief: event.target.value,
+                  }))
+                }
+                disabled={busy}
+                className="min-h-28"
+                placeholder="What this partner does, contract terms, or internal notes."
+              />
+            </div>
+            {error && <p className="text-center text-sm text-red-500">{error}</p>}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Saving..." : "Save profile control"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={createOpen} onOpenChange={resetCreateDialog}>
         <DialogContent>
           {tempPassword ? (
@@ -599,10 +922,14 @@ export function WorkerBalances({
                 </div>
                 {createRoles && createRoles.length > 1 && (
                   <div className="space-y-2">
-                    <Label>Role</Label>
+                    <Label>Partner type</Label>
                     <Select
-                      value={createRole}
-                      onValueChange={(value) => setCreateRole(value as CreateRole)}
+                      value={createType}
+                      onValueChange={(value) => {
+                        if (!value) return;
+                        setCreateType(value);
+                        setOwnerPartnerId("");
+                      }}
                       disabled={busy}
                     >
                       <SelectTrigger>
@@ -610,12 +937,45 @@ export function WorkerBalances({
                       </SelectTrigger>
                       <SelectContent>
                         {createRoles.map((option) => (
-                          <SelectItem key={option.role} value={option.role}>
+                          <SelectItem
+                            key={`${option.role}:${option.partnerType ?? ""}`}
+                            value={`${option.role}:${option.partnerType ?? ""}`}
+                          >
                             {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                )}
+                {selectedCreateOption?.role === "PARTNER_MANAGER" && (
+                  <div className="space-y-2">
+                    <Label>Manager for</Label>
+                    <Select
+                      value={ownerPartnerId}
+                      onValueChange={(value) => {
+                        if (value) setOwnerPartnerId(value);
+                      }}
+                      disabled={busy}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select partner owner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {managerOwners.map((owner) => (
+                          <SelectItem key={owner.id} value={owner.id}>
+                            {owner.name} -{" "}
+                            {owner.partnerType
+                              ? partnerTypeLabel[owner.partnerType] ??
+                                owner.partnerType
+                              : "Partner"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      The manager will only belong to this selected partner.
+                    </p>
                   </div>
                 )}
                 {error && (

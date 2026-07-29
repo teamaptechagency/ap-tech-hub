@@ -8,6 +8,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
 import { notifyClientActivity } from "@/lib/client-activity";
+import { renderEmail } from "@/lib/email-template";
 
 // ============================================
 // PERMISSION
@@ -48,10 +49,12 @@ async function audit(
 // ============================================
 const clientSchema = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
-  contactName: z.string().min(2, "Contact name must be at least 2 characters"),
+  contactName: z.string().min(2, "Client name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   phone: z.string().optional(),
   country: z.string().optional(),
+  clientType: z.enum(["LOCAL", "WEBSITE", "MARKETPLACE"]).default("WEBSITE"),
+  marketplace: z.enum(["FIVERR", "UPWORK", "FREELANCER"]).optional(),
   currency: z.enum(["USD", "EUR", "GBP", "BDT"]),
   timezone: z.string().min(1),
 });
@@ -70,6 +73,67 @@ function tempPassword(): string {
   return out;
 }
 
+function marketplaceName(marketplace?: string | null) {
+  if (marketplace === "FIVERR") return "Fiverr";
+  if (marketplace === "UPWORK") return "Upwork";
+  if (marketplace === "FREELANCER") return "Freelancer";
+  return "Marketplace";
+}
+
+function clientTypeLabel(type: ClientForm["clientType"], marketplace?: string | null) {
+  if (type === "LOCAL") return "Local client";
+  if (type === "MARKETPLACE") {
+    return `${marketplaceName(marketplace)} marketplace client`;
+  }
+  return "Website client";
+}
+
+async function sendClientPortalCredentialsEmail(input: {
+  to: string;
+  name: string;
+  companyName: string;
+  password: string;
+  reset?: boolean;
+}) {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.log(
+        `[DEV] Client portal credentials mail to ${input.to}: ${input.password}`
+      );
+      return;
+    }
+
+    const { Resend } = await import("resend");
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const base = process.env.APP_URL ?? "http://localhost:3000";
+
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM ?? "AP Tech Hub <onboarding@resend.dev>",
+      to: input.to,
+      subject: input.reset
+        ? "Your AP Tech Hub portal password was reset"
+        : "Welcome to your AP Tech Hub client portal",
+      html: renderEmail({
+        title: input.reset ? "Portal password reset" : "Welcome to your portal",
+        eyebrow: "Client portal",
+        greeting: `Hi ${input.name},`,
+        intro: input.reset
+          ? "Your AP Tech Hub client portal password has been reset. Use the temporary password below to sign in."
+          : "Your AP Tech Hub client portal is ready. You can use it to follow projects, invoices, messages, payments, and support.",
+        details: [
+          { label: "Client", value: input.companyName },
+          { label: "Login email", value: input.to },
+          { label: "Temporary password", value: input.password },
+        ],
+        action: { label: "Open client portal", href: `${base}/login` },
+        note: "Please sign in and change this temporary password from your profile. Never share this password or any verification code with anyone.",
+      }),
+    });
+  } catch (error) {
+    console.error("Client portal credentials email failed:", error);
+  }
+}
+
 // ============================================
 // CREATE CLIENT (optionally with portal login)
 // ============================================
@@ -81,6 +145,9 @@ export async function createClient(
 
   const parsed = clientSchema.safeParse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (parsed.data.clientType === "MARKETPLACE" && !parsed.data.marketplace) {
+    return { error: "Select the marketplace for this client" };
+  }
 
   const exists = await prisma.client.findUnique({
     where: { email: parsed.data.email },
@@ -94,6 +161,11 @@ export async function createClient(
       email: parsed.data.email,
       phone: parsed.data.phone || null,
       country: parsed.data.country || null,
+      clientType: parsed.data.clientType,
+      marketplace:
+        parsed.data.clientType === "MARKETPLACE"
+          ? parsed.data.marketplace
+          : null,
       currency: parsed.data.currency,
       timezone: parsed.data.timezone,
     },
@@ -121,6 +193,9 @@ export async function updateClient(id: string, formData: ClientForm) {
 
   const parsed = clientSchema.safeParse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (parsed.data.clientType === "MARKETPLACE" && !parsed.data.marketplace) {
+    return { error: "Select the marketplace for this client" };
+  }
 
   await prisma.client.update({
     where: { id },
@@ -130,6 +205,11 @@ export async function updateClient(id: string, formData: ClientForm) {
       email: parsed.data.email,
       phone: parsed.data.phone || null,
       country: parsed.data.country || null,
+      clientType: parsed.data.clientType,
+      marketplace:
+        parsed.data.clientType === "MARKETPLACE"
+          ? parsed.data.marketplace
+          : null,
       currency: parsed.data.currency,
       timezone: parsed.data.timezone,
     },
@@ -172,7 +252,20 @@ export async function createClientLogin(clientId: string) {
     },
   });
 
-  await audit(session.user.id, "CLIENT_LOGIN_CREATED", "Client", clientId);
+  await audit(
+    session.user.id,
+    "CLIENT_LOGIN_CREATED",
+    "Client",
+    clientId,
+    clientTypeLabel(client.clientType, client.marketplace)
+  );
+
+  await sendClientPortalCredentialsEmail({
+    to: client.email,
+    name: client.contactName,
+    companyName: client.companyName,
+    password,
+  });
 
   revalidatePath("/clients");
   return { success: true, password };
@@ -188,6 +281,7 @@ export async function resetClientLogin(clientId: string) {
   const user = await prisma.user.findFirst({
     where: { clientId, role: { in: ["CLIENT", "CLIENT_MANAGER"] } },
     orderBy: { createdAt: "asc" },
+    include: { client: true },
   });
   if (!user) return { error: "This client has no login yet" };
 
@@ -198,6 +292,14 @@ export async function resetClientLogin(clientId: string) {
   });
 
   await audit(session.user.id, "CLIENT_LOGIN_RESET", "Client", clientId);
+
+  await sendClientPortalCredentialsEmail({
+    to: user.email,
+    name: user.name,
+    companyName: user.client?.companyName ?? "Client account",
+    password,
+    reset: true,
+  });
 
   return { success: true, password };
 }

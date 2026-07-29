@@ -79,8 +79,11 @@ model User {
   // Partner-facing: what this partner's business does. Replaces the
   // admin-managed Skill list, which only makes sense for team members.
   businessBrief String?
+  // SO_PARTNER | REFERENCE_PARTNER | REGULAR_CONTRACT_PARTNER. Role still
+  // controls portal access; this labels the business relationship.
+  partnerType   String?
 
-  // A PARTNER_MANAGER belongs to exactly one BUSINESS_PARTNER, who creates
+  // A PARTNER_MANAGER belongs to exactly one partner account, who creates
   // the account and controls its permissions. Null on a manager means the
   // account predates this link and is not yet assigned to a partner.
   managedByPartnerId String?
@@ -317,23 +320,36 @@ model Skill {
 }
 
 // ============================================
-// CLIENTS (internal clients with portal access)
-// External (Fiverr/Upwork) clients live on Job
+// CLIENTS (portal-capable clients)
 // ============================================
 
+enum ClientType {
+  LOCAL
+  WEBSITE
+  MARKETPLACE
+}
+
+enum ClientMarketplace {
+  FIVERR
+  UPWORK
+  FREELANCER
+}
+
 model Client {
-  id          String  @id @default(cuid())
+  id          String             @id @default(cuid())
   companyName String
   contactName String
-  email       String  @unique
+  email       String             @unique
   phone       String?
   country     String?
-  status      String  @default("ACTIVE")
-  currency    String  @default("USD")
-  timezone    String  @default("UTC")
+  clientType  ClientType         @default(WEBSITE)
+  marketplace ClientMarketplace?
+  status      String             @default("ACTIVE")
+  currency    String             @default("USD")
+  timezone    String             @default("UTC")
   // Cached wallet (ledgers = ClientTxn / PointTxn)
-  balance     Decimal @default(0) @db.Decimal(12, 2)
-  points      Int     @default(0)
+  balance     Decimal            @default(0) @db.Decimal(12, 2)
+  points      Int                @default(0)
 
   users              User[]
   jobs               Job[]

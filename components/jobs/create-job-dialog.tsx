@@ -36,6 +36,12 @@ type Option = {
   name: string;
 };
 
+type ClientOption = Option & {
+  country: string | null;
+  clientType: "LOCAL" | "WEBSITE" | "MARKETPLACE";
+  marketplace: "FIVERR" | "UPWORK" | "FREELANCER" | null;
+};
+
 type SelectedMember = {
   userId: string;
   workerValue: string;
@@ -57,7 +63,7 @@ type JobTypeOption = {
 type CreateJobDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  clients: Option[];
+  clients: ClientOption[];
   teamMembers: Option[];
   skills: Option[];
   receivedUsdRate: number;
@@ -233,8 +239,28 @@ export function CreateJobDialog({
       setExternalName("");
       setExternalCountry("");
       setExternalSource("Fiverr");
-    } else {
+    } else if (mode === "LOCAL") {
       setClientId("");
+    }
+  }
+
+  function marketplaceFromClient(client: ClientOption) {
+    if (client.marketplace === "FIVERR") return "Fiverr";
+    if (client.marketplace === "UPWORK") return "Upwork";
+    if (client.marketplace === "FREELANCER") return "Freelancer";
+    return externalSource;
+  }
+
+  function handleLinkedClientChange(value: string | null) {
+    if (!value) return;
+    setClientId(value);
+    const selectedClient = clients.find((client) => client.id === value);
+    if (!selectedClient) return;
+
+    if (clientMode === "EXTERNAL") {
+      setExternalName(selectedClient.name);
+      setExternalCountry(selectedClient.country ?? "");
+      setExternalSource(marketplaceFromClient(selectedClient));
     }
   }
 
@@ -279,8 +305,8 @@ export function CreateJobDialog({
       return;
     }
 
-    if (clientMode === "EXTERNAL" && !cleanExternalName) {
-      setError("Please enter the external client name.");
+    if (clientMode === "EXTERNAL" && !clientId && !cleanExternalName) {
+      setError("Please select or enter the marketplace client name.");
       return;
     }
 
@@ -341,8 +367,7 @@ export function CreateJobDialog({
         clientMode,
         // LOCAL may optionally carry a client link and/or a written-in name,
         // so it passes through whatever the user filled in.
-        clientId:
-          clientMode !== "EXTERNAL" && clientId ? clientId : undefined,
+        clientId,
         externalSource:
           clientMode === "EXTERNAL"
             ? externalSource
@@ -519,7 +544,7 @@ export function CreateJobDialog({
                     : "text-muted-foreground hover:bg-muted"
                 }`}
               >
-                External client
+                Marketplace client
               </button>
 
               <button
@@ -615,51 +640,82 @@ export function CreateJobDialog({
                 )}
               </div>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-3">
-                <Select
-                  value={externalSource}
-                  onValueChange={(value) => {
-                    if (value !== null) {
-                      setExternalSource(value);
+              <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Select
+                    value={externalSource}
+                    onValueChange={(value) => {
+                      if (value !== null) {
+                        setExternalSource(value);
+                      }
+                    }}
+                    disabled={loading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Marketplace" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="Fiverr">
+                        Fiverr
+                      </SelectItem>
+                      <SelectItem value="Upwork">
+                        Upwork
+                      </SelectItem>
+                      <SelectItem value="Freelancer">
+                        Freelancer
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={clientId}
+                    onValueChange={handleLinkedClientChange}
+                    disabled={loading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select portal client (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {clientId && (
+                  <button
+                    type="button"
+                    onClick={() => setClientId("")}
+                    className="text-xs text-muted-foreground underline"
+                  >
+                    Clear selected portal client
+                  </button>
+                )}
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Input
+                    value={externalName}
+                    onChange={(event) =>
+                      setExternalName(event.target.value)
                     }
-                  }}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Source" />
-                  </SelectTrigger>
+                    placeholder="Client name"
+                    disabled={loading || Boolean(clientId)}
+                    required={!clientId}
+                  />
 
-                  <SelectContent>
-                    <SelectItem value="Fiverr">
-                      Fiverr
-                    </SelectItem>
-                    <SelectItem value="Upwork">
-                      Upwork
-                    </SelectItem>
-                    <SelectItem value="Other">
-                      Other
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Input
-                  value={externalName}
-                  onChange={(event) =>
-                    setExternalName(event.target.value)
-                  }
-                  placeholder="Client name"
-                  disabled={loading}
-                  required
-                />
-
-                <Input
-                  value={externalCountry}
-                  onChange={(event) =>
-                    setExternalCountry(event.target.value)
-                  }
-                  placeholder="Country"
-                  disabled={loading}
-                />
+                  <Input
+                    value={externalCountry}
+                    onChange={(event) =>
+                      setExternalCountry(event.target.value)
+                    }
+                    placeholder="Country"
+                    disabled={loading || Boolean(clientId)}
+                  />
+                </div>
               </div>
             )}
           </div>

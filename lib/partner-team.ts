@@ -10,9 +10,9 @@
  * never anything admin-side.
  */
 export const PARTNER_MANAGER_RESOURCES = [
-  { key: "partnerOrders", label: "Special orders" },
+  { key: "partnerOrders", label: "Partner work" },
   { key: "partnerMessages", label: "Messages" },
-  { key: "partnerBalance", label: "Balance & payouts" },
+  { key: "partnerBalance", label: "Balance, commission & payouts" },
 ] as const;
 
 export type PartnerManagerResource =
