@@ -705,6 +705,22 @@ export async function sendMessage(
     };
   }
 
+  // A signed-in session can outlive the user row it points at — a deleted
+  // account, or a database restored from an older snapshot. The insert below
+  // would then fail on Message_senderId_fkey and surface as a send that spins
+  // forever, so turn it into something the person can actually act on.
+  const senderExists = await prisma.user.findUnique({
+    where: { id: access.session.user.id },
+    select: { id: true },
+  });
+
+  if (!senderExists) {
+    return {
+      error:
+        "Your sign-in is no longer valid. Please sign out and sign in again.",
+    };
+  }
+
   // ============================================
   // GHOST-SEND: admin replying as a team member
   // Only allowed inside a direct client<->team
