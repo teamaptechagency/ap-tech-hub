@@ -2139,6 +2139,21 @@ export function LandingPage({
               </div>
             ))}
           </div>
+
+          {/*
+            The totals above are not website enquiries alone — a large share of
+            the work came through freelance marketplaces. Saying so turns an
+            obvious question into a trust signal instead of leaving visitors to
+            wonder where the numbers come from.
+          */}
+          <div className="border-t border-white/10">
+            <p className="mx-auto max-w-[1140px] px-4 py-3.5 text-center text-xs leading-6 text-[#9aa3b3]">
+              Counted across every channel we work in — direct clients plus{" "}
+              <span className="font-semibold text-[#f5a83c]">Fiverr</span>,{" "}
+              <span className="font-semibold text-[#f5a83c]">Upwork</span> and
+              other marketplaces. Same team, same standard, wherever you hire us.
+            </p>
+          </div>
         </div>
       </section>
       )}
