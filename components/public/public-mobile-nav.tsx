@@ -48,13 +48,13 @@ export function PublicMobileNav() {
         onClick={() => setOpen(true)}
         aria-label="Open menu"
         aria-expanded={open}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#e8e3dc] text-[#101623] transition hover:border-[#101623] md:hidden"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#e8e3dc] text-[#101623] transition hover:border-[#101623] lg:hidden"
       >
         <Menu className="h-5 w-5" />
       </button>
 
       <div
-        className={`fixed inset-0 z-50 transition-opacity md:hidden ${
+        className={`fixed inset-0 z-50 transition-opacity lg:hidden ${
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         }`}
         role="dialog"
