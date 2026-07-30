@@ -21,7 +21,12 @@ export const PUBLIC_NAV_LINKS: { label: string; href: string }[] = [
 // behind a "More" dropdown. Both sets are derived from the list above so it
 // stays the single source of truth — the mobile drawer and the footer still
 // render all ten, in this order.
-const MORE_NAV_HREFS = new Set(["/partners", "/company", "/compliance"]);
+const MORE_NAV_HREFS = new Set([
+  "/partners",
+  "/company",
+  "/compliance",
+  "/blog",
+]);
 
 export const PUBLIC_PRIMARY_NAV_LINKS = PUBLIC_NAV_LINKS.filter(
   (link) => !MORE_NAV_HREFS.has(link.href)
