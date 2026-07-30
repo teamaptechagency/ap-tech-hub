@@ -1,7 +1,7 @@
 import Link from "next/link";
 
+import { PublicDesktopNav } from "@/components/public/public-desktop-nav";
 import { PublicMobileNav } from "@/components/public/public-mobile-nav";
-import { PUBLIC_NAV_LINKS } from "@/lib/public-nav";
 
 const footerGroups = [
   {
@@ -57,17 +57,16 @@ export function PublicPageShell({
     <main className="min-h-screen bg-[#faf8f5] text-[#101623]">
       <header className="border-b border-[#e8e3dc] bg-white">
         <div className="mx-auto flex max-w-[1140px] flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link href="/" className="text-xl font-extrabold">
-            AP Tech <span className="text-[#00c971]">Hub</span>
+          {/* "AP Tech Hub" is the internal portal's name — the public site is
+              AP Tech Agency, which is what every other header and this page's
+              own footer already say. */}
+          <Link
+            href="/"
+            className="shrink-0 whitespace-nowrap text-xl font-extrabold"
+          >
+            AP Tech <span className="text-[#c6613f]">Agency</span>
           </Link>
-          {/* Inline links from md up; below that they live in the drawer. */}
-          <nav className="hidden flex-wrap gap-x-5 gap-y-2 text-sm text-[#6b7280] md:flex">
-            {PUBLIC_NAV_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="hover:text-[#c6613f]">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <PublicDesktopNav />
           <PublicMobileNav />
         </div>
       </header>

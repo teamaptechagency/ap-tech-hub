@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
+import { PublicDesktopNav } from "@/components/public/public-desktop-nav";
 import { PUBLIC_NAV_LINKS } from "@/lib/public-nav";
 
 export type BlogShellProps = {
@@ -45,19 +46,7 @@ export function BlogShell({
               AP Tech <span className="text-[#c6613f]">Agency</span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-5 text-sm font-semibold text-[#6b7280] lg:flex">
-            {PUBLIC_NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`transition hover:text-[#101623] ${
-                  isActive(link.href) ? "text-[#101623]" : ""
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <PublicDesktopNav />
           <div className="hidden items-center gap-3 lg:flex">
             {portalHref ? (
               <Link
