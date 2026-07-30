@@ -27,6 +27,13 @@ const nextConfig: NextConfig = {
         source: "/favicon.ico",
         destination: "/icon",
       },
+      // Digital Asset Links must be served from this exact well-known path for
+      // Chrome to verify the Android app against this domain. It lives in a
+      // route handler because the certificate fingerprints come from env.
+      {
+        source: "/.well-known/assetlinks.json",
+        destination: "/api/assetlinks",
+      },
     ];
   },
   async headers() {

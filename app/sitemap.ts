@@ -66,6 +66,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.9,
     },
+    {
+      url: `${baseUrl}/download`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
     // Individual articles carry the long-tail keywords, so each published
     // post gets its own entry with a real last-modified date.
     ...blogPosts.map((post) => ({

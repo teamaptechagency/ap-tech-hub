@@ -48,3 +48,13 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# android build outputs
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/release/
+# signing material must never be committed
+*.jks
+*.keystore

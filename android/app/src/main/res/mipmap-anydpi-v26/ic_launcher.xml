@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon for Android 8+. The launcher applies its own mask (circle,
+  squircle, rounded square) to these two layers, which is why the foreground
+  keeps the wordmark well inside the safe zone.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/brandDark" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

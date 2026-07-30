@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:statusBarColor">@color/brandDark</item>
+        <item name="android:navigationBarColor">@color/brandDark</item>
+    </style>
+
+    <!--
+      The launcher activity is translucent: androidbrowserhelper draws the
+      splash image over it, then fades into Chrome. A solid window here would
+      show as a flash of colour before the splash appears.
+    -->
+    <style name="Theme.LauncherActivity" parent="AppTheme">
+        <item name="android:windowBackground">@color/brandDark</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

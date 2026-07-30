@@ -1,0 +1,91 @@
+plugins {
+    id 'com.android.application'
+}
+
+/**
+ * Release signing is driven entirely by environment variables so no secret ever
+ * lands in the repo. CI writes the keystore to disk from a base64 secret and
+ * exports these four values; see .github/workflows/android-release.yml.
+ *
+ * When they are absent (a local debug build, or a PR from a fork) the release
+ * signing config is simply not registered, and `assembleDebug` still works.
+ *
+ * Locals are prefixed to avoid shadowing the identically-named DSL properties
+ * inside signingConfigs.
+ */
+def ksPath = System.getenv("ANDROID_KEYSTORE_PATH")
+def ksPassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def ksKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def ksKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+def hasReleaseSigning = ksPath && file(ksPath).exists() &&
+        ksPassword && ksKeyAlias && ksKeyPassword
+
+android {
+    namespace 'com.aptechagency.hub'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId project.property('apApplicationId').toString()
+        minSdk 21
+        targetSdk 35
+        versionCode project.property('apVersionCode').toString().toInteger()
+        versionName project.property('apVersionName').toString()
+
+        // Generated into R.string at build time so the launch URL and verified
+        // host are configurable per build rather than hardcoded in resources.
+        // Do not also declare these in strings.xml — that is a duplicate
+        // resource error.
+        resValue "string", "launch_url", project.property('apLaunchUrl').toString()
+        manifestPlaceholders = [
+                hostName: project.property('apHostName').toString()
+        ]
+    }
+
+    if (hasReleaseSigning) {
+        signingConfigs {
+            release {
+                storeFile file(ksPath)
+                storePassword ksPassword
+                keyAlias ksKeyAlias
+                keyPassword ksKeyPassword
+                // v1 keeps the directly-downloaded APK installable on older
+                // devices; v2+ is what modern Android actually verifies.
+                enableV1Signing true
+                enableV2Signing true
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
+            // A TWA ships no app logic worth shrinking, and minification can
+            // strip classes androidbrowserhelper resolves reflectively.
+            minifyEnabled false
+            shrinkResources false
+        }
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    bundle {
+        language {
+            // The web app localises itself; splitting by language would strip
+            // resources the shell still expects to be present.
+            enableSplit = false
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.0'
+}

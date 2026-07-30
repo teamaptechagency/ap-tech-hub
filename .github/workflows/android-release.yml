@@ -1,0 +1,141 @@
+name: Android release
+
+# Builds the AP Tech Hub Android app in two shapes:
+#   - AAB  -> what Play Console accepts for publishing
+#   - APK  -> what the website serves for direct install
+#
+# Run it from the Actions tab ("Run workflow"), or push a tag like android-v1.0.1.
+# Nothing is signed unless the four keystore secrets below are configured; the
+# build still runs so you can check it compiles.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   ANDROID_KEYSTORE_BASE64   base64 of your .jks   (see android/README.md)
+#   ANDROID_KEYSTORE_PASSWORD keystore password
+#   ANDROID_KEY_ALIAS         key alias
+#   ANDROID_KEY_PASSWORD      key password
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: 'Version name shown to users, e.g. 1.0.1'
+        required: true
+        default: '1.0.0'
+      versionCode:
+        description: 'Integer build number — must be higher than the last Play upload'
+        required: true
+        default: '1'
+      launchUrl:
+        description: 'Site the app opens'
+        required: true
+        default: 'https://aptechagency.com/'
+  push:
+    tags:
+      - 'android-v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ inputs.versionName }}" >> "$GITHUB_OUTPUT"
+            echo "code=${{ inputs.versionCode }}" >> "$GITHUB_OUTPUT"
+            echo "url=${{ inputs.launchUrl }}" >> "$GITHUB_OUTPUT"
+          else
+            # Tag android-v1.0.1 -> versionName 1.0.1. The run number gives a
+            # monotonically increasing versionCode so Play never sees a repeat.
+            NAME="${GITHUB_REF_NAME#android-v}"
+            echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+            echo "code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "url=https://aptechagency.com/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Decode keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No keystore secret set — building unsigned."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$KEYSTORE_BASE64" | base64 -d > "${RUNNER_TEMP}/release.jks"
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build AAB and APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ steps.keystore.outputs.present == 'true' && format('{0}/release.jks', runner.temp) || '' }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          gradle --no-daemon bundleRelease assembleRelease \
+            -PapVersionName='${{ steps.version.outputs.name }}' \
+            -PapVersionCode='${{ steps.version.outputs.code }}' \
+            -PapLaunchUrl='${{ steps.version.outputs.url }}'
+
+      - name: Collect artifacts
+        id: collect
+        run: |
+          mkdir -p dist
+          VERSION='${{ steps.version.outputs.name }}'
+          # Filenames differ between signed and unsigned builds, so glob.
+          cp android/app/build/outputs/bundle/release/*.aab \
+             "dist/ap-tech-hub-${VERSION}.aab"
+          cp android/app/build/outputs/apk/release/*.apk \
+             "dist/ap-tech-hub-${VERSION}.apk"
+          ls -lh dist
+
+      - name: Report signing status
+        run: |
+          if [ '${{ steps.keystore.outputs.present }}' = 'true' ]; then
+            echo "### Signed release build" >> "$GITHUB_STEP_SUMMARY"
+            echo "Upload the .aab to Play Console, and publish the .apk on /download." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Unsigned build" >> "$GITHUB_STEP_SUMMARY"
+            echo "Add the ANDROID_KEYSTORE_* secrets to produce an installable release." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Version ${{ steps.version.outputs.name }} (code ${{ steps.version.outputs.code }})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ap-tech-hub-android-${{ steps.version.outputs.name }}
+          path: dist/
+          retention-days: 90
+
+      - name: Print signing fingerprint for assetlinks
+        if: steps.keystore.outputs.present == 'true'
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          # This SHA-256 goes into the ANDROID_ASSETLINKS_SHA256 env var on the
+          # website, alongside the Play App Signing fingerprint.
+          keytool -list -v \
+            -keystore "${RUNNER_TEMP}/release.jks" \
+            -alias "$KEY_ALIAS" \
+            -storepass "$KEYSTORE_PASSWORD" 2>/dev/null \
+            | grep -A1 'SHA256:' | head -2 >> "$GITHUB_STEP_SUMMARY" || true

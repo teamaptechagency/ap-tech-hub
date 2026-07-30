@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the site's header/hero palette so the system bars and splash
+         blend into the web content instead of flashing white. -->
+    <color name="brandDark">#101623</color>
+    <color name="brandAccent">#C6613F</color>
+    <color name="brandAmber">#F5A83C</color>
+</resources>
