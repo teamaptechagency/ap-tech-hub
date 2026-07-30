@@ -6,6 +6,16 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "dna-digital-dev",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d C:\\Users\\anger\\Downloads\\dna-digital-main\\dna-digital-main && npx astro dev --port %PORT%"
+      ],
+      "port": 4321,
+      "autoPort": true
     }
   ]
 }
