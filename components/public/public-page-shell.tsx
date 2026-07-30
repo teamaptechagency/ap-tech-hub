@@ -30,6 +30,7 @@ const footerGroups = [
       ["Portfolio", "/portfolio"],
       ["Case Studies", "/portfolio"],
       ["Blog", "/blog"],
+      ["Android App", "/download"],
       ["Client Documents", "/client-documents"],
       ["Request a Project", "/contact"],
     ],

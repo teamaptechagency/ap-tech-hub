@@ -21,6 +21,12 @@ const PUBLIC_PATHS = [
   // Trailing slash on purpose: "/blog" alone would also match the admin-only
   // "/blog-manager" route.
   "/blog/",
+  // Android app plumbing. Chrome fetches the asset links file unauthenticated
+  // to verify the Trusted Web Activity, and the APK download has to work for
+  // visitors who have not signed up yet.
+  "/.well-known/",
+  "/api/assetlinks",
+  "/api/download/",
 ];
 
 const PUBLIC_EXACT_PATHS = [
@@ -40,6 +46,10 @@ const PUBLIC_EXACT_PATHS = [
   // redirecting them to /login would leave the site with no crawlable icon.
   "/icon",
   "/apple-icon",
+  // Android app download page, plus the PWA manifest — Chrome reads the
+  // manifest before any user has signed in.
+  "/download",
+  "/manifest.webmanifest",
 ];
 
 export const proxy = auth((req) => {
