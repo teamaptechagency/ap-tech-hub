@@ -169,3 +169,81 @@
     print-color-adjust: exact !important;
   }
 }
+
+/*
+ * The blog post editor's editable surface. Tailwind's preflight strips heading
+ * sizes and list markers, so without these an author styling a paragraph as H2
+ * would see nothing change — which defeats the point of a visual editor.
+ */
+.prose-editor {
+  overflow-wrap: anywhere;
+}
+.prose-editor h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 1.25rem 0 0.5rem;
+}
+.prose-editor h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1.1rem 0 0.45rem;
+}
+.prose-editor h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 1rem 0 0.4rem;
+}
+.prose-editor p {
+  margin: 0.6rem 0;
+  line-height: 1.7;
+}
+.prose-editor ul,
+.prose-editor ol {
+  margin: 0.6rem 0;
+  padding-left: 1.5rem;
+}
+.prose-editor ul {
+  list-style: disc;
+}
+.prose-editor ol {
+  list-style: decimal;
+}
+.prose-editor li {
+  margin: 0.25rem 0;
+  line-height: 1.7;
+}
+.prose-editor blockquote {
+  margin: 0.9rem 0;
+  padding-left: 0.9rem;
+  border-left: 3px solid var(--primary);
+  font-style: italic;
+  opacity: 0.9;
+}
+.prose-editor pre {
+  margin: 0.8rem 0;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: color-mix(in oklch, var(--muted) 70%, transparent);
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+}
+.prose-editor code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  background: color-mix(in oklch, var(--muted) 70%, transparent);
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+}
+.prose-editor a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.prose-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.8rem 0;
+}
