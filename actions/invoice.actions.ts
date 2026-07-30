@@ -48,7 +48,10 @@ async function audit(
  * pay that way can carry it. Returns null when no charge is configured, which
  * keeps every other method behaving exactly as before.
  */
-export const METHOD_CHARGE_SETTING_KEYS: Record<string, string> = {
+// Not exported: a "use server" module may only export async functions, and
+// exporting this object breaks every action in the file (and every action on
+// any page that imports it). Only resolveMethodCharge below needs it.
+const METHOD_CHARGE_SETTING_KEYS: Record<string, string> = {
   BKASH: "payment.bkashChargePercent",
   NAGAD: "payment.nagadChargePercent",
 };
