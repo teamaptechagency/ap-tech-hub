@@ -1767,6 +1767,9 @@ model BlogPost {
   // The one term a post is written to rank for, plus supporting terms.
   primaryKeyword     String?
   secondaryKeywords  String?
+  // Who the post is written for, e.g. "startup founders in Bangladesh".
+  // Guides the writing and feeds schema.org audience on the article.
+  targetAudience     String?
   canonicalUrl    String?
   ogImageUrl      String?
   noIndex         Boolean @default(false)

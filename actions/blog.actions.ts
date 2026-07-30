@@ -96,6 +96,7 @@ export type BlogPostInput = {
   keywords?: string;
   primaryKeyword?: string;
   secondaryKeywords?: string;
+  targetAudience?: string;
   canonicalUrl?: string;
   ogImageUrl?: string;
   noIndex?: boolean;
@@ -182,6 +183,7 @@ export async function saveBlogPost(input: BlogPostInput) {
     keywords: optional(input.keywords),
     primaryKeyword: optional(input.primaryKeyword),
     secondaryKeywords: optional(input.secondaryKeywords),
+    targetAudience: optional(input.targetAudience),
     canonicalUrl: optional(input.canonicalUrl),
     ogImageUrl: optional(input.ogImageUrl),
     noIndex: Boolean(input.noIndex),
