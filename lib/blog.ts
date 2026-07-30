@@ -82,6 +82,7 @@ export type BlogPostDetail = BlogPostSummary & {
   keywords: string | null;
   primaryKeyword: string | null;
   secondaryKeywords: string | null;
+  targetAudience: string | null;
   canonicalUrl: string | null;
   ogImageUrl: string | null;
   noIndex: boolean;
@@ -138,6 +139,7 @@ type PostRow = {
   keywords: string | null;
   primaryKeyword: string | null;
   secondaryKeywords: string | null;
+  targetAudience: string | null;
   canonicalUrl: string | null;
   ogImageUrl: string | null;
   noIndex: boolean;
@@ -181,6 +183,7 @@ function toDetail(post: PostRow): BlogPostDetail {
     keywords: post.keywords,
     primaryKeyword: post.primaryKeyword,
     secondaryKeywords: post.secondaryKeywords,
+    targetAudience: post.targetAudience,
     canonicalUrl: post.canonicalUrl,
     ogImageUrl: post.ogImageUrl,
     noIndex: post.noIndex,

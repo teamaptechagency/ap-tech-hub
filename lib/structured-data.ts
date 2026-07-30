@@ -222,6 +222,14 @@ export function blogPostingJsonLd(
     publisher: { "@id": `${origin}/#organization` },
     ...(post.category ? { articleSection: post.category.name } : {}),
     ...(post.tags.length ? { keywords: post.tags.join(", ") } : {}),
+    ...(post.targetAudience?.trim()
+      ? {
+          audience: {
+            "@type": "Audience",
+            audienceType: post.targetAudience.trim(),
+          },
+        }
+      : {}),
     wordCount: post.content.split(/\s+/).filter(Boolean).length,
     inLanguage: "en",
   };

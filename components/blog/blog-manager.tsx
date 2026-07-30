@@ -62,6 +62,7 @@ export type AdminBlogPost = {
   keywords: string | null;
   primaryKeyword: string | null;
   secondaryKeywords: string | null;
+  targetAudience: string | null;
   canonicalUrl: string | null;
   ogImageUrl: string | null;
   noIndex: boolean;
@@ -89,6 +90,7 @@ type EditorState = {
   keywords: string;
   primaryKeyword: string;
   secondaryKeywords: string;
+  targetAudience: string;
   canonicalUrl: string;
   ogImageUrl: string;
   noIndex: boolean;
@@ -139,6 +141,7 @@ function emptyEditor(): EditorState {
     keywords: "",
     primaryKeyword: "",
     secondaryKeywords: "",
+    targetAudience: "",
     canonicalUrl: "",
     ogImageUrl: "",
     noIndex: false,
@@ -170,6 +173,7 @@ function toEditor(post: AdminBlogPost): EditorState {
     // their existing term is not silently dropped on the next save.
     primaryKeyword: post.primaryKeyword ?? "",
     secondaryKeywords: post.secondaryKeywords ?? "",
+    targetAudience: post.targetAudience ?? "",
     canonicalUrl: post.canonicalUrl ?? "",
     ogImageUrl: post.ogImageUrl ?? "",
     noIndex: post.noIndex,
@@ -1012,6 +1016,13 @@ export function BlogManager({
                   onChange={(value) => update("secondaryKeywords", value)}
                   placeholder="hire web developers, custom website design"
                   hint="Comma separated supporting terms. These plus the primary keyword build the keywords meta tag."
+                />
+                <Field
+                  label="Target audience"
+                  value={editor.targetAudience}
+                  onChange={(value) => update("targetAudience", value)}
+                  placeholder="Startup founders and small business owners in Bangladesh"
+                  hint="Who this post is written for. Keeps the writing focused and is published as the article's schema.org audience."
                 />
                 <Field
                   label="Canonical URL"
