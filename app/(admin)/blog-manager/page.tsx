@@ -1,5 +1,6 @@
 import { BlogManager } from "@/components/blog/blog-manager";
 import { getAllBlogCategories, getAllBlogPosts } from "@/lib/blog";
+import { buildInternalLinkTargets } from "@/lib/internal-link-targets";
 import { getLandingPageData } from "@/lib/landing-data";
 import { prisma } from "@/lib/prisma";
 
@@ -36,6 +37,7 @@ export default async function BlogAdminPage() {
       initialCategories={categories}
       authors={authors}
       siteUrl={landing.seo.siteUrl}
+      linkTargets={buildInternalLinkTargets(landing)}
     />
   );
 }
