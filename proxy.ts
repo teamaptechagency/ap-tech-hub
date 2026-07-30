@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { BUSINESS_POLICY_KEYS } from "@/lib/business-content";
 import {
   homeFor,
   ADMIN_ROLES,
@@ -50,6 +51,15 @@ const PUBLIC_EXACT_PATHS = [
   // manifest before any user has signed in.
   "/download",
   "/manifest.webmanifest",
+  // Transparency pages. These are linked from the public nav and footer on
+  // every page, so gating them behind login sent visitors and crawlers to a
+  // sign-in screen.
+  "/compliance",
+  "/company",
+  "/client-documents",
+  // Legal policies, served by app/[policy]. A publicly reachable privacy
+  // policy is also a hard requirement for the Play Store listing.
+  ...BUSINESS_POLICY_KEYS.map((slug) => `/${slug}`),
 ];
 
 export const proxy = auth((req) => {

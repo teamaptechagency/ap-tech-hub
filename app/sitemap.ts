@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { getBlogSitemapEntries } from "@/lib/blog";
+import { BUSINESS_POLICY_KEYS } from "@/lib/business-content";
 import { getLandingPageData } from "@/lib/landing-data";
 
 function publicBaseUrl(siteUrl: string) {
@@ -72,6 +73,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.7,
     },
+    // Transparency and legal pages. Publicly reachable, so worth crawling.
+    ...(["company", "compliance"] as const).map((path) => ({
+      url: `${baseUrl}/${path}`,
+      lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
+    ...BUSINESS_POLICY_KEYS.map((slug) => ({
+      url: `${baseUrl}/${slug}`,
+      lastModified,
+      changeFrequency: "yearly" as const,
+      priority: 0.3,
+    })),
     // Individual articles carry the long-tail keywords, so each published
     // post gets its own entry with a real last-modified date.
     ...blogPosts.map((post) => ({

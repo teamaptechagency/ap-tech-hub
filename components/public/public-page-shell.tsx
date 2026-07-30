@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PublicMobileNav } from "@/components/public/public-mobile-nav";
 import { PUBLIC_NAV_LINKS } from "@/lib/public-nav";
 
 const footerGroups = [
@@ -59,13 +60,15 @@ export function PublicPageShell({
           <Link href="/" className="text-xl font-extrabold">
             AP Tech <span className="text-[#00c971]">Hub</span>
           </Link>
-          <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#6b7280]">
+          {/* Inline links from md up; below that they live in the drawer. */}
+          <nav className="hidden flex-wrap gap-x-5 gap-y-2 text-sm text-[#6b7280] md:flex">
             {PUBLIC_NAV_LINKS.map((link) => (
               <Link key={link.href} href={link.href} className="hover:text-[#c6613f]">
                 {link.label}
               </Link>
             ))}
           </nav>
+          <PublicMobileNav />
         </div>
       </header>
 
