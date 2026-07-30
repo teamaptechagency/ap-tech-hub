@@ -41,6 +41,12 @@ function reportBlogError(context: string, error: unknown) {
 
 export type BlogStatusValue = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
+/** Whether a finished post is listed publicly. See the schema enum comment. */
+export type BlogVisibilityValue = "PUBLIC" | "PRIVATE";
+
+/** A landing section or service page a post links out to. */
+export type BlogInternalLink = { label: string; href: string };
+
 export type BlogCategorySummary = {
   id: string;
   name: string;
@@ -59,6 +65,7 @@ export type BlogPostSummary = {
   category: { name: string; slug: string } | null;
   tags: string[];
   status: BlogStatusValue;
+  visibility: BlogVisibilityValue;
   featured: boolean;
   publishedAt: Date | null;
   updatedAt: Date;
@@ -73,9 +80,12 @@ export type BlogPostDetail = BlogPostSummary & {
   metaTitle: string | null;
   metaDescription: string | null;
   keywords: string | null;
+  primaryKeyword: string | null;
+  secondaryKeywords: string | null;
   canonicalUrl: string | null;
   ogImageUrl: string | null;
   noIndex: boolean;
+  internalLinks: BlogInternalLink[];
   viewCount: number;
   createdAt: Date;
 };
@@ -90,6 +100,19 @@ function readTags(value: unknown): string[] {
     : [];
 }
 
+/** Json column, so anything could be in there — keep only well-formed links. */
+function readInternalLinks(value: unknown): BlogInternalLink[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const { label, href } = item as { label?: unknown; href?: unknown };
+    if (typeof label !== "string" || typeof href !== "string") return [];
+    if (!label.trim() || !href.trim()) return [];
+    return [{ label: label.trim(), href: href.trim() }];
+  });
+}
+
 type PostRow = {
   id: string;
   slug: string;
@@ -102,6 +125,7 @@ type PostRow = {
   category: { name: string; slug: string } | null;
   tags: unknown;
   status: string;
+  visibility: string;
   featured: boolean;
   publishedAt: Date | null;
   readingMinutes: number;
@@ -112,9 +136,12 @@ type PostRow = {
   metaTitle: string | null;
   metaDescription: string | null;
   keywords: string | null;
+  primaryKeyword: string | null;
+  secondaryKeywords: string | null;
   canonicalUrl: string | null;
   ogImageUrl: string | null;
   noIndex: boolean;
+  internalLinks: unknown;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -134,6 +161,7 @@ function toSummary(post: PostRow): BlogPostSummary {
       : null,
     tags: readTags(post.tags),
     status: post.status as BlogStatusValue,
+    visibility: post.visibility as BlogVisibilityValue,
     featured: post.featured,
     publishedAt: post.publishedAt,
     updatedAt: post.updatedAt,
@@ -151,9 +179,12 @@ function toDetail(post: PostRow): BlogPostDetail {
     metaTitle: post.metaTitle,
     metaDescription: post.metaDescription,
     keywords: post.keywords,
+    primaryKeyword: post.primaryKeyword,
+    secondaryKeywords: post.secondaryKeywords,
     canonicalUrl: post.canonicalUrl,
     ogImageUrl: post.ogImageUrl,
     noIndex: post.noIndex,
+    internalLinks: readInternalLinks(post.internalLinks),
     viewCount: post.viewCount,
     createdAt: post.createdAt,
   };
@@ -173,7 +204,11 @@ export async function getBlogCategories(): Promise<BlogCategorySummary[]> {
       }),
       prisma.blogPost.groupBy({
         by: ["categoryId"],
-        where: { status: "PUBLISHED", publishedAt: { lte: new Date() } },
+        where: {
+          status: "PUBLISHED",
+          visibility: "PUBLIC",
+          publishedAt: { lte: new Date() },
+        },
         _count: { _all: true },
       }),
     ]);
@@ -208,6 +243,7 @@ export async function getPublishedBlogPosts(options?: {
   try {
     const where = {
       status: "PUBLISHED" as const,
+      visibility: "PUBLIC" as const,
       publishedAt: { lte: new Date() },
       ...(options?.categorySlug && options.categorySlug !== "all"
         ? { category: { slug: options.categorySlug } }
@@ -251,6 +287,7 @@ export async function getBlogPostBySlug(
     });
 
     if (!post || post.status !== "PUBLISHED") return null;
+    if (post.visibility !== "PUBLIC") return null;
     if (post.publishedAt && post.publishedAt > new Date()) return null;
 
     return toDetail(post);
@@ -273,6 +310,7 @@ export async function getRelatedBlogPosts(
       ? await prisma.blogPost.findMany({
           where: {
             status: "PUBLISHED",
+            visibility: "PUBLIC",
             publishedAt: { lte: new Date() },
             categoryId: post.categoryId,
             id: { not: post.id },
@@ -288,6 +326,7 @@ export async function getRelatedBlogPosts(
     const filler = await prisma.blogPost.findMany({
       where: {
         status: "PUBLISHED",
+        visibility: "PUBLIC",
         publishedAt: { lte: new Date() },
         id: { notIn: [post.id, ...sameCategory.map((item) => item.id)] },
       },
@@ -309,6 +348,7 @@ export async function getBlogSitemapEntries() {
     const posts = await prisma.blogPost.findMany({
       where: {
         status: "PUBLISHED",
+        visibility: "PUBLIC",
         noIndex: false,
         publishedAt: { lte: new Date() },
       },

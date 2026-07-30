@@ -74,6 +74,29 @@ export function blogKeywordList(value: string | null | undefined) {
     .filter(Boolean);
 }
 
+/**
+ * The keywords meta tag, built from the primary term first and then the
+ * supporting ones. `keywords` is the pre-split legacy field and is only used
+ * when a post has not been given a primary keyword yet, so older posts keep
+ * their terms until someone edits them.
+ */
+export function blogAllKeywords(post: {
+  primaryKeyword?: string | null;
+  secondaryKeywords?: string | null;
+  keywords?: string | null;
+}) {
+  const primary = post.primaryKeyword?.trim();
+  const secondary = blogKeywordList(post.secondaryKeywords);
+  const merged = [...(primary ? [primary] : []), ...secondary];
+
+  const list = merged.length ? merged : blogKeywordList(post.keywords);
+
+  // Same term typed into both fields should not appear twice in the tag.
+  return Array.from(new Set(list.map((item) => item.toLowerCase())))
+    .map((lower) => list.find((item) => item.toLowerCase() === lower)!)
+    .filter(Boolean);
+}
+
 // ============================================
 // CONTENT BLOCKS
 // ============================================

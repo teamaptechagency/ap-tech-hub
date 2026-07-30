@@ -10,6 +10,7 @@ import {
   estimateReadingMinutes,
   slugifyBlogTitle,
   type BlogStatusValue,
+  type BlogVisibilityValue,
 } from "@/lib/blog";
 
 async function checkAdmin() {
@@ -93,10 +94,31 @@ export type BlogPostInput = {
   metaTitle?: string;
   metaDescription?: string;
   keywords?: string;
+  primaryKeyword?: string;
+  secondaryKeywords?: string;
   canonicalUrl?: string;
   ogImageUrl?: string;
   noIndex?: boolean;
+  internalLinks?: { label: string; href: string }[];
+  visibility?: BlogVisibilityValue;
 };
+
+/**
+ * Internal links are author-entered, so keep them to same-site paths. An
+ * "internal" link pointing at another domain would leak page rank and lets a
+ * compromised admin account plant offsite links on indexed pages.
+ */
+function cleanInternalLinks(links?: { label: string; href: string }[]) {
+  if (!Array.isArray(links)) return [];
+
+  return links
+    .map((link) => ({
+      label: String(link?.label ?? "").trim().slice(0, 120),
+      href: String(link?.href ?? "").trim(),
+    }))
+    .filter((link) => link.label && link.href.startsWith("/"))
+    .slice(0, 12);
+}
 
 export async function saveBlogPost(input: BlogPostInput) {
   const session = await checkAdmin();
@@ -155,10 +177,16 @@ export async function saveBlogPost(input: BlogPostInput) {
     authorName: optional(input.authorName),
     metaTitle: optional(input.metaTitle),
     metaDescription: optional(input.metaDescription),
+    // The keywords meta tag is built from the primary + secondary terms so
+    // there is one place to edit; the legacy field keeps whatever it had.
     keywords: optional(input.keywords),
+    primaryKeyword: optional(input.primaryKeyword),
+    secondaryKeywords: optional(input.secondaryKeywords),
     canonicalUrl: optional(input.canonicalUrl),
     ogImageUrl: optional(input.ogImageUrl),
     noIndex: Boolean(input.noIndex),
+    internalLinks: cleanInternalLinks(input.internalLinks),
+    visibility: input.visibility ?? "PUBLIC",
   };
 
   try {
@@ -297,14 +325,23 @@ export async function deleteBlogCategory(id: string) {
   }
 }
 
-/** Fire-and-forget view counter used by the public post page. */
+/**
+ * Fire-and-forget view counter, called from the public post page after mount.
+ *
+ * This is reachable by anyone, so it only ever moves the counter on a post that
+ * is actually published and public — a stray or guessed id cannot inflate a
+ * draft's numbers, and there is nothing else to update.
+ */
 export async function recordBlogPostView(id: string) {
+  const postId = id?.trim();
+  if (!postId) return;
+
   try {
-    await prisma.blogPost.update({
-      where: { id },
+    await prisma.blogPost.updateMany({
+      where: { id: postId, status: "PUBLISHED", visibility: "PUBLIC" },
       data: { viewCount: { increment: 1 } },
     });
   } catch {
-    // View counts are cosmetic — never block the page render on them.
+    // View counts are cosmetic — never surface this to the reader.
   }
 }
