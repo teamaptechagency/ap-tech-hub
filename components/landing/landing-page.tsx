@@ -3,6 +3,7 @@
 import {
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -43,7 +44,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PUBLIC_NAV_LINKS } from "@/lib/public-nav";
+import {
+  PUBLIC_MORE_NAV_LINKS,
+  PUBLIC_NAV_LINKS,
+  PUBLIC_PRIMARY_NAV_LINKS,
+} from "@/lib/public-nav";
 import type {
   LandingPageData,
   LandingAdData,
@@ -1710,6 +1715,8 @@ export function LandingPage({
   const [trustStats, setTrustStats] = useState<TrustStats | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [partnerApplyOpen, setPartnerApplyOpen] = useState(false);
+  const [moreNavOpen, setMoreNavOpen] = useState(false);
+  const moreNavRef = useRef<HTMLDivElement | null>(null);
   const goToSection = useSectionNav();
   const pathname = usePathname();
 
@@ -1744,7 +1751,29 @@ export function LandingPage({
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    setMoreNavOpen(false);
   }, [pathname]);
+
+  // A dropdown that stays open after you click away reads as stuck.
+  useEffect(() => {
+    if (!moreNavOpen) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (!moreNavRef.current?.contains(event.target as Node)) {
+        setMoreNavOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreNavOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [moreNavOpen]);
 
   useEffect(() => {
     const key = "ap-tech-landing-visit-recorded";
@@ -1810,7 +1839,7 @@ export function LandingPage({
         <div className="mx-auto flex h-16 max-w-[1140px] items-center justify-between gap-5 px-4">
           <Link
             href="/"
-            className="flex items-center gap-2 text-left text-xl font-extrabold leading-none text-[#101623]"
+            className="flex shrink-0 items-center gap-2 whitespace-nowrap text-left text-xl font-extrabold leading-none text-[#101623]"
           >
             {publicLogoUrl?.trim() ? (
               <img
@@ -1823,24 +1852,65 @@ export function LandingPage({
               AP Tech <span className="text-[#c6613f]">Agency</span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-5 text-sm font-semibold text-[#6b7280] lg:flex">
-            {PUBLIC_NAV_LINKS.map((link) => (
+          <nav className="hidden items-center gap-4 text-sm font-semibold text-[#6b7280] lg:flex">
+            {PUBLIC_PRIMARY_NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition hover:text-[#101623] ${
+                className={`whitespace-nowrap transition hover:text-[#101623] ${
                   pathname === link.href ? "text-[#101623]" : ""
                 }`}
               >
                 {link.label}
               </Link>
             ))}
+
+            {/* Corporate pages, kept off the main row so nothing wraps. */}
+            <div className="relative" ref={moreNavRef}>
+              <button
+                type="button"
+                onClick={() => setMoreNavOpen((open) => !open)}
+                aria-expanded={moreNavOpen}
+                aria-haspopup="true"
+                className={`inline-flex items-center gap-1 whitespace-nowrap font-semibold transition hover:text-[#101623] ${
+                  moreNavOpen ||
+                  PUBLIC_MORE_NAV_LINKS.some((link) => pathname === link.href)
+                    ? "text-[#101623]"
+                    : ""
+                }`}
+              >
+                More
+                <ChevronDown
+                  size={15}
+                  className={`transition-transform ${moreNavOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {moreNavOpen && (
+                <div className="absolute right-0 top-full z-50 mt-3 w-52 overflow-hidden rounded-[12px] border border-[#e8e3dc] bg-white py-1.5 shadow-[0_16px_40px_rgba(16,22,35,.14)]">
+                  {PUBLIC_MORE_NAV_LINKS.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMoreNavOpen(false)}
+                      className={`block px-4 py-2.5 text-sm transition hover:bg-[#faf8f5] hover:text-[#101623] ${
+                        pathname === link.href
+                          ? "bg-[#faf8f5] text-[#101623]"
+                          : ""
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden shrink-0 items-center gap-3 lg:flex">
             {portalHref ? (
               <Link
                 href={portalHref}
-                className="rounded-[10px] bg-[#c6613f] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#a94e30]"
+                className="whitespace-nowrap rounded-[10px] bg-[#c6613f] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#a94e30]"
               >
                 Go Portal
               </Link>
@@ -1848,13 +1918,13 @@ export function LandingPage({
               <>
                 <Link
                   href="/login"
-                  className="inline-flex rounded-[10px] border border-[#e8e3dc] px-5 py-2.5 text-sm font-bold text-[#101623] transition hover:border-[#101623]"
+                  className="inline-flex whitespace-nowrap rounded-[10px] border border-[#e8e3dc] px-4 py-2.5 text-sm font-bold text-[#101623] transition hover:border-[#101623]"
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/register"
-                  className="rounded-[10px] bg-[#c6613f] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#a94e30]"
+                  className="whitespace-nowrap rounded-[10px] bg-[#c6613f] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#a94e30]"
                 >
                   Sign up
                 </Link>
