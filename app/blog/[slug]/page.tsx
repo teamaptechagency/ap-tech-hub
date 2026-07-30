@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 
 import { BlogContent } from "@/components/blog/blog-content";
 import { BlogShell } from "@/components/blog/blog-shell";
+import { BlogViewCounter } from "@/components/blog/blog-view-counter";
 import { JsonLd } from "@/components/seo/json-ld";
 import { auth } from "@/lib/auth";
 import {
   blogHeadings,
-  blogKeywordList,
+  blogAllKeywords,
   blogMetaDescription,
   blogMetaTitle,
   getBlogPostBySlug,
@@ -50,7 +51,7 @@ export async function generateMetadata({
   const title = blogMetaTitle(post);
   const description = blogMetaDescription(post);
   const image = post.ogImageUrl || post.coverImageUrl || data.seo.socialImageUrl;
-  const keywords = blogKeywordList(post.keywords);
+  const keywords = blogAllKeywords(post);
   const publishedTime = (post.publishedAt ?? post.createdAt).toISOString();
   const indexable = data.seo.allowIndexing && !post.noIndex;
 
@@ -184,9 +185,19 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
               {formatDate(publishedAt)}
             </time>
             <span>{post.readingMinutes} min read</span>
+            {/* Only shown once a post has real traffic — "1 view" on a fresh
+                post reads worse than no number at all. */}
+            {post.viewCount > 0 ? (
+              <span>
+                {post.viewCount.toLocaleString()}{" "}
+                {post.viewCount === 1 ? "view" : "views"}
+              </span>
+            ) : null}
           </div>
         </div>
       </section>
+
+      <BlogViewCounter postId={post.id} />
 
       <article className="py-12">
         <div className="mx-auto max-w-[860px] px-4">
@@ -231,6 +242,31 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
           )}
 
           <BlogContent content={post.content} />
+
+          {/* Author-picked links to the pages this article should feed. Real
+              anchors, so crawlers follow them as internal links. */}
+          {post.internalLinks.length > 0 && (
+            <nav
+              aria-label="Related pages"
+              className="mt-10 rounded-2xl border border-[#e8e3dc] bg-[#faf8f5] p-6"
+            >
+              <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#c6613f]">
+                Related pages
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {post.internalLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="inline-flex rounded-full border border-[#e8e3dc] bg-white px-4 py-2 text-sm font-semibold text-[#101623] transition hover:border-[#c6613f] hover:text-[#c6613f]"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
 
           {post.tags.length > 0 && (
             <div className="mt-10 flex flex-wrap gap-2">

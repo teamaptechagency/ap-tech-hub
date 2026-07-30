@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import {
@@ -28,7 +28,13 @@ import {
   estimateReadingMinutes,
   slugifyBlogTitle,
 } from "@/lib/blog-content";
-import type { BlogCategorySummary, BlogStatusValue } from "@/lib/blog";
+import type {
+  BlogCategorySummary,
+  BlogInternalLink,
+  BlogStatusValue,
+  BlogVisibilityValue,
+} from "@/lib/blog";
+import { PUBLIC_NAV_LINKS } from "@/lib/public-nav";
 
 // Serialized shape of BlogPostDetail (dates crossed the server boundary).
 export type AdminBlogPost = {
@@ -54,9 +60,13 @@ export type AdminBlogPost = {
   metaTitle: string | null;
   metaDescription: string | null;
   keywords: string | null;
+  primaryKeyword: string | null;
+  secondaryKeywords: string | null;
   canonicalUrl: string | null;
   ogImageUrl: string | null;
   noIndex: boolean;
+  internalLinks: BlogInternalLink[];
+  visibility: BlogVisibilityValue;
 };
 
 type EditorState = {
@@ -77,9 +87,13 @@ type EditorState = {
   metaTitle: string;
   metaDescription: string;
   keywords: string;
+  primaryKeyword: string;
+  secondaryKeywords: string;
   canonicalUrl: string;
   ogImageUrl: string;
   noIndex: boolean;
+  internalLinks: BlogInternalLink[];
+  visibility: BlogVisibilityValue;
 };
 
 // Google truncates around these widths, so the editor scores against them.
@@ -123,9 +137,13 @@ function emptyEditor(): EditorState {
     metaTitle: "",
     metaDescription: "",
     keywords: "",
+    primaryKeyword: "",
+    secondaryKeywords: "",
     canonicalUrl: "",
     ogImageUrl: "",
     noIndex: false,
+    internalLinks: [],
+    visibility: "PUBLIC",
   };
 }
 
@@ -148,10 +166,284 @@ function toEditor(post: AdminBlogPost): EditorState {
     metaTitle: post.metaTitle ?? "",
     metaDescription: post.metaDescription ?? "",
     keywords: post.keywords ?? "",
+    // Posts written before the keyword split fall back to the legacy field so
+    // their existing term is not silently dropped on the next save.
+    primaryKeyword: post.primaryKeyword ?? "",
+    secondaryKeywords: post.secondaryKeywords ?? "",
     canonicalUrl: post.canonicalUrl ?? "",
     ogImageUrl: post.ogImageUrl ?? "",
     noIndex: post.noIndex,
+    internalLinks: post.internalLinks ?? [],
+    visibility: post.visibility,
   };
+}
+
+/**
+ * Formatting toolbar for the post body.
+ *
+ * The body is stored as a small markdown subset that parseBlogContent turns
+ * into real h2/h3/h4, ul/ol, blockquote and <strong> tags — good for search
+ * engines and already the format every existing post is written in. So rather
+ * than swapping in a WYSIWYG editor (which would mean migrating that content),
+ * these buttons write the markup for you: the author selects text and clicks,
+ * instead of remembering the syntax.
+ *
+ * Note there is deliberately no H1 — the post title is the page's only h1, and
+ * a second one would muddle the document outline.
+ */
+type ToolbarAction =
+  | { kind: "prefix"; label: string; title: string; prefix: string }
+  | { kind: "wrap"; label: string; title: string; before: string; after: string }
+  | { kind: "insert"; label: string; title: string; snippet: string };
+
+const TOOLBAR_ACTIONS: ToolbarAction[] = [
+  { kind: "prefix", label: "H2", title: "Main heading", prefix: "## " },
+  { kind: "prefix", label: "H3", title: "Sub-heading", prefix: "### " },
+  { kind: "prefix", label: "H4", title: "Minor heading", prefix: "#### " },
+  { kind: "wrap", label: "B", title: "Bold", before: "**", after: "**" },
+  { kind: "wrap", label: "I", title: "Italic", before: "_", after: "_" },
+  { kind: "wrap", label: "Code", title: "Inline code", before: "`", after: "`" },
+  { kind: "prefix", label: "List", title: "Bulleted list", prefix: "- " },
+  { kind: "prefix", label: "1.", title: "Numbered list", prefix: "1. " },
+  { kind: "prefix", label: "Quote", title: "Quote", prefix: "> " },
+  {
+    kind: "wrap",
+    label: "Link",
+    title: "Link to a page",
+    before: "[",
+    after: "](/services)",
+  },
+  {
+    kind: "insert",
+    label: "Image",
+    title: "Insert an image",
+    snippet: "\n![Describe the image for screen readers](https://)\n",
+  },
+];
+
+function EditorToolbar({
+  textareaRef,
+  onChange,
+}: {
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  onChange: (value: string) => void;
+}) {
+  function apply(action: ToolbarAction) {
+    const node = textareaRef.current;
+    if (!node) return;
+
+    const { selectionStart: start, selectionEnd: end, value } = node;
+    const selected = value.slice(start, end);
+    let next = value;
+    let cursorStart = start;
+    let cursorEnd = end;
+
+    if (action.kind === "wrap") {
+      const inner = selected || action.label.toLowerCase();
+      next = `${value.slice(0, start)}${action.before}${inner}${action.after}${value.slice(end)}`;
+      cursorStart = start + action.before.length;
+      cursorEnd = cursorStart + inner.length;
+    } else if (action.kind === "insert") {
+      next = `${value.slice(0, start)}${action.snippet}${value.slice(end)}`;
+      cursorStart = cursorEnd = start + action.snippet.length;
+    } else {
+      // Prefix every selected line, so one click turns a block into a list.
+      const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+      const lineEnd = value.indexOf("\n", end);
+      const sliceEnd = lineEnd === -1 ? value.length : lineEnd;
+      const block = value.slice(lineStart, sliceEnd) || "";
+      const prefixed = block
+        .split("\n")
+        .map((line) =>
+          line.startsWith(action.prefix) ? line : `${action.prefix}${line}`
+        )
+        .join("\n");
+      next = `${value.slice(0, lineStart)}${prefixed}${value.slice(sliceEnd)}`;
+      cursorStart = cursorEnd = lineStart + prefixed.length;
+    }
+
+    onChange(next);
+    // Restore focus after React re-renders, or the author loses their place.
+    requestAnimationFrame(() => {
+      node.focus();
+      node.setSelectionRange(cursorStart, cursorEnd);
+    });
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1 rounded-md border bg-muted/40 p-1.5">
+      {TOOLBAR_ACTIONS.map((action) => (
+        <button
+          key={action.label}
+          type="button"
+          title={action.title}
+          onClick={() => apply(action)}
+          className={`rounded px-2 py-1 text-xs transition hover:bg-background ${
+            action.label === "B"
+              ? "font-bold"
+              : action.label === "I"
+                ? "italic"
+                : "font-medium"
+          }`}
+        >
+          {action.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Attaches landing sections and service pages to a post.
+ *
+ * Blog posts are usually where organic traffic lands, so pointing them at the
+ * pages that actually convert is the whole reason to write them. Offering the
+ * real site paths as a picker means an author cannot typo a URL into a 404.
+ */
+const INTERNAL_LINK_TARGETS: { group: string; links: BlogInternalLink[] }[] = [
+  {
+    group: "Pages",
+    links: PUBLIC_NAV_LINKS.map((link) => ({
+      label: link.label,
+      href: link.href,
+    })),
+  },
+  {
+    group: "Landing sections",
+    links: [
+      { label: "Services section", href: "/#services" },
+      { label: "Our process", href: "/services#process" },
+      { label: "Portfolio section", href: "/#portfolio" },
+      { label: "Our team", href: "/#team" },
+      { label: "Client testimonials", href: "/about#testimonials" },
+      { label: "Contact form", href: "/contact#form" },
+    ],
+  },
+];
+
+function InternalLinksField({
+  value,
+  onChange,
+}: {
+  value: BlogInternalLink[];
+  onChange: (links: BlogInternalLink[]) => void;
+}) {
+  const [customLabel, setCustomLabel] = useState("");
+  const [customHref, setCustomHref] = useState("");
+
+  const chosen = new Set(value.map((link) => link.href));
+
+  function toggle(link: BlogInternalLink) {
+    onChange(
+      chosen.has(link.href)
+        ? value.filter((item) => item.href !== link.href)
+        : [...value, link]
+    );
+  }
+
+  function addCustom() {
+    const label = customLabel.trim();
+    const href = customHref.trim();
+    if (!label || !href.startsWith("/") || chosen.has(href)) return;
+    onChange([...value, { label, href }]);
+    setCustomLabel("");
+    setCustomHref("");
+  }
+
+  return (
+    <div className="grid gap-3 text-sm">
+      <div>
+        <span className="font-medium">Internal links</span>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Shown at the end of the post. Pick the pages this article should send
+          readers to.
+        </p>
+      </div>
+
+      {INTERNAL_LINK_TARGETS.map((group) => (
+        <div key={group.group} className="grid gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            {group.group}
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {group.links.map((link) => (
+              <button
+                key={link.href}
+                type="button"
+                onClick={() => toggle(link)}
+                className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                  chosen.has(link.href)
+                    ? "border-primary bg-primary/10 font-medium text-primary"
+                    : "hover:bg-muted"
+                }`}
+              >
+                {link.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div className="grid gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">
+          Add another path
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          <input
+            value={customLabel}
+            onChange={(event) => setCustomLabel(event.target.value)}
+            placeholder="Link text"
+            className="min-w-[120px] flex-1 rounded-md border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
+          />
+          <input
+            value={customHref}
+            onChange={(event) => setCustomHref(event.target.value)}
+            placeholder="/services"
+            className="min-w-[120px] flex-1 rounded-md border bg-background px-3 py-1.5 font-mono text-xs outline-none focus:border-primary"
+          />
+          <button
+            type="button"
+            onClick={addCustom}
+            className="rounded-md border px-3 py-1.5 text-xs font-medium transition hover:bg-muted"
+          >
+            Add
+          </button>
+        </div>
+        <span className="text-xs text-muted-foreground">
+          Must start with / — only pages on this site.
+        </span>
+      </div>
+
+      {value.length > 0 && (
+        <div className="grid gap-1.5 rounded-md border bg-muted/30 p-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Attached ({value.length})
+          </span>
+          {value.map((link) => (
+            <div
+              key={link.href}
+              className="flex items-center justify-between gap-2 text-xs"
+            >
+              <span className="truncate">
+                {link.label}{" "}
+                <span className="font-mono text-muted-foreground">
+                  {link.href}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => toggle(link)}
+                className="shrink-0 text-muted-foreground transition hover:text-destructive"
+                aria-label={`Remove ${link.label}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Field({
@@ -441,6 +733,7 @@ export function BlogManager({
 }) {
   const [tab, setTab] = useState<"posts" | "categories">("posts");
   const [editor, setEditor] = useState<EditorState | null>(null);
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | BlogStatusValue>(
     "ALL"
@@ -651,16 +944,26 @@ export function BlogManager({
                   rows={3}
                   placeholder="One or two sentences shown on the blog list and used as the fallback meta description."
                 />
-                <Field
-                  label="Content"
-                  value={editor.content}
-                  onChange={(value) => update("content", value)}
-                  textarea
-                  rows={20}
-                  mono
-                  placeholder={CONTENT_PLACEHOLDER}
-                  hint="Markdown-style: ## heading, ### sub-heading, - list, > quote, **bold**, [text](/link), ![alt](image-url). Headings become real h2/h3 tags and a table of contents."
-                />
+                <div className="grid gap-1.5 text-sm">
+                  <span className="font-medium">Content</span>
+                  <EditorToolbar
+                    textareaRef={contentRef}
+                    onChange={(value) => update("content", value)}
+                  />
+                  <textarea
+                    ref={contentRef}
+                    value={editor.content}
+                    rows={20}
+                    placeholder={CONTENT_PLACEHOLDER}
+                    onChange={(event) => update("content", event.target.value)}
+                    className="rounded-md border bg-background px-3 py-2 font-mono text-[13px] leading-6 outline-none focus:border-primary"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Select text and use the buttons above, or type the markup
+                    directly. Headings become real h2/h3/h4 tags and a table of
+                    contents — the post title is already the page&apos;s H1.
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Estimated read time:{" "}
                   {editor.content ? estimateReadingMinutes(editor.content) : 0}{" "}
@@ -697,11 +1000,18 @@ export function BlogManager({
                   placeholder={editor.excerpt || "Meta description"}
                 />
                 <Field
-                  label="Focus keywords"
-                  value={editor.keywords}
-                  onChange={(value) => update("keywords", value)}
-                  placeholder="web development agency, hire web developers"
-                  hint="Comma separated. Used for the keywords meta tag."
+                  label="Primary keyword (focus keyword)"
+                  value={editor.primaryKeyword}
+                  onChange={(value) => update("primaryKeyword", value)}
+                  placeholder="web development agency"
+                  hint="The single term this post is written to rank for."
+                />
+                <Field
+                  label="Secondary keywords"
+                  value={editor.secondaryKeywords}
+                  onChange={(value) => update("secondaryKeywords", value)}
+                  placeholder="hire web developers, custom website design"
+                  hint="Comma separated supporting terms. These plus the primary keyword build the keywords meta tag."
                 />
                 <Field
                   label="Canonical URL"
@@ -747,6 +1057,26 @@ export function BlogManager({
                   </select>
                 </label>
                 <label className="grid gap-1.5 text-sm">
+                  <span className="font-medium">Visibility</span>
+                  <select
+                    value={editor.visibility}
+                    onChange={(event) =>
+                      update(
+                        "visibility",
+                        event.target.value as BlogVisibilityValue
+                      )
+                    }
+                    className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
+                  >
+                    <option value="PUBLIC">Public</option>
+                    <option value="PRIVATE">Private</option>
+                  </select>
+                  <span className="text-xs text-muted-foreground">
+                    Private keeps a finished post off the blog, the sitemap and
+                    search — even with the direct link. It stays editable here.
+                  </span>
+                </label>
+                <label className="grid gap-1.5 text-sm">
                   <span className="font-medium">Publish date</span>
                   <input
                     type="date"
@@ -777,6 +1107,10 @@ export function BlogManager({
                     ))}
                   </select>
                 </label>
+                <InternalLinksField
+                  value={editor.internalLinks}
+                  onChange={(links) => update("internalLinks", links)}
+                />
                 <Field
                   label="Tags"
                   value={editor.tags}
@@ -941,6 +1275,13 @@ export function BlogManager({
                   <div className="min-w-[200px] flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge status={post.status} />
+                      {/* A published post that nobody can reach is confusing
+                          without a marker in the list. */}
+                      {post.visibility === "PRIVATE" ? (
+                        <span className="rounded-full border border-slate-500/30 bg-slate-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase text-slate-600">
+                          private
+                        </span>
+                      ) : null}
                       {post.featured ? (
                         <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase text-amber-600">
                           featured

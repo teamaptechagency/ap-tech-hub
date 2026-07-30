@@ -1712,6 +1712,17 @@ enum BlogStatus {
   ARCHIVED
 }
 
+// Separate from BlogStatus on purpose. Status is where a post is in the
+// writing workflow; visibility is whether a finished post reaches the public.
+// PRIVATE posts are hidden from the blog index, the post page, the sitemap and
+// related-post lists — a direct link 404s too, since "private" that anyone with
+// the URL can still read would be misleading. They stay fully editable in the
+// blog manager.
+enum BlogVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 model BlogCategory {
   id          String     @id @default(cuid())
   name        String
@@ -1749,10 +1760,23 @@ model BlogPost {
   // Per-post SEO overrides. Empty values fall back to title/excerpt.
   metaTitle       String?
   metaDescription String?
+  // Legacy single keyword field. Superseded by primaryKeyword +
+  // secondaryKeywords below; kept so posts written before the split keep their
+  // meta keywords until they are next edited.
   keywords        String?
+  // The one term a post is written to rank for, plus supporting terms.
+  primaryKeyword     String?
+  secondaryKeywords  String?
   canonicalUrl    String?
   ogImageUrl      String?
   noIndex         Boolean @default(false)
+
+  // Landing sections and services this post should link out to, so posts feed
+  // internal link equity to the pages that actually convert.
+  // Shape: [{ label, href }]
+  internalLinks Json?
+
+  visibility BlogVisibility @default(PUBLIC)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1760,6 +1784,8 @@ model BlogPost {
   @@index([status, publishedAt])
   @@index([categoryId])
   @@index([featured])
+  // Public listings filter on both, so index them together.
+  @@index([status, visibility, publishedAt])
 }
 
 // ============================================
