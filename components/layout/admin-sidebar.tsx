@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { logout } from "@/actions/auth.actions";
+import { switchToEmployeeView } from "@/actions/impersonation.actions";
 import { cn } from "@/lib/utils";
 
 import { GlobalSearch } from "@/components/layout/global-search";
@@ -152,10 +154,25 @@ function formatRole(role: string) {
 
 export function AdminSidebar({ user, branding }: AdminSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [switching, setSwitching] = useState(false);
   const exactActiveItem = adminNavItems.find((item) => item.href === pathname);
 
   const userName = user.name.trim() || "Admin User";
   const formattedRole = formatRole(user.role);
+  const canSwitchToEmployee = user.role === "SUPER_ADMIN";
+
+  async function handleSwitchToEmployee() {
+    if (switching) return;
+    setSwitching(true);
+    const result = await switchToEmployeeView();
+    if (result.error) {
+      setSwitching(false);
+      return;
+    }
+    router.push("/e/dashboard");
+    router.refresh();
+  }
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
@@ -207,20 +224,43 @@ export function AdminSidebar({ user, branding }: AdminSidebarProps) {
       {/* User, notifications and logout */}
       <div className="shrink-0 border-t p-3">
         <div className="mb-2 flex items-center justify-between gap-2 px-2">
-          <div className="flex min-w-0 items-center gap-3">
-            <UserAvatar name={userName} imageUrl={user.imageUrl} fallback="A" />
+          {canSwitchToEmployee ? (
+            <button
+              type="button"
+              onClick={handleSwitchToEmployee}
+              disabled={switching}
+              title="Switch to Employee view"
+              className="flex min-w-0 flex-1 items-center gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted disabled:opacity-60"
+            >
+              <UserAvatar name={userName} imageUrl={user.imageUrl} fallback="A" />
 
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">
-                {userName}
-              </p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {userName}
+                </p>
 
-              <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
-                <ShieldCheck className="h-3 w-3 shrink-0" />
-                {formattedRole}
-              </p>
+                <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                  <ShieldCheck className="h-3 w-3 shrink-0" />
+                  {switching ? "Switching…" : formattedRole}
+                </p>
+              </div>
+            </button>
+          ) : (
+            <div className="flex min-w-0 items-center gap-3">
+              <UserAvatar name={userName} imageUrl={user.imageUrl} fallback="A" />
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {userName}
+                </p>
+
+                <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                  <ShieldCheck className="h-3 w-3 shrink-0" />
+                  {formattedRole}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           <NotificationBell />
         </div>
