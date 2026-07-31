@@ -71,6 +71,7 @@ export default async function JobDetailsPage({
       client: {
         select: {
           companyName: true,
+          currency: true,
         },
       },
 
@@ -90,6 +91,7 @@ export default async function JobDetailsPage({
               description: true,
               qty: true,
               amount: true,
+              costUsd: true,
               purchased: true,
               purchasedAt: true,
               purchaseNote: true,
@@ -501,8 +503,12 @@ export default async function JobDetailsPage({
       {/* Things bought for this project. Separate from weeks and tasks on
           purpose — buying a tool is not delivery work. */}
       <JobPurchases
+        jobId={job.id}
         clientName={job.client?.companyName ?? null}
+        clientCurrency={job.client?.currency ?? "USD"}
+        hasClient={Boolean(job.clientId)}
         isSuperAdmin={session.user.role === "SUPER_ADMIN"}
+        isManager={isManager}
         invoices={job.invoices.map((invoice) => ({
           id: invoice.id,
           number: invoice.number,
@@ -515,6 +521,7 @@ export default async function JobDetailsPage({
             description: item.description,
             qty: item.qty,
             amount: Number(item.amount),
+            costUsd: item.costUsd != null ? Number(item.costUsd) : null,
             purchased: item.purchased,
             purchasedAt: item.purchasedAt?.toISOString() ?? null,
             purchaseNote: item.purchaseNote,

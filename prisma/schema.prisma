@@ -933,6 +933,12 @@ model InvoiceItem {
   purchasedAt   DateTime?
   purchasedById String?
   purchaseNote  String?
+
+  // What this item actually cost the agency, always in USD regardless of the
+  // invoice's billing currency (most tool/licence costs are USD-denominated).
+  // Separate from `amount` (what the client is charged) so margin is visible
+  // without guessing at an exchange rate.
+  costUsd Decimal? @db.Decimal(12, 2)
 }
 
 model PaymentMethod {
