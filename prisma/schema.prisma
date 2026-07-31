@@ -63,6 +63,12 @@ model User {
   // stays manual for MONTHLY_SALARY for now — this only records the terms.
   compensationType     CompensationType @default(PER_JOB)
   monthlySalaryAmount  Decimal?  @db.Decimal(12, 2)
+  // MONTHLY_SALARY bonus: target is the USD value of jobs this employee
+  // works on in a calendar month (see lib/compensation.ts); crossing it
+  // earns a BDT bonus at this rate per 100 USD over target. Payment stays
+  // manual (Adjust balance) — these fields only size the bonus.
+  monthlyTargetUsd     Decimal?  @db.Decimal(12, 2)
+  bonusPerHundredUsd   Decimal?  @db.Decimal(12, 2)
   // First-login terms acceptance
   termsAcceptedAt      DateTime?
   termsVersion         String?

@@ -69,6 +69,10 @@ type WorkerRow = {
   txns: Txn[];
   compensationType?: "PER_JOB" | "MONTHLY_SALARY";
   monthlySalaryAmount?: number | null;
+  monthlyTargetUsd?: number | null;
+  bonusPerHundredUsd?: number | null;
+  achievedUsdThisMonth?: number | null;
+  usdBonusEarned?: number;
 };
 
 type CreateRole =
@@ -155,6 +159,12 @@ export function WorkerBalances({
     monthlySalaryAmount: workers[0]?.monthlySalaryAmount
       ? String(workers[0].monthlySalaryAmount)
       : "",
+    monthlyTargetUsd: workers[0]?.monthlyTargetUsd
+      ? String(workers[0].monthlyTargetUsd)
+      : "",
+    bonusPerHundredUsd: workers[0]?.bonusPerHundredUsd
+      ? String(workers[0].bonusPerHundredUsd)
+      : "",
   });
   const [profileDraft, setProfileDraft] = useState({
     partnerType: workers[0]?.partnerType ?? "SO_PARTNER",
@@ -223,6 +233,12 @@ export function WorkerBalances({
       monthlySalaryAmount: worker.monthlySalaryAmount
         ? String(worker.monthlySalaryAmount)
         : "",
+      monthlyTargetUsd: worker.monthlyTargetUsd
+        ? String(worker.monthlyTargetUsd)
+        : "",
+      bonusPerHundredUsd: worker.bonusPerHundredUsd
+        ? String(worker.bonusPerHundredUsd)
+        : "",
     });
   }
 
@@ -237,6 +253,8 @@ export function WorkerBalances({
         | "PER_JOB"
         | "MONTHLY_SALARY",
       monthlySalaryAmount: compensationDraft.monthlySalaryAmount,
+      monthlyTargetUsd: compensationDraft.monthlyTargetUsd,
+      bonusPerHundredUsd: compensationDraft.bonusPerHundredUsd,
     });
     setBusy(false);
 
@@ -541,6 +559,18 @@ export function WorkerBalances({
                       {selected.compensationType === "MONTHLY_SALARY"
                         ? `salary ${bdt(selected.monthlySalaryAmount ?? 0)}/mo`
                         : "per job"}
+                    </Badge>
+                  )}
+                  {selected.compensationType === "MONTHLY_SALARY" &&
+                    selected.monthlyTargetUsd != null && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        target ${selected.monthlyTargetUsd} · this month $
+                        {selected.achievedUsdThisMonth ?? 0}
+                      </Badge>
+                    )}
+                  {(selected.usdBonusEarned ?? 0) > 0 && (
+                    <Badge className="bg-emerald-100 text-[10px] text-emerald-700 hover:bg-emerald-100">
+                      bonus earned {bdt(selected.usdBonusEarned ?? 0)}
                     </Badge>
                   )}
                   {(selected.role === "TEAM_MEMBER" ||
@@ -976,6 +1006,56 @@ export function WorkerBalances({
                   disabled={busy}
                   required
                 />
+              </div>
+            )}
+            {compensationDraft.compensationType === "MONTHLY_SALARY" && (
+              <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground">
+                  Optional: set a monthly USD target. Crossing it earns a BDT
+                  bonus at the rate below, credited manually via Adjust.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="monthly-target-usd">
+                      Monthly target (USD)
+                    </Label>
+                    <Input
+                      id="monthly-target-usd"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={compensationDraft.monthlyTargetUsd}
+                      onChange={(event) =>
+                        setCompensationDraft((current) => ({
+                          ...current,
+                          monthlyTargetUsd: event.target.value,
+                        }))
+                      }
+                      disabled={busy}
+                      placeholder="e.g. 1000"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bonus-per-100-usd">
+                      Bonus per 100 USD over (BDT)
+                    </Label>
+                    <Input
+                      id="bonus-per-100-usd"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={compensationDraft.bonusPerHundredUsd}
+                      onChange={(event) =>
+                        setCompensationDraft((current) => ({
+                          ...current,
+                          bonusPerHundredUsd: event.target.value,
+                        }))
+                      }
+                      disabled={busy}
+                      placeholder="e.g. 1000"
+                    />
+                  </div>
+                </div>
               </div>
             )}
             {error && <p className="text-center text-sm text-red-500">{error}</p>}
