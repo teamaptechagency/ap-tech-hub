@@ -77,3 +77,35 @@ export async function stopUserImpersonation() {
 
   return { success: true, href: "/dashboard" };
 }
+
+/**
+ * A super admin previewing the employee interface as themselves — same
+ * account, same id, just the effective role flipped to TEAM_MEMBER for
+ * routing/UI. Deliberately separate from startUserImpersonation: there's no
+ * target user's real data to view, so none of that machinery applies.
+ */
+export async function switchToEmployeeView() {
+  const session = await rawAuth();
+  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
+    return { error: "Only the super admin can preview the employee view." };
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set("ap_view_mode", "EMPLOYEE", {
+    ...cookieOptions(),
+    maxAge: COOKIE_MAX_AGE,
+  });
+
+  revalidatePath("/", "layout");
+
+  return { success: true, href: "/e/dashboard" };
+}
+
+export async function switchToSuperAdminView() {
+  const cookieStore = await cookies();
+  cookieStore.delete("ap_view_mode");
+
+  revalidatePath("/", "layout");
+
+  return { success: true, href: "/dashboard" };
+}

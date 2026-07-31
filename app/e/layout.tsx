@@ -18,6 +18,7 @@ import {
 } from "@/components/layout/bottom-nav";
 import { TermsGate } from "@/components/terms-gate";
 import { ImpersonationBanner } from "@/components/auth/impersonation-banner";
+import { EmployeeViewBanner } from "@/components/auth/employee-view-banner";
 
 type EmployeeLayoutProps = {
   children: ReactNode;
@@ -145,6 +146,7 @@ export default async function EmployeeLayout({
               targetRole={session.impersonation.targetRole}
             />
           )}
+          {session.viewingAsEmployee && <EmployeeViewBanner />}
           {termsGate}
           {children}
         </div>

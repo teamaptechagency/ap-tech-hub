@@ -18,6 +18,8 @@ declare module "next-auth" {
       targetEmail: string;
       targetRole: string;
     };
+    /** Super admin previewing the employee interface as themselves. */
+    viewingAsEmployee?: boolean;
   }
 
   interface User {

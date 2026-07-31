@@ -9,6 +9,7 @@ import { getUserLoginDevices } from "@/lib/login-security";
 import { PasskeyManager } from "@/components/auth/passkey-manager";
 import { listUserPasskeys } from "@/lib/passkey";
 import { getUserPortfolio } from "@/lib/user-portfolio";
+import { SwitchToEmployeeViewButton } from "@/components/auth/switch-to-employee-view-button";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -47,31 +48,36 @@ export default async function AdminProfilePage() {
       </div>
 
       <Card>
-        <CardContent className="flex items-center gap-4 pt-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
-            {me.name
-              .split(" ")
-              .map((n) => n[0])
-              .slice(0, 2)
-              .join("")}
+        <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-6">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
+              {me.name
+                .split(" ")
+                .map((n) => n[0])
+                .slice(0, 2)
+                .join("")}
+            </div>
+            <div>
+              <p className="flex items-center gap-2 font-semibold">
+                {me.name}
+                <Badge variant="secondary" className="text-xs">
+                  {me.role.replace("_", " ").toLowerCase()}
+                </Badge>
+              </p>
+              <p className="text-sm text-muted-foreground">{me.email}</p>
+              <p className="text-xs text-muted-foreground">
+                Account created{" "}
+                {me.createdAt.toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="flex items-center gap-2 font-semibold">
-              {me.name}
-              <Badge variant="secondary" className="text-xs">
-                {me.role.replace("_", " ").toLowerCase()}
-              </Badge>
-            </p>
-            <p className="text-sm text-muted-foreground">{me.email}</p>
-            <p className="text-xs text-muted-foreground">
-              Account created{" "}
-              {me.createdAt.toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </p>
-          </div>
+          {session.user.role === "SUPER_ADMIN" && (
+            <SwitchToEmployeeViewButton />
+          )}
         </CardContent>
       </Card>
 

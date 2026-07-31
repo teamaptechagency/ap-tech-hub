@@ -192,7 +192,20 @@ async function getEffectiveSession() {
 
   const cookieStore = await cookies();
   const targetId = cookieStore.get("ap_impersonate_user_id")?.value;
-  if (!targetId || targetId === session.user.id) return session;
+
+  // Self view-switch: same account, effective role flipped to TEAM_MEMBER so
+  // employee routes/UI render for real, with none of the target-user
+  // machinery below (there's no other user's data to view).
+  if (!targetId || targetId === session.user.id) {
+    if (cookieStore.get("ap_view_mode")?.value === "EMPLOYEE") {
+      return {
+        ...session,
+        user: { ...session.user, role: "TEAM_MEMBER" },
+        viewingAsEmployee: true,
+      };
+    }
+    return session;
+  }
 
   const target = await prisma.user
     .findUnique({
