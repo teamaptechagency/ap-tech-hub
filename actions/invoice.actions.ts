@@ -376,8 +376,10 @@ export async function createCustomInvoice(formData: {
     },
   });
 
-  // Deduct from wallet + ledger entry
-  if (balanceApplied > 0) {
+  // Deduct from wallet + ledger entry. balanceApplied is only ever positive
+  // when formData.clientId was already checked above, but TypeScript can't
+  // see across that gap — so it's checked again here to actually narrow it.
+  if (balanceApplied > 0 && formData.clientId) {
     await prisma.$transaction([
       prisma.clientTxn.create({
         data: {
