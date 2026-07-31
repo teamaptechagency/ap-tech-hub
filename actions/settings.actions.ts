@@ -940,6 +940,60 @@ export async function updateTeamMemberStatus(
   return { success: true };
 }
 
+/**
+ * Sets how a TEAM_MEMBER is paid: per job (default) or a fixed monthly
+ * salary. Payment itself is still manual either way — this just records the
+ * terms so HR/admin has one place to see and edit it.
+ */
+export async function updateEmployeeCompensation(
+  userId: string,
+  data: {
+    compensationType: "PER_JOB" | "MONTHLY_SALARY";
+    monthlySalaryAmount?: string;
+  }
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!user) return { error: "Employee not found" };
+  if (user.role !== "TEAM_MEMBER") {
+    return { error: "This only applies to employee accounts" };
+  }
+
+  let monthlySalaryAmount: number | null = null;
+  if (data.compensationType === "MONTHLY_SALARY") {
+    monthlySalaryAmount = parseFloat(data.monthlySalaryAmount ?? "");
+    if (!Number.isFinite(monthlySalaryAmount) || monthlySalaryAmount <= 0) {
+      return { error: "Enter a monthly salary amount greater than zero" };
+    }
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      compensationType: data.compensationType,
+      monthlySalaryAmount,
+    },
+  });
+
+  await audit(
+    session.user.id,
+    "EMPLOYEE_COMPENSATION_UPDATED",
+    "User",
+    userId,
+    data.compensationType === "MONTHLY_SALARY"
+      ? `MONTHLY_SALARY: BDT ${monthlySalaryAmount}`
+      : "PER_JOB"
+  );
+
+  revalidatePath("/accounts/employees");
+  return { success: true };
+}
+
 export async function resetTeamMemberPassword(userId: string) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };

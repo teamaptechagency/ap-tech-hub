@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   inviteTeamMember,
   resetTeamMemberPassword,
+  updateEmployeeCompensation,
   updatePartnerAccount,
   updateTeamMemberIdentityStatus,
   updateTeamMemberStatus,
@@ -66,6 +67,8 @@ type WorkerRow = {
   activeJobs: number;
   pendingWithdraw: number;
   txns: Txn[];
+  compensationType?: "PER_JOB" | "MONTHLY_SALARY";
+  monthlySalaryAmount?: number | null;
 };
 
 type CreateRole =
@@ -142,10 +145,17 @@ export function WorkerBalances({
   );
   const [dialog, setDialog] = useState<"adjust" | "penalty" | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [compensationOpen, setCompensationOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [compensationDraft, setCompensationDraft] = useState({
+    compensationType: workers[0]?.compensationType ?? "PER_JOB",
+    monthlySalaryAmount: workers[0]?.monthlySalaryAmount
+      ? String(workers[0].monthlySalaryAmount)
+      : "",
+  });
   const [profileDraft, setProfileDraft] = useState({
     partnerType: workers[0]?.partnerType ?? "SO_PARTNER",
     managedByPartnerId: workers[0]?.managedByPartner?.id ?? "",
@@ -208,6 +218,31 @@ export function WorkerBalances({
       profession: worker.profession ?? "",
       businessBrief: worker.businessBrief ?? "",
     });
+    setCompensationDraft({
+      compensationType: worker.compensationType ?? "PER_JOB",
+      monthlySalaryAmount: worker.monthlySalaryAmount
+        ? String(worker.monthlySalaryAmount)
+        : "",
+    });
+  }
+
+  async function saveCompensation(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) return;
+
+    setError("");
+    setBusy(true);
+    const result = await updateEmployeeCompensation(selected.id, {
+      compensationType: compensationDraft.compensationType as
+        | "PER_JOB"
+        | "MONTHLY_SALARY",
+      monthlySalaryAmount: compensationDraft.monthlySalaryAmount,
+    });
+    setBusy(false);
+
+    if (result.error) return setError(result.error);
+    setCompensationOpen(false);
+    router.refresh();
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -500,6 +535,25 @@ export function WorkerBalances({
                   <Badge variant="secondary" className="text-[10px]">
                     ID {selected.identityStatus.toLowerCase()}
                   </Badge>
+                  {selected.role === "TEAM_MEMBER" && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {selected.compensationType === "MONTHLY_SALARY"
+                        ? `salary ${bdt(selected.monthlySalaryAmount ?? 0)}/mo`
+                        : "per job"}
+                    </Badge>
+                  )}
+                  {selected.role === "TEAM_MEMBER" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        selectWorker(selected);
+                        setCompensationOpen(true);
+                      }}
+                    >
+                      Compensation
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -856,6 +910,71 @@ export function WorkerBalances({
             {error && <p className="text-center text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Saving..." : "Save profile control"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={compensationOpen} onOpenChange={setCompensationOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Compensation - {selected?.name}</DialogTitle>
+            <DialogDescription>
+              Per job pays out through the normal job/payout flow. Monthly
+              salary is fixed regardless of job — payment is still made
+              manually, this just records the terms.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={saveCompensation} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Pay type</Label>
+              <Select
+                value={compensationDraft.compensationType}
+                onValueChange={(value) =>
+                  value &&
+                  setCompensationDraft((current) => ({
+                    ...current,
+                    compensationType: value as "PER_JOB" | "MONTHLY_SALARY",
+                  }))
+                }
+                disabled={busy}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PER_JOB">Per job / project</SelectItem>
+                  <SelectItem value="MONTHLY_SALARY">
+                    Monthly salary
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {compensationDraft.compensationType === "MONTHLY_SALARY" && (
+              <div className="space-y-2">
+                <Label htmlFor="monthly-salary-amount">
+                  Monthly salary (BDT)
+                </Label>
+                <Input
+                  id="monthly-salary-amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={compensationDraft.monthlySalaryAmount}
+                  onChange={(event) =>
+                    setCompensationDraft((current) => ({
+                      ...current,
+                      monthlySalaryAmount: event.target.value,
+                    }))
+                  }
+                  disabled={busy}
+                  required
+                />
+              </div>
+            )}
+            {error && <p className="text-center text-sm text-red-500">{error}</p>}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Saving..." : "Save compensation"}
             </Button>
           </form>
         </DialogContent>

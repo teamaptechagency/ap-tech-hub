@@ -53,6 +53,11 @@ export default async function EmployeesPage() {
         photoUrl: employee.photoUrl,
         balance: Number(employee.balance),
         reserve: Number(employee.reserve),
+        compensationType: employee.compensationType,
+        monthlySalaryAmount:
+          employee.monthlySalaryAmount != null
+            ? Number(employee.monthlySalaryAmount)
+            : null,
         activeJobs: employee._count.jobMemberships,
         pendingWithdraw: employee.withdrawRequests.reduce(
           (sum, request) => sum + Number(request.amount),
