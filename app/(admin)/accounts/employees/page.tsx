@@ -83,6 +83,7 @@ export default async function EmployeesPage() {
           photoUrl: employee.photoUrl,
           balance: Number(employee.balance),
           reserve: Number(employee.reserve),
+          providentFund: Number(employee.providentFund),
           compensationType: employee.compensationType,
           monthlySalaryAmount:
             employee.monthlySalaryAmount != null

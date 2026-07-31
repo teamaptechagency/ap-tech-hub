@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -12,7 +12,11 @@ import {
   updateTeamMemberStatus,
 } from "@/actions/settings.actions";
 import { startUserImpersonation } from "@/actions/impersonation.actions";
-import { adjustWorkerBalance, applyPenalty } from "@/actions/worker.actions";
+import {
+  adjustWorkerBalance,
+  applyPenalty,
+  paySalary,
+} from "@/actions/worker.actions";
 import { SensitiveDeleteDialog } from "@/components/shared/sensitive-delete-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,6 +68,7 @@ type WorkerRow = {
   photoUrl?: string | null;
   balance: number;
   reserve: number;
+  providentFund?: number;
   activeJobs: number;
   pendingWithdraw: number;
   txns: Txn[];
@@ -105,10 +110,18 @@ const kindLabel: Record<string, string> = {
   HOURLY_CREDIT: "Hourly credit",
   RESERVE_HOLD: "Security hold",
   RESERVE_RELEASE: "Reserve release",
+  SALARY_PAYOUT: "Salary payout",
+  PF_CONTRIBUTION: "Provident fund",
   WITHDRAWAL: "Withdrawal",
   ADJUSTMENT: "Adjustment",
   PENALTY: "Penalty",
 };
+
+/** Employee-list-only label — organizationally the super admin is the CEO. */
+function displayRole(worker: { role?: string }) {
+  if (worker.role === "SUPER_ADMIN") return "CEO";
+  return worker.role;
+}
 
 const partnerTypeLabel: Record<string, string> = {
   SO_PARTNER: "SO partner",
@@ -150,6 +163,7 @@ export function WorkerBalances({
   const [dialog, setDialog] = useState<"adjust" | "penalty" | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [compensationOpen, setCompensationOpen] = useState(false);
+  const [paySalaryOpen, setPaySalaryOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("ALL");
@@ -217,6 +231,21 @@ export function WorkerBalances({
     return matchesSearch && matchesType && matchesStatus;
   });
 
+  // Salaried employees don't work project-wise, so their balance sheet is
+  // kept visually separate from freelancers here rather than mixed in —
+  // only kicks in on pages that actually have monthly-salary employees
+  // (the partners page has none, so this is a no-op there).
+  const hasSalaried = filteredWorkers.some(
+    (worker) => worker.compensationType === "MONTHLY_SALARY"
+  );
+  const orderedWorkers = hasSalaried
+    ? [...filteredWorkers].sort((a, b) => {
+        const aSalaried = a.compensationType === "MONTHLY_SALARY" ? 0 : 1;
+        const bSalaried = b.compensationType === "MONTHLY_SALARY" ? 0 : 1;
+        return aSalaried - bSalaried;
+      })
+    : filteredWorkers;
+
   function selectWorker(worker: WorkerRow) {
     setSelected(worker);
     setResetPassword(null);
@@ -260,6 +289,17 @@ export function WorkerBalances({
 
     if (result.error) return setError(result.error);
     setCompensationOpen(false);
+    router.refresh();
+  }
+
+  async function handlePaySalary() {
+    if (!selected) return;
+    setError("");
+    setBusy(true);
+    const result = await paySalary(selected.id);
+    setBusy(false);
+    if (result.error) return setError(result.error);
+    setPaySalaryOpen(false);
     router.refresh();
   }
 
@@ -464,14 +504,36 @@ export function WorkerBalances({
               </CardContent>
             </Card>
           )}
-          {filteredWorkers.map((worker) => (
-            <button
-              key={worker.id}
-              type="button"
-              onClick={() => selectWorker(worker)}
-              className="w-full text-left"
-            >
-              <Card
+          {orderedWorkers.map((worker, index) => {
+            const previous = orderedWorkers[index - 1];
+            const isSalaried = worker.compensationType === "MONTHLY_SALARY";
+            const showSalariedHeader =
+              hasSalaried &&
+              isSalaried &&
+              (!previous || previous.compensationType !== "MONTHLY_SALARY");
+            const showProjectHeader =
+              hasSalaried &&
+              !isSalaried &&
+              (!previous || previous.compensationType === "MONTHLY_SALARY");
+
+            return (
+              <Fragment key={worker.id}>
+                {showSalariedHeader && (
+                  <p className="px-1 pt-1 text-xs font-semibold uppercase text-muted-foreground">
+                    Salaried
+                  </p>
+                )}
+                {showProjectHeader && (
+                  <p className="px-1 pt-3 text-xs font-semibold uppercase text-muted-foreground">
+                    Project-wise
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => selectWorker(worker)}
+                  className="w-full text-left"
+                >
+                  <Card
                 className={
                   selected?.id === worker.id ? "border-2 border-primary" : ""
                 }
@@ -503,7 +565,7 @@ export function WorkerBalances({
                             worker.partnerType
                               ? partnerTypeLabel[worker.partnerType] ??
                                 worker.partnerType
-                              : worker.role,
+                              : displayRole(worker),
                           ]
                             .filter(Boolean)
                             .join(" / ")}
@@ -519,7 +581,9 @@ export function WorkerBalances({
                   <div className="shrink-0 text-right">
                     <p className="font-semibold">{bdt(worker.balance)}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      reserve {bdt(worker.reserve)}
+                      {isSalaried
+                        ? `PF ${bdt(worker.providentFund ?? 0)}`
+                        : `reserve ${bdt(worker.reserve)}`}
                     </p>
                     {worker.pendingWithdraw > 0 && (
                       <p className="text-[10px] text-amber-600">
@@ -528,9 +592,11 @@ export function WorkerBalances({
                     )}
                   </div>
                 </CardContent>
-              </Card>
-            </button>
-          ))}
+                  </Card>
+                </button>
+              </Fragment>
+            );
+          })}
         </div>
 
         {selected ? (
@@ -573,6 +639,12 @@ export function WorkerBalances({
                       bonus earned {bdt(selected.usdBonusEarned ?? 0)}
                     </Badge>
                   )}
+                  {selected.compensationType === "MONTHLY_SALARY" &&
+                    (selected.providentFund ?? 0) > 0 && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        PF {bdt(selected.providentFund ?? 0)}
+                      </Badge>
+                    )}
                   {(selected.role === "TEAM_MEMBER" ||
                     selected.role === "SUPER_ADMIN") && (
                     <Button
@@ -584,6 +656,19 @@ export function WorkerBalances({
                       }}
                     >
                       Compensation
+                    </Button>
+                  )}
+                  {selected.compensationType === "MONTHLY_SALARY" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-primary/40 text-primary hover:bg-primary/10"
+                      onClick={() => {
+                        setError("");
+                        setPaySalaryOpen(true);
+                      }}
+                    >
+                      Pay salary
                     </Button>
                   )}
                   <Button
@@ -738,6 +823,14 @@ export function WorkerBalances({
                             className="ml-2 bg-amber-100 text-[10px] text-amber-700"
                           >
                             reserve
+                          </Badge>
+                        )}
+                        {txn.bucket === "PROVIDENT_FUND" && (
+                          <Badge
+                            variant="secondary"
+                            className="ml-2 bg-emerald-100 text-[10px] text-emerald-700"
+                          >
+                            provident fund
                           </Badge>
                         )}
                       </p>
@@ -1063,6 +1156,49 @@ export function WorkerBalances({
               {busy ? "Saving..." : "Save compensation"}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={paySalaryOpen} onOpenChange={setPaySalaryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pay salary - {selected?.name}</DialogTitle>
+            <DialogDescription>
+              Splits automatically: 80% to spendable balance, 20% to the
+              locked provident fund. Blocked if this month is already paid.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 rounded-md border bg-muted/30 p-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Monthly salary</span>
+              <span className="font-medium">
+                {bdt(selected?.monthlySalaryAmount ?? 0)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">To balance (80%)</span>
+              <span className="font-medium text-green-600">
+                +{bdt((selected?.monthlySalaryAmount ?? 0) * 0.8)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                To provident fund (20%)
+              </span>
+              <span className="font-medium">
+                +{bdt((selected?.monthlySalaryAmount ?? 0) * 0.2)}
+              </span>
+            </div>
+          </div>
+          {error && <p className="text-center text-sm text-red-500">{error}</p>}
+          <Button
+            type="button"
+            className="w-full"
+            disabled={busy}
+            onClick={handlePaySalary}
+          >
+            {busy ? "Paying..." : "Confirm payment"}
+          </Button>
         </DialogContent>
       </Dialog>
 

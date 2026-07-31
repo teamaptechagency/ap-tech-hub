@@ -58,6 +58,8 @@ model User {
   // Cached money (ledger = WorkerTxn)
   balance              Decimal   @default(0) @db.Decimal(12, 2)
   reserve              Decimal   @default(0) @db.Decimal(12, 2)
+  // MONTHLY_SALARY only — 20% of each salary payout, see WorkerBucket.PROVIDENT_FUND
+  providentFund        Decimal   @default(0) @db.Decimal(12, 2)
   // How a TEAM_MEMBER is paid: per job (the existing Job/JobMember payout
   // flow) or a fixed monthly salary independent of any job. Payment itself
   // stays manual for MONTHLY_SALARY for now — this only records the terms.
@@ -1120,6 +1122,10 @@ model PointExchangeRequest {
 enum WorkerBucket {
   BALANCE
   RESERVE
+  // MONTHLY_SALARY employees only — 20% of each salary payout, locked
+  // (no withdraw flow), admin-managed. See actions/worker.actions.ts'
+  // paySalary.
+  PROVIDENT_FUND
 }
 
 enum WorkerTxnKind {
@@ -1128,6 +1134,8 @@ enum WorkerTxnKind {
   HOURLY_CREDIT
   RESERVE_HOLD
   RESERVE_RELEASE
+  SALARY_PAYOUT
+  PF_CONTRIBUTION
   WITHDRAWAL
   ADJUSTMENT
   PENALTY
