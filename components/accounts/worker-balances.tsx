@@ -535,14 +535,16 @@ export function WorkerBalances({
                   <Badge variant="secondary" className="text-[10px]">
                     ID {selected.identityStatus.toLowerCase()}
                   </Badge>
-                  {selected.role === "TEAM_MEMBER" && (
+                  {(selected.role === "TEAM_MEMBER" ||
+                    selected.role === "SUPER_ADMIN") && (
                     <Badge variant="secondary" className="text-[10px]">
                       {selected.compensationType === "MONTHLY_SALARY"
                         ? `salary ${bdt(selected.monthlySalaryAmount ?? 0)}/mo`
                         : "per job"}
                     </Badge>
                   )}
-                  {selected.role === "TEAM_MEMBER" && (
+                  {(selected.role === "TEAM_MEMBER" ||
+                    selected.role === "SUPER_ADMIN") && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -587,7 +589,7 @@ export function WorkerBalances({
                   >
                     Penalty
                   </Button>
-                  {isSuperAdmin && onDelete && (
+                  {isSuperAdmin && onDelete && selected.role !== "SUPER_ADMIN" && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -602,18 +604,22 @@ export function WorkerBalances({
               </div>
 
               <div className="mb-3 flex flex-wrap gap-2 rounded-md border bg-muted/30 p-2">
-                <Button size="sm" variant="outline" className={statusButtonClass("ACTIVE")} onClick={() => changeStatus("ACTIVE")} disabled={busy}>
-                  {selected.accountStatus === "ACTIVE" ? "Active now" : "Activate"}
-                </Button>
-                <Button size="sm" variant="outline" className={statusButtonClass("HOLD")} onClick={() => changeStatus("HOLD")} disabled={busy}>
-                  {selected.accountStatus === "HOLD" ? "On hold" : "Hold"}
-                </Button>
-                <Button size="sm" variant="outline" className={statusButtonClass("LOCKED")} onClick={() => changeStatus("LOCKED")} disabled={busy}>
-                  {selected.accountStatus === "LOCKED" ? "Locked" : "Lock"}
-                </Button>
-                <Button size="sm" variant="outline" className={statusButtonClass("SUSPENDED") || "text-red-500 hover:text-red-600"} onClick={() => changeStatus("SUSPENDED")} disabled={busy}>
-                  {selected.accountStatus === "SUSPENDED" ? "Suspended" : "Suspend"}
-                </Button>
+                {selected.role !== "SUPER_ADMIN" && (
+                  <>
+                    <Button size="sm" variant="outline" className={statusButtonClass("ACTIVE")} onClick={() => changeStatus("ACTIVE")} disabled={busy}>
+                      {selected.accountStatus === "ACTIVE" ? "Active now" : "Activate"}
+                    </Button>
+                    <Button size="sm" variant="outline" className={statusButtonClass("HOLD")} onClick={() => changeStatus("HOLD")} disabled={busy}>
+                      {selected.accountStatus === "HOLD" ? "On hold" : "Hold"}
+                    </Button>
+                    <Button size="sm" variant="outline" className={statusButtonClass("LOCKED")} onClick={() => changeStatus("LOCKED")} disabled={busy}>
+                      {selected.accountStatus === "LOCKED" ? "Locked" : "Lock"}
+                    </Button>
+                    <Button size="sm" variant="outline" className={statusButtonClass("SUSPENDED") || "text-red-500 hover:text-red-600"} onClick={() => changeStatus("SUSPENDED")} disabled={busy}>
+                      {selected.accountStatus === "SUSPENDED" ? "Suspended" : "Suspend"}
+                    </Button>
+                  </>
+                )}
                 <Button size="sm" variant="outline" onClick={resetPasswordForSelected} disabled={busy}>
                   Reset password
                 </Button>

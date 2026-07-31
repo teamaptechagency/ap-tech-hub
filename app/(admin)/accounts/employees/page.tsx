@@ -6,7 +6,11 @@ import { deleteEmployee } from "@/actions/worker.actions";
 export default async function EmployeesPage() {
   const session = await auth();
   const employees = await prisma.user.findMany({
-    where: { role: "TEAM_MEMBER" },
+    // Super admin draws a salary too and belongs in this list alongside
+    // regular team members so compensation can be set the same way — see
+    // the SUPER_ADMIN carve-outs below and in worker-balances.tsx that keep
+    // status changes/deletion off this row.
+    where: { role: { in: ["TEAM_MEMBER", "SUPER_ADMIN"] } },
     orderBy: { name: "asc" },
     include: {
       workerTxns: {
