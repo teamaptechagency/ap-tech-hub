@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  BarChart3,
   Eye,
   FileText,
   ImageUp,
@@ -72,6 +73,8 @@ export type AdminBlogPost = {
   noIndex: boolean;
   internalLinks: BlogInternalLink[];
   visibility: BlogVisibilityValue;
+  showViewCount: boolean;
+  impressions: number;
 };
 
 type EditorState = {
@@ -100,6 +103,7 @@ type EditorState = {
   noIndex: boolean;
   internalLinks: BlogInternalLink[];
   visibility: BlogVisibilityValue;
+  showViewCount: boolean;
 };
 
 // Google truncates around these widths, so the editor scores against them.
@@ -151,6 +155,7 @@ function emptyEditor(): EditorState {
     noIndex: false,
     internalLinks: [],
     visibility: "PUBLIC",
+    showViewCount: false,
   };
 }
 
@@ -183,6 +188,7 @@ function toEditor(post: AdminBlogPost): EditorState {
     noIndex: post.noIndex,
     internalLinks: post.internalLinks ?? [],
     visibility: post.visibility,
+    showViewCount: post.showViewCount,
   };
 }
 
@@ -954,6 +960,12 @@ export function BlogManager({
                     search — even with the direct link. It stays editable here.
                   </span>
                 </label>
+                <Toggle
+                  label="Show view count publicly"
+                  checked={editor.showViewCount}
+                  onChange={(value) => update("showViewCount", value)}
+                  hint="Off by default — reach and views still track either way, this only controls whether readers see the number on the post."
+                />
                 <label className="grid gap-1.5 text-sm">
                   <span className="font-medium">Publish date</span>
                   <input
@@ -1079,14 +1091,23 @@ export function BlogManager({
             .
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditor(emptyEditor())}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          New post
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/blog-manager/analytics"
+            className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </Link>
+          <button
+            type="button"
+            onClick={() => setEditor(emptyEditor())}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            New post
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2 border-b">
@@ -1193,6 +1214,15 @@ export function BlogManager({
                       {post.publishedAt
                         ? ` · ${new Date(post.publishedAt).toLocaleDateString()}`
                         : ""}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {post.impressions.toLocaleString()} impressions ·{" "}
+                      {post.viewCount.toLocaleString()} views
+                      {!post.showViewCount && (
+                        <span className="ml-1 text-[11px] text-muted-foreground/70">
+                          (hidden from readers)
+                        </span>
+                      )}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">

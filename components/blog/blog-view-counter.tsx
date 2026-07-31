@@ -25,7 +25,7 @@ export function BlogViewCounter({ postId }: { postId: string }) {
       // per page load is still better than not counting it at all.
     }
 
-    recordBlogPostView(postId).catch(() => {
+    recordBlogPostView(postId, document.referrer).catch(() => {
       // A missed view must never surface as an error to the reader.
     });
   }, [postId]);

@@ -1,17 +1,34 @@
 "use server";
 
+import { createHash } from "crypto";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES } from "@/lib/roles";
 import {
   buildBlogExcerpt,
+  classifyReferrerSource,
   estimateReadingMinutes,
   slugifyBlogTitle,
   type BlogStatusValue,
   type BlogVisibilityValue,
 } from "@/lib/blog";
+
+function firstHeader(headerList: Headers, keys: string[]) {
+  for (const key of keys) {
+    const value = headerList.get(key);
+    if (value) return value.trim();
+  }
+  return "";
+}
+
+function hashIp(value: string) {
+  const ip = value.split(",")[0]?.trim();
+  if (!ip) return null;
+  return createHash("sha256").update(ip).digest("hex");
+}
 
 async function checkAdmin() {
   const session = await auth();
@@ -102,6 +119,7 @@ export type BlogPostInput = {
   noIndex?: boolean;
   internalLinks?: { label: string; href: string }[];
   visibility?: BlogVisibilityValue;
+  showViewCount?: boolean;
 };
 
 /**
@@ -137,8 +155,14 @@ export async function saveBlogPost(input: BlogPostInput) {
   const excerpt = input.excerpt?.trim() || buildBlogExcerpt(content, 180);
 
   const publishedAtInput = input.publishedAt?.trim();
+  // The editor's date picker sends a bare "YYYY-MM-DD" with no time or
+  // offset. `new Date()` reads that as UTC midnight, not Dhaka midnight —
+  // so picking "today" between 00:00-05:59 Dhaka time (UTC+6) resolved to a
+  // few hours in the future and the post sat hidden until the server's UTC
+  // clock caught up, even though it showed as Published. Anchoring to the
+  // Dhaka offset keeps "today" meaning today for the people using this.
   const parsedPublishedAt = publishedAtInput
-    ? new Date(publishedAtInput)
+    ? new Date(`${publishedAtInput}T00:00:00+06:00`)
     : null;
   if (parsedPublishedAt && Number.isNaN(parsedPublishedAt.getTime())) {
     return { error: "Publish date is not a valid date" };
@@ -189,6 +213,7 @@ export async function saveBlogPost(input: BlogPostInput) {
     noIndex: Boolean(input.noIndex),
     internalLinks: cleanInternalLinks(input.internalLinks),
     visibility: input.visibility ?? "PUBLIC",
+    showViewCount: Boolean(input.showViewCount),
   };
 
   try {
@@ -333,17 +358,80 @@ export async function deleteBlogCategory(id: string) {
  * This is reachable by anyone, so it only ever moves the counter on a post that
  * is actually published and public — a stray or guessed id cannot inflate a
  * draft's numbers, and there is nothing else to update.
+ *
+ * `referrer` is the browser's `document.referrer` at the time the post
+ * opened — the request's own Referer header would just be this page's own
+ * URL, since the browser sends it as part of calling this action, not as
+ * part of the navigation that got the reader here.
  */
-export async function recordBlogPostView(id: string) {
+export async function recordBlogPostView(id: string, referrer?: string) {
   const postId = id?.trim();
   if (!postId) return;
 
   try {
-    await prisma.blogPost.updateMany({
+    const result = await prisma.blogPost.updateMany({
       where: { id: postId, status: "PUBLISHED", visibility: "PUBLIC" },
       data: { viewCount: { increment: 1 } },
     });
+
+    // Guessed/stray/draft ids never get this far, so the analytics event
+    // stays as clean as the counter it rides alongside.
+    if (result.count === 0) return;
+
+    const headerList = await headers();
+    const host = firstHeader(headerList, ["host"]);
+    const ipHash = hashIp(
+      firstHeader(headerList, ["x-forwarded-for", "x-real-ip", "cf-connecting-ip"])
+    );
+
+    await prisma.blogPostEvent.create({
+      data: {
+        postId,
+        type: "VIEW",
+        source: classifyReferrerSource(referrer, host),
+        ipHash,
+      },
+    });
   } catch {
     // View counts are cosmetic — never surface this to the reader.
+  }
+}
+
+/**
+ * Fire-and-forget impression counter — a post "card" was rendered in a
+ * listing (blog index, home page teaser, related posts). Batched to one
+ * insert per page load instead of one call per card.
+ *
+ * Same reachable-by-anyone shape as recordBlogPostView: only ids that are
+ * actually published and public get an event logged.
+ */
+export async function recordBlogImpressions(postIds: string[], path = "/blog") {
+  const ids = Array.from(
+    new Set(
+      (postIds ?? [])
+        .map((id) => id?.trim())
+        .filter((id): id is string => Boolean(id))
+    )
+  ).slice(0, 60);
+
+  if (!ids.length) return;
+
+  try {
+    const published = await prisma.blogPost.findMany({
+      where: { id: { in: ids }, status: "PUBLISHED", visibility: "PUBLIC" },
+      select: { id: true },
+    });
+
+    if (!published.length) return;
+
+    await prisma.blogPostEvent.createMany({
+      data: published.map((post) => ({
+        postId: post.id,
+        type: "IMPRESSION" as const,
+        path: path.slice(0, 180),
+      })),
+    });
+  } catch {
+    // Impressions are cosmetic analytics — never surface this to the reader.
   }
 }

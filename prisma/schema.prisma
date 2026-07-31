@@ -1781,6 +1781,13 @@ model BlogPost {
 
   visibility BlogVisibility @default(PUBLIC)
 
+  // View count is tracked for every post regardless, but stays off the public
+  // page until the author opts in — a fresh post showing "0 views" reads
+  // worse than no number at all.
+  showViewCount Boolean @default(false)
+
+  events BlogPostEvent[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1789,6 +1796,32 @@ model BlogPost {
   @@index([featured])
   // Public listings filter on both, so index them together.
   @@index([status, visibility, publishedAt])
+}
+
+// A post card rendered in a listing is an IMPRESSION (reach); the reader
+// actually opening the post page is a VIEW (click/open). Kept as raw events
+// rather than counters so the admin dashboard can break both down by traffic
+// source and time range — a running total can't do either.
+enum BlogEventType {
+  IMPRESSION
+  VIEW
+}
+
+model BlogPostEvent {
+  id     String        @id @default(cuid())
+  postId String
+  post   BlogPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  type   BlogEventType
+  // Classified from the browser's referrer at event time: "Google", "Direct",
+  // "Facebook", etc. See classifyReferrerSource in lib/blog.ts.
+  source    String   @default("Direct")
+  path      String   @default("/blog")
+  ipHash    String?
+  createdAt DateTime @default(now())
+
+  @@index([postId, type, createdAt])
+  @@index([type, createdAt])
+  @@index([postId, type, source])
 }
 
 // ============================================
