@@ -38,8 +38,11 @@ export function LoginForm({
   const [loginMode, setLoginMode] = useState<
     "password" | "authenticator" | "email" | "whatsapp" | "passkey"
   >("password");
-  // Browsers without WebAuthn (or an older in-app webview) must not be shown
-  // a fingerprint button that cannot work.
+  // Fingerprint sign-in is offered only on mobile, with a real platform
+  // sensor (Touch ID / Face ID / Android fingerprint) — desktop WebAuthn
+  // support (security keys, etc.) exists but isn't the "fingerprint" the
+  // button promises, and showing it there would just be a confusing prompt
+  // most desktops can't satisfy.
   const [passkeySupported, setPasskeySupported] = useState(false);
   const [passwordlessMethods, setPasswordlessMethods] = useState<string[]>([]);
   const [passwordlessCodeSent, setPasswordlessCodeSent] = useState(false);
@@ -56,9 +59,31 @@ export function LoginForm({
   useEffect(() => {
     const savedToken = window.localStorage.getItem("aptech_login_device") ?? "";
     setDeviceToken(savedToken);
-    setPasskeySupported(
-      typeof window !== "undefined" && !!window.PublicKeyCredential
-    );
+
+    let cancelled = false;
+
+    async function detectPasskeySupport() {
+      if (typeof window === "undefined" || !window.PublicKeyCredential) return;
+
+      // Mobile only — same UA check as defaultPasskeyLabel in lib/passkey.ts.
+      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+      if (!isMobile) return;
+
+      // A browser can support WebAuthn without the device having an actual
+      // fingerprint/Face ID sensor (e.g. only external security keys) — the
+      // button promises "fingerprint," so it should only appear when one is
+      // really there. Same check passkey-manager.tsx uses for registration.
+      const hasPlatformAuthenticator = await window.PublicKeyCredential
+        .isUserVerifyingPlatformAuthenticatorAvailable?.()
+        .catch(() => false);
+
+      if (!cancelled) setPasskeySupported(Boolean(hasPlatformAuthenticator));
+    }
+
+    void detectPasskeySupport();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handlePasskeyLogin() {
