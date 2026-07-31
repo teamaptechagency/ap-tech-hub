@@ -86,6 +86,21 @@ export function LoginForm({
     };
   }, []);
 
+  // onBlur alone missed this on mobile: autofill, virtual-keyboard "Done"/
+  // "Go", and tapping straight from the email field to a login-method
+  // button can all skip a blur event, so the Fingerprint option (gated on
+  // passwordlessMethods including PASSKEY) never appeared even when a
+  // passkey was actually registered. Debounced refresh as they type covers
+  // that without hitting the server on every keystroke.
+  useEffect(() => {
+    if (!email.includes("@")) return;
+    const timeout = setTimeout(() => {
+      void refreshLoginOptions(email);
+    }, 500);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
+
   async function handlePasskeyLogin() {
     setError("");
     setMessage("");
