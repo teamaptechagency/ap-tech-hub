@@ -362,7 +362,10 @@ export async function createCustomInvoice(formData: {
       balanceApplied,
       amountPaid: balanceApplied,
       status: fullyCovered ? "PAID" : "DUE",
-      dueDate: new Date(formData.dueDate),
+      // formData.dueDate is a bare "YYYY-MM-DD" from a date picker; `new Date()`
+      // would read it as UTC midnight (Dhaka 06:00), pushing the OVERDUE
+      // transition 6 hours past the Dhaka-local due moment the admin picked.
+      dueDate: new Date(`${formData.dueDate}T00:00:00+06:00`),
       paidVia: fullyCovered ? "Client balance" : null,
       payoneerInvoiceUrl,
       payoneerInvoiceButtonLabel:
@@ -1148,7 +1151,8 @@ export async function updateInvoice(
         amount: total,
         currency: formData.currency,
         vatPercent: vat,
-        dueDate: new Date(formData.dueDate),
+        // See createCustomInvoice: anchor to Dhaka midnight, not UTC midnight.
+        dueDate: new Date(`${formData.dueDate}T00:00:00+06:00`),
         payoneerInvoiceUrl,
         payoneerInvoiceButtonLabel:
           formData.payoneerInvoiceButtonLabel?.trim() || null,
@@ -1268,4 +1272,142 @@ export async function setInvoiceItemPurchased(input: {
     console.error("Failed to record purchase:", error);
     return { error: "Could not record this purchase" };
   }
+}
+
+/**
+ * Raises an advance invoice straight from a job's page — the client is
+ * whoever the job already belongs to, so nothing needs picking. The amount
+ * is the one field that can't be defaulted (there's no sensible guess for
+ * how much to bill); title and due date fall back to something reasonable
+ * so the admin isn't forced to type either.
+ */
+export async function createJobAdvanceInvoice(input: {
+  jobId: string;
+  amount: string;
+  title?: string;
+  dueDate?: string;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const amount = parseFloat(input.amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { error: "Enter an amount greater than zero" };
+  }
+
+  const job = await prisma.job.findUnique({
+    where: { id: input.jobId },
+    select: { title: true, clientId: true, client: { select: { currency: true } } },
+  });
+  if (!job) return { error: "Job not found" };
+  if (!job.clientId) {
+    return { error: "This job has no linked client, so there is no balance to fund" };
+  }
+
+  const number = await nextInvoiceNumber();
+  const title = input.title?.trim() || `Project purchases — ${job.title}`;
+  // A bare "YYYY-MM-DD" reads as UTC midnight, not Dhaka midnight — see
+  // createCustomInvoice above for why the offset is anchored explicitly.
+  const dueDate = input.dueDate?.trim()
+    ? new Date(`${input.dueDate.trim()}T00:00:00+06:00`)
+    : new Date();
+
+  const invoice = await prisma.invoice.create({
+    data: {
+      number,
+      type: "CUSTOM",
+      title,
+      jobId: input.jobId,
+      clientId: job.clientId,
+      amount,
+      currency: job.client?.currency ?? "USD",
+      creditsClientBalance: true,
+      status: "DUE",
+      dueDate,
+    },
+  });
+
+  await audit(
+    session.user.id,
+    "INVOICE_CREATED",
+    "Invoice",
+    invoice.id,
+    `${number} · advance · ${amount.toFixed(2)}`
+  );
+
+  const clientUser = await prisma.user.findFirst({
+    where: { clientId: job.clientId },
+  });
+  if (clientUser) {
+    await notify({
+      userId: clientUser.id,
+      title: `New invoice — ${number}`,
+      body: `${title} · ${job.client?.currency ?? "USD"} ${amount.toFixed(2)}`,
+      href: `/c/invoices/${invoice.id}`,
+    });
+  }
+
+  revalidatePath("/invoices");
+  revalidatePath(`/jobs/${input.jobId}`);
+  return { success: true, invoiceId: invoice.id };
+}
+
+/**
+ * Appends a line item to an existing advance invoice — the shopping list for
+ * a project grows over the life of the job, well after the advance itself
+ * was paid, so this deliberately skips updateInvoice's paid-invoice lock and
+ * doesn't touch the invoice's own amount. The item is just something to buy
+ * against the balance the advance already funded; setInvoiceItemPurchased is
+ * what actually moves money when it's ticked off.
+ */
+export async function addJobPurchaseItem(input: {
+  invoiceId: string;
+  description: string;
+  qty?: string;
+  amount: string;
+  costUsd?: string;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const description = input.description?.trim();
+  if (!description) return { error: "Item description is required" };
+
+  const amount = parseFloat(input.amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { error: "Enter an amount greater than zero" };
+  }
+
+  const qty = Math.max(1, parseInt(input.qty ?? "1") || 1);
+  const costUsd =
+    input.costUsd?.trim() && Number.isFinite(parseFloat(input.costUsd))
+      ? parseFloat(input.costUsd)
+      : null;
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: input.invoiceId },
+    select: { id: true, jobId: true, creditsClientBalance: true },
+  });
+  if (!invoice) return { error: "Invoice not found" };
+  if (!invoice.creditsClientBalance) {
+    return { error: "Only advance invoices can carry purchase items" };
+  }
+
+  const item = await prisma.invoiceItem.create({
+    data: { invoiceId: invoice.id, description, qty, amount, costUsd },
+  });
+
+  await audit(
+    session.user.id,
+    "INVOICE_ITEM_ADDED",
+    "InvoiceItem",
+    item.id,
+    `${description} · ${amount.toFixed(2)}`
+  );
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${invoice.id}`);
+  if (invoice.jobId) revalidatePath(`/jobs/${invoice.jobId}`);
+
+  return { success: true };
 }
