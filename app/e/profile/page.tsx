@@ -3,9 +3,15 @@ import { auth } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileForm } from "@/components/employee/profile-form";
+import { WithdrawRequestForm } from "@/components/employee/withdraw-request-form";
 import { getUserLoginDevices } from "@/lib/login-security";
 import { PasskeyManager } from "@/components/auth/passkey-manager";
 import { listUserPasskeys } from "@/lib/passkey";
+import { getSalaryBalance } from "@/lib/compensation";
+import {
+  toPayoutMethodOption,
+  type PayoutMethodOption,
+} from "@/lib/payout-methods";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -26,10 +32,37 @@ export default async function EmployeeProfilePage() {
     },
   });
   if (!me) notFound();
-  const [loginDevices, passkeys] = await Promise.all([
-    getUserLoginDevices(me.id),
-    listUserPasskeys(me.id),
-  ]);
+
+  const isSalaried = me.compensationType === "MONTHLY_SALARY";
+
+  const [loginDevices, passkeys, salaryBalance, pendingWithdraw, paymentMethods] =
+    await Promise.all([
+      getUserLoginDevices(me.id),
+      listUserPasskeys(me.id),
+      isSalaried ? getSalaryBalance(me.id) : Promise.resolve(0),
+      isSalaried
+        ? prisma.withdrawRequest.findFirst({
+            where: { userId: me.id, status: "PENDING" },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      isSalaried
+        ? prisma.paymentMethod.findMany({
+            where: { active: true },
+            orderBy: [{ sortOrder: "asc" }, { label: "asc" }],
+            include: {
+              bankAccounts: {
+                where: { active: true },
+                orderBy: [{ sortOrder: "asc" }, { bankName: "asc" }],
+              },
+            },
+          })
+        : Promise.resolve([]),
+    ]);
+
+  const payoutMethods = paymentMethods
+    .map(toPayoutMethodOption)
+    .filter((method): method is PayoutMethodOption => Boolean(method));
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -39,6 +72,19 @@ export default async function EmployeeProfilePage() {
           {me.name} · {me.email}
         </p>
       </div>
+
+      {isSalaried && (
+        <WithdrawRequestForm
+          balance={salaryBalance}
+          reserve={0}
+          emergencyPercent={0}
+          hasPending={Boolean(pendingWithdraw)}
+          defaultMethod={me.payoutMethod ?? ""}
+          defaultDetails={me.payoutDetails ?? ""}
+          paymentMethods={payoutMethods}
+          profileHref="/e/profile"
+        />
+      )}
 
       {/* Skills — admin-managed */}
       <Card>
