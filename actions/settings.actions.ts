@@ -962,6 +962,8 @@ export async function updateEmployeeCompensation(
   data: {
     compensationType: "PER_JOB" | "MONTHLY_SALARY";
     monthlySalaryAmount?: string;
+    monthlyTargetUsd?: string;
+    bonusPerHundredUsd?: string;
   }
 ) {
   const session = await checkAdmin();
@@ -977,10 +979,27 @@ export async function updateEmployeeCompensation(
   }
 
   let monthlySalaryAmount: number | null = null;
+  let monthlyTargetUsd: number | null = null;
+  let bonusPerHundredUsd: number | null = null;
   if (data.compensationType === "MONTHLY_SALARY") {
     monthlySalaryAmount = parseFloat(data.monthlySalaryAmount ?? "");
     if (!Number.isFinite(monthlySalaryAmount) || monthlySalaryAmount <= 0) {
       return { error: "Enter a monthly salary amount greater than zero" };
+    }
+
+    // Target/bonus rate are optional — a monthly-salary employee with no
+    // target set just isn't tracked for a bonus.
+    const targetInput = (data.monthlyTargetUsd ?? "").trim();
+    const rateInput = (data.bonusPerHundredUsd ?? "").trim();
+    if (targetInput || rateInput) {
+      monthlyTargetUsd = parseFloat(targetInput);
+      bonusPerHundredUsd = parseFloat(rateInput);
+      if (!Number.isFinite(monthlyTargetUsd) || monthlyTargetUsd <= 0) {
+        return { error: "Enter a monthly USD target greater than zero" };
+      }
+      if (!Number.isFinite(bonusPerHundredUsd) || bonusPerHundredUsd <= 0) {
+        return { error: "Enter a bonus rate greater than zero" };
+      }
     }
   }
 
@@ -989,6 +1008,8 @@ export async function updateEmployeeCompensation(
     data: {
       compensationType: data.compensationType,
       monthlySalaryAmount,
+      monthlyTargetUsd,
+      bonusPerHundredUsd,
     },
   });
 
