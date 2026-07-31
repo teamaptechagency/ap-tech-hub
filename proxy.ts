@@ -69,7 +69,19 @@ export const proxy = auth((req) => {
     user?.role === "SUPER_ADMIN"
       ? req.cookies.get("ap_impersonate_user_role")?.value
       : null;
-  const effectiveRole = impersonatedRole || user?.role;
+  // Self view-switch: super admin previewing the employee interface as
+  // themselves. This proxy runs before any layout and must agree with
+  // getEffectiveSession() (lib/auth.ts), which already treats this cookie
+  // as TEAM_MEMBER — otherwise this proxy keeps bouncing /e/* to /dashboard
+  // on the raw SUPER_ADMIN role while app/(admin)/layout.tsx bounces
+  // /dashboard back to /e/profile on the effective TEAM_MEMBER role,
+  // producing an infinite redirect loop.
+  const viewingAsEmployee =
+    user?.role === "SUPER_ADMIN" &&
+    !impersonatedRole &&
+    req.cookies.get("ap_view_mode")?.value === "EMPLOYEE";
+  const effectiveRole =
+    impersonatedRole || (viewingAsEmployee ? "TEAM_MEMBER" : user?.role);
 
   // Public routes
   if (
