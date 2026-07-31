@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 
+import { getLandingVisitorStats } from "@/actions/landing.actions";
 import { InfoGrid, PublicHero, PublicPageShell } from "@/components/public/public-page-shell";
+import { auth } from "@/lib/auth";
+import { getBrandingSettings } from "@/lib/branding";
 import { getPublicBusinessProfile } from "@/lib/business-content";
+import { getLandingPageData } from "@/lib/landing-data";
+import { homeFor } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +21,21 @@ function statusLabel(value: string) {
 }
 
 export default async function CompanyPage() {
-  const profile = await getPublicBusinessProfile();
+  const [profile, session, branding, landing, stats] = await Promise.all([
+    getPublicBusinessProfile(),
+    auth(),
+    getBrandingSettings(),
+    getLandingPageData(),
+    getLandingVisitorStats(),
+  ]);
 
   return (
-    <PublicPageShell>
+    <PublicPageShell
+      portalHref={session?.user ? homeFor(session.user.role) : null}
+      publicLogoUrl={branding.publicLogoUrl}
+      topBar={landing.topBar}
+      stats={stats}
+    >
       <PublicHero
         eyebrow="Company"
         title="Company Information"

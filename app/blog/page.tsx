@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { getLandingVisitorStats } from "@/actions/landing.actions";
+import { BlogImpressionTracker } from "@/components/blog/blog-impression-tracker";
 import { BlogShell } from "@/components/blog/blog-shell";
 import { JsonLd } from "@/components/seo/json-ld";
 import { auth } from "@/lib/auth";
@@ -94,7 +96,7 @@ export default async function BlogIndexPage({
   const search = params.q?.trim() || "";
   const page = Math.max(1, Number(params.page) || 1);
 
-  const [data, session, branding, categories, result] = await Promise.all([
+  const [data, session, branding, categories, result, stats] = await Promise.all([
     getLandingPageData(),
     auth(),
     getBrandingSettings(),
@@ -105,6 +107,7 @@ export default async function BlogIndexPage({
       take: PAGE_SIZE,
       skip: (page - 1) * PAGE_SIZE,
     }),
+    getLandingVisitorStats(),
   ]);
 
   const origin = publicOrigin(data.seo.siteUrl);
@@ -127,6 +130,8 @@ export default async function BlogIndexPage({
       portalHref={session?.user ? homeFor(session.user.role) : null}
       publicLogoUrl={branding.publicLogoUrl}
       copyright={data.footer.copyright}
+      topBar={data.topBar}
+      stats={stats}
     >
       <JsonLd
         data={[
@@ -137,6 +142,11 @@ export default async function BlogIndexPage({
             { name: "Blog", path: "/blog" },
           ]),
         ]}
+      />
+
+      <BlogImpressionTracker
+        postIds={posts.map((post) => post.id)}
+        path="/blog"
       />
 
       <section className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">

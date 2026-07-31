@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { getLandingVisitorStats } from "@/actions/landing.actions";
 import { BlogContent } from "@/components/blog/blog-content";
+import { BlogImpressionTracker } from "@/components/blog/blog-impression-tracker";
 import { BlogShell } from "@/components/blog/blog-shell";
 import { BlogViewCounter } from "@/components/blog/blog-view-counter";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -121,11 +123,12 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
 
   if (!post) notFound();
 
-  const [data, session, branding, related] = await Promise.all([
+  const [data, session, branding, related, stats] = await Promise.all([
     getLandingPageData(),
     auth(),
     getBrandingSettings(),
     getRelatedBlogPosts(post, 3),
+    getLandingVisitorStats(),
   ]);
 
   const origin = publicOrigin(data.seo.siteUrl);
@@ -137,6 +140,8 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
       portalHref={session?.user ? homeFor(session.user.role) : null}
       publicLogoUrl={branding.publicLogoUrl}
       copyright={data.footer.copyright}
+      topBar={data.topBar}
+      stats={stats}
     >
       <JsonLd
         data={[
@@ -185,9 +190,10 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
               {formatDate(publishedAt)}
             </time>
             <span>{post.readingMinutes} min read</span>
-            {/* Only shown once a post has real traffic — "1 view" on a fresh
-                post reads worse than no number at all. */}
-            {post.viewCount > 0 ? (
+            {/* Off by default (showViewCount), and only shown once a post has
+                real traffic — "1 view" on a fresh post reads worse than no
+                number at all. */}
+            {post.showViewCount && post.viewCount > 0 ? (
               <span>
                 {post.viewCount.toLocaleString()}{" "}
                 {post.viewCount === 1 ? "view" : "views"}
@@ -312,6 +318,10 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
 
       {related.length > 0 && (
         <section className="border-t border-[#e8e3dc] bg-[#faf8f5] py-14">
+          <BlogImpressionTracker
+            postIds={related.map((item) => item.id)}
+            path={`/blog/${post.slug}`}
+          />
           <div className="mx-auto max-w-[1140px] px-4">
             <h2 className="mb-7 text-2xl font-extrabold tracking-tight text-[#101623]">
               Keep reading

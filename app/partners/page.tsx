@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { getLandingVisitorStats } from "@/actions/landing.actions";
 import { BlogShell } from "@/components/blog/blog-shell";
 import { PartnerApplicationForm } from "@/components/referral/partner-application-form";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -62,10 +63,11 @@ const WHO = [
 ];
 
 export default async function PartnersPage() {
-  const [data, session, branding] = await Promise.all([
+  const [data, session, branding, stats] = await Promise.all([
     getLandingPageData(),
     auth(),
     getBrandingSettings(),
+    getLandingVisitorStats(),
   ]);
 
   return (
@@ -73,6 +75,8 @@ export default async function PartnersPage() {
       portalHref={session?.user ? homeFor(session.user.role) : null}
       publicLogoUrl={branding.publicLogoUrl}
       copyright={data.footer.copyright}
+      topBar={data.topBar}
+      stats={stats}
     >
       <JsonLd
         data={publicPageJsonLd(data, { name: TITLE, path: "/partners" })}
