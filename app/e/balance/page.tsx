@@ -115,64 +115,64 @@ export default async function BalancePage() {
             <p className="text-3xl font-bold">BDT {balance.toLocaleString()}</p>
           </CardContent>
         </Card>
-        <Card className={isPartner ? "border-dashed" : "border-amber-200 bg-amber-50"}>
-          <CardContent className="pt-6">
-            <p
-              className={
-                isPartner
-                  ? "text-xs text-muted-foreground"
-                  : "text-xs text-amber-700"
-              }
-            >
-              {isPartner ? "Optional reserve" : "Security reserve"}
-            </p>
-            <p
-              className={
-                isPartner
-                  ? "text-3xl font-bold"
-                  : "text-3xl font-bold text-amber-900"
-              }
-            >
-              BDT {reserve.toLocaleString()}
-            </p>
-            <p
-              className={
-                isPartner
-                  ? "mt-1 text-[11px] text-muted-foreground"
-                  : "mt-1 text-[11px] text-amber-700"
-              }
-            >
-              {isPartner
-                ? "Partners can request normal payments without reserve being mandatory."
-                : `Emergency withdrawals up to ${emergencyPercent}% with admin approval`}
-              {!isPartner &&
-                reserve >= releaseThreshold &&
-                ` . You crossed BDT ${releaseThreshold.toLocaleString()}`}
-            </p>
-          </CardContent>
-        </Card>
+        {isSalaried ? (
+          <Card className="border-dashed">
+            <CardContent className="pt-6">
+              <p className="text-xs text-muted-foreground">
+                Provident fund (locked)
+              </p>
+              <p className="text-3xl font-bold">
+                BDT {providentFund.toLocaleString()}
+              </p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                20% of each monthly salary payout. Not withdrawable here —
+                managed and settled by admin.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className={isPartner ? "border-dashed" : "border-amber-200 bg-amber-50"}>
+            <CardContent className="pt-6">
+              <p
+                className={
+                  isPartner
+                    ? "text-xs text-muted-foreground"
+                    : "text-xs text-amber-700"
+                }
+              >
+                {isPartner ? "Optional reserve" : "Security reserve"}
+              </p>
+              <p
+                className={
+                  isPartner
+                    ? "text-3xl font-bold"
+                    : "text-3xl font-bold text-amber-900"
+                }
+              >
+                BDT {reserve.toLocaleString()}
+              </p>
+              <p
+                className={
+                  isPartner
+                    ? "mt-1 text-[11px] text-muted-foreground"
+                    : "mt-1 text-[11px] text-amber-700"
+                }
+              >
+                {isPartner
+                  ? "Partners can request normal payments without reserve being mandatory."
+                  : `Emergency withdrawals up to ${emergencyPercent}% with admin approval`}
+                {!isPartner &&
+                  reserve >= releaseThreshold &&
+                  ` . You crossed BDT ${releaseThreshold.toLocaleString()}`}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      {isSalaried && (
-        <Card className="border-dashed">
-          <CardContent className="pt-6">
-            <p className="text-xs text-muted-foreground">
-              Provident fund (locked)
-            </p>
-            <p className="text-3xl font-bold">
-              BDT {providentFund.toLocaleString()}
-            </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              20% of each monthly salary payout. Not withdrawable here —
-              managed and settled by admin.
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       <WithdrawRequestForm
         balance={balance}
-        reserve={reserve}
+        reserve={isSalaried ? 0 : reserve}
         emergencyPercent={emergencyPercent}
         hasPending={hasPending}
         defaultMethod={me?.payoutMethod ?? ""}
