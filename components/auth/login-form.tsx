@@ -36,7 +36,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [deviceToken, setDeviceToken] = useState("");
   const [loginMode, setLoginMode] = useState<
-    "password" | "authenticator" | "email" | "whatsapp" | "passkey"
+    "password" | "authenticator" | "email" | "whatsapp"
   >("password");
   // Fingerprint sign-in is offered only on mobile, with a real platform
   // sensor (Touch ID / Face ID / Android fingerprint) — desktop WebAuthn
@@ -183,18 +183,10 @@ export function LoginForm({
     if (loginMode === "whatsapp" && !result.methods.includes("WHATSAPP")) {
       setLoginMode("password");
     }
-    if (loginMode === "passkey" && !result.methods.includes("PASSKEY")) {
-      setLoginMode("password");
-    }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    if (loginMode === "passkey") {
-      await handlePasskeyLogin();
-      return;
-    }
 
     setError("");
     setMessage("");
@@ -276,6 +268,30 @@ export function LoginForm({
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {passkeySupported && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={loading}
+                  onClick={handlePasskeyLogin}
+                >
+                  <Fingerprint className="h-4 w-4" />
+                  Sign in with fingerprint
+                </Button>
+                <p className="text-center text-xs text-muted-foreground">
+                  Email lagbe na — device-e already registered thakle direct
+                  recognize hoye jabe. Na thakle onnovabe (password/OTP)
+                  login korun niche.
+                </p>
+                <div className="relative py-1 text-center text-xs text-muted-foreground">
+                  <span className="relative bg-background px-2">or</span>
+                  <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-border" />
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
               <Label>Login method</Label>
               <div className="grid grid-cols-2 gap-2">
@@ -283,10 +299,6 @@ export function LoginForm({
                   [
                     { value: "password", label: "Password" },
                     { value: "email", label: "Email OTP" },
-                    ...(passkeySupported &&
-                    passwordlessMethods.includes("PASSKEY")
-                      ? [{ value: "passkey", label: "Fingerprint" }]
-                      : []),
                     ...(passwordlessMethods.includes("WHATSAPP")
                       ? [{ value: "whatsapp", label: "WhatsApp OTP" }]
                       : []),
@@ -335,19 +347,7 @@ export function LoginForm({
             />
           </div>
 
-            {loginMode === "passkey" ? (
-              <div className="space-y-2 rounded-md border bg-muted/30 p-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Fingerprint className="h-4 w-4" />
-                  Fingerprint sign-in
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Apnar device er fingerprint, Face ID ba Windows Hello diye
-                  login korun. Password lagbe na. Age Profile theke ei device
-                  register kora thakte hobe.
-                </p>
-              </div>
-            ) : loginMode === "authenticator" ? (
+            {loginMode === "authenticator" ? (
               <div className="space-y-2">
                 <Label htmlFor="auth-code">Authenticator code</Label>
                 <Input
@@ -425,17 +425,15 @@ export function LoginForm({
             <Button type="submit" className="w-full" disabled={loading}>
               {loading
                 ? "Signing in..."
-                : loginMode === "passkey"
-                  ? "Use fingerprint"
-                  : loginMode === "authenticator"
-                    ? "Login with Authenticator"
-                    : loginMode === "email" || loginMode === "whatsapp"
-                      ? passwordlessCodeSent
-                        ? "Verify OTP and login"
-                        : "Send login OTP"
-                    : needsCode
-                      ? "Verify and sign in"
-                      : "Sign in"}
+                : loginMode === "authenticator"
+                  ? "Login with Authenticator"
+                  : loginMode === "email" || loginMode === "whatsapp"
+                    ? passwordlessCodeSent
+                      ? "Verify OTP and login"
+                      : "Send login OTP"
+                  : needsCode
+                    ? "Verify and sign in"
+                    : "Sign in"}
             </Button>
 
             <Button
