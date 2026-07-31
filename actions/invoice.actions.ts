@@ -1290,6 +1290,7 @@ export async function createJobAdvanceInvoice(input: {
   amount: string;
   title?: string;
   dueDate?: string;
+  vatPercent?: string;
 }) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
@@ -1298,6 +1299,12 @@ export async function createJobAdvanceInvoice(input: {
   if (!Number.isFinite(amount) || amount <= 0) {
     return { error: "Enter an amount greater than zero" };
   }
+
+  const vat = input.vatPercent?.trim() ? parseFloat(input.vatPercent) : null;
+  if (vat !== null && (!Number.isFinite(vat) || vat < 0)) {
+    return { error: "Enter a valid VAT percentage" };
+  }
+  const total = vat ? Math.round(amount * (1 + vat / 100) * 100) / 100 : amount;
 
   const job = await prisma.job.findUnique({
     where: { id: input.jobId },
@@ -1323,7 +1330,8 @@ export async function createJobAdvanceInvoice(input: {
       title,
       jobId: input.jobId,
       clientId: job.clientId,
-      amount,
+      amount: total,
+      vatPercent: vat,
       currency: job.client?.currency ?? "USD",
       creditsClientBalance: true,
       status: "DUE",
@@ -1336,7 +1344,7 @@ export async function createJobAdvanceInvoice(input: {
     "INVOICE_CREATED",
     "Invoice",
     invoice.id,
-    `${number} · advance · ${amount.toFixed(2)}`
+    `${number} · advance · ${total.toFixed(2)}`
   );
 
   const clientUser = await prisma.user.findFirst({
@@ -1346,7 +1354,7 @@ export async function createJobAdvanceInvoice(input: {
     await notify({
       userId: clientUser.id,
       title: `New invoice — ${number}`,
-      body: `${title} · ${job.client?.currency ?? "USD"} ${amount.toFixed(2)}`,
+      body: `${title} · ${job.client?.currency ?? "USD"} ${total.toFixed(2)}`,
       href: `/c/invoices/${invoice.id}`,
     });
   }
