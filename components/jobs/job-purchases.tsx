@@ -11,6 +11,7 @@ import {
   createJobAdvanceInvoice,
   setInvoiceItemPurchased,
 } from "@/actions/invoice.actions";
+import { CustomInvoiceDialog } from "@/components/invoices/custom-invoice-dialog";
 import { SensitiveActionDialog } from "@/components/shared/sensitive-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -292,20 +293,24 @@ function AddItemForm({
  */
 export function JobPurchases({
   jobId,
+  jobTitle,
   invoices,
   clientName,
   clientCurrency,
   hasClient,
   isSuperAdmin,
   isManager,
+  clients,
 }: {
   jobId: string;
+  jobTitle: string;
   invoices: JobPurchaseInvoice[];
   clientName: string | null;
   clientCurrency: string;
   hasClient: boolean;
   isSuperAdmin: boolean;
   isManager: boolean;
+  clients: { id: string; name: string; balance: number; currency: string }[];
 }) {
   const [pendingItem, setPendingItem] = useState<{
     item: JobPurchaseItem;
@@ -313,6 +318,7 @@ export function JobPurchases({
   } | null>(null);
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [newInvoiceOpen, setNewInvoiceOpen] = useState(false);
+  const [generalInvoiceOpen, setGeneralInvoiceOpen] = useState(false);
   const router = useRouter();
 
   // Totals are only meaningful per currency, so they are grouped by it rather
@@ -367,13 +373,25 @@ export function JobPurchases({
               New advance invoice
             </Button>
           )}
+          {isManager && !hasClient && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setGeneralInvoiceOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Create invoice
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {!hasClient ? (
           <p className="text-sm text-muted-foreground">
             This job has no linked client, so there is no balance to fund or
-            spend against.
+            spend against — a regular invoice can still be raised against it
+            above.
           </p>
         ) : invoices.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -567,6 +585,16 @@ export function JobPurchases({
         jobId={jobId}
         currency={clientCurrency}
       />
+
+      {generalInvoiceOpen && (
+        <CustomInvoiceDialog
+          open={generalInvoiceOpen}
+          onOpenChange={setGeneralInvoiceOpen}
+          clients={clients}
+          jobs={[{ id: jobId, title: jobTitle, clientId: null, clientName: null }]}
+          initialJobId={jobId}
+        />
+      )}
 
       <SensitiveActionDialog
         open={pendingItem !== null}

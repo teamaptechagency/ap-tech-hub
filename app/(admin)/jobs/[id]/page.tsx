@@ -16,7 +16,7 @@ import {
 } from "@/components/jobs/timer-section";
 import { CompleteJobButton } from "@/components/jobs/complete-job-button";
 import { PublishToggle } from "@/components/jobs/publish-toggle";
-import { JobPricingEditor } from "@/components/jobs/job-pricing-editor";
+import { JobDetailsEditor } from "@/components/jobs/job-details-editor";
 import { DeleteJobButton } from "@/components/jobs/delete-job-button";
 import { JobPurchases } from "@/components/jobs/job-purchases";
 import { ChatPanel } from "@/components/chat/chat-panel";
@@ -65,100 +65,107 @@ export default async function JobDetailsPage({
 
   const isManager = ADMIN_ROLES.includes(session.user.role);
 
-  const job = await prisma.job.findUnique({
-    where: { id },
-    include: {
-      client: {
-        select: {
-          companyName: true,
-          currency: true,
+  const [job, clients] = await Promise.all([
+    prisma.job.findUnique({
+      where: { id },
+      include: {
+        client: {
+          select: {
+            companyName: true,
+            currency: true,
+          },
         },
-      },
 
-      // Invoices raised against this job, for the purchases section below.
-      invoices: {
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          number: true,
-          currency: true,
-          status: true,
-          amountPaid: true,
-          creditsClientBalance: true,
-          items: {
-            select: {
-              id: true,
-              description: true,
-              qty: true,
-              amount: true,
-              costUsd: true,
-              purchased: true,
-              purchasedAt: true,
-              purchaseNote: true,
+        // Invoices raised against this job, for the purchases section below.
+        invoices: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            number: true,
+            currency: true,
+            status: true,
+            amountPaid: true,
+            creditsClientBalance: true,
+            items: {
+              select: {
+                id: true,
+                description: true,
+                qty: true,
+                amount: true,
+                costUsd: true,
+                purchased: true,
+                purchasedAt: true,
+                purchaseNote: true,
+              },
             },
           },
         },
-      },
 
-      members: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
           },
         },
-      },
 
-      weeks: {
-        orderBy: {
-          weekNumber: "asc",
-        },
-        include: {
-          tasks: {
-            orderBy: {
-              sortOrder: "asc",
+        weeks: {
+          orderBy: {
+            weekNumber: "asc",
+          },
+          include: {
+            tasks: {
+              orderBy: {
+                sortOrder: "asc",
+              },
             },
           },
         },
-      },
 
-      milestones: {
-        orderBy: {
-          sortOrder: "asc",
-        },
-        include: {
-          assignee: {
-            select: {
-              name: true,
+        milestones: {
+          orderBy: {
+            sortOrder: "asc",
+          },
+          include: {
+            assignee: {
+              select: {
+                name: true,
+              },
             },
           },
         },
-      },
 
-      workSessions: {
-        orderBy: {
-          startedAt: "desc",
-        },
-        take: 30,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
+        workSessions: {
+          orderBy: {
+            startedAt: "desc",
+          },
+          take: 30,
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
           },
         },
-      },
 
-      conversation: {
-        select: {
-          id: true,
+        conversation: {
+          select: {
+            id: true,
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.client.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: { companyName: "asc" },
+      select: { id: true, companyName: true, balance: true, currency: true },
+    }),
+  ]);
 
   if (!job) {
     notFound();
@@ -341,8 +348,16 @@ export default async function JobDetailsPage({
 
         <div className="flex flex-wrap gap-2">
           {isManager && (
-            <JobPricingEditor
+            <JobDetailsEditor
               jobId={job.id}
+              title={job.title}
+              description={job.description}
+              status={job.status}
+              publish={job.publish}
+              deadline={
+                job.deadline ? job.deadline.toISOString().slice(0, 10) : null
+              }
+              weeklyHourLimit={job.weeklyHourLimit}
               clientValue={
                 job.clientValue !== null ? Number(job.clientValue) : null
               }
@@ -504,11 +519,18 @@ export default async function JobDetailsPage({
           purpose — buying a tool is not delivery work. */}
       <JobPurchases
         jobId={job.id}
+        jobTitle={job.title}
         clientName={job.client?.companyName ?? null}
         clientCurrency={job.client?.currency ?? "USD"}
         hasClient={Boolean(job.clientId)}
         isSuperAdmin={session.user.role === "SUPER_ADMIN"}
         isManager={isManager}
+        clients={clients.map((c) => ({
+          id: c.id,
+          name: c.companyName,
+          balance: Number(c.balance),
+          currency: c.currency,
+        }))}
         invoices={job.invoices.map((invoice) => ({
           id: invoice.id,
           number: invoice.number,

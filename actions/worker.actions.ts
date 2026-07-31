@@ -171,10 +171,26 @@ export async function completeJob(jobId: string, confirm: boolean) {
         },
         select: { number: true },
       },
+      milestones: {
+        where: { status: { not: "COMPLETED" } },
+        select: { title: true },
+      },
     },
   });
   if (!job) return { error: "Job not found" };
   if (job.status === "COMPLETED") return { error: "Already completed" };
+
+  // Hard block — unlike the unpaid-invoice warning below, this can't be
+  // overridden. A job with milestones still open isn't actually done, so
+  // "complete anyway" would just hide unfinished work instead of describing
+  // the job's real state.
+  if (job.milestones.length > 0) {
+    return {
+      error: `This job has ${job.milestones.length} incomplete milestone(s): ${job.milestones
+        .map((m) => m.title)
+        .join(", ")}. Complete them first.`,
+    };
+  }
 
   // Safety warning — unpaid invoices
   if (!confirm && job.invoices.length > 0) {

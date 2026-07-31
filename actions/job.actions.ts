@@ -287,10 +287,16 @@ export async function createJob(formData: CreateJobInput) {
       workerValue,
       workerCurrency: "BDT",
 
-      startDate: data.startDate ? new Date(data.startDate) : null,
+      // Bare "YYYY-MM-DD" reads as UTC midnight, not Dhaka midnight — see
+      // updateJob below for the full story.
+      startDate: data.startDate
+        ? new Date(`${data.startDate}T00:00:00+06:00`)
+        : null,
       billingDay:
         data.type === "MONTHLY" ? parseInt(data.billingDay!) : null,
-      deadline: data.deadline ? new Date(data.deadline) : null,
+      deadline: data.deadline
+        ? new Date(`${data.deadline}T00:00:00+06:00`)
+        : null,
       weeklyHourLimit:
         data.type === "HOURLY" && data.weeklyHourLimit
           ? parseInt(data.weeklyHourLimit)
@@ -393,6 +399,23 @@ export async function updateJob(
   const job = await prisma.job.findUnique({ where: { id } });
   if (!job) return { error: "Job not found" };
 
+  // Same rule as completeJob: a job with milestones still open isn't
+  // actually done, so this can't be marked complete through the edit form
+  // either — no override.
+  if (job.status !== "COMPLETED" && formData.status === "COMPLETED") {
+    const openMilestones = await prisma.milestone.findMany({
+      where: { jobId: id, status: { not: "COMPLETED" } },
+      select: { title: true },
+    });
+    if (openMilestones.length > 0) {
+      return {
+        error: `This job has ${openMilestones.length} incomplete milestone(s): ${openMilestones
+          .map((m) => m.title)
+          .join(", ")}. Complete them first.`,
+      };
+    }
+  }
+
   await prisma.job.update({
     where: { id },
     data: {
@@ -400,7 +423,11 @@ export async function updateJob(
       description: formData.description || null,
       status: formData.status,
       publish: formData.publish,
-      deadline: formData.deadline ? new Date(formData.deadline) : job.deadline,
+      // Bare "YYYY-MM-DD" reads as UTC midnight, not Dhaka midnight — see
+      // createCustomInvoice in invoice.actions.ts for the full story.
+      deadline: formData.deadline
+        ? new Date(`${formData.deadline}T00:00:00+06:00`)
+        : job.deadline,
       weeklyHourLimit: formData.weeklyHourLimit
         ? parseInt(formData.weeklyHourLimit)
         : job.weeklyHourLimit,

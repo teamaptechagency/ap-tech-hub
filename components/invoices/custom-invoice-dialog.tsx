@@ -30,7 +30,12 @@ type ClientOption = {
   currency: string;
 };
 
-type JobOption = { id: string; title: string; clientId: string | null };
+type JobOption = {
+  id: string;
+  title: string;
+  clientId: string | null;
+  clientName: string | null;
+};
 
 type Item = { description: string; qty: string; amount: string };
 
@@ -39,16 +44,22 @@ export function CustomInvoiceDialog({
   onOpenChange,
   clients,
   jobs,
+  initialJobId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clients: ClientOption[];
   jobs: JobOption[];
+  /** Pre-fills "Link to job" — used when opened from a specific job's page. */
+  initialJobId?: string;
 }) {
   const router = useRouter();
 
-  const [clientId, setClientId] = useState<string | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const initialJob = jobs.find((j) => j.id === initialJobId);
+  const [clientId, setClientId] = useState<string | null>(
+    initialJob?.clientId ?? null
+  );
+  const [jobId, setJobId] = useState<string | null>(initialJobId ?? null);
   const [title, setTitle] = useState("");
   const [items, setItems] = useState<Item[]>([
     { description: "", qty: "1", amount: "" },
@@ -65,7 +76,6 @@ export function CustomInvoiceDialog({
   const [busy, setBusy] = useState(false);
 
   const selectedClient = clients.find((c) => c.id === clientId);
-  const clientJobs = jobs.filter((j) => j.clientId === clientId);
 
   const subtotal = items.reduce(
     (s, i) => s + (parseInt(i.qty) || 1) * (parseFloat(i.amount) || 0),
@@ -120,21 +130,32 @@ export function CustomInvoiceDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Client</Label>
+              <Label>
+                Link to job{" "}
+                <span className="text-xs text-muted-foreground">
+                  (optional)
+                </span>
+              </Label>
               <Select
-                value={clientId}
+                value={jobId}
                 onValueChange={(v) => {
-                  setClientId(v);
-                  setJobId(null);
+                  setJobId(v);
+                  // Picking a job is the common case, so it fills the client
+                  // in for you — still changeable by hand right after.
+                  const picked = jobs.find((j) => j.id === v);
+                  if (picked?.clientId) setClientId(picked.clientId);
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
+                  <SelectValue
+                    placeholder={jobs.length === 0 ? "No jobs" : "Select..."}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
+                  {jobs.map((j) => (
+                    <SelectItem key={j.id} value={j.id}>
+                      {j.title}
+                      {j.clientName ? ` — ${j.clientName}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -142,23 +163,19 @@ export function CustomInvoiceDialog({
             </div>
             <div className="space-y-2">
               <Label>
-                Link to job{" "}
+                Client{" "}
                 <span className="text-xs text-muted-foreground">
                   (optional)
                 </span>
               </Label>
-              <Select value={jobId} onValueChange={setJobId}>
+              <Select value={clientId} onValueChange={setClientId}>
                 <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      clientJobs.length === 0 ? "No jobs" : "Select..."
-                    }
-                  />
+                  <SelectValue placeholder="Select..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {clientJobs.map((j) => (
-                    <SelectItem key={j.id} value={j.id}>
-                      {j.title}
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
