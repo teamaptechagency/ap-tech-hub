@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -41,6 +41,9 @@ export type AdminNavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Groups the desktop sidebar into labeled sections; ignored by the flat
+   * mobile nav, which just needs label/href/icon. */
+  section?: string;
 };
 
 type AdminSidebarProps = {
@@ -57,91 +60,109 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    section: "Overview",
   },
   {
     label: "Clients",
     href: "/clients",
     icon: Users,
+    section: "Sales & clients",
   },
   {
     label: "Leads",
     href: "/leads",
     icon: ContactRound,
+    section: "Sales & clients",
   },
   {
     label: "Referrals",
     href: "/referrals",
     icon: Handshake,
-  },
-  {
-    label: "Public Portal",
-    href: "/landing-manager",
-    icon: GalleryHorizontalEnd,
-  },
-  {
-    label: "Business Settings",
-    href: "/business-settings",
-    icon: Landmark,
-  },
-  {
-    label: "Blog",
-    href: "/blog-manager",
-    icon: Newspaper,
-  },
-  {
-    label: "Jobs",
-    href: "/jobs",
-    icon: Briefcase,
-  },
-  {
-    label: "Messages",
-    href: "/messages",
-    icon: MessageCircle,
-  },
-  {
-    label: "Bug & Feedback",
-    href: "/feedback",
-    icon: Bug,
-  },
-  {
-    label: "Invoices",
-    href: "/invoices",
-    icon: Receipt,
-  },
-  {
-    label: "Special orders",
-    href: "/special-orders",
-    icon: ShoppingBag,
+    section: "Sales & clients",
   },
   {
     label: "Partners",
     href: "/accounts/partners",
     icon: Handshake,
+    section: "Sales & clients",
   },
   {
-    label: "HR / Accounts",
-    href: "/accounts",
-    icon: Wallet,
+    label: "Jobs",
+    href: "/jobs",
+    icon: Briefcase,
+    section: "Delivery",
+  },
+  {
+    label: "Special orders",
+    href: "/special-orders",
+    icon: ShoppingBag,
+    section: "Delivery",
   },
   {
     label: "Meetings",
     href: "/meetings",
     icon: Video,
+    section: "Delivery",
+  },
+  {
+    label: "Public Portal",
+    href: "/landing-manager",
+    icon: GalleryHorizontalEnd,
+    section: "Content",
+  },
+  {
+    label: "Blog",
+    href: "/blog-manager",
+    icon: Newspaper,
+    section: "Content",
+  },
+  {
+    label: "Invoices",
+    href: "/invoices",
+    icon: Receipt,
+    section: "Finance",
+  },
+  {
+    label: "HR / Accounts",
+    href: "/accounts",
+    icon: Wallet,
+    section: "Finance",
+  },
+  {
+    label: "Business Settings",
+    href: "/business-settings",
+    icon: Landmark,
+    section: "Finance",
   },
   {
     label: "Reports",
     href: "/reports",
     icon: BarChart3,
+    section: "Finance",
+  },
+  {
+    label: "Messages",
+    href: "/messages",
+    icon: MessageCircle,
+    section: "Support",
+  },
+  {
+    label: "Bug & Feedback",
+    href: "/feedback",
+    icon: Bug,
+    section: "Support",
   },
   {
     label: "Settings",
     href: "/settings",
     icon: Settings,
+    section: "Account",
   },
   {
     label: "My profile",
     href: "/profile",
     icon: UserCircle,
+    section: "Account",
   },
 ];
 
@@ -191,32 +212,46 @@ export function AdminSidebar({ user, branding }: AdminSidebarProps) {
         aria-label="Admin navigation"
         className="flex-1 space-y-1 overflow-y-auto p-3"
       >
-        {adminNavItems.map((item) => {
+        {adminNavItems.map((item, index) => {
           const Icon = item.icon;
 
           const isActive =
             exactActiveItem?.href === item.href ||
             (!exactActiveItem && pathname.startsWith(`${item.href}/`));
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <Icon
-                className="h-4 w-4 shrink-0"
-                aria-hidden="true"
-              />
+          const showSectionHeader =
+            item.section && item.section !== adminNavItems[index - 1]?.section;
 
-              <span>{item.label}</span>
-            </Link>
+          return (
+            <Fragment key={item.href}>
+              {showSectionHeader && (
+                <p
+                  className={cn(
+                    "px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70",
+                    index === 0 ? "pt-0" : "pt-3"
+                  )}
+                >
+                  {item.section}
+                </p>
+              )}
+              <Link
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Icon
+                  className="h-4 w-4 shrink-0"
+                  aria-hidden="true"
+                />
+
+                <span>{item.label}</span>
+              </Link>
+            </Fragment>
           );
         })}
       </nav>
