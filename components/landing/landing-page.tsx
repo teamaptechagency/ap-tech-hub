@@ -37,7 +37,12 @@ import {
 } from "@/actions/landing.actions";
 import { PartnerApplicationForm } from "@/components/referral/partner-application-form";
 import { BlogImpressionTracker } from "@/components/blog/blog-impression-tracker";
-import { PublicTopBar, type TrustStats } from "@/components/public/public-top-bar";
+import {
+  formatCountdown,
+  getDefaultCountdownEnd,
+  PublicTopBar,
+  type TrustStats,
+} from "@/components/public/public-top-bar";
 import {
   Dialog,
   DialogContent,

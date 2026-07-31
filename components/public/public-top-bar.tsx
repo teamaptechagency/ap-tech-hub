@@ -89,7 +89,7 @@ export function PublicTopBar({
   );
 }
 
-function formatCountdown(value: string | null | undefined, now: Date) {
+export function formatCountdown(value: string | null | undefined, now: Date) {
   if (!value) return "10 days 2 hours";
   const end = new Date(value);
   if (Number.isNaN(end.getTime())) return "";
@@ -104,7 +104,7 @@ function formatCountdown(value: string | null | undefined, now: Date) {
   return `${minutes} min`;
 }
 
-function getDefaultCountdownEnd(key: string) {
+export function getDefaultCountdownEnd(key: string) {
   const fallbackMs = (10 * 24 + 2) * 60 * 60 * 1000;
   const existing = window.localStorage.getItem(key);
   if (existing) {
