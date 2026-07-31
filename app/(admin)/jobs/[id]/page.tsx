@@ -26,7 +26,7 @@ import { hoursThisWeek } from "@/actions/session.actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 
 const typeBadge: Record<string, string> = {
   MONTHLY: "bg-blue-100 text-blue-700",
@@ -82,9 +82,11 @@ export default async function JobDetailsPage({
           select: {
             id: true,
             number: true,
+            type: true,
             currency: true,
             status: true,
             amountPaid: true,
+            amount: true,
             creditsClientBalance: true,
             items: {
               select: {
@@ -280,6 +282,11 @@ export default async function JobDetailsPage({
 
   const currency = currencySymbol[job.clientCurrency] ?? "";
 
+  // The job's own bill for the work delivered — separate from any advance
+  // invoices in "Project purchases" below, which fund the client's balance
+  // rather than pay for the job itself.
+  const jobInvoice = job.invoices.find((invoice) => invoice.type === "AUTO");
+
   return (
     <div className="space-y-6">
       <Link
@@ -312,6 +319,31 @@ export default async function JobDetailsPage({
             >
               {job.status.replaceAll("_", " ").toLowerCase()}
             </Badge>
+
+            {jobInvoice ? (
+              <Link
+                href={`/invoices/${jobInvoice.id}`}
+                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              >
+                <FileText className="h-3 w-3" />
+                {jobInvoice.number}
+                <span
+                  className={`rounded-full px-1.5 text-[10px] uppercase ${
+                    jobInvoice.status === "PAID"
+                      ? "text-green-600"
+                      : "text-amber-600"
+                  }`}
+                >
+                  {jobInvoice.status.toLowerCase()}
+                </span>
+              </Link>
+            ) : (
+              job.status === "COMPLETED" && (
+                <span className="text-xs text-muted-foreground">
+                  No invoice — client budget wasn&apos;t set
+                </span>
+              )
+            )}
           </h1>
 
           <p className="text-sm text-muted-foreground">

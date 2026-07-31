@@ -76,8 +76,13 @@ function NewAdvanceInvoiceDialog({
   const [amount, setAmount] = useState("");
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [vatPercent, setVatPercent] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const vat = parseFloat(vatPercent) || 0;
+  const base = parseFloat(amount) || 0;
+  const total = base * (1 + vat / 100);
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -89,6 +94,7 @@ function NewAdvanceInvoiceDialog({
       amount,
       title: title || undefined,
       dueDate: dueDate || undefined,
+      vatPercent: vatPercent || undefined,
     });
 
     setBusy(false);
@@ -101,6 +107,7 @@ function NewAdvanceInvoiceDialog({
     setAmount("");
     setTitle("");
     setDueDate("");
+    setVatPercent("");
     onOpenChange(false);
     router.refresh();
   };
@@ -118,20 +125,44 @@ function NewAdvanceInvoiceDialog({
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="advAmount">Amount ({currency})</Label>
-            <Input
-              id="advAmount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-              placeholder="0.00"
-              required
-              autoFocus
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="advAmount">Amount ({currency})</Label>
+              <Input
+                id="advAmount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                placeholder="0.00"
+                required
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="advVat">
+                VAT %{" "}
+                <span className="text-xs text-muted-foreground">
+                  (optional)
+                </span>
+              </Label>
+              <Input
+                id="advVat"
+                type="number"
+                step="0.01"
+                min="0"
+                value={vatPercent}
+                onChange={(event) => setVatPercent(event.target.value)}
+                placeholder="0"
+              />
+            </div>
           </div>
+          {vat > 0 && base > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Total with VAT: {currency} {total.toFixed(2)}
+            </p>
+          )}
           <div className="space-y-2">
             <Label htmlFor="advTitle">
               Title{" "}
