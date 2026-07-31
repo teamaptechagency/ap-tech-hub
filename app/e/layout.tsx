@@ -133,6 +133,7 @@ export default async function EmployeeLayout({
           presenceBusy: currentUser.presenceBusy,
         }}
         branding={branding}
+        viewingAsEmployee={Boolean(session.viewingAsEmployee)}
       />
 
       {/* Main content */}

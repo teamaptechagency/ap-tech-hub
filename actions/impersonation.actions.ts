@@ -69,9 +69,13 @@ export async function startUserImpersonation(userId: string) {
 
 export async function stopUserImpersonation() {
   const cookieStore = await cookies();
-  cookieStore.delete("ap_impersonate_user_id");
-  cookieStore.delete("ap_impersonate_user_role");
-  cookieStore.delete("ap_impersonate_user_name");
+  // The set calls above pin path: "/" explicitly; delete needs the same
+  // path or it can silently target a different cookie scope (defaulting to
+  // the current route) and leave the real one — and the stuck session —
+  // behind.
+  cookieStore.delete({ name: "ap_impersonate_user_id", path: "/" });
+  cookieStore.delete({ name: "ap_impersonate_user_role", path: "/" });
+  cookieStore.delete({ name: "ap_impersonate_user_name", path: "/" });
 
   revalidatePath("/", "layout");
 
@@ -103,7 +107,8 @@ export async function switchToEmployeeView() {
 
 export async function switchToSuperAdminView() {
   const cookieStore = await cookies();
-  cookieStore.delete("ap_view_mode");
+  // Must match the path the cookie was set with (see stopUserImpersonation).
+  cookieStore.delete({ name: "ap_view_mode", path: "/" });
 
   revalidatePath("/", "layout");
 

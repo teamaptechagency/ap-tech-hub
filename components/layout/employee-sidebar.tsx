@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { logout } from "@/actions/auth.actions";
+import { switchToSuperAdminView } from "@/actions/impersonation.actions";
 import { setPresenceBusy } from "@/actions/presence.actions";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,8 @@ type EmployeeSidebarProps = {
     presenceBusy?: boolean;
   };
   branding?: BrandingSettings;
+  /** True when this is a super admin previewing the employee interface. */
+  viewingAsEmployee?: boolean;
 };
 
 export const employeeNavItems: EmployeeNavItem[] = [
@@ -113,10 +116,13 @@ function formatRole(role: string) {
 export function EmployeeSidebar({
   user,
   branding,
+  viewingAsEmployee = false,
 }: EmployeeSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [busy, setBusy] = useState(Boolean(user.presenceBusy));
   const [savingBusy, setSavingBusy] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   const formattedRole = formatRole(user.role);
 
@@ -127,6 +133,14 @@ export function EmployeeSidebar({
     const result = await setPresenceBusy(next);
     setSavingBusy(false);
     if (result?.error) setBusy(!next);
+  }
+
+  async function handleSwitchToSuperAdmin() {
+    if (switching) return;
+    setSwitching(true);
+    await switchToSuperAdminView();
+    router.push("/dashboard");
+    router.refresh();
   }
 
   return (
@@ -174,19 +188,41 @@ export function EmployeeSidebar({
       {/* User and sign out */}
       <div className="shrink-0 border-t p-3">
         <div className="mb-2 flex items-center justify-between gap-2 px-2">
-          <div className="flex min-w-0 items-center gap-3">
-            <UserAvatar name={user.name} imageUrl={user.imageUrl} fallback="TM" />
+          {viewingAsEmployee ? (
+            <button
+              type="button"
+              onClick={handleSwitchToSuperAdmin}
+              disabled={switching}
+              title="Back to Super Admin"
+              className="flex min-w-0 flex-1 items-center gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted disabled:opacity-60"
+            >
+              <UserAvatar name={user.name} imageUrl={user.imageUrl} fallback="TM" />
 
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">
-                {user.name || "Team Member"}
-              </p>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {user.name || "Team Member"}
+                </p>
 
-              <p className="truncate text-xs text-muted-foreground">
-                {formattedRole || "Team Member"}
-              </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {switching ? "Switching…" : formattedRole || "Team Member"}
+                </p>
+              </div>
+            </button>
+          ) : (
+            <div className="flex min-w-0 items-center gap-3">
+              <UserAvatar name={user.name} imageUrl={user.imageUrl} fallback="TM" />
+
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {user.name || "Team Member"}
+                </p>
+
+                <p className="truncate text-xs text-muted-foreground">
+                  {formattedRole || "Team Member"}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           <NotificationBell />
         </div>
