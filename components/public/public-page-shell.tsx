@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-import { PublicDesktopNav } from "@/components/public/public-desktop-nav";
-import { PublicMobileNav } from "@/components/public/public-mobile-nav";
+import { PublicHeaderBar } from "@/components/public/public-header-bar";
+import type { TrustStats } from "@/components/public/public-top-bar";
+import type { LandingPageData } from "@/lib/landing-data";
 
 const footerGroups = [
   {
@@ -50,26 +51,25 @@ const footerGroups = [
 
 export function PublicPageShell({
   children,
+  portalHref,
+  publicLogoUrl,
+  topBar,
+  stats,
 }: {
   children: React.ReactNode;
+  portalHref?: string | null;
+  publicLogoUrl?: string | null;
+  topBar: LandingPageData["topBar"];
+  stats: TrustStats | null;
 }) {
   return (
     <main className="min-h-screen bg-[#faf8f5] text-[#101623]">
-      <header className="border-b border-[#e8e3dc] bg-white">
-        <div className="mx-auto flex max-w-[1140px] flex-wrap items-center justify-between gap-4 px-4 py-4">
-          {/* "AP Tech Hub" is the internal portal's name — the public site is
-              AP Tech Agency, which is what every other header and this page's
-              own footer already say. */}
-          <Link
-            href="/"
-            className="shrink-0 whitespace-nowrap text-xl font-extrabold"
-          >
-            AP Tech <span className="text-[#c6613f]">Agency</span>
-          </Link>
-          <PublicDesktopNav />
-          <PublicMobileNav />
-        </div>
-      </header>
+      <PublicHeaderBar
+        portalHref={portalHref}
+        publicLogoUrl={publicLogoUrl}
+        topBar={topBar}
+        stats={stats}
+      />
 
       {children}
 

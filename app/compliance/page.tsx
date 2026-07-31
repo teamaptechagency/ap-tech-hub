@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 
+import { getLandingVisitorStats } from "@/actions/landing.actions";
 import { InfoGrid, PublicHero, PublicPageShell } from "@/components/public/public-page-shell";
+import { auth } from "@/lib/auth";
+import { getBrandingSettings } from "@/lib/branding";
+import { getLandingPageData } from "@/lib/landing-data";
+import { homeFor } from "@/lib/roles";
 
 export const metadata: Metadata = {
   title: "Compliance and Business Transparency | AP Tech Agency",
@@ -8,9 +13,21 @@ export const metadata: Metadata = {
     "How AP Tech Agency manages project documentation, financial records, compliance and international remote operations.",
 };
 
-export default function CompliancePage() {
+export default async function CompliancePage() {
+  const [session, branding, landing, stats] = await Promise.all([
+    auth(),
+    getBrandingSettings(),
+    getLandingPageData(),
+    getLandingVisitorStats(),
+  ]);
+
   return (
-    <PublicPageShell>
+    <PublicPageShell
+      portalHref={session?.user ? homeFor(session.user.role) : null}
+      publicLogoUrl={branding.publicLogoUrl}
+      topBar={landing.topBar}
+      stats={stats}
+    >
       <PublicHero
         eyebrow="Transparency"
         title="Compliance and Business Transparency"

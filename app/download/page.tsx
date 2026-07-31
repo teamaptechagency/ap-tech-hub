@@ -11,8 +11,13 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { getLandingVisitorStats } from "@/actions/landing.actions";
 import { PublicPageShell } from "@/components/public/public-page-shell";
 import { getAndroidAppRelease } from "@/lib/android-release";
+import { auth } from "@/lib/auth";
+import { getBrandingSettings } from "@/lib/branding";
+import { getLandingPageData } from "@/lib/landing-data";
+import { homeFor } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -61,12 +66,23 @@ const installSteps = [
   },
 ];
 
-export default function DownloadPage() {
+export default async function DownloadPage() {
   const release = getAndroidAppRelease();
   const apkAvailable = Boolean(release.apkUrl);
+  const [session, branding, landing, stats] = await Promise.all([
+    auth(),
+    getBrandingSettings(),
+    getLandingPageData(),
+    getLandingVisitorStats(),
+  ]);
 
   return (
-    <PublicPageShell>
+    <PublicPageShell
+      portalHref={session?.user ? homeFor(session.user.role) : null}
+      publicLogoUrl={branding.publicLogoUrl}
+      topBar={landing.topBar}
+      stats={stats}
+    >
       {/* Hero with the download action, on the dark brand gradient. */}
       <section className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] text-white">
         <div className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.30),transparent_65%)]" />
