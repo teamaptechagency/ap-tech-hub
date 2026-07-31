@@ -1,10 +1,15 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { Prisma } from "@prisma/client";
 
 import { WithdrawRequestForm } from "@/components/employee/withdraw-request-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { getSalaryBalance } from "@/lib/compensation";
+import {
+  toPayoutMethodOption,
+  type PayoutMethodOption,
+} from "@/lib/payout-methods";
 import { prisma } from "@/lib/prisma";
 import { PARTNER_ROLES } from "@/lib/roles";
 
@@ -20,17 +25,6 @@ const kindLabel: Record<string, string> = {
   ADJUSTMENT: "Adjustment",
   PENALTY: "Penalty",
 };
-
-type PayoutMethodOption = {
-  key: string;
-  label: string;
-  details: string;
-  placeholder: string;
-};
-
-type PaymentMethodWithAccounts = Prisma.PaymentMethodGetPayload<{
-  include: { bankAccounts: true };
-}>;
 
 export default async function BalancePage() {
   const session = await auth();
@@ -83,10 +77,15 @@ export default async function BalancePage() {
     }),
   ]);
 
-  const balance = Number(me?.balance ?? 0);
   const reserve = Number(me?.reserve ?? 0);
   const providentFund = Number(me?.providentFund ?? 0);
   const isSalaried = me?.compensationType === "MONTHLY_SALARY";
+  // A salaried employee's balance only ever counts salary/bonus money —
+  // never mixed with any leftover per-job earnings from before they moved
+  // to MONTHLY_SALARY (see getSalaryBalance for why).
+  const balance = isSalaried
+    ? await getSalaryBalance(session.user.id)
+    : Number(me?.balance ?? 0);
   const sMap = new Map(settings.map((s) => [s.key, s.value]));
   const emergencyPercent = parseInt(
     sMap.get("reserve.emergencyMaxPercent") ?? "70"
@@ -170,17 +169,34 @@ export default async function BalancePage() {
         )}
       </div>
 
-      <WithdrawRequestForm
-        balance={balance}
-        reserve={isSalaried ? 0 : reserve}
-        emergencyPercent={emergencyPercent}
-        hasPending={hasPending}
-        defaultMethod={me?.payoutMethod ?? ""}
-        defaultDetails={me?.payoutDetails ?? ""}
-        paymentMethods={payoutMethods}
-        reserveOptional={isPartner}
-        profileHref={isPartner ? "/p/profile" : "/e/profile"}
-      />
+      {isSalaried ? (
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4 text-sm">
+            <p className="text-muted-foreground">
+              Payment requests for salaried employees are made from your
+              profile page.
+            </p>
+            <Link
+              href="/e/profile"
+              className="font-medium text-primary hover:underline"
+            >
+              Go to profile
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <WithdrawRequestForm
+          balance={balance}
+          reserve={reserve}
+          emergencyPercent={emergencyPercent}
+          hasPending={hasPending}
+          defaultMethod={me?.payoutMethod ?? ""}
+          defaultDetails={me?.payoutDetails ?? ""}
+          paymentMethods={payoutMethods}
+          reserveOptional={isPartner}
+          profileHref={isPartner ? "/p/profile" : "/e/profile"}
+        />
+      )}
 
       {requests.length > 0 && (
         <Card>
@@ -371,81 +387,3 @@ async function syncWorkerCachedFunds(userId: string) {
   });
 }
 
-function toPayoutMethodOption(method: PaymentMethodWithAccounts): PayoutMethodOption | null {
-  const details: string[] = [];
-
-  if (method.key === "BANK_TRANSFER") {
-    const accounts = method.bankAccounts.filter(
-      (account) =>
-        account.active &&
-        account.bankName.trim() &&
-        account.accountName.trim() &&
-        account.accountNumber.trim()
-    );
-    if (accounts.length === 0) return null;
-    details.push(
-      ...accounts.map(
-        (account) =>
-          `${account.bankName}: ${account.accountName}, ${account.accountNumber}`
-      )
-    );
-  } else if (method.key === "BKASH" || method.key === "NAGAD") {
-    if (!method.receiverNumber?.trim() || !method.accountType?.trim()) {
-      return null;
-    }
-    details.push(`${method.receiverNumber} (${method.accountType})`);
-  } else if (method.key === "WISE") {
-    if (
-      !method.wiseEmail?.trim() &&
-      !method.wisePaymentUrl?.trim() &&
-      !method.wiseTransferDetails?.trim()
-    ) {
-      return null;
-    }
-    if (method.wiseEmail) details.push(`Wise email: ${method.wiseEmail}`);
-    if (method.wiseTransferDetails) details.push(method.wiseTransferDetails);
-  } else if (method.key === "CASH") {
-    if (!method.cashReceiverInfo?.trim() && !method.instructions?.trim()) {
-      return null;
-    }
-    details.push(method.cashReceiverInfo || method.instructions || "");
-  } else if (method.key === "PAYONEER") {
-    if (
-      !method.payoneerMerchantId?.trim() &&
-      !method.payoneerMode?.trim() &&
-      !method.details?.trim()
-    ) {
-      return null;
-    }
-    details.push(
-      method.payoneerButtonLabel ||
-        method.payoneerMode ||
-        method.details ||
-        "Payoneer configured"
-    );
-  } else if (method.details?.trim()) {
-    details.push(method.details);
-  } else {
-    return null;
-  }
-
-  return {
-    key: method.key ?? method.label,
-    label: method.label,
-    details: details.filter(Boolean).join("\n"),
-    placeholder: payoutPlaceholder(method.key ?? method.label),
-  };
-}
-
-function payoutPlaceholder(key: string) {
-  if (key === "BANK_TRANSFER") {
-    return "Your bank name, account name, account number, branch";
-  }
-  if (key === "BKASH" || key === "NAGAD") {
-    return "Your mobile banking number and account type";
-  }
-  if (key === "WISE" || key === "PAYONEER") {
-    return "Your account email or payment link";
-  }
-  return "Your payment receiving details";
-}

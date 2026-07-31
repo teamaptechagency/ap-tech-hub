@@ -98,3 +98,33 @@ export function calculateUsdBonus(
   if (over <= 0) return 0;
   return Math.round(((over / 100) * bonusPerHundredUsd) * 100) / 100;
 }
+
+// Job-derived WorkerTxn kinds — excluded from a salaried employee's balance
+// so old per-job earnings (from before they moved to MONTHLY_SALARY, or a
+// stray legacy credit) don't get mixed into a figure that's meant to be
+// salary-only. See getSalaryBalance.
+const JOB_DERIVED_KINDS = [
+  "JOB_PAYOUT",
+  "MONTHLY_CREDIT",
+  "HOURLY_CREDIT",
+  "RESERVE_HOLD",
+  "RESERVE_RELEASE",
+] as const;
+
+/**
+ * A MONTHLY_SALARY employee's spendable balance, counting only
+ * salary/bonus-derived money (SALARY_PAYOUT, ADJUSTMENT, PENALTY,
+ * WITHDRAWAL) — never job payouts, so their balance sheet stays fully
+ * separate from project-wise freelancers' the way per-job earnings work.
+ */
+export async function getSalaryBalance(userId: string): Promise<number> {
+  const agg = await prisma.workerTxn.aggregate({
+    where: {
+      userId,
+      bucket: "BALANCE",
+      kind: { notIn: [...JOB_DERIVED_KINDS] },
+    },
+    _sum: { amount: true },
+  });
+  return Number(agg._sum.amount ?? 0);
+}
