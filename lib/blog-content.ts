@@ -98,6 +98,63 @@ export function blogAllKeywords(post: {
 }
 
 // ============================================
+// ANALYTICS
+// ============================================
+
+const REFERRER_SOURCE_PATTERNS: [RegExp, string][] = [
+  [/(^|\.)google\.\w+$/, "Google"],
+  [/(^|\.)bing\.com$/, "Bing"],
+  [/(^|\.)duckduckgo\.com$/, "DuckDuckGo"],
+  [/(^|\.)yahoo\.\w+$/, "Yahoo"],
+  [/(^|\.)(facebook\.com|fb\.com|l\.facebook\.com)$/, "Facebook"],
+  [/(^|\.)instagram\.com$/, "Instagram"],
+  [/(^|\.)linkedin\.com$/, "LinkedIn"],
+  [/(^|\.)(twitter\.com|x\.com|t\.co)$/, "Twitter/X"],
+  [/(^|\.)pinterest\.\w+$/, "Pinterest"],
+  [/(^|\.)reddit\.com$/, "Reddit"],
+  [/(^|\.)(chat\.openai\.com|chatgpt\.com)$/, "ChatGPT"],
+  [/(^|\.)youtube\.com$/, "YouTube"],
+  [/(^|\.)whatsapp\.com$/, "WhatsApp"],
+  [/(^|\.)(t\.me|telegram\.org)$/, "Telegram"],
+];
+
+/**
+ * Buckets a browser referrer into a readable source label for the analytics
+ * dashboard. `siteHost` is the current request's own host, so a reader
+ * clicking from the blog listing into a post is labelled "Internal" instead
+ * of showing up as a random-looking self-referral.
+ *
+ * An unrecognised external host is returned as-is (minus "www.") rather than
+ * lumped into a generic "Other" bucket, since which unlisted sites send
+ * traffic is exactly the kind of thing this exists to surface.
+ */
+export function classifyReferrerSource(
+  referrer: string | null | undefined,
+  siteHost?: string | null
+): string {
+  const value = referrer?.trim();
+  if (!value) return "Direct";
+
+  let host: string;
+  try {
+    host = new URL(value).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "Direct";
+  }
+
+  if (!host) return "Direct";
+  if (siteHost && host === siteHost.toLowerCase().replace(/^www\./, "")) {
+    return "Internal";
+  }
+
+  for (const [pattern, label] of REFERRER_SOURCE_PATTERNS) {
+    if (pattern.test(host)) return label;
+  }
+
+  return host;
+}
+
+// ============================================
 // CONTENT BLOCKS
 // ============================================
 // Post bodies are stored as a small markdown subset. Parsing them into blocks

@@ -88,6 +88,7 @@ export type BlogPostDetail = BlogPostSummary & {
   noIndex: boolean;
   internalLinks: BlogInternalLink[];
   viewCount: number;
+  showViewCount: boolean;
   createdAt: Date;
 };
 
@@ -131,6 +132,7 @@ type PostRow = {
   publishedAt: Date | null;
   readingMinutes: number;
   viewCount: number;
+  showViewCount: boolean;
   authorId: string | null;
   authorName: string | null;
   author: { name: string } | null;
@@ -189,6 +191,7 @@ function toDetail(post: PostRow): BlogPostDetail {
     noIndex: post.noIndex,
     internalLinks: readInternalLinks(post.internalLinks),
     viewCount: post.viewCount,
+    showViewCount: post.showViewCount,
     createdAt: post.createdAt,
   };
 }
@@ -403,6 +406,132 @@ export async function getAllBlogCategories(): Promise<BlogCategorySummary[]> {
     }));
   } catch (error) {
     reportBlogError("Failed to load blog categories for admin", error);
+    return [];
+  }
+}
+
+// ============================================
+// ANALYTICS (admin-side)
+// ============================================
+
+export type BlogEventTypeValue = "IMPRESSION" | "VIEW";
+
+export type BlogAnalyticsOverview = {
+  impressions30d: number;
+  views30d: number;
+  impressionsAllTime: number;
+  viewsAllTime: number;
+};
+
+export type BlogPostAnalyticsRow = {
+  id: string;
+  title: string;
+  slug: string;
+  status: BlogStatusValue;
+  impressions: number;
+  views: number;
+};
+
+export type BlogSourceBreakdownRow = {
+  source: string;
+  count: number;
+};
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** Top-line impression/view totals for the analytics overview cards. */
+export async function getBlogAnalyticsOverview(): Promise<BlogAnalyticsOverview> {
+  const since = new Date(Date.now() - THIRTY_DAYS_MS);
+
+  try {
+    const [impressions30d, views30d, impressionsAllTime, viewsAllTime] =
+      await Promise.all([
+        prisma.blogPostEvent.count({
+          where: { type: "IMPRESSION", createdAt: { gte: since } },
+        }),
+        prisma.blogPostEvent.count({
+          where: { type: "VIEW", createdAt: { gte: since } },
+        }),
+        prisma.blogPostEvent.count({ where: { type: "IMPRESSION" } }),
+        prisma.blogPostEvent.count({ where: { type: "VIEW" } }),
+      ]);
+
+    return { impressions30d, views30d, impressionsAllTime, viewsAllTime };
+  } catch (error) {
+    reportBlogError("Failed to load blog analytics overview", error);
+    return {
+      impressions30d: 0,
+      views30d: 0,
+      impressionsAllTime: 0,
+      viewsAllTime: 0,
+    };
+  }
+}
+
+/** Per-post impressions vs. views, sorted by reach — the funnel the admin cares about. */
+export async function getBlogPostAnalyticsRows(
+  take = 100
+): Promise<BlogPostAnalyticsRow[]> {
+  try {
+    const [posts, impressionGroups, viewGroups] = await Promise.all([
+      prisma.blogPost.findMany({
+        select: { id: true, title: true, slug: true, status: true },
+        orderBy: { updatedAt: "desc" },
+        take,
+      }),
+      prisma.blogPostEvent.groupBy({
+        by: ["postId"],
+        where: { type: "IMPRESSION" },
+        _count: { _all: true },
+      }),
+      prisma.blogPostEvent.groupBy({
+        by: ["postId"],
+        where: { type: "VIEW" },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const impressionMap = new Map(
+      impressionGroups.map((row) => [row.postId, row._count._all])
+    );
+    const viewMap = new Map(
+      viewGroups.map((row) => [row.postId, row._count._all])
+    );
+
+    return posts
+      .map((post) => ({
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        status: post.status as BlogStatusValue,
+        impressions: impressionMap.get(post.id) ?? 0,
+        views: viewMap.get(post.id) ?? 0,
+      }))
+      .sort((a, b) => b.impressions - a.impressions);
+  } catch (error) {
+    reportBlogError("Failed to load blog post analytics rows", error);
+    return [];
+  }
+}
+
+/** Where views are coming from — Google, Direct, social, etc. */
+export async function getBlogSourceBreakdown(
+  type: BlogEventTypeValue = "VIEW",
+  take = 8
+): Promise<BlogSourceBreakdownRow[]> {
+  try {
+    const rows = await prisma.blogPostEvent.groupBy({
+      by: ["source"],
+      where: { type },
+      _count: { _all: true },
+    });
+
+    return rows
+      .map((row) => ({ source: row.source, count: row._count._all }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, take);
+  } catch (error) {
+    reportBlogError("Failed to load blog source breakdown", error);
     return [];
   }
 }
