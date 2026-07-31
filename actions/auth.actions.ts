@@ -278,6 +278,7 @@ export async function login(formData: {
 
   const deviceToken = await rememberLoginDevice({
     userId: user.id,
+    role: user.role,
     deviceToken: formData.deviceToken,
     ipAddress,
     headers: requestHeaders,
@@ -351,6 +352,7 @@ export async function loginWithPasskey(input: {
 
   const deviceToken = await rememberLoginDevice({
     userId: user.id,
+    role: user.role,
     deviceToken: input.deviceToken,
     ipAddress,
     headers: requestHeaders,

@@ -2,6 +2,20 @@ import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsAppNotification } from "@/lib/whatsapp";
 import { notify } from "@/lib/notify";
+import {
+  CLIENT_ROLES,
+  PARTNER_ROLES,
+  REFERRAL_ROLES,
+  WORKER_ROLES,
+} from "@/lib/roles";
+
+function profileHrefFor(role: string) {
+  if (WORKER_ROLES.includes(role)) return "/e/profile";
+  if (CLIENT_ROLES.includes(role)) return "/c/profile";
+  if (PARTNER_ROLES.includes(role)) return "/p/profile";
+  if (REFERRAL_ROLES.includes(role)) return "/r/profile";
+  return "/profile";
+}
 
 export type LoginBlockResult =
   | { allowed: true }
@@ -331,6 +345,7 @@ export async function clearFailedLogin(email: string, ipAddress: string) {
 
 export async function rememberLoginDevice(input: {
   userId: string;
+  role: string;
   deviceToken?: string;
   ipAddress: string;
   headers: Headers;
@@ -376,6 +391,7 @@ export async function rememberLoginDevice(input: {
       userId: input.userId,
       title: "New sign-in to your account",
       body: `${summarizeDevice(deviceInfo)}. If this wasn't you, change your password and contact admin.`,
+      href: profileHrefFor(input.role),
     }).catch((error) => {
       console.error("New-device login notice failed:", error);
     });
