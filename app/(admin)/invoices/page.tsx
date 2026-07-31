@@ -19,7 +19,12 @@ export default async function InvoicesPage() {
     prisma.job.findMany({
       where: { status: { notIn: ["CANCELLED"] } },
       orderBy: { updatedAt: "desc" },
-      select: { id: true, title: true, clientId: true },
+      select: {
+        id: true,
+        title: true,
+        clientId: true,
+        client: { select: { companyName: true } },
+      },
     }),
   ]);
 
@@ -51,7 +56,12 @@ export default async function InvoicesPage() {
         balance: Number(c.balance),
         currency: c.currency,
       }))}
-      jobs={jobs}
+      jobs={jobs.map((j) => ({
+        id: j.id,
+        title: j.title,
+        clientId: j.clientId,
+        clientName: j.client?.companyName ?? null,
+      }))}
     />
   );
 }

@@ -30,7 +30,12 @@ type ClientOption = {
   currency: string;
 };
 
-type JobOption = { id: string; title: string; clientId: string | null };
+type JobOption = {
+  id: string;
+  title: string;
+  clientId: string | null;
+  clientName: string | null;
+};
 
 const FILTERS = [
   { key: "ALL", label: "All" },

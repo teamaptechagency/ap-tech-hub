@@ -270,7 +270,7 @@ async function applyPaidEffects(
 // - optional balance deduction from client wallet
 // ============================================
 export async function createCustomInvoice(formData: {
-  clientId: string;
+  clientId?: string;
   jobId?: string;
   title: string;
   items: { description: string; qty: string; amount: string }[];
@@ -287,7 +287,6 @@ export async function createCustomInvoice(formData: {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 
-  if (!formData.clientId) return { error: "Please select a client" };
   if (!formData.title || formData.title.length < 2) {
     return { error: "Invoice title is required" };
   }
@@ -332,9 +331,10 @@ export async function createCustomInvoice(formData: {
     ? Math.round(afterVat * (1 + methodCharge.percent / 100) * 100) / 100
     : afterVat;
 
-  // Balance deduction (only positive client balance applies)
+  // Balance deduction (only positive client balance applies, and only
+  // makes sense against an actual client's wallet)
   let balanceApplied = 0;
-  if (formData.deductFromBalance) {
+  if (formData.deductFromBalance && formData.clientId) {
     const client = await prisma.client.findUnique({
       where: { id: formData.clientId },
     });
@@ -353,7 +353,7 @@ export async function createCustomInvoice(formData: {
       type: "CUSTOM",
       title: formData.title,
       jobId: formData.jobId || null,
-      clientId: formData.clientId,
+      clientId: formData.clientId || null,
       amount: total,
       currency: formData.currency,
       vatPercent: vat,
@@ -404,10 +404,12 @@ export async function createCustomInvoice(formData: {
     `${number} · ${formData.currency} ${total.toFixed(2)}`
   );
 
-  // Notify the client about the new invoice
-  const clientUser = await prisma.user.findFirst({
-    where: { clientId: formData.clientId },
-  });
+  // Notify the client about the new invoice, if there's a client with a
+  // portal account to notify — an external/client-less buyer just gets the
+  // invoice stored.
+  const clientUser = formData.clientId
+    ? await prisma.user.findFirst({ where: { clientId: formData.clientId } })
+    : null;
   if (clientUser && !fullyCovered) {
     await notify({
       userId: clientUser.id,
