@@ -357,6 +357,98 @@ export async function adjustWorkerBalance(
 }
 
 // ============================================
+// PAY MONTHLY SALARY (admin) — MONTHLY_SALARY employees only.
+// Splits 80% to the spendable balance and 20% to a locked Provident
+// Fund (admin-managed, no employee withdraw flow — see WorkerBucket.
+// PROVIDENT_FUND). Guards against double-paying the same calendar
+// month, mirroring the job-payout cron's monthTag check.
+// ============================================
+export async function paySalary(userId: string) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const worker = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, compensationType: true, monthlySalaryAmount: true },
+  });
+  if (!worker) return { error: "Employee not found" };
+  if (worker.role !== "TEAM_MEMBER" && worker.role !== "SUPER_ADMIN") {
+    return { error: "This only applies to employee accounts" };
+  }
+  if (worker.compensationType !== "MONTHLY_SALARY") {
+    return { error: "This employee isn't on monthly salary" };
+  }
+
+  const salary = Number(worker.monthlySalaryAmount ?? 0);
+  if (salary <= 0) {
+    return { error: "Set a monthly salary amount first" };
+  }
+
+  const monthTag = new Date().toLocaleDateString("en-GB", {
+    month: "short",
+    year: "numeric",
+  });
+
+  const alreadyPaid = await prisma.workerTxn.findFirst({
+    where: { userId, kind: "SALARY_PAYOUT", note: { contains: monthTag } },
+  });
+  if (alreadyPaid) {
+    return { error: `Already paid for ${monthTag}` };
+  }
+
+  const pfAmount = Math.round(salary * 0.2 * 100) / 100;
+  const balanceAmount = Math.round((salary - pfAmount) * 100) / 100;
+
+  await prisma.$transaction([
+    prisma.workerTxn.create({
+      data: {
+        userId,
+        amount: balanceAmount,
+        bucket: "BALANCE",
+        kind: "SALARY_PAYOUT",
+        note: `Monthly salary — ${monthTag}`,
+        createdById: session.user.id,
+      },
+    }),
+    prisma.workerTxn.create({
+      data: {
+        userId,
+        amount: pfAmount,
+        bucket: "PROVIDENT_FUND",
+        kind: "PF_CONTRIBUTION",
+        note: `20% provident fund — ${monthTag}`,
+        createdById: session.user.id,
+      },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        balance: { increment: balanceAmount },
+        providentFund: { increment: pfAmount },
+      },
+    }),
+  ]);
+
+  await audit(
+    session.user.id,
+    "SALARY_PAID",
+    "User",
+    userId,
+    `${monthTag}: ৳${balanceAmount} balance + ৳${pfAmount} PF`
+  );
+
+  await notify({
+    userId,
+    title: `Salary credited +৳${balanceAmount.toLocaleString()}`,
+    body: `${monthTag} salary — ৳${pfAmount.toLocaleString()} added to your provident fund`,
+    href: `/e/balance`,
+  });
+
+  revalidatePath("/accounts/employees");
+  return { success: true, balanceAmount, pfAmount };
+}
+
+// ============================================
 // PENALTY (admin) — your rule:
 // deduct from balance first, then reserve
 // ============================================

@@ -14,6 +14,8 @@ const kindLabel: Record<string, string> = {
   HOURLY_CREDIT: "Hourly credit",
   RESERVE_HOLD: "Security hold",
   RESERVE_RELEASE: "Reserve release",
+  SALARY_PAYOUT: "Salary payout",
+  PF_CONTRIBUTION: "Provident fund",
   WITHDRAWAL: "Withdrawal",
   ADJUSTMENT: "Adjustment",
   PENALTY: "Penalty",
@@ -45,6 +47,8 @@ export default async function BalancePage() {
       select: {
         balance: true,
         reserve: true,
+        providentFund: true,
+        compensationType: true,
         payoutMethod: true,
         payoutDetails: true,
       },
@@ -81,6 +85,8 @@ export default async function BalancePage() {
 
   const balance = Number(me?.balance ?? 0);
   const reserve = Number(me?.reserve ?? 0);
+  const providentFund = Number(me?.providentFund ?? 0);
+  const isSalaried = me?.compensationType === "MONTHLY_SALARY";
   const sMap = new Map(settings.map((s) => [s.key, s.value]));
   const emergencyPercent = parseInt(
     sMap.get("reserve.emergencyMaxPercent") ?? "70"
@@ -146,6 +152,23 @@ export default async function BalancePage() {
           </CardContent>
         </Card>
       </div>
+
+      {isSalaried && (
+        <Card className="border-dashed">
+          <CardContent className="pt-6">
+            <p className="text-xs text-muted-foreground">
+              Provident fund (locked)
+            </p>
+            <p className="text-3xl font-bold">
+              BDT {providentFund.toLocaleString()}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              20% of each monthly salary payout. Not withdrawable here —
+              managed and settled by admin.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <WithdrawRequestForm
         balance={balance}
@@ -218,6 +241,14 @@ export default async function BalancePage() {
                       className="ml-2 bg-amber-100 text-[10px] text-amber-700"
                     >
                       reserve
+                    </Badge>
+                  )}
+                  {t.bucket === "PROVIDENT_FUND" && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-emerald-100 text-[10px] text-emerald-700"
+                    >
+                      provident fund
                     </Badge>
                   )}
                 </p>
