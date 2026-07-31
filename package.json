@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "//build": "prisma generate runs here because @prisma/client only generates in its postinstall, which a cached node_modules skips — leaving the build type-checking against a stale schema.",
-    "build": "prisma generate && next build",
+    "//build": "prisma migrate deploy applies any pending migrations to the real database before the client is generated — without it, a schema change can ship in code while the production DB is still on the old shape, and every query touching the new columns silently fails. prisma generate runs after it because @prisma/client only generates in its postinstall, which a cached node_modules skips — leaving the build type-checking against a stale schema.",
+    "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "lint": "eslint"
   },
