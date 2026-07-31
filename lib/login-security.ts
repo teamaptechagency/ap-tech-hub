@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsAppNotification } from "@/lib/whatsapp";
+import { notify } from "@/lib/notify";
 
 export type LoginBlockResult =
   | { allowed: true }
@@ -340,6 +341,16 @@ export async function rememberLoginDevice(input: {
   const deviceInfo = getDeviceInfoFromHeaders(input.headers);
   const now = new Date();
 
+  // Checked before the upsert below so a login from an already-remembered
+  // device (the normal case — same phone/laptop every day) doesn't notify.
+  // Only a token this account has never logged in from before counts as new.
+  const existing = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT "id" FROM "UserLoginDevice"
+    WHERE "userId" = ${input.userId} AND "deviceToken" = ${deviceToken}
+    LIMIT 1
+  `;
+  const isNewDevice = existing.length === 0;
+
   await prisma.$executeRaw`
     INSERT INTO "UserLoginDevice"
       ("id", "userId", "deviceToken", "ipAddress", "userAgent", "country", "city", "region", "trusted", "lastSeenAt", "updatedAt")
@@ -357,7 +368,53 @@ export async function rememberLoginDevice(input: {
       "updatedAt" = EXCLUDED."updatedAt"
   `;
 
+  if (isNewDevice) {
+    // Reaches any other session the user has open — NotificationBell polls
+    // every 10s — so logging in on web surfaces a "new sign-in" alert on a
+    // phone that's already logged in, and vice versa.
+    await notify({
+      userId: input.userId,
+      title: "New sign-in to your account",
+      body: `${summarizeDevice(deviceInfo)}. If this wasn't you, change your password and contact admin.`,
+    }).catch((error) => {
+      console.error("New-device login notice failed:", error);
+    });
+  }
+
   return deviceToken;
+}
+
+function summarizeDevice(deviceInfo: {
+  userAgent: string | null;
+  country: string | null;
+  city: string | null;
+}) {
+  const ua = (deviceInfo.userAgent ?? "").toLowerCase();
+  const platform = ua.includes("iphone")
+    ? "iPhone"
+    : ua.includes("ipad")
+      ? "iPad"
+      : ua.includes("android")
+        ? "Android device"
+        : ua.includes("mac")
+          ? "Mac"
+          : ua.includes("windows")
+            ? "Windows PC"
+            : "a device";
+  const browser = ua.includes("edg/")
+    ? "Edge"
+    : ua.includes("chrome")
+      ? "Chrome"
+      : ua.includes("firefox")
+        ? "Firefox"
+        : ua.includes("safari")
+          ? "Safari"
+          : "a browser";
+  const place = [deviceInfo.city, deviceInfo.country]
+    .filter(Boolean)
+    .join(", ");
+
+  return `${browser} on ${platform}${place ? ` · ${place}` : ""}`;
 }
 
 export async function isRecentTrustedDevice(userId: string, deviceToken?: string) {
