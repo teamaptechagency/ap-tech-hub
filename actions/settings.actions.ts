@@ -927,6 +927,18 @@ export async function updateTeamMemberStatus(
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  // The super admin now shows up in the employees list for compensation
+  // purposes, but locking/suspending that account here would be a self
+  // lockout (accountStatus !== "ACTIVE" blocks login entirely) — not
+  // something this bulk status control should be able to do.
+  if (target?.role === "SUPER_ADMIN") {
+    return { error: "Super admin account status can't be changed here" };
+  }
+
   await prisma.user.update({
     where: { id: userId },
     data: { accountStatus: status },
@@ -960,7 +972,7 @@ export async function updateEmployeeCompensation(
     select: { role: true },
   });
   if (!user) return { error: "Employee not found" };
-  if (user.role !== "TEAM_MEMBER") {
+  if (user.role !== "TEAM_MEMBER" && user.role !== "SUPER_ADMIN") {
     return { error: "This only applies to employee accounts" };
   }
 
