@@ -22,7 +22,10 @@ export function SwitchToEmployeeViewButton() {
       return;
     }
 
-    router.push(result.href);
+    // switchToEmployeeView always lands on /e/dashboard on success — pushed
+    // directly rather than reading result.href, since that field only
+    // exists on the success branch of the action's return type.
+    router.push("/e/dashboard");
     router.refresh();
   }
 
