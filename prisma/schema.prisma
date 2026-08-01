@@ -141,6 +141,7 @@ model User {
   permissions            UserPermission[]
   blogPosts              BlogPost[]                 @relation("BlogPostAuthor")
   passkeys               UserPasskey[]
+  mobileLoginRequests    MobileLoginRequest[]
   referralPartner        ReferralPartner?           @relation("ReferralPartnerAccount")
   createdAt              DateTime                   @default(now())
   updatedAt              DateTime                   @updatedAt
@@ -318,6 +319,33 @@ model WebAuthnChallenge {
   createdAt DateTime @default(now())
 
   @@index([expiresAt])
+}
+
+// "Login with mobile": a web browser requests a sign-in, a notification
+// reaches the account's other (already logged in) session, and approving
+// it there with a fingerprint (STEP_UP passkey ceremony, see
+// actions/mobile-login.actions.ts) hands the web browser a short-lived
+// single-use token to exchange for a real session via NextAuth.
+model MobileLoginRequest {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // PENDING | APPROVED | DENIED | EXPIRED | CONSUMED
+  status String @default("PENDING")
+
+  ipAddress String?
+  userAgent String?
+
+  // Set once approved; the web side exchanges this for a session, then it
+  // is deleted — single delivery, single use.
+  approvalToken    String?   @unique
+  approvalTokenExp DateTime?
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model EmailOtp {
