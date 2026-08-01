@@ -46,8 +46,6 @@ type GrowthMonthsResult =
         mainGoal: string | null;
         startDate: string;
         endDate: string;
-        completedAt: string | null;
-        completedBy: { id: string; name: string } | null;
         monthlyTasks: GrowthMonthTask[];
         weeklyTemplates: {
           id: string;
@@ -99,7 +97,6 @@ export async function getGrowthMonths(): Promise<GrowthMonthsResult> {
   const months = await prisma.growthMonth.findMany({
     orderBy: { monthNumber: "asc" },
     include: {
-      completedBy: { select: { id: true, name: true } },
       monthlyTasks: {
         orderBy: { sortOrder: "asc" },
         include: {
@@ -133,8 +130,6 @@ export async function getGrowthMonths(): Promise<GrowthMonthsResult> {
       mainGoal: month.mainGoal,
       startDate: month.startDate.toISOString(),
       endDate: month.endDate.toISOString(),
-      completedAt: month.completedAt ? month.completedAt.toISOString() : null,
-      completedBy: month.completedBy,
       monthlyTasks: month.monthlyTasks.map((task) => ({
         id: task.id,
         title: task.title,
@@ -195,39 +190,6 @@ export async function createGrowthMonth(data: {
       startDate: new Date(`${data.startDate}T00:00:00+06:00`),
       endDate: new Date(`${data.endDate}T00:00:00+06:00`),
     },
-  });
-
-  revalidateGrowthPaths();
-  return { success: true };
-}
-
-// Admin sign-off that a month's record is closed, independent of whether
-// every task under it happened to get checked off — the Full roadmap
-// record's "Mark as complete" action.
-export async function completeGrowthMonth(
-  monthId: string
-): Promise<{ error: string } | { success: true }> {
-  const session = await checkAdmin();
-  if (!session) return { error: "You don't have permission for this action" };
-
-  await prisma.growthMonth.update({
-    where: { id: monthId },
-    data: { completedAt: new Date(), completedById: session.user.id },
-  });
-
-  revalidateGrowthPaths();
-  return { success: true };
-}
-
-export async function reopenGrowthMonth(
-  monthId: string
-): Promise<{ error: string } | { success: true }> {
-  const session = await checkAdmin();
-  if (!session) return { error: "You don't have permission for this action" };
-
-  await prisma.growthMonth.update({
-    where: { id: monthId },
-    data: { completedAt: null, completedById: null },
   });
 
   revalidateGrowthPaths();

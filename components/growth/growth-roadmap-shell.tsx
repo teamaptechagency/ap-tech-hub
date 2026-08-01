@@ -101,7 +101,6 @@ export function GrowthRoadmapShell({
           <GrowthProgressStrip month={activeMonth} week={activeWeek} />
           <GrowthNeedsAttention
             months={months}
-            isAdmin={isAdmin}
             onView={() => setActive("record")}
           />
           <GrowthMonthsBoard
