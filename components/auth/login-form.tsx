@@ -14,6 +14,11 @@ import {
   startPasskeyLogin,
   verifyPasskeyAssertion,
 } from "@/actions/passkey.actions";
+import {
+  getMobileLoginStatus,
+  loginWithMobileApproval,
+  requestMobileLogin,
+} from "@/actions/mobile-login.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,8 +41,12 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [deviceToken, setDeviceToken] = useState("");
   const [loginMode, setLoginMode] = useState<
-    "password" | "authenticator" | "email" | "whatsapp"
+    "password" | "authenticator" | "email" | "whatsapp" | "mobile"
   >("password");
+  const [mobileRequestId, setMobileRequestId] = useState<string | null>(null);
+  const [mobileStatus, setMobileStatus] = useState<
+    "idle" | "pending" | "denied" | "expired"
+  >("idle");
   // Fingerprint sign-in is offered only on mobile, with a real platform
   // sensor (Touch ID / Face ID / Android fingerprint) — desktop WebAuthn
   // support (security keys, etc.) exists but isn't the "fingerprint" the
@@ -100,6 +109,82 @@ export function LoginForm({
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email]);
+
+  // "Login with mobile": once a request is sent, poll for it being
+  // approved/denied elsewhere (the approval page at /approve-signin/[id]).
+  // Stops itself on a terminal status or when the request/mode changes.
+  useEffect(() => {
+    if (!mobileRequestId || mobileStatus !== "pending") return;
+    let cancelled = false;
+
+    const interval = setInterval(async () => {
+      const result = await getMobileLoginStatus(mobileRequestId);
+      if (cancelled) return;
+
+      if (result.status === "APPROVED" && result.token && result.email) {
+        clearInterval(interval);
+        const loginResult = await loginWithMobileApproval({
+          email: result.email,
+          token: result.token,
+          deviceToken,
+          next: nextPath,
+        });
+        if (cancelled) return;
+
+        if (loginResult?.error) {
+          setError(loginResult.error);
+          setMobileStatus("idle");
+          setMobileRequestId(null);
+          return;
+        }
+        if (loginResult?.redirectTo) {
+          if (loginResult.deviceToken) {
+            window.localStorage.setItem(
+              "aptech_login_device",
+              loginResult.deviceToken
+            );
+          }
+          window.location.replace(loginResult.redirectTo);
+        }
+        return;
+      }
+
+      if (result.status === "DENIED") {
+        clearInterval(interval);
+        setMobileStatus("denied");
+        return;
+      }
+
+      if (result.status === "EXPIRED") {
+        clearInterval(interval);
+        setMobileStatus("expired");
+      }
+    }, 3000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileRequestId, mobileStatus]);
+
+  async function handleRequestMobileLogin() {
+    if (!email.includes("@")) {
+      setError("Enter your email first");
+      return;
+    }
+    setError("");
+    setMessage("");
+    setLoading(true);
+    const result = await requestMobileLogin(email);
+    setLoading(false);
+    if ("error" in result) {
+      setError(result.error);
+      return;
+    }
+    setMobileRequestId(result.requestId);
+    setMobileStatus("pending");
+  }
 
   async function handlePasskeyLogin() {
     setError("");
@@ -187,6 +272,12 @@ export function LoginForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (loginMode === "mobile") {
+      if (mobileStatus === "pending") return;
+      await handleRequestMobileLogin();
+      return;
+    }
 
     setError("");
     setMessage("");
@@ -299,6 +390,7 @@ export function LoginForm({
                   [
                     { value: "password", label: "Password" },
                     { value: "email", label: "Email OTP" },
+                    { value: "mobile", label: "Login via mobile" },
                     ...(passwordlessMethods.includes("WHATSAPP")
                       ? [{ value: "whatsapp", label: "WhatsApp OTP" }]
                       : []),
@@ -315,6 +407,9 @@ export function LoginForm({
                       setNeedsCode(false);
                       setCode("");
                       setPasswordlessCodeSent(false);
+                      setMobileRequestId(null);
+                      setMobileStatus("idle");
+                      setError("");
                     }}
                     className={`h-10 rounded-md border text-sm font-medium transition-colors ${
                       loginMode === method.value
@@ -347,7 +442,30 @@ export function LoginForm({
             />
           </div>
 
-            {loginMode === "authenticator" ? (
+            {loginMode === "mobile" ? (
+              <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground">
+                  Ei email e logged-in mobile e ekta notification jabe. Sekhane
+                  Access die fingerprint diye confirm korle, ei browser e
+                  automatically login hoye jabe.
+                </p>
+                {mobileStatus === "pending" && (
+                  <p className="text-sm font-medium">
+                    Waiting for approval on your mobile...
+                  </p>
+                )}
+                {mobileStatus === "denied" && (
+                  <p className="text-sm font-medium text-red-500">
+                    Request was denied on your mobile.
+                  </p>
+                )}
+                {mobileStatus === "expired" && (
+                  <p className="text-sm font-medium text-amber-600">
+                    Request expired without a response. Try again.
+                  </p>
+                )}
+              </div>
+            ) : loginMode === "authenticator" ? (
               <div className="space-y-2">
                 <Label htmlFor="auth-code">Authenticator code</Label>
                 <Input
@@ -398,7 +516,7 @@ export function LoginForm({
               </div>
             )}
 
-          {needsCode && loginMode !== "authenticator" && (
+          {needsCode && loginMode !== "authenticator" && loginMode !== "mobile" && (
             <div className="space-y-2">
               <Label htmlFor="code">Login code</Label>
               <Input
@@ -422,18 +540,32 @@ export function LoginForm({
             <p className="text-center text-sm text-red-500">{error}</p>
           )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading
-                ? "Signing in..."
-                : loginMode === "authenticator"
-                  ? "Login with Authenticator"
-                  : loginMode === "email" || loginMode === "whatsapp"
-                    ? passwordlessCodeSent
-                      ? "Verify OTP and login"
-                      : "Send login OTP"
-                  : needsCode
-                    ? "Verify and sign in"
-                    : "Sign in"}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={
+                loading || (loginMode === "mobile" && mobileStatus === "pending")
+              }
+            >
+              {loginMode === "mobile"
+                ? mobileStatus === "pending"
+                  ? "Waiting for approval..."
+                  : loading
+                    ? "Sending request..."
+                    : mobileStatus === "denied" || mobileStatus === "expired"
+                      ? "Send request again"
+                      : "Send request to mobile"
+                : loading
+                  ? "Signing in..."
+                  : loginMode === "authenticator"
+                    ? "Login with Authenticator"
+                    : loginMode === "email" || loginMode === "whatsapp"
+                      ? passwordlessCodeSent
+                        ? "Verify OTP and login"
+                        : "Send login OTP"
+                    : needsCode
+                      ? "Verify and sign in"
+                      : "Sign in"}
             </Button>
 
             <Button

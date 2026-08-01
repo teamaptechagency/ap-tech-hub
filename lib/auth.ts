@@ -26,6 +26,7 @@ const nextAuth = NextAuth({
         authLogin: {},
         authMethod: {},
         passkeyToken: {},
+        mobileApprovalToken: {},
       },
       async authorize(credentials) {
         if (!credentials?.email) return null;
@@ -71,6 +72,42 @@ const nextAuth = NextAuth({
             where: { id: user.id },
             data: { twoFactorCode: null, twoFactorCodeExp: null },
           });
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            partnerType: user.partnerType,
+            clientId: user.clientId,
+          };
+        }
+
+        // "Login with mobile": the account's own already-logged-in session
+        // approved this browser's request with a fingerprint, which minted
+        // this single-use token (see actions/mobile-login.actions.ts). The
+        // token only exists in CONSUMED state after the web browser's one
+        // legitimate poll read it, so checking that status here is what
+        // stops a leaked/replayed token from working twice.
+        const mobileApprovalToken = String(
+          credentials.mobileApprovalToken ?? ""
+        ).trim();
+        if (mobileApprovalToken) {
+          const request = await prisma.mobileLoginRequest.findUnique({
+            where: { approvalToken: mobileApprovalToken },
+          });
+          const valid =
+            !!request &&
+            request.status === "CONSUMED" &&
+            request.userId === user.id &&
+            !!request.approvalTokenExp &&
+            request.approvalTokenExp >= new Date();
+
+          if (!valid) return null;
+
+          await prisma.mobileLoginRequest
+            .delete({ where: { id: request.id } })
+            .catch(() => null);
 
           return {
             id: user.id,
