@@ -99,6 +99,109 @@ export async function getGrowthMembers(): Promise<
 }
 
 // ============================================
+// MONTHLY ROADMAP — the high-level goal list, one tier up from the
+// Weekly tasks board above. Admin-managed only; GROWTH_MEMBER accounts
+// see it read-only alongside their weekly board.
+// ============================================
+
+type GrowthMilestonesResult =
+  | { error: string }
+  | {
+      success: true;
+      milestones: {
+        id: string;
+        title: string;
+        description: string | null;
+        deadline: string | null;
+        status: string;
+      }[];
+    };
+
+export async function getGrowthMilestones(): Promise<GrowthMilestonesResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "Please sign in first" };
+  const isAdmin = ADMIN_ROLES.includes(session.user.role);
+  const isGrowthMember = GROWTH_ROLES.includes(session.user.role);
+  if (!isAdmin && !isGrowthMember) {
+    return { error: "You don't have access to the Growth Roadmap" };
+  }
+
+  const milestones = await prisma.growthMilestone.findMany({
+    orderBy: [{ status: "asc" }, { sortOrder: "asc" }],
+  });
+
+  return {
+    success: true,
+    milestones: milestones.map((milestone) => ({
+      id: milestone.id,
+      title: milestone.title,
+      description: milestone.description,
+      deadline: milestone.deadline ? milestone.deadline.toISOString() : null,
+      status: milestone.status,
+    })),
+  };
+}
+
+export async function createGrowthMilestone(data: {
+  title: string;
+  description?: string;
+  deadline?: string;
+}): Promise<{ error: string } | { success: true }> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const title = data.title.trim();
+  if (!title) return { error: "Title is required" };
+
+  const count = await prisma.growthMilestone.count();
+
+  await prisma.growthMilestone.create({
+    data: {
+      title,
+      description: data.description?.trim() || null,
+      // Dhaka-local midnight, same fix used throughout this app.
+      deadline: data.deadline
+        ? new Date(`${data.deadline}T00:00:00+06:00`)
+        : null,
+      sortOrder: count,
+    },
+  });
+
+  revalidateGrowthPaths();
+  return { success: true };
+}
+
+export async function updateGrowthMilestoneStatus(
+  id: string,
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED"
+): Promise<{ error: string } | { success: true }> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  await prisma.growthMilestone.update({
+    where: { id },
+    data: {
+      status,
+      completedAt: status === "COMPLETED" ? new Date() : null,
+    },
+  });
+
+  revalidateGrowthPaths();
+  return { success: true };
+}
+
+export async function deleteGrowthMilestone(
+  id: string
+): Promise<{ error: string } | { success: true }> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  await prisma.growthMilestone.delete({ where: { id } }).catch(() => null);
+  revalidateGrowthPaths();
+  return { success: true };
+}
+
+// ============================================
 // ADMIN — weeks and tasks
 // ============================================
 
