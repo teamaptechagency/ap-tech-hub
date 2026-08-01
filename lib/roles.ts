@@ -16,10 +16,16 @@ export const REFERRAL_ROLES = ["REFERRAL_PARTNER"];
 
 export const CLIENT_ROLES = ["CLIENT", "CLIENT_MANAGER"];
 
+// AP Tech's internal Growth Roadmap only — the /g/ portal. Deliberately
+// separate from WORKER_ROLES: this role must never also unlock the regular
+// employee portal (jobs, clients, messages, etc.), just the roadmap.
+export const GROWTH_ROLES = ["GROWTH_MEMBER"];
+
 // Where each role lands after login
 export function homeFor(role: string, partnerType?: string | null): string {
   if (ADMIN_ROLES.includes(role)) return "/dashboard";
   if (WORKER_ROLES.includes(role)) return "/e/dashboard";
+  if (GROWTH_ROLES.includes(role)) return "/g/dashboard";
   if (role === "PARTNER_MANAGER" && partnerType === "REFERENCE_PARTNER") {
     return "/r/dashboard";
   }

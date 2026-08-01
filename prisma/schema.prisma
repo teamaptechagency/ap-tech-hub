@@ -25,6 +25,10 @@ enum Role {
   REFERRAL_PARTNER
   CLIENT
   CLIENT_MANAGER
+  // AP Tech's internal Growth Roadmap only — the /g/ portal. Deliberately
+  // separate from TEAM_MEMBER: granting this role must not also hand out
+  // access to jobs, clients, or anything else in the employee portal.
+  GROWTH_MEMBER
 }
 
 // How a TEAM_MEMBER's pay is structured — separate from JobType (which
@@ -118,6 +122,9 @@ model User {
   assignedTasks          WeeklyTask[]               @relation("TaskAssignee")
   completedTasks         WeeklyTask[]               @relation("TaskCompleter")
   cancelledTasks         WeeklyTask[]               @relation("TaskCanceller")
+  assignedGrowthTasks    GrowthTask[]               @relation("GrowthTaskAssignee")
+  completedGrowthTasks   GrowthTask[]               @relation("GrowthTaskCompleter")
+  cancelledGrowthTasks   GrowthTask[]               @relation("GrowthTaskCanceller")
   assignedMilestones     Milestone[]                @relation("MilestoneAssignee")
   sentMessages           Message[]
   displayedMessages      Message[]                  @relation("MessageDisplaySender")
@@ -555,6 +562,43 @@ model WeeklyTask {
   cancelledAt   DateTime?
   attachments   Attachment[]
   createdAt     DateTime     @default(now())
+}
+
+// ============================================
+// AP TECH GROWTH ROADMAP
+// A single internal initiative, not tied to any client or Job — access is
+// gated entirely by the GROWTH_MEMBER role (see lib/roles.ts, app/g/*).
+// Deliberately its own models rather than reusing Week/WeeklyTask, even
+// though the shape mirrors them, since this isn't billable client work.
+// ============================================
+
+model GrowthWeek {
+  id         String       @id @default(cuid())
+  weekNumber Int          @unique
+  startDate  DateTime
+  endDate    DateTime
+  tasks      GrowthTask[]
+  createdAt  DateTime     @default(now())
+}
+
+model GrowthTask {
+  id            String     @id @default(cuid())
+  weekId        String
+  week          GrowthWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  title         String
+  priority      Priority   @default(MEDIUM)
+  status        TaskStatus @default(PENDING)
+  sortOrder     Int        @default(0)
+  assigneeId    String?
+  assignee      User?      @relation("GrowthTaskAssignee", fields: [assigneeId], references: [id])
+  completedById String?
+  completedBy   User?      @relation("GrowthTaskCompleter", fields: [completedById], references: [id])
+  completedAt   DateTime?
+  cancelReason  String?
+  cancelledById String?
+  cancelledBy   User?      @relation("GrowthTaskCanceller", fields: [cancelledById], references: [id])
+  cancelledAt   DateTime?
+  createdAt     DateTime   @default(now())
 }
 
 model CommonTask {

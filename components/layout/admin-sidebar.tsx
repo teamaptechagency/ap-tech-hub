@@ -27,6 +27,7 @@ import {
   MessageCircle,
   Newspaper,
   Receipt,
+  Rocket,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -102,6 +103,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Meetings",
     href: "/meetings",
     icon: Video,
+    section: "Delivery",
+  },
+  {
+    label: "Growth Roadmap",
+    href: "/growth-roadmap",
+    icon: Rocket,
     section: "Delivery",
   },
   {

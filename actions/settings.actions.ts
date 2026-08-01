@@ -722,7 +722,8 @@ export async function inviteTeamMember(formData: {
     | "TEAM_MEMBER"
     | "BUSINESS_PARTNER"
     | "PARTNER_MANAGER"
-    | "REFERRAL_PARTNER";
+    | "REFERRAL_PARTNER"
+    | "GROWTH_MEMBER";
   partnerType?:
     | "SO_PARTNER"
     | "REFERENCE_PARTNER"
