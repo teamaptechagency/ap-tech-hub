@@ -127,6 +127,7 @@ model User {
   cancelledGrowthTasks   GrowthTask[]               @relation("GrowthTaskCanceller")
   assignedGrowthMonthlyTasks  GrowthMonthlyTask[]    @relation("GrowthMonthlyTaskAssignee")
   completedGrowthMonthlyTasks GrowthMonthlyTask[]    @relation("GrowthMonthlyTaskCompleter")
+  completedGrowthMonths       GrowthMonth[]          @relation("GrowthMonthCompleter")
   assignedMilestones     Milestone[]                @relation("MilestoneAssignee")
   sentMessages           Message[]
   displayedMessages      Message[]                  @relation("MessageDisplaySender")
@@ -588,6 +589,14 @@ model GrowthMonth {
   mainGoal  String?
   startDate DateTime
   endDate   DateTime
+
+  // Explicit admin sign-off that this month's record is closed — separate
+  // from whether every task happened to get checked off, since a month can
+  // end with leftover work the admin still wants to archive as "done for
+  // now" (see the Full roadmap record's Mark as complete action).
+  completedAt   DateTime?
+  completedById String?
+  completedBy   User?    @relation("GrowthMonthCompleter", fields: [completedById], references: [id])
 
   monthlyTasks    GrowthMonthlyTask[]
   weeklyTemplates GrowthWeeklyTemplate[]
