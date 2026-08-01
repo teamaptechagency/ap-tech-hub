@@ -32,7 +32,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Repeat, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  Plus,
+  Repeat,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 
 export type Person = { id: string; name: string };
 
@@ -534,21 +541,42 @@ export function GrowthMonthsBoard({
                       key={task.id}
                       className="flex items-center justify-between gap-2 rounded px-1 py-1 text-sm hover:bg-muted/50"
                     >
-                      <div className="min-w-0">
-                        <p
-                          className={
+                      <div className="flex min-w-0 items-start gap-2">
+                        <button
+                          type="button"
+                          disabled={!canComplete || busyId === task.id}
+                          onClick={() => handleCompleteMonthlyTask(task.id)}
+                          aria-label={
                             task.status === "COMPLETED"
-                              ? "text-muted-foreground line-through"
-                              : ""
+                              ? "Completed"
+                              : "Mark complete"
                           }
+                          className="mt-0.5 shrink-0 disabled:cursor-default"
                         >
-                          {task.title}
-                        </p>
-                        {task.assignee && (
-                          <p className="text-[10px] text-muted-foreground">
-                            {task.assignee.name}
+                          {task.status === "COMPLETED" ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          ) : (
+                            <Circle
+                              className={`h-4 w-4 ${canComplete ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
+                            />
+                          )}
+                        </button>
+                        <div className="min-w-0">
+                          <p
+                            className={
+                              task.status === "COMPLETED"
+                                ? "text-muted-foreground line-through"
+                                : ""
+                            }
+                          >
+                            {task.title}
                           </p>
-                        )}
+                          {task.assignee && (
+                            <p className="text-[10px] text-muted-foreground">
+                              {task.assignee.name}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
                         <Badge
@@ -557,17 +585,6 @@ export function GrowthMonthsBoard({
                         >
                           {task.priority}
                         </Badge>
-                        {canComplete && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 px-2 text-[10px]"
-                            disabled={busyId === task.id}
-                            onClick={() => handleCompleteMonthlyTask(task.id)}
-                          >
-                            Done
-                          </Button>
-                        )}
                         {isAdmin && (
                           <Button
                             size="sm"
@@ -695,30 +712,60 @@ export function GrowthMonthsBoard({
                     const canComplete =
                       task.status === "PENDING" &&
                       (isAdmin || task.assignee?.id === currentUserId);
+                    const canToggle =
+                      canComplete || (isAdmin && task.status === "COMPLETED");
                     const busy = busyId === task.id;
                     return (
                       <div
                         key={task.id}
                         className="flex items-center justify-between gap-2 rounded px-1 py-1 text-sm hover:bg-muted/50"
                       >
-                        <div className="min-w-0">
-                          <p
-                            className={
-                              task.status === "CANCELLED"
-                                ? "text-muted-foreground line-through"
-                                : task.status === "COMPLETED"
+                        <div className="flex min-w-0 items-start gap-2">
+                          {task.status === "CANCELLED" ? (
+                            <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={!canToggle || busy}
+                              onClick={() =>
+                                task.status === "COMPLETED"
+                                  ? handleReopenWeekTask(task.id)
+                                  : handleCompleteWeekTask(task.id)
+                              }
+                              aria-label={
+                                task.status === "COMPLETED"
+                                  ? "Reopen"
+                                  : "Mark complete"
+                              }
+                              className="mt-0.5 shrink-0 disabled:cursor-default"
+                            >
+                              {task.status === "COMPLETED" ? (
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                              ) : (
+                                <Circle
+                                  className={`h-4 w-4 ${canComplete ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
+                                />
+                              )}
+                            </button>
+                          )}
+                          <div className="min-w-0">
+                            <p
+                              className={
+                                task.status === "CANCELLED" ||
+                                task.status === "COMPLETED"
                                   ? "text-muted-foreground line-through"
                                   : ""
-                            }
-                          >
-                            {task.title}
-                          </p>
-                          {task.status === "CANCELLED" &&
-                            task.cancelReason && (
-                              <p className="text-[10px] text-red-500">
-                                {task.cancelReason}
-                              </p>
-                            )}
+                              }
+                            >
+                              {task.title}
+                            </p>
+                            {task.status === "CANCELLED" &&
+                              task.cancelReason && (
+                                <p className="text-[10px] text-red-500">
+                                  {task.cancelReason}
+                                </p>
+                              )}
+                          </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
                           <Badge
@@ -727,28 +774,6 @@ export function GrowthMonthsBoard({
                           >
                             {task.priority}
                           </Badge>
-                          {canComplete && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-6 px-2 text-[10px]"
-                              disabled={busy}
-                              onClick={() => handleCompleteWeekTask(task.id)}
-                            >
-                              Done
-                            </Button>
-                          )}
-                          {isAdmin && task.status === "COMPLETED" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-6 px-2 text-[10px]"
-                              disabled={busy}
-                              onClick={() => handleReopenWeekTask(task.id)}
-                            >
-                              Reopen
-                            </Button>
-                          )}
                           {isAdmin && task.status === "PENDING" && (
                             <Button
                               size="sm"

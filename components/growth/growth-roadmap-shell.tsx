@@ -1,14 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import {
+  Archive,
+  LayoutDashboard,
+  UserCog,
+  Wallet,
+} from "lucide-react";
 
 import {
+  getActiveMonth,
+  getActiveWeek,
   GrowthMonthsBoard,
   type Month,
   type Person,
 } from "@/components/growth/growth-months-board";
 import { GrowthMilestones } from "@/components/growth/growth-milestones";
 import { GrowthNeedsAttention } from "@/components/growth/growth-needs-attention";
+import { GrowthProgressStrip } from "@/components/growth/growth-progress-strip";
 import {
   GrowthExpensesPanel,
   GrowthMembersPanel,
@@ -50,38 +59,46 @@ export function GrowthRoadmapShell({
 }) {
   const [active, setActive] = useState<TabKey>("dashboard");
 
-  const tabs: { key: TabKey; label: string }[] = [
-    { key: "dashboard", label: "Dashboard" },
+  const activeMonth = getActiveMonth(months);
+  const activeWeek = getActiveWeek(activeMonth);
+
+  const tabs: { key: TabKey; label: string; icon: typeof LayoutDashboard }[] = [
+    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     ...(isAdmin
       ? ([
-          { key: "members", label: "Member setup" },
-          { key: "expenses", label: "Expenses record" },
-        ] as { key: TabKey; label: string }[])
+          { key: "members", label: "Member setup", icon: UserCog },
+          { key: "expenses", label: "Expenses record", icon: Wallet },
+        ] as { key: TabKey; label: string; icon: typeof LayoutDashboard }[])
       : []),
-    { key: "record", label: "Full roadmap record" },
+    { key: "record", label: "Full roadmap record", icon: Archive },
   ];
 
   return (
     <div className="space-y-4">
       <div className="flex gap-2 overflow-x-auto rounded-xl border bg-card p-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActive(tab.key)}
-            className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium ${
-              active === tab.key
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActive(tab.key)}
+              className={`flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium ${
+                active === tab.key
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {active === "dashboard" && (
         <div className="space-y-4">
+          <GrowthProgressStrip month={activeMonth} week={activeWeek} />
           <GrowthNeedsAttention
             months={months}
             isAdmin={isAdmin}
