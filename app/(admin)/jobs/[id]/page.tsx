@@ -19,6 +19,7 @@ import { PublishToggle } from "@/components/jobs/publish-toggle";
 import { JobDetailsEditor } from "@/components/jobs/job-details-editor";
 import { DeleteJobButton } from "@/components/jobs/delete-job-button";
 import { JobPurchases } from "@/components/jobs/job-purchases";
+import { OverdueTasksPanel } from "@/components/jobs/overdue-tasks-panel";
 import { ChatPanel } from "@/components/chat/chat-panel";
 
 import { hoursThisWeek } from "@/actions/session.actions";
@@ -250,6 +251,19 @@ export default async function JobDetailsPage({
 
   const activeWeek = classified.find((week) => week.state === "ACTIVE");
 
+  const overdueTasks = classified
+    .filter((week) => week.state === "OVERDUE")
+    .flatMap((week) =>
+      week.tasks
+        .filter((task) => task.status === "PENDING")
+        .map((task) => ({
+          id: task.id,
+          title: task.title,
+          priority: task.priority,
+          weekNumber: week.weekNumber,
+        }))
+    );
+
   // ============================================
   // HOURLY JOB DATA
   // ============================================
@@ -426,19 +440,29 @@ export default async function JobDetailsPage({
 
       {/* Discussion left and job content right */}
       <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
-        {job.conversation ? (
-          <ChatPanel
-            conversationId={job.conversation.id}
-            currentUserId={session.user.id}
-            title="Discussion"
-          />
-        ) : (
-          <Card className="h-fit">
-            <CardContent className="py-16 text-center text-sm text-muted-foreground">
-              No conversation attached to this job
-            </CardContent>
-          </Card>
-        )}
+        <div className="space-y-4">
+          {job.conversation ? (
+            <ChatPanel
+              conversationId={job.conversation.id}
+              currentUserId={session.user.id}
+              title="Discussion"
+            />
+          ) : (
+            <Card className="h-fit">
+              <CardContent className="py-16 text-center text-sm text-muted-foreground">
+                No conversation attached to this job
+              </CardContent>
+            </Card>
+          )}
+
+          {job.type === "MONTHLY" && (
+            <OverdueTasksPanel
+              tasks={overdueTasks}
+              jobId={job.id}
+              canToggle={canToggle}
+            />
+          )}
+        </div>
 
         <div className="space-y-4">
           {/* Monthly job */}
