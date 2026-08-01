@@ -405,7 +405,7 @@ export function GrowthBoard({
                 <Select
                   value={taskAssigneeId || "none"}
                   onValueChange={(value) =>
-                    setTaskAssigneeId(value === "none" ? "" : value)
+                    setTaskAssigneeId(value && value !== "none" ? value : "")
                   }
                 >
                   <SelectTrigger>
