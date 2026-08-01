@@ -131,21 +131,17 @@ export function LoginForm({
         });
         if (cancelled) return;
 
-        if (loginResult?.error) {
+        if ("error" in loginResult) {
           setError(loginResult.error);
           setMobileStatus("idle");
           setMobileRequestId(null);
           return;
         }
-        if (loginResult?.redirectTo) {
-          if (loginResult.deviceToken) {
-            window.localStorage.setItem(
-              "aptech_login_device",
-              loginResult.deviceToken
-            );
-          }
-          window.location.replace(loginResult.redirectTo);
-        }
+        window.localStorage.setItem(
+          "aptech_login_device",
+          loginResult.deviceToken
+        );
+        window.location.replace(loginResult.redirectTo);
         return;
       }
 
