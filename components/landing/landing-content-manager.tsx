@@ -4,7 +4,10 @@ import { ImageUp, Plus, Save, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { updateLandingContent } from "@/actions/settings.actions";
+import {
+  removeUnnecessaryLandingServices,
+  updateLandingContent,
+} from "@/actions/settings.actions";
 import type {
   LandingCategoryData,
   LandingHeroSlideData,
@@ -280,6 +283,7 @@ export function LandingContentManager({
   const [data, setData] = useState(initialData);
   const [active, setActive] = useState<SectionKey>("hero");
   const [pending, startTransition] = useTransition();
+  const [removingServices, setRemovingServices] = useState(false);
 
   function save() {
     startTransition(async () => {
@@ -291,6 +295,30 @@ export function LandingContentManager({
       }
       toast.success("Landing content saved");
     });
+  }
+
+  async function removeUnnecessaryServices() {
+    if (
+      !window.confirm(
+        "Remove accounting/bookkeeping and interior/exterior/3D-architecture services (plus their category and hero banners) from the public portal?"
+      )
+    ) {
+      return;
+    }
+    setRemovingServices(true);
+    const result = await removeUnnecessaryLandingServices();
+    setRemovingServices(false);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(
+      `Removed ${result.removedServices.length} service(s) and ${result.removedHero.length} hero banner(s). Reloading...`
+    );
+    // The removal is already saved server-side (same path as Save changes);
+    // reload so this editor's local state — including derived category
+    // lists — reflects the new server data instead of drifting from it.
+    window.location.reload();
   }
 
   function updateHero(index: number, patch: Partial<LandingHeroSlideData>) {
@@ -400,6 +428,15 @@ export function LandingContentManager({
           >
             Preview page
           </a>
+          <button
+            type="button"
+            onClick={removeUnnecessaryServices}
+            disabled={removingServices}
+            className="inline-flex items-center gap-2 rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+          >
+            <Trash2 className="h-4 w-4" />
+            {removingServices ? "Removing..." : "Remove accounting/interior services"}
+          </button>
           <button
             type="button"
             onClick={save}

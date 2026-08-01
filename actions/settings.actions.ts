@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { uniqueReferralCode } from "@/lib/referral";
 import { ADMIN_ROLES } from "@/lib/roles";
+import { getLandingPageData } from "@/lib/landing-data";
 import { revalidatePath } from "next/cache";
 
 async function checkAdmin() {
@@ -652,6 +653,86 @@ export async function updateLandingContent(jsonText: string) {
   revalidatePath("/settings");
 
   return { success: true };
+}
+
+// ============================================
+// LANDING SERVICE CLEANUP — one-off removal of services the agency no
+// longer offers (accounting/bookkeeping, interior/exterior/3D-architecture).
+// getLandingPageData() reads the saved "landing.page" JSON blob with
+// priority over the relational CMS tables once that blob exists, so this
+// filters whatever is actually live right now and writes it back through
+// the same updateLandingContent() path the admin content manager's Save
+// button uses — not the static defaults in lib/landing-data.ts, which may
+// already be stale versus what's live.
+// ============================================
+
+const REMOVE_LANDING_SERVICE_CATEGORY_SLUGS = new Set([
+  "accounting",
+  "3d-architecture",
+]);
+
+const REMOVE_LANDING_SERVICE_KEYWORDS = [
+  "accounting",
+  "bookkeeping",
+  "interior",
+  "exterior",
+  "3d",
+  "architecture",
+];
+
+function textHitsRemovedServiceKeyword(text?: string | null) {
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  return REMOVE_LANDING_SERVICE_KEYWORDS.some((keyword) => lower.includes(keyword));
+}
+
+export async function removeUnnecessaryLandingServices(): Promise<
+  | { error: string }
+  | { success: true; removedServices: string[]; removedHero: string[] }
+> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const data = await getLandingPageData();
+
+  const removedServices: string[] = [];
+  const services = data.services.filter((service) => {
+    const hit =
+      REMOVE_LANDING_SERVICE_CATEGORY_SLUGS.has(service.categorySlug) ||
+      textHitsRemovedServiceKeyword(service.title) ||
+      (service.tags ?? []).some((tag) => textHitsRemovedServiceKeyword(tag));
+    if (hit) removedServices.push(service.title);
+    return !hit;
+  });
+
+  const categories = data.categories.filter(
+    (category) =>
+      category.slug === "all" ||
+      !REMOVE_LANDING_SERVICE_CATEGORY_SLUGS.has(category.slug)
+  );
+
+  const removedHero: string[] = [];
+  const heroSlides = data.heroSlides.filter((slide) => {
+    const hit =
+      textHitsRemovedServiceKeyword(slide.title) ||
+      textHitsRemovedServiceKeyword(slide.description) ||
+      textHitsRemovedServiceKeyword(slide.badge);
+    if (hit) removedHero.push(slide.title);
+    return !hit;
+  });
+
+  if (removedServices.length === 0 && removedHero.length === 0) {
+    return {
+      error:
+        "No accounting/bookkeeping or interior/exterior/3D-architecture services were found to remove.",
+    };
+  }
+
+  const updated = { ...data, services, categories, heroSlides };
+  const result = await updateLandingContent(JSON.stringify(updated));
+  if ("error" in result) return result;
+
+  return { success: true, removedServices, removedHero };
 }
 
 // ============================================
