@@ -605,7 +605,9 @@ export async function updateBrandingSettings(input: {
   return { success: true };
 }
 
-export async function updateLandingContent(jsonText: string) {
+export async function updateLandingContent(
+  jsonText: string
+): Promise<{ error: string } | { success: true }> {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 
