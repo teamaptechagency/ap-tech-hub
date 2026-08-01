@@ -8,7 +8,6 @@ import {
   addGrowthTask,
   addGrowthWeeklyTemplate,
   cancelGrowthTask,
-  completeGrowthMonth,
   completeGrowthMonthlyTask,
   completeGrowthTask,
   createGrowthMonth,
@@ -16,7 +15,6 @@ import {
   deleteGrowthMonthlyTask,
   deleteGrowthTask,
   deleteGrowthWeeklyTemplate,
-  reopenGrowthMonth,
   reopenGrowthTask,
   seedGrowthOperatingCalendar,
 } from "@/actions/growth.actions";
@@ -77,8 +75,6 @@ export type Month = {
   mainGoal: string | null;
   startDate: string;
   endDate: string;
-  completedAt: string | null;
-  completedBy: Person | null;
   monthlyTasks: MonthTask[];
   weeklyTemplates: Template[];
   weeks: Week[];
@@ -137,10 +133,18 @@ export function monthHasIncompleteWork(month: Month) {
 
 export function isMonthOverdue(month: Month) {
   return (
-    !month.completedAt &&
     new Date(month.endDate).getTime() < Date.now() &&
     monthHasIncompleteWork(month)
   );
+}
+
+// Completed status is fully automatic — no manual "mark as complete"
+// action — a month is done the moment every task under it is done.
+export function isMonthComplete(month: Month) {
+  const totalTasks =
+    month.monthlyTasks.length +
+    month.weeks.reduce((sum, week) => sum + week.tasks.length, 0);
+  return totalTasks > 0 && !monthHasIncompleteWork(month);
 }
 
 export function GrowthMonthsBoard({
@@ -163,9 +167,6 @@ export function GrowthMonthsBoard({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [seeding, setSeeding] = useState(false);
-  const [completingMonthId, setCompletingMonthId] = useState<string | null>(
-    null
-  );
 
   const activeMonth = getActiveMonth(months);
   const visibleMonths =
@@ -182,17 +183,6 @@ export function GrowthMonthsBoard({
           ]
         : []
       : months;
-
-  async function handleToggleMonthComplete(month: Month) {
-    setCompletingMonthId(month.id);
-    setError("");
-    const result = month.completedAt
-      ? await reopenGrowthMonth(month.id)
-      : await completeGrowthMonth(month.id);
-    setCompletingMonthId(null);
-    if ("error" in result) return setError(result.error);
-    router.refresh();
-  }
 
   async function handleSeedCalendar() {
     if (
@@ -458,13 +448,14 @@ export function GrowthMonthsBoard({
 
       {visibleMonths.map((month) => {
         const overdue = isMonthOverdue(month);
+        const complete = isMonthComplete(month);
         return (
         <Card
           key={month.id}
           className={
             overdue
               ? "border-red-300 bg-red-50/40"
-              : month.completedAt
+              : complete
                 ? "border-emerald-200"
                 : ""
           }
@@ -483,25 +474,14 @@ export function GrowthMonthsBoard({
                     Needs attention
                   </Badge>
                 )}
-                {month.completedAt && (
+                {complete && (
                   <Badge className="bg-emerald-100 text-[10px] text-emerald-700">
                     Completed
                   </Badge>
                 )}
               </span>
-              <span className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
+              <span className="text-xs font-normal text-muted-foreground">
                 {formatDate(month.startDate)} - {formatDate(month.endDate)}
-                {isAdmin && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-6 px-2 text-[10px]"
-                    disabled={completingMonthId === month.id}
-                    onClick={() => handleToggleMonthComplete(month)}
-                  >
-                    {month.completedAt ? "Reopen" : "Mark as complete"}
-                  </Button>
-                )}
               </span>
             </CardTitle>
             {month.mainGoal && (

@@ -1,9 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-import { completeGrowthMonth } from "@/actions/growth.actions";
 import {
   isMonthOverdue,
   type Month,
@@ -25,26 +21,14 @@ function pendingCount(month: Month) {
 
 export function GrowthNeedsAttention({
   months,
-  isAdmin,
   onView,
 }: {
   months: Month[];
-  isAdmin: boolean;
   onView: () => void;
 }) {
-  const router = useRouter();
-  const [completingId, setCompletingId] = useState<string | null>(null);
-
   const overdueMonths = months.filter((month) => isMonthOverdue(month));
 
   if (overdueMonths.length === 0) return null;
-
-  async function handleComplete(monthId: string) {
-    setCompletingId(monthId);
-    const result = await completeGrowthMonth(monthId);
-    setCompletingId(null);
-    if (!("error" in result)) router.refresh();
-  }
 
   return (
     <Card className="border-red-300 bg-red-50/40">
@@ -67,21 +51,9 @@ export function GrowthNeedsAttention({
                   {monthly} monthly / {weekly} weekly task(s) still pending
                 </p>
               </div>
-              <div className="flex shrink-0 gap-2">
-                <Button size="sm" variant="outline" onClick={onView}>
-                  View
-                </Button>
-                {isAdmin && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={completingId === month.id}
-                    onClick={() => handleComplete(month.id)}
-                  >
-                    Mark as complete
-                  </Button>
-                )}
-              </div>
+              <Button size="sm" variant="outline" onClick={onView}>
+                View
+              </Button>
             </div>
           );
         })}
