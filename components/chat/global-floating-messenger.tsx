@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { MessageSquare, X } from "lucide-react";
 
@@ -35,6 +35,11 @@ export function GlobalFloatingMessenger({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState(conversations[0]?.id ?? "");
+  const [liveConversations, setLiveConversations] = useState(conversations);
+
+  useEffect(() => {
+    setLiveConversations(conversations);
+  }, [conversations]);
 
   const hiddenOnMessagesPage =
     pathname === "/messages" ||
@@ -42,11 +47,11 @@ export function GlobalFloatingMessenger({
     pathname.includes("/messages/");
 
   const ordered = useMemo(() => {
-    if (!activeId) return conversations;
-    const active = conversations.find((item) => item.id === activeId);
-    const rest = conversations.filter((item) => item.id !== activeId);
-    return active ? [active, ...rest] : conversations;
-  }, [activeId, conversations]);
+    if (!activeId) return liveConversations;
+    const active = liveConversations.find((item) => item.id === activeId);
+    const rest = liveConversations.filter((item) => item.id !== activeId);
+    return active ? [active, ...rest] : liveConversations;
+  }, [activeId, liveConversations]);
 
   const active = ordered[0] ?? null;
   const activeContactKey = active
@@ -63,13 +68,13 @@ export function GlobalFloatingMessenger({
       return true;
     });
   }, [ordered]);
-  const unreadCount = conversations.filter((item) => item.unread).length;
+  const unreadCount = liveConversations.filter((item) => item.unread).length;
 
   useEffect(() => {
-    if (hiddenOnMessagesPage || conversations.length === 0) return;
+    if (hiddenOnMessagesPage || liveConversations.length === 0) return;
 
     const pusher = getPusherClient();
-    const subscribedChannels = conversations
+    const subscribedChannels = liveConversations
       .filter((conversation) => conversation.kind !== "landing-chat")
       .map((conversation) => {
       const channelName = `conversation-${conversation.id}`;
@@ -89,7 +94,30 @@ export function GlobalFloatingMessenger({
         pusher.unsubscribe(channelName);
       });
     };
-  }, [conversations, currentUserId, hiddenOnMessagesPage]);
+  }, [liveConversations, currentUserId, hiddenOnMessagesPage]);
+
+  // A brand-new landing chat doesn't exist yet in the server-rendered
+  // conversations list, so it needs its own always-on subscription to learn
+  // about chats created after this page loaded.
+  useEffect(() => {
+    if (hiddenOnMessagesPage) return;
+
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe("landing-chats-global");
+    channel.bind("new-chat", (chat: FloatingConversationRow) => {
+      setLiveConversations((prev) =>
+        prev.some((existing) => existing.id === chat.id)
+          ? prev
+          : [chat, ...prev]
+      );
+      void playWaterDropMessageSound();
+    });
+
+    return () => {
+      channel.unbind("new-chat");
+      pusher.unsubscribe("landing-chats-global");
+    };
+  }, [hiddenOnMessagesPage]);
 
   if (hiddenOnMessagesPage || !currentUserId) return null;
 
@@ -214,10 +242,15 @@ function LandingChatPanel({ chat }: { chat: FloatingConversationRow }) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
   // The Pusher channel is keyed by the bare landingChatLead id, matching
   // what actions/landing.actions.ts broadcasts on — chat.id itself carries
   // a "landing:"/"fallback:" prefix (see getFloatingConversations).
   const bareId = chat.id.replace(/^landing:/, "");
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     let alive = true;
@@ -302,6 +335,7 @@ function LandingChatPanel({ chat }: { chat: FloatingConversationRow }) {
             Chat started. No message yet.
           </p>
         )}
+        <div ref={bottomRef} />
       </div>
       <div className="border-t p-3">
         <div className="flex gap-2">

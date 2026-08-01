@@ -68,6 +68,36 @@ async function triggerLandingChatPusher(
   }
 }
 
+// Admin's floating messenger only knows about chats that existed at the
+// time its conversations list was fetched server-side. A brand new chat's
+// first message needs its own broadcast so the panel can pick it up live
+// instead of waiting for a manual page refresh.
+async function triggerNewLandingChatPusher(chat: {
+  id: string;
+  name: string;
+  subtitle: string;
+  avatarName: string;
+  lastBody: string;
+  lastAt: string;
+}) {
+  try {
+    await pusherServer.trigger("landing-chats-global", "new-chat", {
+      id: chat.id,
+      name: chat.name,
+      subtitle: chat.subtitle,
+      avatarUserId: null,
+      avatarName: chat.avatarName,
+      avatarUrl: null,
+      lastBody: chat.lastBody,
+      lastAt: chat.lastAt,
+      unread: true,
+      kind: "landing-chat",
+    });
+  } catch (error) {
+    console.error("New landing chat Pusher event failed:", error);
+  }
+}
+
 function firstHeader(headerList: Headers, keys: string[]) {
   for (const key of keys) {
     const value = headerList.get(key);
@@ -450,6 +480,15 @@ export async function startLandingChat(formData: FormData) {
       email,
       subject,
     },
+  });
+
+  await triggerNewLandingChatPusher({
+    id: `landing:${lead.id}`,
+    name: subject || "Website live chat",
+    subtitle: `${name} . ${email}`,
+    avatarName: name,
+    lastBody: "Chat started from public portal",
+    lastAt: new Date().toISOString(),
   });
 
   revalidatePath("/leads");

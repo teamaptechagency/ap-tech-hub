@@ -16,6 +16,7 @@ import {
   deleteGrowthTask,
   deleteGrowthWeeklyTemplate,
   reopenGrowthTask,
+  seedGrowthOperatingCalendar,
 } from "@/actions/growth.actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,23 @@ export function GrowthMonthsBoard({
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [seeding, setSeeding] = useState(false);
+
+  async function handleSeedCalendar() {
+    if (
+      !window.confirm(
+        "Load the Aug 2026 - Jul 2027 operating calendar? This creates all 12 months with their tasks."
+      )
+    ) {
+      return;
+    }
+    setSeeding(true);
+    setError("");
+    const result = await seedGrowthOperatingCalendar();
+    setSeeding(false);
+    if ("error" in result) return setError(result.error);
+    router.refresh();
+  }
 
   // Add month
   const [monthDialogOpen, setMonthDialogOpen] = useState(false);
@@ -307,10 +325,22 @@ export function GrowthMonthsBoard({
           </p>
         </div>
         {isAdmin && (
-          <Button type="button" onClick={() => setMonthDialogOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            Add month
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {months.length === 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSeedCalendar}
+                disabled={seeding}
+              >
+                {seeding ? "Loading calendar..." : "Load 12-month calendar"}
+              </Button>
+            )}
+            <Button type="button" onClick={() => setMonthDialogOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              Add month
+            </Button>
+          </div>
         )}
       </div>
 
