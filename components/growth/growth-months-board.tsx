@@ -8,6 +8,7 @@ import {
   addGrowthTask,
   addGrowthWeeklyTemplate,
   cancelGrowthTask,
+  completeGrowthMonth,
   completeGrowthMonthlyTask,
   completeGrowthTask,
   createGrowthMonth,
@@ -15,6 +16,7 @@ import {
   deleteGrowthMonthlyTask,
   deleteGrowthTask,
   deleteGrowthWeeklyTemplate,
+  reopenGrowthMonth,
   reopenGrowthTask,
   seedGrowthOperatingCalendar,
 } from "@/actions/growth.actions";
@@ -32,9 +34,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Repeat, Trash2 } from "lucide-react";
 
-type Person = { id: string; name: string };
+export type Person = { id: string; name: string };
 
-type MonthTask = {
+export type MonthTask = {
   id: string;
   title: string;
   priority: string;
@@ -43,9 +45,9 @@ type MonthTask = {
   completedBy: Person | null;
 };
 
-type WeekTask = MonthTask & { cancelReason: string | null };
+export type WeekTask = MonthTask & { cancelReason: string | null };
 
-type Week = {
+export type Week = {
   id: string;
   weekNumber: number;
   startDate: string;
@@ -53,14 +55,14 @@ type Week = {
   tasks: WeekTask[];
 };
 
-type Template = {
+export type Template = {
   id: string;
   title: string;
   priority: string;
   active: boolean;
 };
 
-type Month = {
+export type Month = {
   id: string;
   monthNumber: number;
   name: string;
@@ -68,6 +70,8 @@ type Month = {
   mainGoal: string | null;
   startDate: string;
   endDate: string;
+  completedAt: string | null;
+  completedBy: Person | null;
   monthlyTasks: MonthTask[];
   weeklyTemplates: Template[];
   weeks: Week[];
@@ -87,21 +91,101 @@ function formatDate(value: string) {
   });
 }
 
+function isDateWithin(nowMs: number, startDate: string, endDate: string) {
+  return (
+    new Date(startDate).getTime() <= nowMs &&
+    nowMs <= new Date(endDate).getTime()
+  );
+}
+
+// The month/week whose date range contains today, falling back to the
+// latest one (months/weeks already come sorted ascending) when nothing
+// created yet actually spans today — e.g. before this month's row exists.
+export function getActiveMonth(months: Month[]): Month | null {
+  if (months.length === 0) return null;
+  const now = Date.now();
+  return (
+    months.find((month) => isDateWithin(now, month.startDate, month.endDate)) ??
+    months[months.length - 1]
+  );
+}
+
+export function getActiveWeek(month: Month | null): Week | null {
+  if (!month || month.weeks.length === 0) return null;
+  const now = Date.now();
+  return (
+    month.weeks.find((week) => isDateWithin(now, week.startDate, week.endDate)) ??
+    month.weeks[month.weeks.length - 1]
+  );
+}
+
+export function monthHasIncompleteWork(month: Month) {
+  return (
+    month.monthlyTasks.some((task) => task.status === "PENDING") ||
+    month.weeks.some((week) =>
+      week.tasks.some((task) => task.status === "PENDING")
+    )
+  );
+}
+
+export function isMonthOverdue(month: Month) {
+  return (
+    !month.completedAt &&
+    new Date(month.endDate).getTime() < Date.now() &&
+    monthHasIncompleteWork(month)
+  );
+}
+
 export function GrowthMonthsBoard({
   months,
   isAdmin,
   currentUserId,
   members = [],
+  viewMode = "full",
 }: {
   months: Month[];
   isAdmin: boolean;
   currentUserId: string;
   members?: Person[];
+  // "dashboard" narrows the board down to just the active month and its
+  // active week — the focused view; "full" (default) is the complete
+  // historical record used on the Full roadmap record tab.
+  viewMode?: "full" | "dashboard";
 }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [seeding, setSeeding] = useState(false);
+  const [completingMonthId, setCompletingMonthId] = useState<string | null>(
+    null
+  );
+
+  const activeMonth = getActiveMonth(months);
+  const visibleMonths =
+    viewMode === "dashboard"
+      ? activeMonth
+        ? [
+            {
+              ...activeMonth,
+              weeks: (() => {
+                const activeWeek = getActiveWeek(activeMonth);
+                return activeWeek ? [activeWeek] : [];
+              })(),
+            },
+          ]
+        : []
+      : months;
+
+  async function handleToggleMonthComplete(month: Month) {
+    setCompletingMonthId(month.id);
+    setError("");
+    const result = month.completedAt
+      ? await reopenGrowthMonth(month.id)
+      : await completeGrowthMonth(month.id);
+    setCompletingMonthId(null);
+    if ("error" in result) return setError(result.error);
+    router.refresh();
+  }
 
   async function handleSeedCalendar() {
     if (
@@ -318,13 +402,18 @@ export function GrowthMonthsBoard({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">AP Tech Growth Roadmap</h1>
+          <h1 className="text-2xl font-bold">
+            {viewMode === "dashboard"
+              ? "Active month & week"
+              : "AP Tech Growth Roadmap"}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Each month has its own goal, one-time monthly tasks, recurring
-            weekly common tasks, and the weeks themselves.
+            {viewMode === "dashboard"
+              ? "What's active right now — this month's goal and this week's tasks."
+              : "Each month has its own goal, one-time monthly tasks, recurring weekly common tasks, and the weeks themselves."}
           </p>
         </div>
-        {isAdmin && (
+        {isAdmin && viewMode === "full" && (
           <div className="flex flex-wrap gap-2">
             {months.length === 0 && (
               <Button
@@ -350,28 +439,62 @@ export function GrowthMonthsBoard({
         </p>
       )}
 
-      {months.length === 0 && (
+      {visibleMonths.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            No months yet.
+            {viewMode === "dashboard"
+              ? "No active month yet — add a month on the Full roadmap record tab."
+              : "No months yet."}
           </CardContent>
         </Card>
       )}
 
-      {months.map((month) => (
-        <Card key={month.id}>
+      {visibleMonths.map((month) => {
+        const overdue = isMonthOverdue(month);
+        return (
+        <Card
+          key={month.id}
+          className={
+            overdue
+              ? "border-red-300 bg-red-50/40"
+              : month.completedAt
+                ? "border-emerald-200"
+                : ""
+          }
+        >
           <CardHeader className="pb-2">
             <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-base">
-              <span>
+              <span className="flex flex-wrap items-center gap-2">
                 {month.name}
                 {month.theme && (
-                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  <span className="text-xs font-normal text-muted-foreground">
                     {month.theme}
                   </span>
                 )}
+                {overdue && (
+                  <Badge className="bg-red-100 text-[10px] text-red-700">
+                    Needs attention
+                  </Badge>
+                )}
+                {month.completedAt && (
+                  <Badge className="bg-emerald-100 text-[10px] text-emerald-700">
+                    Completed
+                  </Badge>
+                )}
               </span>
-              <span className="text-xs font-normal text-muted-foreground">
+              <span className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
                 {formatDate(month.startDate)} - {formatDate(month.endDate)}
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-[10px]"
+                    disabled={completingMonthId === month.id}
+                    onClick={() => handleToggleMonthComplete(month)}
+                  >
+                    {month.completedAt ? "Reopen" : "Mark as complete"}
+                  </Button>
+                )}
               </span>
             </CardTitle>
             {month.mainGoal && (
@@ -657,7 +780,8 @@ export function GrowthMonthsBoard({
             </div>
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
 
       {/* Add month dialog */}
       <Dialog open={monthDialogOpen} onOpenChange={setMonthDialogOpen}>

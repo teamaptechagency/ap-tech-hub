@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { getGrowthMilestones, getGrowthMonths } from "@/actions/growth.actions";
-import { GrowthMonthsBoard } from "@/components/growth/growth-months-board";
-import { GrowthMilestones } from "@/components/growth/growth-milestones";
+import { GrowthRoadmapShell } from "@/components/growth/growth-roadmap-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -25,16 +24,11 @@ export default async function GrowthDashboardPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <GrowthMonthsBoard
-        months={months.months}
-        isAdmin={false}
-        currentUserId={session.user.id}
-      />
-      <GrowthMilestones
-        milestones={"error" in milestones ? [] : milestones.milestones}
-        isAdmin={false}
-      />
-    </div>
+    <GrowthRoadmapShell
+      months={months.months}
+      milestones={"error" in milestones ? [] : milestones.milestones}
+      isAdmin={false}
+      currentUserId={session.user.id}
+    />
   );
 }
