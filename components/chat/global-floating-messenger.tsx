@@ -214,6 +214,10 @@ function LandingChatPanel({ chat }: { chat: FloatingConversationRow }) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  // The Pusher channel is keyed by the bare landingChatLead id, matching
+  // what actions/landing.actions.ts broadcasts on — chat.id itself carries
+  // a "landing:"/"fallback:" prefix (see getFloatingConversations).
+  const bareId = chat.id.replace(/^landing:/, "");
 
   useEffect(() => {
     let alive = true;
@@ -232,24 +236,34 @@ function LandingChatPanel({ chat }: { chat: FloatingConversationRow }) {
     };
   }, [chat.id]);
 
+  useEffect(() => {
+    if (chat.id.startsWith("fallback:")) return;
+
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe(`landing-chat-${bareId}`);
+    channel.bind("new-message", (message: LandingChatMessage) => {
+      setMessages((prev) =>
+        prev.some((existing) => existing.id === message.id)
+          ? prev
+          : [...prev, message]
+      );
+    });
+
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(`landing-chat-${bareId}`);
+    };
+  }, [chat.id, bareId]);
+
   const send = async () => {
     const body = text.trim();
     if (!body || sending) return;
 
     setSending(true);
+    // No optimistic local append — the Pusher echo above adds it once the
+    // server confirms, same pattern ChatPanel uses for real conversations.
     const result = await sendLandingChatAdminReply(chat.id, body);
-    if (!result.error) {
-      setMessages((current) => [
-        ...current,
-        {
-          id: `local-${Date.now()}`,
-          body,
-          sender: "ADMIN",
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-      setText("");
-    }
+    if (!result.error) setText("");
     setSending(false);
   };
 

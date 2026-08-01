@@ -29,12 +29,14 @@ import {
 import { toast } from "sonner";
 
 import {
+  getLandingChatMessages,
   getLandingVisitorStats,
   recordLandingVisit,
   sendLandingChatMessage,
   startLandingChat,
   submitLandingContact,
 } from "@/actions/landing.actions";
+import { getPusherClient } from "@/lib/pusher-client";
 import { PartnerApplicationForm } from "@/components/referral/partner-application-form";
 import { BlogImpressionTracker } from "@/components/blog/blog-impression-tracker";
 import {
@@ -1145,6 +1147,15 @@ function LandingModal({
   );
 }
 
+type FloatingChatMessage = {
+  id: string;
+  body: string;
+  sender: string;
+  createdAt: string;
+};
+
+const LANDING_CHAT_STORAGE_KEY = "ap_landing_chat_id";
+
 function FloatingChat({
   languageNote,
 }: {
@@ -1153,8 +1164,59 @@ function FloatingChat({
   const [open, setOpen] = useState(false);
   const [leadId, setLeadId] = useState("");
   const [text, setText] = useState("");
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<FloatingChatMessage[]>([]);
   const [pending, startTransition] = useTransition();
+
+  // leadId used to live only in React state, so a page refresh mid-chat
+  // lost it entirely — the widget fell back to the "Start chat" form,
+  // which looked like the chat had been reset/cleared, and clicking
+  // Start again created a brand new lead instead of continuing the old
+  // one. Persisting it means a refresh reopens the same conversation.
+  useEffect(() => {
+    const saved = window.localStorage.getItem(LANDING_CHAT_STORAGE_KEY);
+    if (saved) setLeadId(saved);
+  }, []);
+
+  useEffect(() => {
+    if (leadId) {
+      window.localStorage.setItem(LANDING_CHAT_STORAGE_KEY, leadId);
+    }
+  }, [leadId]);
+
+  // Live updates for admin replies — previously this widget never fetched
+  // or subscribed to anything after the chat started, so a reply from
+  // admin never appeared here at all (not even after a refresh, since
+  // messages only lived in local state seeded from the visitor's own
+  // sent texts). Fallback-mode chats (no landingChatLead table yet)
+  // aren't real-time — leadId only ever holds a bare id in that path too,
+  // so this just quietly does nothing for them.
+  useEffect(() => {
+    if (!leadId) return;
+    let alive = true;
+
+    getLandingChatMessages(leadId).then((result) => {
+      if (!alive) return;
+      if ("messages" in result && Array.isArray(result.messages)) {
+        setMessages(result.messages);
+      }
+    });
+
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe(`landing-chat-${leadId}`);
+    channel.bind("new-message", (message: FloatingChatMessage) => {
+      setMessages((prev) =>
+        prev.some((existing) => existing.id === message.id)
+          ? prev
+          : [...prev, message]
+      );
+    });
+
+    return () => {
+      alive = false;
+      channel.unbind_all();
+      pusher.unsubscribe(`landing-chat-${leadId}`);
+    };
+  }, [leadId]);
 
   const begin = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -1171,8 +1233,8 @@ function FloatingChat({
         toast.error("Chat storage is not ready yet.");
         return;
       }
-      setLeadId(nextLeadId);
       setMessages([]);
+      setLeadId(nextLeadId);
       setText("");
       toast.success("Chat started. Send your message.");
     });
@@ -1183,12 +1245,14 @@ function FloatingChat({
     if (!leadId || !nextText) return;
 
     startTransition(async () => {
+      // No optimistic local append — the Pusher echo above adds it once
+      // the server confirms, so it also works if the reply came from
+      // another tab/device using the same chat.
       const result = await sendLandingChatMessage(leadId, nextText);
       if (result.error) {
         toast.error(result.error);
         return;
       }
-      setMessages((current) => [...current, nextText]);
       setText("");
     });
   };
@@ -1237,11 +1301,26 @@ function FloatingChat({
             <div className="p-5">
               <div className="mb-4 h-44 space-y-3 overflow-y-auto rounded-2xl bg-[#faf8f5] p-4 text-sm">
                 {messages.length ? (
-                  messages.map((message, index) => (
-                    <div key={`${message}-${index}`} className="ml-auto w-fit max-w-[85%] rounded-xl bg-[#c6613f] px-3 py-2 text-white">
-                      {message}
-                    </div>
-                  ))
+                  messages.map((message) => {
+                    const mine = message.sender !== "ADMIN";
+                    return (
+                      <div
+                        key={message.id}
+                        className={`w-fit max-w-[85%] rounded-xl px-3 py-2 ${
+                          mine
+                            ? "ml-auto bg-[#c6613f] text-white"
+                            : "bg-white text-[#101623] shadow-sm"
+                        }`}
+                      >
+                        {!mine && (
+                          <p className="mb-0.5 text-[10px] font-semibold text-[#6b7280]">
+                            Support
+                          </p>
+                        )}
+                        {message.body}
+                      </div>
+                    );
+                  })
                 ) : (
                   <p className="grid h-full place-items-center text-slate-400">
                     Write your first message.

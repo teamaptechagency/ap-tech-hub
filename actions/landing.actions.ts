@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 
 import { notifyAdmins } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
+import { pusherServer } from "@/lib/pusher-server";
 
 type LeadCapablePrisma = typeof prisma & {
   landingContactMessage?: {
@@ -18,7 +19,12 @@ type LeadCapablePrisma = typeof prisma & {
     ) => Promise<{ id: string; email: string; subject: string } | null>;
   };
   landingChatMessage?: {
-    create: (args: unknown) => Promise<unknown>;
+    create: (args: unknown) => Promise<{
+      id: string;
+      body: string;
+      sender: string;
+      createdAt: Date;
+    }>;
   };
   leadCollection?: {
     findFirst: (args: unknown) => Promise<{ id: string } | null>;
@@ -39,6 +45,27 @@ function clean(value: FormDataEntryValue | null) {
 
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+// Neither the visitor widget nor the admin's floating-messenger panel had
+// any live-update wiring for landing chat — both only ever showed whatever
+// was fetched at open time, so replies only appeared after a manual
+// reopen/refresh. This puts it on the same real-time channel pattern
+// actions/message.actions.ts already uses for real conversations.
+async function triggerLandingChatPusher(
+  leadId: string,
+  message: { id: string; body: string; sender: string; createdAt: Date }
+) {
+  try {
+    await pusherServer.trigger(`landing-chat-${leadId}`, "new-message", {
+      id: message.id,
+      body: message.body,
+      sender: message.sender,
+      createdAt: message.createdAt.toISOString(),
+    });
+  } catch (error) {
+    console.error("Landing chat Pusher event failed:", error);
+  }
 }
 
 function firstHeader(headerList: Headers, keys: string[]) {
@@ -477,7 +504,7 @@ export async function sendLandingChatMessage(
     return { error: "Chat session was not found." };
   }
 
-  await db.landingChatMessage.create({
+  const message = await db.landingChatMessage.create({
     data: {
       leadId: cleanLeadId,
       body: cleanBody,
@@ -490,6 +517,8 @@ export async function sendLandingChatMessage(
     subject: `Live chat: ${lead.subject}`,
     body: cleanBody,
   });
+
+  await triggerLandingChatPusher(cleanLeadId, message);
 
   revalidatePath("/leads");
 
@@ -591,13 +620,15 @@ export async function sendLandingChatAdminReply(leadId: string, body: string) {
     return { error: "Chat storage is not ready yet." };
   }
 
-  await db.landingChatMessage.create({
+  const message = await db.landingChatMessage.create({
     data: {
       leadId: realId,
       body: cleanBody,
       sender: "ADMIN",
     },
   });
+
+  await triggerLandingChatPusher(realId, message);
 
   revalidatePath("/leads");
 

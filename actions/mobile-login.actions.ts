@@ -214,23 +214,39 @@ export async function loginWithMobileApproval(input: {
 // the account's own already-logged-in session.
 // ============================================
 
-async function loadOwnPendingRequest(requestId: string) {
+type LoadOwnPendingRequestResult =
+  | { error: string }
+  | {
+      userId: string;
+      request: NonNullable<
+        Awaited<ReturnType<typeof prisma.mobileLoginRequest.findUnique>>
+      >;
+    };
+
+// Explicit union, and only the userId (not the full session) — an inferred
+// return type here merges into one loosely-optional shape where every
+// branch structurally has an `error` property, which broke `"error" in
+// loaded` narrowing at every call site (every branch "has" error, so the
+// success branch never got excluded — this is what failed the build).
+async function loadOwnPendingRequest(
+  requestId: string
+): Promise<LoadOwnPendingRequestResult> {
   const session = await auth();
-  if (!session?.user) return { error: "Please sign in first" as const };
+  if (!session?.user) return { error: "Please sign in first" };
 
   const request = await prisma.mobileLoginRequest.findUnique({
     where: { id: requestId },
   });
   if (!request || request.userId !== session.user.id) {
-    return { error: "This request was not found" as const };
+    return { error: "This request was not found" };
   }
   if (request.status !== "PENDING" || request.expiresAt < new Date()) {
     return {
-      error: "This sign-in request has expired or was already handled" as const,
+      error: "This sign-in request has expired or was already handled",
     };
   }
 
-  return { session, request };
+  return { userId: session.user.id, request };
 }
 
 type MobileLoginRequestInfoResult =
@@ -251,7 +267,7 @@ export async function getMobileLoginRequestInfo(
 
   const hasPasskey =
     (await prisma.userPasskey.count({
-      where: { userId: loaded.session.user.id },
+      where: { userId: loaded.userId },
     })) > 0;
 
   return {
@@ -290,7 +306,7 @@ export async function startMobileLoginStepUp(
   if ("error" in loaded) return loaded;
 
   const passkeys = await prisma.userPasskey.findMany({
-    where: { userId: loaded.session.user.id },
+    where: { userId: loaded.userId },
     select: { credentialId: true, transports: true },
   });
   if (passkeys.length === 0) {
@@ -313,7 +329,7 @@ export async function startMobileLoginStepUp(
   const handle = await saveChallenge({
     challenge: options.challenge,
     purpose: "STEP_UP",
-    userId: loaded.session.user.id,
+    userId: loaded.userId,
   });
 
   return { success: true, options, handle };
@@ -326,17 +342,17 @@ export async function approveMobileLogin(input: {
 }) {
   const loaded = await loadOwnPendingRequest(input.requestId);
   if ("error" in loaded) return loaded;
-  const { session, request } = loaded;
+  const { userId, request } = loaded;
 
   const record = await consumeChallenge(input.handle, "STEP_UP");
-  if (!record || record.userId !== session.user.id) {
+  if (!record || record.userId !== userId) {
     return { error: "This approval attempt expired. Please try again." };
   }
 
   const passkey = await prisma.userPasskey.findUnique({
     where: { credentialId: input.response.id },
   });
-  if (!passkey || passkey.userId !== session.user.id) {
+  if (!passkey || passkey.userId !== userId) {
     return { error: "This fingerprint is not registered to your account" };
   }
 
