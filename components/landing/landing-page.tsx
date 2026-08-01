@@ -1166,6 +1166,11 @@ function FloatingChat({
   const [text, setText] = useState("");
   const [messages, setMessages] = useState<FloatingChatMessage[]>([]);
   const [pending, startTransition] = useTransition();
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // leadId used to live only in React state, so a page refresh mid-chat
   // lost it entirely — the widget fell back to the "Start chat" form,
@@ -1326,6 +1331,7 @@ function FloatingChat({
                     Write your first message.
                   </p>
                 )}
+                <div ref={bottomRef} />
               </div>
               <div className="flex gap-2">
                 <input
