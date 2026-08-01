@@ -8,6 +8,7 @@ import {
   CLIENT_ROLES,
   PARTNER_ROLES,
   REFERRAL_ROLES,
+  GROWTH_ROLES,
 } from "@/lib/roles";
 
 // Routes anyone can visit without logging in
@@ -147,12 +148,18 @@ export const proxy = auth((req) => {
   if (pathname.startsWith("/r/") && !REFERRAL_ROLES.includes(role)) {
     return NextResponse.redirect(new URL(homeFor(role), req.url));
   }
-  // Admin portal = everything not /e/, /c/, /p/ or /r/
+  // Growth Roadmap is this role's entire portal — never falls through to
+  // the admin catch-all below.
+  if (pathname.startsWith("/g/") && !GROWTH_ROLES.includes(role)) {
+    return NextResponse.redirect(new URL(homeFor(role), req.url));
+  }
+  // Admin portal = everything not /e/, /c/, /p/, /r/ or /g/
   if (
     !pathname.startsWith("/e/") &&
     !pathname.startsWith("/c/") &&
     !pathname.startsWith("/p/") &&
     !pathname.startsWith("/r/") &&
+    !pathname.startsWith("/g/") &&
     !ADMIN_ROLES.includes(role)
   ) {
     return NextResponse.redirect(new URL(homeFor(role), req.url));
