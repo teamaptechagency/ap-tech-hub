@@ -3,9 +3,9 @@ import {
   getGrowthExpenses,
   getGrowthMembers,
   getGrowthMilestones,
-  getGrowthRoadmap,
+  getGrowthMonths,
 } from "@/actions/growth.actions";
-import { GrowthBoard } from "@/components/growth/growth-board";
+import { GrowthMonthsBoard } from "@/components/growth/growth-months-board";
 import { GrowthMilestones } from "@/components/growth/growth-milestones";
 import { GrowthAdminExtras } from "@/components/growth/growth-admin-extras";
 
@@ -14,8 +14,8 @@ export const dynamic = "force-dynamic";
 export default async function GrowthRoadmapAdminPage() {
   const session = await auth();
 
-  const [roadmap, members, expenses, milestones] = await Promise.all([
-    getGrowthRoadmap(),
+  const [months, members, expenses, milestones] = await Promise.all([
+    getGrowthMonths(),
     getGrowthMembers(),
     getGrowthExpenses(),
     getGrowthMilestones(),
@@ -23,29 +23,17 @@ export default async function GrowthRoadmapAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">AP Tech Growth Roadmap</h1>
-        <p className="text-sm text-muted-foreground">
-          Weekly tasks on the left, the monthly big-picture goals on the
-          right.
-        </p>
-      </div>
+      <GrowthMonthsBoard
+        months={"error" in months ? [] : months.months}
+        isAdmin
+        currentUserId={session?.user.id ?? ""}
+        members={members}
+      />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <GrowthBoard
-          weeks={"error" in roadmap ? [] : roadmap.weeks}
-          isAdmin
-          currentUserId={session?.user.id ?? ""}
-          members={members}
-          heading="Weekly Tasks"
-          subheading=""
-        />
-
-        <GrowthMilestones
-          milestones={"error" in milestones ? [] : milestones.milestones}
-          isAdmin
-        />
-      </div>
+      <GrowthMilestones
+        milestones={"error" in milestones ? [] : milestones.milestones}
+        isAdmin
+      />
 
       <GrowthAdminExtras
         members={members}

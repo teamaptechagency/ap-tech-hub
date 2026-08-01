@@ -19,32 +19,67 @@ function revalidateGrowthPaths() {
 }
 
 // ============================================
-// SHARED READ — both the admin management page and
-// the GROWTH_MEMBER portal show the same board.
+// MONTHS — the top-level structure. Each month groups its own one-time
+// "Monthly Tasks", recurring "Weekly Common Task" templates, and the
+// actual Weeks (each week's checklist is seeded from the active
+// templates at week-creation time, see createGrowthWeek above... below).
 // ============================================
 
-type GrowthRoadmapResult =
+type GrowthMonthTask = {
+  id: string;
+  title: string;
+  priority: string;
+  status: string;
+  assignee: { id: string; name: string } | null;
+  completedBy: { id: string; name: string } | null;
+};
+
+type GrowthMonthsResult =
   | { error: string }
   | {
       success: true;
-      weeks: {
+      months: {
         id: string;
-        weekNumber: number;
+        monthNumber: number;
+        name: string;
+        theme: string | null;
+        mainGoal: string | null;
         startDate: string;
         endDate: string;
-        tasks: {
+        monthlyTasks: GrowthMonthTask[];
+        weeklyTemplates: {
           id: string;
           title: string;
           priority: string;
-          status: string;
-          cancelReason: string | null;
-          assignee: { id: string; name: string } | null;
-          completedBy: { id: string; name: string } | null;
+          active: boolean;
+        }[];
+        weeks: {
+          id: string;
+          weekNumber: number;
+          startDate: string;
+          endDate: string;
+          tasks: {
+            id: string;
+            title: string;
+            priority: string;
+            status: string;
+            cancelReason: string | null;
+            assignee: { id: string; name: string } | null;
+            completedBy: { id: string; name: string } | null;
+          }[];
         }[];
       }[];
     };
 
-export async function getGrowthRoadmap(): Promise<GrowthRoadmapResult> {
+type RequireRoadmapAccessResult =
+  | { error: string }
+  | { userId: string; isAdmin: boolean };
+
+// Explicit union — see loadOwnPendingRequest in mobile-login.actions.ts for
+// why: an inferred return type here would let "error" in access match the
+// success branch too, since every branch would structurally carry an
+// (optional) error property.
+async function requireRoadmapAccess(): Promise<RequireRoadmapAccessResult> {
   const session = await auth();
   if (!session?.user) return { error: "Please sign in first" };
   const isAdmin = ADMIN_ROLES.includes(session.user.role);
@@ -52,15 +87,34 @@ export async function getGrowthRoadmap(): Promise<GrowthRoadmapResult> {
   if (!isAdmin && !isGrowthMember) {
     return { error: "You don't have access to the Growth Roadmap" };
   }
+  return { userId: session.user.id, isAdmin };
+}
 
-  const weeks = await prisma.growthWeek.findMany({
-    orderBy: { weekNumber: "asc" },
+export async function getGrowthMonths(): Promise<GrowthMonthsResult> {
+  const access = await requireRoadmapAccess();
+  if ("error" in access) return access;
+
+  const months = await prisma.growthMonth.findMany({
+    orderBy: { monthNumber: "asc" },
     include: {
-      tasks: {
+      monthlyTasks: {
         orderBy: { sortOrder: "asc" },
         include: {
           assignee: { select: { id: true, name: true } },
           completedBy: { select: { id: true, name: true } },
+        },
+      },
+      weeklyTemplates: { orderBy: { sortOrder: "asc" } },
+      weeks: {
+        orderBy: { weekNumber: "asc" },
+        include: {
+          tasks: {
+            orderBy: { sortOrder: "asc" },
+            include: {
+              assignee: { select: { id: true, name: true } },
+              completedBy: { select: { id: true, name: true } },
+            },
+          },
         },
       },
     },
@@ -68,23 +122,223 @@ export async function getGrowthRoadmap(): Promise<GrowthRoadmapResult> {
 
   return {
     success: true,
-    weeks: weeks.map((week) => ({
-      id: week.id,
-      weekNumber: week.weekNumber,
-      startDate: week.startDate.toISOString(),
-      endDate: week.endDate.toISOString(),
-      tasks: week.tasks.map((task) => ({
+    months: months.map((month) => ({
+      id: month.id,
+      monthNumber: month.monthNumber,
+      name: month.name,
+      theme: month.theme,
+      mainGoal: month.mainGoal,
+      startDate: month.startDate.toISOString(),
+      endDate: month.endDate.toISOString(),
+      monthlyTasks: month.monthlyTasks.map((task) => ({
         id: task.id,
         title: task.title,
         priority: task.priority,
         status: task.status,
-        cancelReason: task.cancelReason,
         assignee: task.assignee,
         completedBy: task.completedBy,
+      })),
+      weeklyTemplates: month.weeklyTemplates.map((template) => ({
+        id: template.id,
+        title: template.title,
+        priority: template.priority,
+        active: template.active,
+      })),
+      weeks: month.weeks.map((week) => ({
+        id: week.id,
+        weekNumber: week.weekNumber,
+        startDate: week.startDate.toISOString(),
+        endDate: week.endDate.toISOString(),
+        tasks: week.tasks.map((task) => ({
+          id: task.id,
+          title: task.title,
+          priority: task.priority,
+          status: task.status,
+          cancelReason: task.cancelReason,
+          assignee: task.assignee,
+          completedBy: task.completedBy,
+        })),
       })),
     })),
   };
 }
+
+export async function createGrowthMonth(data: {
+  name: string;
+  theme?: string;
+  mainGoal?: string;
+  startDate: string;
+  endDate: string;
+}): Promise<{ error: string } | { success: true }> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const name = data.name.trim();
+  if (!name) return { error: "Month name is required" };
+  if (!data.startDate || !data.endDate) {
+    return { error: "Start and end date are required" };
+  }
+
+  const count = await prisma.growthMonth.count();
+
+  await prisma.growthMonth.create({
+    data: {
+      monthNumber: count + 1,
+      name,
+      theme: data.theme?.trim() || null,
+      mainGoal: data.mainGoal?.trim() || null,
+      startDate: new Date(`${data.startDate}T00:00:00+06:00`),
+      endDate: new Date(`${data.endDate}T00:00:00+06:00`),
+    },
+  });
+
+  revalidateGrowthPaths();
+  return { success: true };
+}
+
+export async function addGrowthMonthlyTask(data: {
+  monthId: string;
+  title: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  assigneeId?: string;
+}): Promise<{ error: string } | { success: true }> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const title = data.title.trim();
+  if (!title) return { error: "Task title is required" };
+
+  const month = await prisma.growthMonth.findUnique({
+    where: { id: data.monthId },
+  });
+  if (!month) return { error: "Month not found" };
+
+  if (data.assigneeId) {
+    const assignee = await prisma.user.findUnique({
+      where: { id: data.assigneeId },
+      select: { role: true },
+    });
+    if (!assignee || assignee.role !== "GROWTH_MEMBER") {
+      return { error: "Tasks can only be assigned to Growth Roadmap members" };
+    }
+  }
+
+  const count = await prisma.growthMonthlyTask.count({
+    where: { monthId: data.monthId },
+  });
+
+  await prisma.growthMonthlyTask.create({
+    data: {
+      monthId: data.monthId,
+      title,
+      priority: data.priority ?? "MEDIUM",
+      assigneeId: data.assigneeId || null,
+      sortOrder: count,
+    },
+  });
+
+  if (data.assigneeId) {
+    await notify({
+      userId: data.assigneeId,
+      title: "New Growth Roadmap monthly task",
+      body: title,
+      href: "/g/dashboard",
+    }).catch(() => null);
+  }
+
+  revalidateGrowthPaths();
+  return { success: true };
+}
+
+export async function completeGrowthMonthlyTask(
+  taskId: string
+): Promise<{ error: string } | { success: true }> {
+  const session = await auth();
+  if (!session?.user) return { error: "Please sign in first" };
+
+  const task = await prisma.growthMonthlyTask.findUnique({
+    where: { id: taskId },
+  });
+  if (!task) return { error: "Task not found" };
+
+  const isAdmin = ADMIN_ROLES.includes(session.user.role);
+  const isOwnTask = task.assigneeId === session.user.id;
+  if (!isAdmin && !isOwnTask) {
+    return { error: "You can only complete your own tasks" };
+  }
+
+  await prisma.growthMonthlyTask.update({
+    where: { id: taskId },
+    data: {
+      status: "COMPLETED",
+      completedById: session.user.id,
+      completedAt: new Date(),
+    },
+  });
+
+  revalidateGrowthPaths();
+  return { success: true };
+}
+
+export async function deleteGrowthMonthlyTask(
+  taskId: string
+): Promise<{ error: string } | { success: true }> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  await prisma.growthMonthlyTask
+    .delete({ where: { id: taskId } })
+    .catch(() => null);
+  revalidateGrowthPaths();
+  return { success: true };
+}
+
+export async function addGrowthWeeklyTemplate(data: {
+  monthId: string;
+  title: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+}): Promise<{ error: string } | { success: true }> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const title = data.title.trim();
+  if (!title) return { error: "Task title is required" };
+
+  const month = await prisma.growthMonth.findUnique({
+    where: { id: data.monthId },
+  });
+  if (!month) return { error: "Month not found" };
+
+  const count = await prisma.growthWeeklyTemplate.count({
+    where: { monthId: data.monthId },
+  });
+
+  await prisma.growthWeeklyTemplate.create({
+    data: {
+      monthId: data.monthId,
+      title,
+      priority: data.priority ?? "MEDIUM",
+      sortOrder: count,
+    },
+  });
+
+  revalidateGrowthPaths();
+  return { success: true };
+}
+
+export async function deleteGrowthWeeklyTemplate(
+  id: string
+): Promise<{ error: string } | { success: true }> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  await prisma.growthWeeklyTemplate
+    .delete({ where: { id } })
+    .catch(() => null);
+  revalidateGrowthPaths();
+  return { success: true };
+}
+
 
 export async function getGrowthMembers(): Promise<
   { id: string; name: string }[]
@@ -206,6 +460,7 @@ export async function deleteGrowthMilestone(
 // ============================================
 
 export async function createGrowthWeek(data: {
+  monthId: string;
   weekNumber: string;
   startDate: string;
   endDate: string;
@@ -221,19 +476,40 @@ export async function createGrowthWeek(data: {
     return { error: "Start and end date are required" };
   }
 
+  const month = await prisma.growthMonth.findUnique({
+    where: { id: data.monthId },
+  });
+  if (!month) return { error: "Month not found" };
+
   const existing = await prisma.growthWeek.findUnique({
     where: { weekNumber },
   });
   if (existing) return { error: `Week ${weekNumber} already exists` };
 
+  // Recurring weekly tasks: copied in once, at creation, from this month's
+  // active templates — so each week starts with its "common tasks"
+  // checklist already in place, tracked/completed independently per week.
+  const templates = await prisma.growthWeeklyTemplate.findMany({
+    where: { monthId: data.monthId, active: true },
+    orderBy: { sortOrder: "asc" },
+  });
+
   await prisma.growthWeek.create({
     data: {
+      monthId: data.monthId,
       weekNumber,
       // Dhaka-local midnight — new Date("YYYY-MM-DD") parses as UTC
       // midnight, the same fix applied elsewhere in this app (jobs,
       // invoices, blog posts).
       startDate: new Date(`${data.startDate}T00:00:00+06:00`),
       endDate: new Date(`${data.endDate}T00:00:00+06:00`),
+      tasks: {
+        create: templates.map((template, index) => ({
+          title: template.title,
+          priority: template.priority,
+          sortOrder: index,
+        })),
+      },
     },
   });
 

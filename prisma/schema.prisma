@@ -125,6 +125,8 @@ model User {
   assignedGrowthTasks    GrowthTask[]               @relation("GrowthTaskAssignee")
   completedGrowthTasks   GrowthTask[]               @relation("GrowthTaskCompleter")
   cancelledGrowthTasks   GrowthTask[]               @relation("GrowthTaskCanceller")
+  assignedGrowthMonthlyTasks  GrowthMonthlyTask[]    @relation("GrowthMonthlyTaskAssignee")
+  completedGrowthMonthlyTasks GrowthMonthlyTask[]    @relation("GrowthMonthlyTaskCompleter")
   assignedMilestones     Milestone[]                @relation("MilestoneAssignee")
   sentMessages           Message[]
   displayedMessages      Message[]                  @relation("MessageDisplaySender")
@@ -572,8 +574,62 @@ model WeeklyTask {
 // though the shape mirrors them, since this isn't billable client work.
 // ============================================
 
+// A calendar month in the roadmap. Groups its own weeks, plus two
+// separate task lists — one-time monthly tasks vs recurring weekly
+// tasks (the templates get copied into each week created under this
+// month, see actions/growth.actions.ts createGrowthWeek).
+model GrowthMonth {
+  id        String   @id @default(cuid())
+  // Sequential across the whole roadmap (1, 2, 3...), not calendar month —
+  // matches how GrowthWeek.weekNumber already works.
+  monthNumber Int    @unique
+  name      String
+  theme     String?
+  mainGoal  String?
+  startDate DateTime
+  endDate   DateTime
+
+  monthlyTasks    GrowthMonthlyTask[]
+  weeklyTemplates GrowthWeeklyTemplate[]
+  weeks           GrowthWeek[]
+  createdAt       DateTime @default(now())
+}
+
+// One-time task for the month — not tied to any particular week.
+model GrowthMonthlyTask {
+  id            String      @id @default(cuid())
+  monthId       String
+  month         GrowthMonth @relation(fields: [monthId], references: [id], onDelete: Cascade)
+  title         String
+  priority      Priority    @default(MEDIUM)
+  status        TaskStatus  @default(PENDING)
+  sortOrder     Int         @default(0)
+  assigneeId    String?
+  assignee      User?       @relation("GrowthMonthlyTaskAssignee", fields: [assigneeId], references: [id])
+  completedById String?
+  completedBy   User?       @relation("GrowthMonthlyTaskCompleter", fields: [completedById], references: [id])
+  completedAt   DateTime?
+  createdAt     DateTime    @default(now())
+}
+
+// A recurring task definition for the month — copied into every week
+// created under this month (at week-creation time) as an ordinary
+// GrowthTask, so it's tracked and completed the same way per week.
+model GrowthWeeklyTemplate {
+  id        String      @id @default(cuid())
+  monthId   String
+  month     GrowthMonth @relation(fields: [monthId], references: [id], onDelete: Cascade)
+  title     String
+  priority  Priority    @default(MEDIUM)
+  active    Boolean     @default(true)
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now())
+}
+
 model GrowthWeek {
   id         String       @id @default(cuid())
+  monthId    String?
+  month      GrowthMonth? @relation(fields: [monthId], references: [id], onDelete: Cascade)
   weekNumber Int          @unique
   startDate  DateTime
   endDate    DateTime
