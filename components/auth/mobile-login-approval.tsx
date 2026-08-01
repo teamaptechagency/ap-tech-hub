@@ -71,7 +71,7 @@ export function MobileLoginApproval({ requestId }: { requestId: string }) {
     setError("");
     const result = await denyMobileLogin(requestId);
     setBusy(false);
-    if (result.error) return setError(result.error);
+    if ("error" in result) return setError(result.error);
     setOutcome("denied");
   }
 
@@ -97,7 +97,7 @@ export function MobileLoginApproval({ requestId }: { requestId: string }) {
         response: assertion,
       });
 
-      if (result.error) {
+      if ("error" in result) {
         setError(result.error);
         setBusy(false);
         return;

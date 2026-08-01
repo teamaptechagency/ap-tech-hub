@@ -141,12 +141,16 @@ export async function getMobileLoginStatus(
  * Exchanges the approval token the poll above returned for a real session,
  * on the browser that originally asked for it. Mirrors loginWithPasskey.
  */
+type LoginWithMobileApprovalResult =
+  | { error: string; contactAdmin?: boolean }
+  | { redirectTo: string; deviceToken: string };
+
 export async function loginWithMobileApproval(input: {
   email: string;
   token: string;
   deviceToken?: string;
   next?: string;
-}) {
+}): Promise<LoginWithMobileApprovalResult> {
   const email = input.email.trim().toLowerCase();
   const requestHeaders = await headers();
   const ipAddress = getClientIpFromHeaders(requestHeaders);
@@ -279,7 +283,9 @@ export async function getMobileLoginRequestInfo(
   };
 }
 
-export async function denyMobileLogin(requestId: string) {
+export async function denyMobileLogin(
+  requestId: string
+): Promise<{ error: string } | { success: true }> {
   const loaded = await loadOwnPendingRequest(requestId);
   if ("error" in loaded) return loaded;
 
@@ -339,7 +345,7 @@ export async function approveMobileLogin(input: {
   requestId: string;
   handle: string;
   response: AuthenticationResponseJSON;
-}) {
+}): Promise<{ error: string } | { success: true }> {
   const loaded = await loadOwnPendingRequest(input.requestId);
   if ("error" in loaded) return loaded;
   const { userId, request } = loaded;
