@@ -601,6 +601,20 @@ model GrowthTask {
   createdAt     DateTime   @default(now())
 }
 
+// The high-level "Monthly roadmap" — big goals, one tier up from the
+// granular Weekly tasks above. Admin-managed only (no per-goal assignee),
+// shown read-only to GROWTH_MEMBER accounts.
+model GrowthMilestone {
+  id          String          @id @default(cuid())
+  title       String
+  description String?
+  deadline    DateTime?
+  status      MilestoneStatus @default(PENDING)
+  sortOrder   Int             @default(0)
+  completedAt DateTime?
+  createdAt   DateTime        @default(now())
+}
+
 model CommonTask {
   id        String   @id @default(cuid())
   title     String

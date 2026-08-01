@@ -68,11 +68,15 @@ export function GrowthBoard({
   isAdmin,
   currentUserId,
   members = [],
+  heading = "AP Tech Growth Roadmap",
+  subheading = "Weekly initiatives, tracked like a job's Weeks & Tasks board.",
 }: {
   weeks: Week[];
   isAdmin: boolean;
   currentUserId: string;
   members?: { id: string; name: string }[];
+  heading?: string;
+  subheading?: string;
 }) {
   const router = useRouter();
   const [busyTaskId, setBusyTaskId] = useState<string | null>(null);
@@ -167,10 +171,10 @@ export function GrowthBoard({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">AP Tech Growth Roadmap</h1>
-          <p className="text-sm text-muted-foreground">
-            Weekly initiatives, tracked like a job's Weeks &amp; Tasks board.
-          </p>
+          <h2 className="text-lg font-bold">{heading}</h2>
+          {subheading && (
+            <p className="text-sm text-muted-foreground">{subheading}</p>
+          )}
         </div>
         {isAdmin && (
           <Button type="button" onClick={() => setWeekDialogOpen(true)}>
