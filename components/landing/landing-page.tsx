@@ -89,6 +89,9 @@ const categoryEmojiMap: Record<string, string> = {
 /** Testimonials per page on the About wall — a 3 x 3 grid on desktop. */
 const REVIEWS_PER_PAGE = 9;
 
+/** Projects per page on the portfolio — the same 3 x 3 grid. */
+const PROJECTS_PER_PAGE = 9;
+
 function ratingStars(value: number | string | null | undefined) {
   const numeric = Number(value ?? 0);
   const rounded = Number.isFinite(numeric) ? numeric : 0;
@@ -576,107 +579,6 @@ function SectionLabel({
         </h2>
       </div>
       {action}
-    </div>
-  );
-}
-
-function CardRail({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [activePage, setActivePage] = useState(0);
-  const [pageCount, setPageCount] = useState(1);
-
-  const updateProgress = () => {
-    const node = ref.current;
-    if (!node) return;
-
-    const maxScroll = Math.max(node.scrollWidth - node.clientWidth, 1);
-    const nextPageCount = Math.max(1, Math.ceil(node.scrollWidth / node.clientWidth));
-    const nextPage = Math.min(
-      nextPageCount - 1,
-      Math.round((node.scrollLeft / maxScroll) * (nextPageCount - 1))
-    );
-
-    setPageCount(nextPageCount);
-    setActivePage(nextPage);
-  };
-
-  const move = (direction: number) => {
-    const node = ref.current;
-    if (!node) return;
-    node.scrollBy({
-      left: direction * Math.min(node.clientWidth, 780),
-      behavior: "smooth",
-    });
-  };
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-
-    updateProgress();
-    node.addEventListener("scroll", updateProgress, { passive: true });
-    window.addEventListener("resize", updateProgress);
-
-    return () => {
-      node.removeEventListener("scroll", updateProgress);
-      window.removeEventListener("resize", updateProgress);
-    };
-  });
-
-  return (
-    <div className="relative min-w-0 w-full">
-      <button
-        type="button"
-        onClick={() => move(-1)}
-        className="absolute left-1 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e8e3dc] bg-white text-[#101623] shadow-lg transition hover:border-[#c6613f] hover:text-[#c6613f] sm:-left-5"
-        aria-label="Previous"
-      >
-        <ChevronLeft size={20} />
-      </button>
-      <div
-        ref={ref}
-        className={`flex w-full min-w-0 snap-x gap-5 overflow-x-auto overscroll-x-contain scroll-smooth pb-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}
-      >
-        {children}
-      </div>
-      <button
-        type="button"
-        onClick={() => move(1)}
-        className="absolute right-1 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e8e3dc] bg-white text-[#101623] shadow-lg transition hover:border-[#c6613f] hover:text-[#c6613f] sm:-right-5"
-        aria-label="Next"
-      >
-        <ChevronRight size={20} />
-      </button>
-      <div className="mx-auto flex w-fit gap-2">
-        {Array.from({ length: pageCount }).map((_, index) => (
-          <button
-            key={index}
-            type="button"
-            onClick={() => {
-              const node = ref.current;
-              if (!node) return;
-              node.scrollTo({
-                left:
-                  pageCount <= 1
-                    ? 0
-                    : (index / (pageCount - 1)) *
-                      (node.scrollWidth - node.clientWidth),
-                behavior: "smooth",
-              });
-            }}
-            className={`h-2 rounded-full transition-all ${
-              index === activePage ? "w-6 bg-[#c6613f]" : "w-2 bg-[#e8e3dc]"
-            }`}
-            aria-label={`Go to slide group ${index + 1}`}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -1870,6 +1772,18 @@ export function LandingPage({
     [data.marketplace?.profiles]
   );
 
+  // Three rows of three, so a growing portfolio stays one screen deep.
+  const [projectPage, setProjectPage] = useState(1);
+  const projectPageCount = Math.max(
+    1,
+    Math.ceil(visibleProjects.length / PROJECTS_PER_PAGE)
+  );
+  const currentProjectPage = Math.min(projectPage, projectPageCount);
+  const pagedProjects = visibleProjects.slice(
+    (currentProjectPage - 1) * PROJECTS_PER_PAGE,
+    currentProjectPage * PROJECTS_PER_PAGE
+  );
+
   // Three rows of three, so the wall of testimonials stays one screen deep
   // however many reviews are collected.
   const [reviewPage, setReviewPage] = useState(1);
@@ -2572,22 +2486,29 @@ export function LandingPage({
       <section id="portfolio" className="scroll-mt-24 border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <SectionLabel eyebrow="Our Work" title="Recent Projects" />
-          <CardRail>
-            {visibleProjects.map((project, index) => (
+
+          {/* A grid rather than a side-scrolling rail: with the whole portfolio
+              in view a visitor can judge the range of work at a glance, instead
+              of discovering it two cards at a time behind an arrow. */}
+          <div
+            id="portfolio-grid"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {pagedProjects.map((project, index) => (
               <button
                 key={project.id}
                 type="button"
                 onClick={() => setModal({ type: "project", item: project })}
-                className={`flex ${project.review ? "h-[288px]" : "h-[224px]"} w-[min(82vw,242px)] shrink-0 snap-start flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)] sm:w-[44%] lg:w-[242px]`}
+                className="flex h-full flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
               >
                 {project.thumbnailUrl || project.imageUrl ? (
                   <img
                     src={project.thumbnailUrl || project.imageUrl || ""}
                     alt={project.title}
-                    className="h-[130px] w-full object-cover"
+                    className="h-[170px] w-full object-cover"
                   />
                 ) : (
-                  <div className="grid h-[130px] place-items-center bg-[linear-gradient(135deg,#1b2334,#3d4c6b)] text-4xl">
+                  <div className="grid h-[170px] place-items-center bg-[linear-gradient(135deg,#1b2334,#3d4c6b)] text-4xl">
                     {["📊", "🛍️", "✈️", "🎓", "🏥", "🏠"][index % 6]}
                   </div>
                 )}
@@ -2609,7 +2530,41 @@ export function LandingPage({
                 </div>
               </button>
             ))}
-          </CardRail>
+          </div>
+
+          {projectPageCount > 1 && (
+            <nav
+              aria-label="Project pages"
+              className="mt-8 flex flex-wrap items-center justify-center gap-2"
+            >
+              {Array.from(
+                { length: projectPageCount },
+                (_, index) => index + 1
+              ).map((pageNumber) => {
+                const isCurrent = pageNumber === currentProjectPage;
+                return (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    aria-current={isCurrent ? "page" : undefined}
+                    onClick={() => {
+                      setProjectPage(pageNumber);
+                      document
+                        .getElementById("portfolio-grid")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className={`grid h-9 min-w-9 place-items-center rounded-[10px] border px-3 text-sm font-black transition ${
+                      isCurrent
+                        ? "border-[#101623] bg-[#101623] text-white"
+                        : "border-[#e8e3dc] bg-white text-[#101623] hover:border-[#101623]"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
         </div>
       </section>
       )}
