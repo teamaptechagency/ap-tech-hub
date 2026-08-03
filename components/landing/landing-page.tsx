@@ -1585,6 +1585,44 @@ function SideAds({
   );
 }
 
+/**
+ * The ad's call to action on its own.
+ *
+ * AdButton makes the whole card one link, which suits a small side or top
+ * slot. In the popup it left the visible button decorative and the entire
+ * dialog clickable, so a stray click anywhere navigated the visitor away.
+ */
+function AdCta({ ad, className }: { ad: LandingAdData; className?: string }) {
+  const goToSection = useSectionNav();
+  // An ad with a destination but no label still needs to be clickable.
+  const label =
+    ad.buttonLabel?.trim() || (ad.buttonUrl?.trim() ? "Learn more" : "");
+  if (!label) return null;
+
+  if (ad.buttonUrl?.startsWith("#")) {
+    return (
+      <button
+        type="button"
+        onClick={() => goToSection(ad.buttonUrl || "#contact")}
+        className={className}
+      >
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <a
+      href={ad.buttonUrl || "#contact"}
+      target={ad.buttonUrl?.startsWith("http") ? "_blank" : undefined}
+      rel="noreferrer"
+      className={className}
+    >
+      {label}
+    </a>
+  );
+}
+
 function PopupAd({ ad }: { ad: LandingAdData }) {
   const [open, setOpen] = useState(false);
 
@@ -1599,26 +1637,56 @@ function PopupAd({ ad }: { ad: LandingAdData }) {
     return () => window.clearTimeout(timer);
   }, [ad]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   if (!open || !isVisibleAd(ad)) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
       onClick={() => setOpen(false)}
     >
+      {/* One card, not a card inside a card: the close button sits over the
+          corner instead of taking a row of its own, and the image runs to the
+          edges. */}
       <div
-        className="w-full max-w-md rounded-3xl bg-white p-5 text-[#101623] shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label={ad.title?.trim() || "Offer"}
+        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white text-left text-[#101623] shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mb-3 flex justify-end">
-          <button type="button" onClick={() => setOpen(false)}>
-            <X size={18} />
-          </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          aria-label="Close"
+          className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-[#6b7385] backdrop-blur transition hover:bg-[#f1ede8] hover:text-[#101623]"
+        >
+          <X size={16} />
+        </button>
+
+        {ad.imageUrl && (
+          <img src={ad.imageUrl} alt="" className="h-44 w-full object-cover" />
+        )}
+
+        <div className="p-6">
+          {/* Clear of the close button when there is no image above it. */}
+          <p className="pr-6 text-xl font-black leading-snug">{ad.title}</p>
+          {ad.body && (
+            <p className="mt-2.5 text-sm leading-6 text-[#5b6376]">{ad.body}</p>
+          )}
+          <AdCta
+            ad={ad}
+            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-[#c6613f] px-5 py-3 text-sm font-black text-white transition hover:bg-[#ad5233]"
+          />
         </div>
-        <AdButton
-          ad={ad}
-          className="block rounded-2xl border border-[#e8e3dc] p-4 text-left"
-        />
       </div>
     </div>
   );
