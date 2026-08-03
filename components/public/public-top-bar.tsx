@@ -112,19 +112,17 @@ export function formatCountdown(value: string | null | undefined, now: Date) {
   return `${minutes}m ${pad(seconds)}s`;
 }
 
-export function getDefaultCountdownEnd(key: string) {
-  const fallbackMs = (10 * 24 + 2) * 60 * 60 * 1000;
-  const existing = window.localStorage.getItem(key);
-  if (existing) {
-    const existingDate = new Date(existing);
-    if (!Number.isNaN(existingDate.getTime()) && existingDate.getTime() > Date.now()) {
-      return existing;
-    }
-  }
-
-  const next = new Date(Date.now() + fallbackMs).toISOString();
-  window.localStorage.setItem(key, next);
-  return next;
+/**
+ * There is no invented deadline any more.
+ *
+ * This used to mint a fresh "10 days 2 hours" per visitor and keep it in their
+ * own browser, so every person saw a personal deadline for an offer that was
+ * not ending. Buyers recognise that, and it costs more trust than the urgency
+ * was ever worth. A countdown now shows only when a real end date is set in
+ * the offer bar settings.
+ */
+export function getDefaultCountdownEnd(_key: string): string | null {
+  return null;
 }
 
 function StatPill({

@@ -2064,11 +2064,15 @@ export function LandingPage({
         </div>
         <div className="relative z-10 border-t border-white/10 bg-white/[.04]">
           <div className="mx-auto grid max-w-[1140px] grid-cols-2 px-4 py-6 md:grid-cols-4">
+            {/* Figures a visitor can go and check. The four that were here
+                before — 300+ projects, 120+ clients, 25+ team members, 98%
+                satisfaction — had no source, and the team page listed eight
+                people, so anyone who clicked through caught the site out. */}
             {[
-              ["300+", "Projects Completed"],
-              ["120+", "Happy Clients"],
-              ["25+", "Team Members"],
-              ["98%", "Client Satisfaction"],
+              ["440+", "Jobs delivered"],
+              ["73", "Marketplace reviews"],
+              ["4.9", "Average rating"],
+              ["8", "Specialists"],
             ].map(([value, title], index) => (
               <div
                 key={title}
