@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { createInvoiceWithNumber } from "@/lib/invoice-number";
 import { NextResponse } from "next/server";
 
 // ============================================
@@ -42,43 +43,56 @@ export async function GET(req: Request) {
   });
 
   let created = 0;
+  let skipped = 0;
+  // One job failing must not cost every other job its invoice, and the run
+  // still has to reach the overdue sweep below — so failures are collected
+  // rather than thrown.
+  const failed: { jobId: string; title: string; error: string }[] = [];
 
   for (const job of jobs) {
-    // @@unique([jobId, periodStart]) guards duplicates
-    const exists = await prisma.invoice.findFirst({
-      where: { jobId: job.id, periodStart },
-    });
-    if (exists) continue;
+    try {
+      // @@unique([jobId, periodStart]) guards duplicates
+      const exists = await prisma.invoice.findFirst({
+        where: { jobId: job.id, periodStart },
+      });
+      if (exists) {
+        skipped++;
+        continue;
+      }
 
-    const year = today.getFullYear();
-    const count = await prisma.invoice.count({
-      where: { number: { startsWith: `INV-${year}-` } },
-    });
-    const number = `INV-${year}-${String(count + 1).padStart(4, "0")}`;
+      const dueDate = new Date(today);
+      dueDate.setDate(dueDate.getDate() + 7);
 
-    const dueDate = new Date(today);
-    dueDate.setDate(dueDate.getDate() + 7);
-
-    await prisma.invoice.create({
-      data: {
-        number,
-        type: "AUTO",
-        title: `${job.title} — ${today.toLocaleDateString("en-GB", {
-          month: "long",
-          year: "numeric",
-        })}`,
+      await createInvoiceWithNumber((number) =>
+        prisma.invoice.create({
+          data: {
+            number,
+            type: "AUTO",
+            title: `${job.title} — ${today.toLocaleDateString("en-GB", {
+              month: "long",
+              year: "numeric",
+            })}`,
+            jobId: job.id,
+            clientId: job.clientId!,
+            amount: job.clientValue!,
+            currency: job.clientCurrency,
+            vatPercent: job.vatPercent,
+            status: "DUE",
+            periodStart,
+            periodEnd,
+            dueDate,
+          },
+        })
+      );
+      created++;
+    } catch (error) {
+      console.error(`Monthly invoice failed for job ${job.id}:`, error);
+      failed.push({
         jobId: job.id,
-        clientId: job.clientId!,
-        amount: job.clientValue!,
-        currency: job.clientCurrency,
-        vatPercent: job.vatPercent,
-        status: "DUE",
-        periodStart,
-        periodEnd,
-        dueDate,
-      },
-    });
-    created++;
+        title: job.title,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   // Flag overdue
@@ -94,13 +108,23 @@ export async function GET(req: Request) {
     data: {
       action: "CRON_INVOICES",
       entity: "System",
-      meta: `${created} created, ${overdue.count} marked overdue`,
+      meta:
+        `day ${day} · ${jobs.length} due, ${created} created, ` +
+        `${skipped} already existed, ${failed.length} failed, ` +
+        `${overdue.count} marked overdue` +
+        (failed.length
+          ? ` · ${failed.map((f) => `${f.title}: ${f.error}`).join(" | ")}`
+          : ""),
     },
   });
 
   return NextResponse.json({
-    ok: true,
+    ok: failed.length === 0,
+    day,
+    jobsDueToday: jobs.length,
     created,
+    skipped,
+    failed,
     markedOverdue: overdue.count,
   });
 }

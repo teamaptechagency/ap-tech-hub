@@ -95,20 +95,31 @@ export function CustomInvoiceDialog({
     setError("");
     setBusy(true);
 
-    const result = await createCustomInvoice({
-      clientId: clientId ?? "",
-      jobId: jobId ?? undefined,
-      title,
-      items,
-      currency: (currency ?? "USD") as "USD" | "EUR" | "GBP" | "BDT",
-      vatPercent: vatPercent || undefined,
-      dueDate,
-      deductFromBalance: deduct,
-      payoneerInvoiceUrl: payoneerInvoiceUrl || undefined,
-      payoneerInvoiceButtonLabel:
-        payoneerInvoiceButtonLabel || undefined,
-      payoneerInvoiceNote: payoneerInvoiceNote || undefined,
-    });
+    // Without the catch, an unexpected server error rejects here, the button
+    // is left disabled forever and nothing tells the admin why.
+    let result;
+    try {
+      result = await createCustomInvoice({
+        clientId: clientId ?? "",
+        jobId: jobId ?? undefined,
+        title,
+        items,
+        currency: (currency ?? "USD") as "USD" | "EUR" | "GBP" | "BDT",
+        vatPercent: vatPercent || undefined,
+        dueDate,
+        deductFromBalance: deduct,
+        payoneerInvoiceUrl: payoneerInvoiceUrl || undefined,
+        payoneerInvoiceButtonLabel:
+          payoneerInvoiceButtonLabel || undefined,
+        payoneerInvoiceNote: payoneerInvoiceNote || undefined,
+      });
+    } catch (err) {
+      console.error("Invoice creation failed:", err);
+      setBusy(false);
+      return setError(
+        "Couldn't create the invoice. Please try again, or contact support if it keeps failing."
+      );
+    }
 
     setBusy(false);
     if (result.error) return setError(result.error);
