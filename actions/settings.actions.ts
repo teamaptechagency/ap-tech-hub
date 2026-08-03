@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { uniqueReferralCode } from "@/lib/referral";
 import { ADMIN_ROLES } from "@/lib/roles";
 import { getLandingPageData } from "@/lib/landing-data";
+import { marketplaceReviews } from "@/lib/marketplace-reviews";
 import { revalidatePath } from "next/cache";
 
 async function checkAdmin() {
@@ -735,6 +736,43 @@ export async function removeUnnecessaryLandingServices(): Promise<
   if ("error" in result) return result;
 
   return { success: true, removedServices, removedHero };
+}
+
+// ============================================
+// REVIEW IMPORT — replaces whatever review list is live with the reviews
+// clients actually left on the marketplaces.
+//
+// Editing defaultLandingData is not enough on its own: once the content
+// manager has been saved even once, the saved blob wins on read and the
+// defaults are never consulted again. This writes through the same
+// updateLandingContent() path the Save button uses, so it lands on what is
+// actually live.
+// ============================================
+export async function importMarketplaceReviews(): Promise<
+  { error: string } | { success: true; imported: number; replaced: number }
+> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const data = await getLandingPageData();
+
+  // Anything the admin wrote themselves is kept — only the marketplace set is
+  // refreshed, matched on id, so running this twice does not duplicate them.
+  const importedIds = new Set(marketplaceReviews.map((review) => review.id));
+  const ownReviews = data.reviews.filter(
+    (review) => !importedIds.has(review.id)
+  );
+
+  const replaced = data.reviews.length - ownReviews.length;
+  const updated = {
+    ...data,
+    reviews: [...marketplaceReviews, ...ownReviews],
+  };
+
+  const result = await updateLandingContent(JSON.stringify(updated));
+  if ("error" in result) return result;
+
+  return { success: true, imported: marketplaceReviews.length, replaced };
 }
 
 // ============================================
