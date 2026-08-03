@@ -86,6 +86,28 @@ export type LandingReviewData = {
   hidden?: boolean | null;
 };
 
+/**
+ * A marketplace profile shown as third-party proof.
+ *
+ * Deliberately a credibility badge and not a buying route: a visitor who
+ * reached this site is a lead the agency generated itself, and sending them
+ * off to Fiverr or Upwork to hire would hand the platform a commission on it
+ * and hand the platform the client relationship with it.
+ */
+export type LandingMarketplaceProfileData = {
+  id: string;
+  platform: string;
+  /** What the profile is called, e.g. the seller handle. */
+  label: string;
+  profileUrl: string;
+  /** Platform-awarded standing, e.g. "Top Rated". Blank hides it. */
+  badge: string;
+  /** Kept as text so an unset rating stays blank instead of showing 0. */
+  rating: string;
+  reviewCount: string;
+  hidden?: boolean | null;
+};
+
 export type LandingPageData = {
   topBar: {
     enabled: boolean;
@@ -130,6 +152,12 @@ export type LandingPageData = {
   contact: {
     languageNoteEnabled: boolean;
     languageNote: string;
+  };
+  marketplace: {
+    enabled: boolean;
+    heading: string;
+    note: string;
+    profiles: LandingMarketplaceProfileData[];
   };
   footer: {
     copyright: string;
@@ -1063,6 +1091,43 @@ export const defaultLandingData: LandingPageData = {
     languageNote:
       "Comfortable in your own language? Feel free to write to us in Bengali, Spanish, French, German, Portuguese or any language you prefer — we'll understand and reply just as easily. No need to translate into English first.",
   },
+  marketplace: {
+    // Ratings and counts are left blank on purpose: they change, and an
+    // invented number is worse than none. Fill them in from the live profiles.
+    enabled: true,
+    heading: "Also verified on",
+    note: "Independent ratings from the marketplaces we have delivered on. Work with us directly here — same team, no platform fee.",
+    profiles: [
+      {
+        id: "marketplace-upwork",
+        platform: "Upwork",
+        label: "AP Tech Agency",
+        profileUrl:
+          "https://www.upwork.com/freelancers/~01930494872738921b",
+        badge: "",
+        rating: "",
+        reviewCount: "",
+      },
+      {
+        id: "marketplace-fiverr-wp-nahida",
+        platform: "Fiverr",
+        label: "wp_nahida",
+        profileUrl: "https://www.fiverr.com/wp_nahida",
+        badge: "",
+        rating: "",
+        reviewCount: "",
+      },
+      {
+        id: "marketplace-fiverr-envatoelem",
+        platform: "Fiverr",
+        label: "envatoelem",
+        profileUrl: "https://www.fiverr.com/envatoelem",
+        badge: "",
+        rating: "",
+        reviewCount: "",
+      },
+    ],
+  },
   footer: {
     thanksText: "Thanks!",
     copyright: "© 2026 AP Tech Agency. All rights reserved.",
@@ -1279,6 +1344,14 @@ function mergeLandingContent(
     contact: {
       ...defaultLandingData.contact,
       ...(saved.contact ?? {}),
+    },
+    marketplace: {
+      ...defaultLandingData.marketplace,
+      ...(saved.marketplace ?? {}),
+      profiles: savedOrDefault(
+        saved.marketplace?.profiles,
+        defaultLandingData.marketplace.profiles
+      ),
     },
     footer: mergeFooter(saved.footer),
   };
@@ -1533,6 +1606,9 @@ export async function getLandingPageData(): Promise<LandingPageData> {
       seo,
       about,
       contact,
+      // The relational CMS tables have no marketplace equivalent, so this
+      // branch carries the seeded profiles until the admin saves their own.
+      marketplace: defaultLandingData.marketplace,
       footer,
     };
   } catch (error) {

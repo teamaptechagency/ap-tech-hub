@@ -13,6 +13,7 @@ import type {
   LandingHeroSlideData,
   LandingPageData,
   LandingProjectData,
+  LandingMarketplaceProfileData,
   LandingReviewData,
   LandingServiceData,
   LandingTeamMemberData,
@@ -27,6 +28,7 @@ type SectionKey =
   | "projects"
   | "team"
   | "reviews"
+  | "marketplace"
   | "seo"
   | "about"
   | "contact"
@@ -41,6 +43,7 @@ const sections: { key: SectionKey; label: string }[] = [
   { key: "projects", label: "Projects" },
   { key: "team", label: "Team" },
   { key: "reviews", label: "Reviews" },
+  { key: "marketplace", label: "Marketplace proof" },
   { key: "seo", label: "SEO / Google" },
   { key: "about", label: "About" },
   { key: "contact", label: "Contact / Language" },
@@ -372,6 +375,28 @@ export function LandingContentManager({
       reviews: current.reviews.map((review, itemIndex) =>
         itemIndex === index ? { ...review, ...patch } : review
       ),
+    }));
+  }
+
+  function updateMarketplace(patch: Partial<LandingPageData["marketplace"]>) {
+    setData((current) => ({
+      ...current,
+      marketplace: { ...current.marketplace, ...patch },
+    }));
+  }
+
+  function updateMarketplaceProfile(
+    index: number,
+    patch: Partial<LandingMarketplaceProfileData>
+  ) {
+    setData((current) => ({
+      ...current,
+      marketplace: {
+        ...current.marketplace,
+        profiles: current.marketplace.profiles.map((profile, itemIndex) =>
+          itemIndex === index ? { ...profile, ...patch } : profile
+        ),
+      },
     }));
   }
 
@@ -887,6 +912,93 @@ export function LandingContentManager({
               <Field label="Details" value={review.details} textarea onChange={(value) => updateReview(index, { details: value })} />
               <ToggleField label="Hide from public portal" checked={review.hidden} onChange={(value) => updateReview(index, { hidden: value })} />
               <Hint>Client reviews should stay hidden until admin verifies and saves them here.</Hint>
+            </Panel>
+          ))}
+        </EditorList>
+      )}
+
+      {active === "marketplace" && (
+        <EditorList
+          title="Marketplace proof"
+          onAdd={() =>
+            setData((current) => ({
+              ...current,
+              marketplace: {
+                ...current.marketplace,
+                profiles: [
+                  ...current.marketplace.profiles,
+                  {
+                    id: newId("marketplace"),
+                    platform: "Fiverr",
+                    label: "",
+                    profileUrl: "",
+                    badge: "",
+                    rating: "",
+                    reviewCount: "",
+                  },
+                ],
+              },
+            }))
+          }
+        >
+          <Panel title="Section">
+            <ToggleField
+              label="Show this section on the public site"
+              checked={data.marketplace.enabled}
+              onChange={(value) => updateMarketplace({ enabled: value })}
+            />
+            <Field
+              label="Heading"
+              value={data.marketplace.heading}
+              onChange={(value) => updateMarketplace({ heading: value })}
+            />
+            <Field
+              label="Note under the badges"
+              value={data.marketplace.note}
+              textarea
+              onChange={(value) => updateMarketplace({ note: value })}
+            />
+            <Hint>
+              These are trust badges, not a hire-us button. A visitor already on
+              this site is your own lead — sending them to Fiverr or Upwork to
+              buy hands that platform a commission on a client you found, and
+              the client relationship with it. Show the rating, keep the
+              &ldquo;Start a project&rdquo; button pointing here.
+            </Hint>
+          </Panel>
+
+          {data.marketplace.profiles.map((profile, index) => (
+            <Panel
+              key={profile.id}
+              title={
+                [profile.platform, profile.label].filter(Boolean).join(" — ") ||
+                `Profile ${index + 1}`
+              }
+              onDelete={() =>
+                setData((current) => ({
+                  ...current,
+                  marketplace: {
+                    ...current.marketplace,
+                    profiles: current.marketplace.profiles.filter(
+                      (_, i) => i !== index
+                    ),
+                  },
+                }))
+              }
+            >
+              <Field label="Platform" value={profile.platform} onChange={(value) => updateMarketplaceProfile(index, { platform: value })} />
+              <Field label="Profile name / handle" value={profile.label} onChange={(value) => updateMarketplaceProfile(index, { label: value })} />
+              <Field label="Profile URL" value={profile.profileUrl} onChange={(value) => updateMarketplaceProfile(index, { profileUrl: value })} />
+              <Field label="Rating" value={profile.rating} onChange={(value) => updateMarketplaceProfile(index, { rating: value })} />
+              <Field label="Reviews / jobs count" value={profile.reviewCount} onChange={(value) => updateMarketplaceProfile(index, { reviewCount: value })} />
+              <Field label="Badge" value={profile.badge} onChange={(value) => updateMarketplaceProfile(index, { badge: value })} />
+              <ToggleField label="Hide from public portal" checked={profile.hidden} onChange={(value) => updateMarketplaceProfile(index, { hidden: value })} />
+              <Hint>
+                Put only the real numbers here, and leave a field blank to drop
+                it from the badge. Rating &ldquo;4.9&rdquo;, count &ldquo;60+
+                jobs&rdquo;, badge &ldquo;Top Rated&rdquo;. An inflated or stale
+                figure costs more trust than showing nothing.
+              </Hint>
             </Panel>
           ))}
         </EditorList>
