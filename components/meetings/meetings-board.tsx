@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   completeMeeting,
   createMeeting,
+  getMeetingEmbedUrl,
   processMeeting,
 } from "@/actions/meeting.actions";
 import { Button } from "@/components/ui/button";
@@ -56,14 +57,12 @@ export function MeetingsBoard({
   jobs,
   canCreate,
   isAdmin,
-  currentUserName,
 }: {
   meetings: MeetingRow[];
   people: Option[];
   jobs: Option[];
   canCreate: boolean;
   isAdmin: boolean;
-  currentUserName: string | null;
 }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [joining, setJoining] = useState<MeetingRow | null>(null);
@@ -75,27 +74,48 @@ export function MeetingsBoard({
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-
-  function meetingUrl(roomCode: string) {
-    return `https://meet.jit.si/APTechHub-${roomCode}`;
-  }
+  const [roomUrl, setRoomUrl] = useState("");
+  const [roomLoading, setRoomLoading] = useState(false);
+  const [joinError, setJoinError] = useState("");
 
   /**
-   * The room URL for the embed, carrying who is joining.
-   *
-   * Jitsi reads config from the URL fragment, JSON-encoded. Without a display
-   * name it opens its own pre-join screen and asks the participant to type a
-   * name this platform already knows. Deliberately not used for the guest
-   * link — that one gets copied to other people, who are not this user.
+   * Guests land on our own page rather than straight on the video host: it
+   * asks for a name, mints them a token and shows the same conduct warning
+   * members see.
    */
-  function embedUrl(roomCode: string) {
-    if (!currentUserName) return meetingUrl(roomCode);
-    const name = encodeURIComponent(JSON.stringify(currentUserName));
-    return `${meetingUrl(roomCode)}#userInfo.displayName=${name}`;
+  function guestLink(roomCode: string) {
+    return `${window.location.origin}/meet/${roomCode}`;
   }
 
   async function copyGuestLink(roomCode: string) {
-    await navigator.clipboard?.writeText(meetingUrl(roomCode));
+    await navigator.clipboard?.writeText(guestLink(roomCode));
+  }
+
+  /**
+   * Rooms are entered with a per-person token that says who is joining and
+   * whether they may moderate, so the URL has to be asked for rather than
+   * built here.
+   */
+  async function enterRoom(meeting: MeetingRow) {
+    setJoinError("");
+    setRoomLoading(true);
+    setInRoom(meeting);
+
+    const result = await getMeetingEmbedUrl(meeting.id).catch(() => ({
+      error: "Could not open the meeting room. Please try again.",
+    }));
+
+    setRoomLoading(false);
+    if ("error" in result) {
+      setInRoom(null);
+      return setJoinError(result.error);
+    }
+    setRoomUrl(result.url);
+  }
+
+  function leaveRoom() {
+    setInRoom(null);
+    setRoomUrl("");
   }
 
   async function updateMeetingStatus(
@@ -152,7 +172,7 @@ export function MeetingsBoard({
                 Stop meeting
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={() => setInRoom(null)}>
+            <Button variant="outline" size="sm" onClick={leaveRoom}>
               Leave meeting
             </Button>
           </div>
@@ -161,11 +181,17 @@ export function MeetingsBoard({
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           {WARNING}
         </div>
-        <iframe
-          src={embedUrl(inRoom.roomCode)}
-          allow="camera; microphone; fullscreen; display-capture"
-          className="h-[70vh] w-full rounded-lg border"
-        />
+        {roomUrl ? (
+          <iframe
+            src={roomUrl}
+            allow="camera; microphone; fullscreen; display-capture"
+            className="h-[70vh] w-full rounded-lg border"
+          />
+        ) : (
+          <div className="flex h-[70vh] w-full items-center justify-center rounded-lg border text-sm text-muted-foreground">
+            {roomLoading ? "Opening the room…" : "Could not open the room"}
+          </div>
+        )}
       </div>
     );
   }
@@ -186,6 +212,12 @@ export function MeetingsBoard({
           </Button>
         )}
       </div>
+
+      {joinError && (
+        <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-600">
+          {joinError}
+        </p>
+      )}
 
       {meetings.length === 0 ? (
         <Card>
@@ -271,7 +303,7 @@ export function MeetingsBoard({
                           </Button>
                         </>
                       )}
-                      <Button size="sm" onClick={() => setJoining(m)}>
+                      <Button size="sm" onClick={() => setJoining(m)} disabled={roomLoading}>
                         <Video className="mr-2 h-4 w-4" />
                         Join
                       </Button>
@@ -299,7 +331,7 @@ export function MeetingsBoard({
           </DialogHeader>
           <Button
             onClick={() => {
-              setInRoom(joining);
+              if (joining) enterRoom(joining);
               setJoining(null);
             }}
           >
