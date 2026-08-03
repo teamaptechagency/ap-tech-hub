@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   importLiveProjects,
   importMarketplaceProfiles,
+  importTeamProfiles,
   importMarketplaceReviews,
   removeUnnecessaryLandingServices,
   removeUnverifiedClaims,
@@ -299,6 +300,7 @@ export function LandingContentManager({
   const [importingProjects, setImportingProjects] = useState(false);
   const [importingProfiles, setImportingProfiles] = useState(false);
   const [cleaningClaims, setCleaningClaims] = useState(false);
+  const [importingTeam, setImportingTeam] = useState(false);
 
   function save() {
     startTransition(async () => {
@@ -333,6 +335,18 @@ export function LandingContentManager({
     // The removal is already saved server-side (same path as Save changes);
     // reload so this editor's local state — including derived category
     // lists — reflects the new server data instead of drifting from it.
+    window.location.reload();
+  }
+
+  async function handleImportTeamProfiles() {
+    setImportingTeam(true);
+    const result = await importTeamProfiles();
+    setImportingTeam(false);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(`${result.updated} team profiles updated. Reloading...`);
     window.location.reload();
   }
 
@@ -909,6 +923,16 @@ export function LandingContentManager({
       {active === "team" && (
         <EditorList
           title="Team members"
+          action={
+            <button
+              type="button"
+              onClick={handleImportTeamProfiles}
+              disabled={importingTeam}
+              className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+            >
+              {importingTeam ? "Loading..." : "Load team profiles"}
+            </button>
+          }
           onAdd={() =>
             setData((current) => ({
               ...current,

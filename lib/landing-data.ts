@@ -182,32 +182,31 @@ export type LandingAdData = {
 export const defaultLandingData: LandingPageData = {
   topBar: {
     enabled: true,
-    offerText: "Get 20% Off",
+    offerText: "Your website live in 24 hours — get 20% off",
     countdownEndsAt: "",
+    // The 3D-modelling, architecture and accounting lines that used to be here
+    // advertised services the agency stopped selling, so anyone who asked got
+    // turned away.
     messages: [
-      "Popular service offer: 20% off WordPress website, UI/UX, SEO and branding projects.",
-      "Start a website, landing page or Next.js app this week with free planning support.",
-      "Need growth? Lead generation, outreach, social media and SEO campaign slots are open.",
-      "Design support available for Figma UI/UX, logo, branding and campaign graphics.",
-      "Architecture service slots open for interior, exterior and 3D modeling projects.",
-      "Business support available for accounting, office freelancing and document cleanup.",
-      "Website maintenance, bug fixing, speed optimization and monthly support are available.",
-      "New client offer: free project planning session with selected web and UI/UX orders.",
-      "Trusted remote team for websites, branding, SEO, 3D modeling and office support.",
+      "20% off WordPress websites, UI/UX design, SEO and branding work.",
+      "Start a website, landing page or Next.js app this week.",
+      "Figma UI/UX, logo and branding support is open.",
+      "Website maintenance, bug fixing and speed work are available monthly.",
+      "Free project planning call with selected web and UI/UX orders.",
     ],
   },
   ads: {
     popup: {
       enabled: false,
       title: "Get 20% Off",
-      body: "Start your website, UI/UX, SEO, branding or 3D modeling project before this offer ends.",
+      body: "Start your website, UI/UX, SEO or branding project before this offer ends.",
       buttonLabel: "Start now",
       buttonUrl: "#contact",
     },
     top: {
       enabled: false,
       title: "Popular service offer",
-      body: "20% off selected website, design, SEO, lead generation and 3D modeling services.",
+      body: "20% off selected website, design, SEO and branding services.",
       buttonLabel: "Start now",
       buttonUrl: "#contact",
     },
@@ -602,8 +601,8 @@ export const defaultLandingData: LandingPageData = {
     {
       id: "team-nazmul",
       name: "Nazmul Hasan",
-      role: "Founder & CEO",
-      bio: "Leads AP Tech delivery across WordPress, Elementor, theme and plugin work, AI workflows, PHP Laravel, React websites, SEO and long-term support.",
+      role: "Founder & Project Manager",
+      bio: "Spent two years at BD Calling and a year at Plowex Agency before starting AP Tech. Works here full time, building WordPress sites and running each project from the first call through to delivery.",
       photoUrl: "",
       skills: [
         "WordPress",
@@ -631,7 +630,7 @@ export const defaultLandingData: LandingPageData = {
       id: "team-nahida",
       name: "Nahdia Nasrin",
       role: "UI/UX Designer",
-      bio: "Designs clean user journeys, Figma screens and polished layouts for landing pages, dashboards and mobile-friendly portals.",
+      bio: "Designs the screens a visitor sees first. Works in Figma on landing pages, dashboards and layouts that hold up on a phone.",
       photoUrl: "",
       skills: ["UI/UX", "Figma", "Wireframe", "Landing Page UI", "Dashboard Design"],
       jobs: [
@@ -646,7 +645,7 @@ export const defaultLandingData: LandingPageData = {
       id: "team-raihan",
       name: "Raihan Ahmed",
       role: "UI/UX & Product Designer",
-      bio: "Turns client briefs into structured product flows, clickable prototypes and conversion-focused web layouts.",
+      bio: "Takes a brief and turns it into a clear structure, then into screens a client can click through before anything is built.",
       photoUrl: "",
       skills: ["Figma", "Prototype", "Product UX", "Website Redesign", "Client Portal UI"],
       jobs: [
@@ -661,7 +660,7 @@ export const defaultLandingData: LandingPageData = {
       id: "team-tahmina",
       name: "Tahmina Akter",
       role: "UI/UX Research Assistant",
-      bio: "Supports UI/UX projects with competitor research, content structure, usability notes and design QA before delivery.",
+      bio: "Studies the competitors and the users first, then checks the finished design against that research before it goes out.",
       photoUrl: "",
       skills: ["UX Research", "Content Layout", "Design QA", "Competitor Review", "User Notes"],
       jobs: [
@@ -676,7 +675,7 @@ export const defaultLandingData: LandingPageData = {
       id: "team-nirob",
       name: "KS Nirob",
       role: "React Full Stack Developer",
-      bio: "Builds React and Next.js applications with clean interfaces, API-connected dashboards and practical workflow tools.",
+      bio: "Builds the React and Next.js side of our work — dashboards, connected APIs and the tools a team uses every day.",
       photoUrl: "",
       skills: ["React", "Next.js", "Node.js", "API Integration", "Dashboard"],
       jobs: [
@@ -701,12 +700,15 @@ export const defaultLandingData: LandingPageData = {
         "Render-ready scene setup for client approval",
       ],
       socialLinks: {},
+      // Off the public portal: this speciality is a service the agency stopped
+      // selling, so advertising it only sets up a refusal. Still on the team.
+      hidden: true,
     },
     {
       id: "team-rifatul",
       name: "Rifatul Islam",
       role: "Graphics & Branding Designer",
-      bio: "Designs brand visuals, logo concepts, social creatives and campaign-ready graphics for web and marketing use.",
+      bio: "Handles the brand side — logos, social posts and the graphics that go out with a campaign.",
       photoUrl: "",
       skills: ["Graphics Design", "Logo Design", "Branding", "Social Creative", "Print Asset"],
       jobs: [
@@ -731,6 +733,8 @@ export const defaultLandingData: LandingPageData = {
         "Financial summary and report formatting",
       ],
       socialLinks: {},
+      // Same reason as the 3D specialist above.
+      hidden: true,
     },
   ],
   reviews: marketplaceReviews,
