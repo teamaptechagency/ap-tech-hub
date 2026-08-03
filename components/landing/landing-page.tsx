@@ -2340,19 +2340,17 @@ export function LandingPage({
       {page === "services" && (
       <section id="services" className="scroll-mt-24 py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
-          <SectionLabel
-            eyebrow="What We Do"
-            title="Popular services"
-            action={
-              <button
-                type="button"
-                onClick={() => goToSection("#contact")}
-                className="hidden text-sm font-bold text-[#c6613f] md:inline"
-              >
-                Start a project →
-              </button>
-            }
-          />
+          {/* The banner above already reads "What We Do / Popular Services", so
+              only the action is kept here rather than the heading again. */}
+          <div className="mb-6 flex justify-end">
+            <button
+              type="button"
+              onClick={() => goToSection("#contact")}
+              className="hidden text-sm font-bold text-[#c6613f] md:inline"
+            >
+              Start a project →
+            </button>
+          </div>
           <div className="-mt-2 mb-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {data.categories.filter((category) => category.slug !== "all").slice(0, 6).map((category) => (
               <button
@@ -2491,7 +2489,9 @@ export function LandingPage({
       {page === "portfolio" && (
       <section id="portfolio" className="scroll-mt-24 border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
-          <SectionLabel eyebrow="Our Work" title="Recent Projects" />
+          {/* No heading here: the banner at the top of this page already says
+              "Our Work / Recent Projects", and printing it twice in a row makes
+              the page look unfinished. */}
 
           {/* A grid rather than a side-scrolling rail: with the whole portfolio
               in view a visitor can judge the range of work at a glance, instead
@@ -2627,7 +2627,8 @@ export function LandingPage({
       {page === "team" && (
       <section id="team" className="scroll-mt-24 py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
-          <SectionLabel eyebrow="Our Team" title="Meet Our Experts" />
+          {/* Repeated by the page banner directly above — see the portfolio
+              section for the same reason. */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {visibleTeam.map((member) => (
               <button
@@ -2877,7 +2878,7 @@ export function LandingPage({
       <section id="about" className="scroll-mt-24 py-[72px]">
         <div className="mx-auto grid max-w-[1140px] items-center gap-10 px-4 lg:grid-cols-[1.1fr_.9fr]">
           <div>
-            <SectionLabel eyebrow={data.about.eyebrow} title={data.about.title} />
+            {/* Repeated by the page banner directly above. */}
             <p className="max-w-2xl text-[15px] leading-7 text-[#6b7280]">
               {data.about.description}
             </p>

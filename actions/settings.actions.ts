@@ -840,6 +840,48 @@ export async function importMarketplaceProfiles(): Promise<
   return { success: true, imported: fresh.length };
 }
 
+/**
+ * Loads the written team profiles onto the public portal.
+ *
+ * Same saved-blob reasoning as the other imports. Matched on name rather than
+ * id, because the team list can come from live staff records whose ids differ
+ * from the ones held here.
+ */
+export async function importTeamProfiles(): Promise<
+  { error: string } | { success: true; updated: number }
+> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const data = await getLandingPageData();
+  const written = new Map(
+    defaultLandingData.team.map((member) => [
+      member.name.trim().toLowerCase(),
+      member,
+    ])
+  );
+
+  let updated = 0;
+  const team = data.team.map((member) => {
+    const source = written.get(member.name.trim().toLowerCase());
+    if (!source) return member;
+    updated++;
+    return {
+      ...member,
+      role: source.role,
+      bio: source.bio,
+      hidden: source.hidden ?? member.hidden ?? false,
+    };
+  });
+
+  const result = await updateLandingContent(
+    JSON.stringify({ ...data, team })
+  );
+  if ("error" in result) return result;
+
+  return { success: true, updated };
+}
+
 // ============================================
 // UNVERIFIED CLAIMS — one-off cleanup of things on the public portal that
 // nothing backs up, and of copy that contradicts other copy. Written through
@@ -869,6 +911,15 @@ export async function removeUnverifiedClaims(): Promise<
   // read "Make you website".
   const offerText = "Your website live in 24 hours — get 20% off";
 
+  // Scrolling lines that offered 3D modelling, architecture and accounting —
+  // services the agency stopped selling, so every enquiry ended in a no.
+  const messages = data.topBar.messages.filter(
+    (message) =>
+      !["3d", "architecture", "interior", "exterior", "accounting", "bookkeeping"].some(
+        (word) => message.toLowerCase().includes(word)
+      )
+  );
+
   // People whose listed speciality is a service the agency stopped selling.
   // Hidden from the public portal only; they stay on the team internally.
   const teamHidden: string[] = [];
@@ -887,7 +938,7 @@ export async function removeUnverifiedClaims(): Promise<
     ...data,
     services,
     team,
-    topBar: { ...data.topBar, offerText },
+    topBar: { ...data.topBar, offerText, messages },
   };
 
   const result = await updateLandingContent(JSON.stringify(updated));
