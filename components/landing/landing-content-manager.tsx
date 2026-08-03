@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import {
+  importLiveProjects,
   importMarketplaceReviews,
   removeUnnecessaryLandingServices,
   updateLandingContent,
@@ -293,6 +294,7 @@ export function LandingContentManager({
   const [pending, startTransition] = useTransition();
   const [removingServices, setRemovingServices] = useState(false);
   const [importingReviews, setImportingReviews] = useState(false);
+  const [importingProjects, setImportingProjects] = useState(false);
 
   function save() {
     startTransition(async () => {
@@ -327,6 +329,25 @@ export function LandingContentManager({
     // The removal is already saved server-side (same path as Save changes);
     // reload so this editor's local state — including derived category
     // lists — reflects the new server data instead of drifting from it.
+    window.location.reload();
+  }
+
+  async function handleImportLiveProjects() {
+    if (
+      !window.confirm(
+        "Load the shipped client projects into the portfolio? Projects you added yourself are kept."
+      )
+    ) {
+      return;
+    }
+    setImportingProjects(true);
+    const result = await importLiveProjects();
+    setImportingProjects(false);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(`${result.imported} projects loaded. Reloading...`);
     window.location.reload();
   }
 
@@ -786,6 +807,16 @@ export function LandingContentManager({
       {active === "projects" && (
         <EditorList
           title="Recent projects"
+          action={
+            <button
+              type="button"
+              onClick={handleImportLiveProjects}
+              disabled={importingProjects}
+              className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+            >
+              {importingProjects ? "Loading..." : "Load live projects"}
+            </button>
+          }
           onAdd={() =>
             setData((current) => ({
               ...current,

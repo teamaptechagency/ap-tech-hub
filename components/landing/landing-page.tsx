@@ -438,33 +438,39 @@ const processSteps: { number: string; title: string; description: string }[] = [
 const workingProcessSteps = [
   {
     step: "01",
-    title: "Order",
-    text: "Scope, price and deadline agreed in writing before any work starts.",
-    check: "Nothing begins until you have said yes to the plan.",
+    title: "Discuss",
+    text: "Your goals, features and target users talked through, then scope and deadline agreed in writing.",
+    check: "Nothing starts until you have said yes to the plan.",
   },
   {
     step: "02",
     title: "Research",
-    text: "Your market, competitors and audience studied, then the structure mapped out.",
-    check: "You see the plan and approve it.",
+    text: "Your business, your competitors and your users studied, so the direction is chosen for a reason.",
+    check: "You see the direction before any design work begins.",
   },
   {
     step: "03",
     title: "Design",
-    text: "The first concept built from that research, in Figma.",
-    check: "You review, we revise, until you approve.",
+    text: "Two different landing page concepts to choose from, then the rest of the desktop pages in the style you picked.",
+    check: "You choose the direction, and revisions are finished before anything moves on.",
   },
   {
     step: "04",
-    title: "Development",
-    text: "The approved design built and tested on real devices.",
-    check: "You review, we revise, until you approve.",
+    title: "Responsive",
+    text: "Tablet and mobile designed only once the desktop version has your approval.",
+    check: "You review the responsive version and we finish the last changes.",
   },
   {
     step: "05",
-    title: "Delivery",
-    text: "Files, source and a walkthrough handed over — plus 60 days of free fixes.",
-    check: "Yours to keep, with support after handover.",
+    title: "Build",
+    text: "The approved design developed in WordPress, Elementor, React or custom code, then checked for speed, forms, links and behaviour on real devices.",
+    check: "Tested before launch, not after you find something.",
+  },
+  {
+    step: "06",
+    title: "Deliver",
+    text: "Every file and access handed over, and we stay on for minor updates and guidance afterwards.",
+    check: "Yours to keep, with 60 days of free fixes.",
   },
 ];
 
@@ -2237,7 +2243,7 @@ export function LandingPage({
               are part of the price, not an extra.
             </p>
 
-            <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {workingProcessSteps.map((stage) => (
                 <li
                   key={stage.step}
