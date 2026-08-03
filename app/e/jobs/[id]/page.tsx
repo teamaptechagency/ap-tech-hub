@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 
 import { WeekCard, type WeekData } from "@/components/jobs/week-card";
+import { groupWeeksByState } from "@/lib/job-weeks";
 import {
   MilestonesSection,
   type MilestoneData,
@@ -168,18 +169,7 @@ export default async function EmployeeJobDetailsPage({
     };
   });
 
-  const weekOrder: Record<WeekData["state"], number> = {
-    ACTIVE: 0,
-    OVERDUE: 1,
-    UPCOMING: 2,
-    COMPLETED: 3,
-  };
-
-  const sortedWeeks = [...classified].sort(
-    (firstWeek, secondWeek) =>
-      weekOrder[firstWeek.state] - weekOrder[secondWeek.state] ||
-      firstWeek.weekNumber - secondWeek.weekNumber
-  );
+  const weekGroups = groupWeeksByState(classified);
 
   // ============================================
   // MONTHLY JOB STATS
@@ -286,21 +276,25 @@ export default async function EmployeeJobDetailsPage({
         )}
       </div>
 
-      {/* Discussion left and work right */}
-      <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
-        {job.conversation ? (
-          <ChatPanel
-            conversationId={job.conversation.id}
-            currentUserId={session.user.id}
-            title="Discussion"
-          />
-        ) : (
-          <Card className="h-fit">
-            <CardContent className="py-16 text-center text-sm text-muted-foreground">
-              No conversation attached to this job
-            </CardContent>
-          </Card>
-        )}
+      {/* Discussion left and work right. The weeks column runs many screens
+          long, so the discussion follows down rather than leaving the left
+          half of the page blank. */}
+      <div className="grid items-start gap-4 lg:grid-cols-[2fr_3fr]">
+        <div className="lg:sticky lg:top-4">
+          {job.conversation ? (
+            <ChatPanel
+              conversationId={job.conversation.id}
+              currentUserId={session.user.id}
+              title="Discussion"
+            />
+          ) : (
+            <Card className="h-fit">
+              <CardContent className="py-16 text-center text-sm text-muted-foreground">
+                No conversation attached to this job
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         <div className="space-y-4">
           {/* Monthly job */}
@@ -341,14 +335,21 @@ export default async function EmployeeJobDetailsPage({
                 </Card>
               </div>
 
-              {sortedWeeks.map((week) => (
-                <WeekCard
-                  key={week.id}
-                  week={week}
-                  jobId={job.id}
-                  isManager={false}
-                  canToggle
-                />
+              {weekGroups.map((group) => (
+                <div key={group.state} className="space-y-4">
+                  <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {group.label} · {group.weeks.length}
+                  </p>
+                  {group.weeks.map((week) => (
+                    <WeekCard
+                      key={week.id}
+                      week={week}
+                      jobId={job.id}
+                      isManager={false}
+                      canToggle
+                    />
+                  ))}
+                </div>
               ))}
             </>
           )}

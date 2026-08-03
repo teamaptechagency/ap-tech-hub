@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import { WeekCard, type WeekData } from "@/components/jobs/week-card";
+import { groupWeeksByState } from "@/lib/job-weeks";
 import { AddWeekButton } from "@/components/jobs/add-week-button";
 import {
   MilestonesSection,
@@ -222,18 +223,7 @@ export default async function JobDetailsPage({
     };
   });
 
-  const weekOrder: Record<WeekData["state"], number> = {
-    ACTIVE: 0,
-    OVERDUE: 1,
-    UPCOMING: 2,
-    COMPLETED: 3,
-  };
-
-  const sortedWeeks = [...classified].sort(
-    (firstWeek, secondWeek) =>
-      weekOrder[firstWeek.state] - weekOrder[secondWeek.state] ||
-      firstWeek.weekNumber - secondWeek.weekNumber
-  );
+  const weekGroups = groupWeeksByState(classified);
 
   // ============================================
   // MONTHLY JOB STATS
@@ -438,9 +428,13 @@ export default async function JobDetailsPage({
         </div>
       </div>
 
-      {/* Discussion left and job content right */}
-      <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
-        <div className="space-y-4">
+      {/* Discussion left and job content right. The right column runs to a
+          couple of dozen week cards while the left is a screen tall, so the
+          left sticks instead of leaving half the page blank on the way down. */}
+      <div className="grid items-start gap-4 lg:grid-cols-[2fr_3fr]">
+        {/* Capped and scrollable: the carried-over list grows with the job, and
+            a sticky column taller than the viewport strands its own bottom. */}
+        <div className="space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1">
           {job.conversation ? (
             <ChatPanel
               conversationId={job.conversation.id}
@@ -503,14 +497,21 @@ export default async function JobDetailsPage({
                 </Card>
               </div>
 
-              {sortedWeeks.map((week) => (
-                <WeekCard
-                  key={week.id}
-                  week={week}
-                  jobId={job.id}
-                  isManager={isManager}
-                  canToggle={canToggle}
-                />
+              {weekGroups.map((group) => (
+                <div key={group.state} className="space-y-4">
+                  <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {group.label} · {group.weeks.length}
+                  </p>
+                  {group.weeks.map((week) => (
+                    <WeekCard
+                      key={week.id}
+                      week={week}
+                      jobId={job.id}
+                      isManager={isManager}
+                      canToggle={canToggle}
+                    />
+                  ))}
+                </div>
               ))}
             </>
           )}
