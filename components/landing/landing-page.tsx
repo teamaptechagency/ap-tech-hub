@@ -86,6 +86,9 @@ const categoryEmojiMap: Record<string, string> = {
   "3d-architecture": "📐",
 };
 
+/** Testimonials per page on the About wall — a 3 x 3 grid on desktop. */
+const REVIEWS_PER_PAGE = 9;
+
 function ratingStars(value: number | string | null | undefined) {
   const numeric = Number(value ?? 0);
   const rounded = Number.isFinite(numeric) ? numeric : 0;
@@ -1837,6 +1840,20 @@ export function LandingPage({
     [data.marketplace?.profiles]
   );
 
+  // Three rows of three, so the wall of testimonials stays one screen deep
+  // however many reviews are collected.
+  const [reviewPage, setReviewPage] = useState(1);
+  const reviewPageCount = Math.max(
+    1,
+    Math.ceil(visibleReviews.length / REVIEWS_PER_PAGE)
+  );
+  // Hiding reviews can shrink the list under the page being viewed.
+  const currentReviewPage = Math.min(reviewPage, reviewPageCount);
+  const pagedReviews = visibleReviews.slice(
+    (currentReviewPage - 1) * REVIEWS_PER_PAGE,
+    currentReviewPage * REVIEWS_PER_PAGE
+  );
+
   const submitContact = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -2140,8 +2157,20 @@ export function LandingPage({
       {page === "home" && (
         <section className="bg-[#101623] py-8">
           <div className="mx-auto max-w-[1140px] px-4">
-            <div className="grid gap-4 rounded-[18px] border border-[#c6613f]/30 bg-[linear-gradient(120deg,#1c2438_0%,#241a15_100%)] p-6 sm:grid-cols-2 sm:p-7">
+            <div className="grid gap-4 rounded-[18px] border border-[#c6613f]/30 bg-[linear-gradient(120deg,#1c2438_0%,#241a15_100%)] p-6 sm:grid-cols-3 sm:p-7">
               <div className="flex items-center gap-4">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#c6613f]/15 text-[#f5a83c]">
+                  <Clock size={22} />
+                </div>
+                <div>
+                  <p className="font-extrabold text-white">24 Hour Delivery</p>
+                  <p className="mt-0.5 text-sm text-[#cbd2df]">
+                    A working site live within a day — the offer at the top of
+                    this page.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 sm:border-l sm:border-white/10 sm:pl-6">
                 <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#c6613f]/15 text-[#f5a83c]">
                   <HeadphonesIcon size={22} />
                 </div>
@@ -2890,8 +2919,11 @@ export function LandingPage({
             in one place so it reflects what people actually say working
             with us.
           </p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleReviews.map((review) => (
+          <div
+            id="testimonial-grid"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {pagedReviews.map((review) => (
               <button
                 key={review.id}
                 type="button"
@@ -2949,6 +2981,40 @@ export function LandingPage({
               </button>
             ))}
           </div>
+
+          {reviewPageCount > 1 && (
+            <nav
+              aria-label="Testimonial pages"
+              className="mt-8 flex flex-wrap items-center justify-center gap-2"
+            >
+              {Array.from(
+                { length: reviewPageCount },
+                (_, index) => index + 1
+              ).map((pageNumber) => {
+                const isCurrent = pageNumber === currentReviewPage;
+                return (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    aria-current={isCurrent ? "page" : undefined}
+                    onClick={() => {
+                      setReviewPage(pageNumber);
+                      document
+                        .getElementById("testimonial-grid")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className={`grid h-9 min-w-9 place-items-center rounded-[10px] border px-3 text-sm font-black transition ${
+                      isCurrent
+                        ? "border-[#101623] bg-[#101623] text-white"
+                        : "border-[#e8e3dc] bg-white text-[#101623] hover:border-[#101623]"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
         </div>
       </section>
       )}

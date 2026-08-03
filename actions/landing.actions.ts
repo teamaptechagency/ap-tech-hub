@@ -4,6 +4,7 @@ import { createHash, randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
+import { isBotUserAgent } from "@/lib/bot-detect";
 import { notifyAdmins } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher-server";
@@ -706,6 +707,13 @@ export async function recordLandingVisit(path = "/") {
   const userAgent =
     firstHeader(headerList, ["user-agent"]).slice(0, 500) || null;
   const cleanPath = path.startsWith("/") ? path.slice(0, 180) : "/";
+
+  // The counter is on the public page, so a crawler bumping it shows visitors
+  // a number that never meant anything. Bots still get the page, they just do
+  // not get counted as people.
+  if (isBotUserAgent(userAgent)) {
+    return { count: 0, stats: await getLandingVisitorStats() };
+  }
 
   const nextCount = await prisma
     .$transaction(async (tx) => {
