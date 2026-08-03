@@ -74,7 +74,13 @@ export function WeekCard({
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<string | null>("MEDIUM");
   const [busy, setBusy] = useState(false);
-  const [collapsed, setCollapsed] = useState(week.state === "COMPLETED");
+  // Only the weeks that need doing something today open on their own. A
+  // six-month job carries 24 weeks of ten tasks each, and expanding the
+  // finished and not-yet-started ones buried the active week under a page
+  // several screens long.
+  const [collapsed, setCollapsed] = useState(
+    week.state === "COMPLETED" || week.state === "UPCOMING"
+  );
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancelReasonInput, setCancelReasonInput] = useState("");
   const [cancelBusy, setCancelBusy] = useState(false);
@@ -178,6 +184,13 @@ export function WeekCard({
             )}
           </div>
           <span className="text-xs text-muted-foreground">
+            {/* Collapsed, the card is otherwise silent about how much is in it. */}
+            {collapsed && week.tasks.length > 0 && (
+              <>
+                {week.tasks.length} task{week.tasks.length !== 1 && "s"}
+                {" · "}
+              </>
+            )}
             {fmt(week.startDate)} – {fmt(week.endDate)}
             {daysLeft !== null && ` · ${daysLeft} days left`}
           </span>
