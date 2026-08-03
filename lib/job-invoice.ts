@@ -1,15 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { createInvoiceWithNumber } from "@/lib/invoice-number";
 
 const DEFAULT_DUE_DAYS = 7;
-
-/** INV-2026-0001 style numbering, shared with the manual invoice flow. */
-async function nextInvoiceNumber() {
-  const year = new Date().getFullYear();
-  const count = await prisma.invoice.count({
-    where: { number: { startsWith: `INV-${year}-` } },
-  });
-  return `INV-${year}-${String(count + 1).padStart(4, "0")}`;
-}
 
 export type JobInvoiceResult =
   | { created: true; invoiceId: string; number: string }
@@ -64,33 +56,35 @@ export async function createInvoiceForCompletedJob(
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + DEFAULT_DUE_DAYS);
 
-    const invoice = await prisma.invoice.create({
-      data: {
-        number: await nextInvoiceNumber(),
-        type: "AUTO",
-        title: job.title,
-        jobId: job.id,
-        clientId: job.clientId,
-        // Only meaningful when there is no linked Client.
-        externalName: job.clientId ? null : job.externalName,
-        externalSource: job.clientId ? null : job.externalSource,
-        externalCountry: job.clientId ? null : job.externalCountry,
-        amount,
-        currency: job.clientCurrency || "USD",
-        dueDate,
-        status: "DUE",
-        items: {
-          create: [
-            {
-              description: job.title,
-              qty: 1,
-              amount,
-            },
-          ],
+    const invoice = await createInvoiceWithNumber((number) =>
+      prisma.invoice.create({
+        data: {
+          number,
+          type: "AUTO",
+          title: job.title,
+          jobId: job.id,
+          clientId: job.clientId,
+          // Only meaningful when there is no linked Client.
+          externalName: job.clientId ? null : job.externalName,
+          externalSource: job.clientId ? null : job.externalSource,
+          externalCountry: job.clientId ? null : job.externalCountry,
+          amount,
+          currency: job.clientCurrency || "USD",
+          dueDate,
+          status: "DUE",
+          items: {
+            create: [
+              {
+                description: job.title,
+                qty: 1,
+                amount,
+              },
+            ],
+          },
         },
-      },
-      select: { id: true, number: true },
-    });
+        select: { id: true, number: true },
+      })
+    );
 
     await prisma.auditLog
       .create({

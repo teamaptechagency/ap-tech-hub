@@ -9,6 +9,7 @@ import { notify } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher-server";
 import { ADMIN_ROLES, PARTNER_ROLES } from "@/lib/roles";
+import { nextInvoiceNumber } from "@/lib/invoice-number";
 
 async function triggerPusher(channel: string, event: string, payload: unknown) {
   try {
@@ -24,16 +25,6 @@ async function checkAdmin() {
     return null;
   }
   return session;
-}
-
-async function nextInvoiceNumber(
-  db: Prisma.TransactionClient = prisma as unknown as Prisma.TransactionClient
-) {
-  const year = new Date().getFullYear();
-  const count = await db.invoice.count({
-    where: { number: { startsWith: `INV-${year}-` } },
-  });
-  return `INV-${year}-${String(count + 1).padStart(4, "0")}`;
 }
 
 function num(value: string | number | null | undefined) {

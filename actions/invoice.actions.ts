@@ -8,6 +8,7 @@ import { notify, notifyAdmins } from "@/lib/notify";
 import type { Prisma } from "@prisma/client";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
 import { invoiceBuyerName } from "@/lib/job-invoice";
+import { createInvoiceWithNumber } from "@/lib/invoice-number";
 import { createReferralCommissionForPayment } from "@/lib/referral-finance";
 
 // ============================================
@@ -72,15 +73,6 @@ async function resolveMethodCharge(methodKey?: string | null) {
 
   const label = key.charAt(0) + key.slice(1).toLowerCase();
   return { percent, label: `${label} charge` };
-}
-
-// INV-2026-0001 style numbering
-async function nextInvoiceNumber() {
-  const year = new Date().getFullYear();
-  const count = await prisma.invoice.count({
-    where: { number: { startsWith: `INV-${year}-` } },
-  });
-  return `INV-${year}-${String(count + 1).padStart(4, "0")}`;
 }
 
 // Convert any supported currency amount → BDT + USD
@@ -344,37 +336,39 @@ export async function createCustomInvoice(formData: {
     }
   }
 
-  const number = await nextInvoiceNumber();
   const fullyCovered = balanceApplied >= total;
 
-  const invoice = await prisma.invoice.create({
-    data: {
-      number,
-      type: "CUSTOM",
-      title: formData.title,
-      jobId: formData.jobId || null,
-      clientId: formData.clientId || null,
-      amount: total,
-      currency: formData.currency,
-      vatPercent: vat,
-      methodChargePercent: methodCharge?.percent ?? null,
-      methodChargeLabel: methodCharge?.label ?? null,
-      balanceApplied,
-      amountPaid: balanceApplied,
-      status: fullyCovered ? "PAID" : "DUE",
-      // formData.dueDate is a bare "YYYY-MM-DD" from a date picker; `new Date()`
-      // would read it as UTC midnight (Dhaka 06:00), pushing the OVERDUE
-      // transition 6 hours past the Dhaka-local due moment the admin picked.
-      dueDate: new Date(`${formData.dueDate}T00:00:00+06:00`),
-      paidVia: fullyCovered ? "Client balance" : null,
-      payoneerInvoiceUrl,
-      payoneerInvoiceButtonLabel:
-        formData.payoneerInvoiceButtonLabel?.trim() || null,
-      payoneerInvoiceNote:
-        formData.payoneerInvoiceNote?.trim() || null,
-      items: { create: items },
-    },
-  });
+  const { invoice, number } = await createInvoiceWithNumber(async (next) => ({
+    number: next,
+    invoice: await prisma.invoice.create({
+      data: {
+        number: next,
+        type: "CUSTOM",
+        title: formData.title,
+        jobId: formData.jobId || null,
+        clientId: formData.clientId || null,
+        amount: total,
+        currency: formData.currency,
+        vatPercent: vat,
+        methodChargePercent: methodCharge?.percent ?? null,
+        methodChargeLabel: methodCharge?.label ?? null,
+        balanceApplied,
+        amountPaid: balanceApplied,
+        status: fullyCovered ? "PAID" : "DUE",
+        // formData.dueDate is a bare "YYYY-MM-DD" from a date picker; `new Date()`
+        // would read it as UTC midnight (Dhaka 06:00), pushing the OVERDUE
+        // transition 6 hours past the Dhaka-local due moment the admin picked.
+        dueDate: new Date(`${formData.dueDate}T00:00:00+06:00`),
+        paidVia: fullyCovered ? "Client balance" : null,
+        payoneerInvoiceUrl,
+        payoneerInvoiceButtonLabel:
+          formData.payoneerInvoiceButtonLabel?.trim() || null,
+        payoneerInvoiceNote:
+          formData.payoneerInvoiceNote?.trim() || null,
+        items: { create: items },
+      },
+    }),
+  }));
 
   // Deduct from wallet + ledger entry. balanceApplied is only ever positive
   // when formData.clientId was already checked above, but TypeScript can't
@@ -1315,7 +1309,6 @@ export async function createJobAdvanceInvoice(input: {
     return { error: "This job has no linked client, so there is no balance to fund" };
   }
 
-  const number = await nextInvoiceNumber();
   const title = input.title?.trim() || `Project purchases — ${job.title}`;
   // A bare "YYYY-MM-DD" reads as UTC midnight, not Dhaka midnight — see
   // createCustomInvoice above for why the offset is anchored explicitly.
@@ -1323,21 +1316,24 @@ export async function createJobAdvanceInvoice(input: {
     ? new Date(`${input.dueDate.trim()}T00:00:00+06:00`)
     : new Date();
 
-  const invoice = await prisma.invoice.create({
-    data: {
-      number,
-      type: "CUSTOM",
-      title,
-      jobId: input.jobId,
-      clientId: job.clientId,
-      amount: total,
-      vatPercent: vat,
-      currency: job.client?.currency ?? "USD",
-      creditsClientBalance: true,
-      status: "DUE",
-      dueDate,
-    },
-  });
+  const { invoice, number } = await createInvoiceWithNumber(async (next) => ({
+    number: next,
+    invoice: await prisma.invoice.create({
+      data: {
+        number: next,
+        type: "CUSTOM",
+        title,
+        jobId: input.jobId,
+        clientId: job.clientId,
+        amount: total,
+        vatPercent: vat,
+        currency: job.client?.currency ?? "USD",
+        creditsClientBalance: true,
+        status: "DUE",
+        dueDate,
+      },
+    }),
+  }));
 
   await audit(
     session.user.id,
