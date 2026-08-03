@@ -127,13 +127,13 @@ export function GlobalFloatingMessenger({
         <button
           type="button"
           aria-label="Close messenger"
-          className="fixed inset-0 z-40 bg-black/30"
+          className="fixed inset-0 z-40 bg-black/30 print:hidden"
           onClick={() => setOpen(false)}
         />
       )}
 
       {open && (
-        <div className="fixed bottom-28 right-3 z-50 w-[min(94vw,560px)] md:bottom-24 md:right-6">
+        <div className="fixed bottom-28 right-3 z-50 w-[min(94vw,560px)] md:bottom-24 md:right-6 print:hidden">
           <div className="mb-2 flex justify-end">
             <Button
               type="button"
@@ -223,7 +223,7 @@ export function GlobalFloatingMessenger({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="fixed bottom-20 right-4 z-50 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-transform hover:scale-105 md:bottom-6 md:right-6 md:h-14 md:w-14"
+        className="fixed bottom-20 right-4 z-50 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-transform hover:scale-105 md:bottom-6 md:right-6 md:h-14 md:w-14 print:hidden"
         aria-label="Open messages"
       >
         <MessageSquare className="h-3.5 w-3.5 md:h-6 md:w-6" />
