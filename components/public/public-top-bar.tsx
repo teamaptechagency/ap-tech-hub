@@ -32,9 +32,10 @@ export function PublicTopBar({
   );
 
   useEffect(() => {
+    // Once a second, so the seconds in the countdown actually move.
     const timer = window.setInterval(() => {
       setNow(new Date());
-    }, 45000);
+    }, 1000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -90,7 +91,9 @@ export function PublicTopBar({
 }
 
 export function formatCountdown(value: string | null | undefined, now: Date) {
-  if (!value) return "10 days 2 hours";
+  // No deadline set means no countdown. This used to answer "10 days 2 hours"
+  // — a fixed string that was never counting anything.
+  if (!value) return "";
   const end = new Date(value);
   if (Number.isNaN(end.getTime())) return "";
 
@@ -98,10 +101,15 @@ export function formatCountdown(value: string | null | undefined, now: Date) {
   const days = Math.floor(diff / 86400000);
   const hours = Math.floor((diff % 86400000) / 3600000);
   const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
 
-  if (days > 0) return `${days} days ${hours} hours`;
-  if (hours > 0) return `${hours} hours ${minutes} min`;
-  return `${minutes} min`;
+  const pad = (part: number) => String(part).padStart(2, "0");
+
+  // Seconds are always shown. Reported as "28 days 9 hours" the number moved
+  // once an hour, so the countdown looked frozen.
+  if (days > 0) return `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+  if (hours > 0) return `${hours}h ${pad(minutes)}m ${pad(seconds)}s`;
+  return `${minutes}m ${pad(seconds)}s`;
 }
 
 export function getDefaultCountdownEnd(key: string) {

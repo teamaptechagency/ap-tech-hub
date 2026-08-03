@@ -425,22 +425,46 @@ const processSteps: { number: string; title: string; description: string }[] = [
   },
 ];
 
-const businessTrustCards = [
+/**
+ * How a project actually runs, start to finish.
+ *
+ * The client's own sequence is Order, Research, Review, Revision, Review,
+ * Development, Review, Revision, Review, Delivery. Written out literally that
+ * is ten steps with "Review" four times, which reads as repetition rather than
+ * as the point being made. The stages are kept, and the review-and-revise loop
+ * that sits inside each one is stated on the stage itself — which is the part
+ * a buyer is actually reassured by.
+ */
+const workingProcessSteps = [
   {
-    title: "Clear Agreements",
-    text: "Every project starts with an agreed scope, budget, timeline, and delivery process.",
+    step: "01",
+    title: "Order",
+    text: "Scope, price and deadline agreed in writing before any work starts.",
+    check: "Nothing begins until you have said yes to the plan.",
   },
   {
-    title: "Professional Invoices",
-    text: "Clients receive clear invoices with project details, payment information, and transaction records.",
+    step: "02",
+    title: "Research",
+    text: "Your market, competitors and audience studied, then the structure mapped out.",
+    check: "You see the plan and approve it.",
   },
   {
-    title: "Secure Project Management",
-    text: "Project communication, files, milestones, revisions, and approvals are managed through an organized system.",
+    step: "03",
+    title: "Design",
+    text: "The first concept built from that research, in Figma.",
+    check: "You review, we revise, until you approve.",
   },
   {
-    title: "International Client Support",
-    text: "We support international clients with remote meetings, digital contracts, milestone-based projects, and accepted payment methods.",
+    step: "04",
+    title: "Development",
+    text: "The approved design built and tested on real devices.",
+    check: "You review, we revise, until you approve.",
+  },
+  {
+    step: "05",
+    title: "Delivery",
+    text: "Files, source and a walkthrough handed over — plus 60 days of free fixes.",
+    check: "Yours to keep, with support after handover.",
   },
 ];
 
@@ -1541,7 +1565,7 @@ function TopAd({
 
   useEffect(() => {
     setDefaultCountdownEnd(getDefaultCountdownEnd("ap-tech-top-ad-countdown-end"));
-    const timer = window.setInterval(() => setNow(new Date()), 60000);
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -2208,21 +2232,36 @@ export function LandingPage({
               eyebrow="Transparent Delivery"
               title="A Professional and Transparent Working Process"
             />
-            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {businessTrustCards.map((card) => (
-                <div
-                  key={card.title}
-                  className="rounded-[14px] border border-[#e8e3dc] bg-white p-5 shadow-[0_14px_35px_rgba(16,22,35,.05)]"
+            <p className="-mt-3 max-w-2xl text-sm leading-6 text-[#6b7280]">
+              You approve every stage before the next one starts, and revisions
+              are part of the price, not an extra.
+            </p>
+
+            <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {workingProcessSteps.map((stage) => (
+                <li
+                  key={stage.step}
+                  className="flex flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-4"
                 >
-                  <h3 className="text-base font-extrabold text-[#101623]">
-                    {card.title}
+                  <span className="text-xs font-black tracking-[0.14em] text-[#c6613f]">
+                    {stage.step}
+                  </span>
+                  <h3 className="mt-1.5 text-base font-extrabold text-[#101623]">
+                    {stage.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-7 text-[#6b7280]">
-                    {card.text}
+                  <p className="mt-1.5 text-sm leading-6 text-[#6b7280]">
+                    {stage.text}
                   </p>
-                </div>
+                  <p className="mt-auto flex items-start gap-1.5 pt-3 text-[12px] font-bold leading-5 text-[#101623]">
+                    <ShieldCheck
+                      size={13}
+                      className="mt-0.5 shrink-0 text-[#c6613f]"
+                    />
+                    {stage.check}
+                  </p>
+                </li>
               ))}
-            </div>
+            </ol>
           </div>
           <div className="mx-auto mb-8 max-w-[1140px] px-4">
             <div className="rounded-[18px] border border-[#e8e3dc] bg-white p-6 md:p-8">

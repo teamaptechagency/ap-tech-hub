@@ -80,11 +80,14 @@ function Field({
   value,
   onChange,
   textarea = false,
+  type = "text",
 }: {
   label: string;
   value?: string | number | null;
   onChange: (value: string) => void;
   textarea?: boolean;
+  /** e.g. "datetime-local" for a date picker instead of typed-out text. */
+  type?: string;
 }) {
   return (
     <label className="grid gap-1.5 text-sm">
@@ -98,6 +101,7 @@ function Field({
         />
       ) : (
         <input
+          type={type}
           value={value ?? ""}
           onChange={(event) => onChange(event.target.value)}
           className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
@@ -515,6 +519,7 @@ export function LandingContentManager({
           />
           <Field
             label="Countdown end date/time"
+            type="datetime-local"
             value={data.topBar.countdownEndsAt}
             onChange={(value) =>
               setData((current) => ({
@@ -524,8 +529,8 @@ export function LandingContentManager({
             }
           />
           <Hint>
-            Example: 2026-07-27T20:00:00. Empty hole default "10 days 2 hours"
-            show korbe.
+            Pick the date and time the offer closes. The bar counts down to it
+            live. Leave it empty and no countdown is shown.
           </Hint>
           <Field
             label="Animated offer text (one message per line)"
