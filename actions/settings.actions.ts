@@ -841,6 +841,62 @@ export async function importMarketplaceProfiles(): Promise<
 }
 
 // ============================================
+// UNVERIFIED CLAIMS — one-off cleanup of things on the public portal that
+// nothing backs up, and of copy that contradicts other copy. Written through
+// updateLandingContent() because the saved blob is what the site reads.
+// ============================================
+export async function removeUnverifiedClaims(): Promise<
+  | { error: string }
+  | { success: true; ratingsCleared: number; teamHidden: string[]; offerText: string }
+> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const data = await getLandingPageData();
+
+  // Star ratings typed in by hand. Nothing in this app collects a rating per
+  // service, and every one of them landed between 4.6 and 4.9 — a spread that
+  // gives itself away. They sit beside the genuine marketplace ratings, so one
+  // doubted number discredits those too.
+  let ratingsCleared = 0;
+  const services = data.services.map((service) => {
+    if (!service.rating?.trim()) return service;
+    ratingsCleared++;
+    return { ...service, rating: "" };
+  });
+
+  // The offer bar promised 20 hours while the page below it promised 24, and
+  // read "Make you website".
+  const offerText = "Your website live in 24 hours — get 20% off";
+
+  // People whose listed speciality is a service the agency stopped selling.
+  // Hidden from the public portal only; they stay on the team internally.
+  const teamHidden: string[] = [];
+  const team = data.team.map((member) => {
+    if (member.hidden) return member;
+    const role = `${member.role} ${member.bio ?? ""}`.toLowerCase();
+    const dropped = ["3d", "architecture", "interior", "accounting", "bookkeeping"].some(
+      (word) => role.includes(word)
+    );
+    if (!dropped) return member;
+    teamHidden.push(member.name);
+    return { ...member, hidden: true };
+  });
+
+  const updated = {
+    ...data,
+    services,
+    team,
+    topBar: { ...data.topBar, offerText },
+  };
+
+  const result = await updateLandingContent(JSON.stringify(updated));
+  if ("error" in result) return result;
+
+  return { success: true, ratingsCleared, teamHidden, offerText };
+}
+
+// ============================================
 // SKILLS LIBRARY
 // ============================================
 export async function addSkill(name: string) {

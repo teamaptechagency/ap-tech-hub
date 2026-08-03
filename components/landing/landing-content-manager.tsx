@@ -9,6 +9,7 @@ import {
   importMarketplaceProfiles,
   importMarketplaceReviews,
   removeUnnecessaryLandingServices,
+  removeUnverifiedClaims,
   updateLandingContent,
 } from "@/actions/settings.actions";
 import type {
@@ -297,6 +298,7 @@ export function LandingContentManager({
   const [importingReviews, setImportingReviews] = useState(false);
   const [importingProjects, setImportingProjects] = useState(false);
   const [importingProfiles, setImportingProfiles] = useState(false);
+  const [cleaningClaims, setCleaningClaims] = useState(false);
 
   function save() {
     startTransition(async () => {
@@ -331,6 +333,27 @@ export function LandingContentManager({
     // The removal is already saved server-side (same path as Save changes);
     // reload so this editor's local state — including derived category
     // lists — reflects the new server data instead of drifting from it.
+    window.location.reload();
+  }
+
+  async function handleRemoveUnverifiedClaims() {
+    if (
+      !window.confirm(
+        "Clear the hand-typed service star ratings, fix the 20-hour/24-hour delivery promise, and hide team members whose speciality is a service you no longer sell?"
+      )
+    ) {
+      return;
+    }
+    setCleaningClaims(true);
+    const result = await removeUnverifiedClaims();
+    setCleaningClaims(false);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(
+      `${result.ratingsCleared} service ratings cleared, ${result.teamHidden.length} team member(s) hidden. Reloading...`
+    );
     window.location.reload();
   }
 
@@ -517,6 +540,14 @@ export function LandingContentManager({
           >
             Preview page
           </a>
+          <button
+            type="button"
+            onClick={handleRemoveUnverifiedClaims}
+            disabled={cleaningClaims}
+            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+          >
+            {cleaningClaims ? "Cleaning..." : "Remove unverified claims"}
+          </button>
           <button
             type="button"
             onClick={removeUnnecessaryServices}

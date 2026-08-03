@@ -327,7 +327,7 @@ export const defaultLandingData: LandingPageData = {
       title: "Web Development",
       description: "Custom websites and web apps built with modern technology.",
       priceRange: "Start from 120 USD",
-      rating: "4.9",
+      rating: "",
       accent: "#2e3b55",
       emoji: "💻",
       details:
@@ -340,7 +340,7 @@ export const defaultLandingData: LandingPageData = {
       title: "UI/UX Design",
       description: "Beautiful, user-friendly interfaces that turn visitors into customers.",
       priceRange: "Start from 100 USD",
-      rating: "4.8",
+      rating: "",
       accent: "#7b5bb8",
       emoji: "🎨",
       details:
@@ -353,7 +353,7 @@ export const defaultLandingData: LandingPageData = {
       title: "Digital Marketing",
       description: "Campaigns that increase visibility, traffic and sales.",
       priceRange: "Start from 50 USD",
-      rating: "4.7",
+      rating: "",
       accent: "#1f8cab",
       emoji: "📣",
       details:
@@ -366,7 +366,7 @@ export const defaultLandingData: LandingPageData = {
       title: "SEO Optimization",
       description: "Improve rankings and organic growth with focused search work.",
       priceRange: "Start from 50 USD",
-      rating: "4.9",
+      rating: "",
       accent: "#206c3a",
       emoji: "📈",
       details:
@@ -379,7 +379,7 @@ export const defaultLandingData: LandingPageData = {
       title: "Support & Maintenance",
       description: "Reliable updates and maintenance to keep your site running.",
       priceRange: "Start from 40 USD",
-      rating: "4.8",
+      rating: "",
       accent: "#2f3341",
       emoji: "🛠️",
       details:
@@ -393,7 +393,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Realistic interior models and renders for rooms, offices and commercial spaces.",
       priceRange: "Start from 150 USD",
-      rating: "4.7",
+      rating: "",
       accent: "#a45216",
       emoji: "🏠",
       details:
@@ -408,7 +408,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Exterior building visuals with clean materials, lighting and environment.",
       priceRange: "Start from 180 USD",
-      rating: "4.7",
+      rating: "",
       accent: "#256a44",
       emoji: "🏢",
       details:
@@ -423,7 +423,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Architecture planning support, concept visuals and presentation-ready design assets.",
       priceRange: "Start from 250 USD",
-      rating: "4.8",
+      rating: "",
       accent: "#4d3f8d",
       emoji: "📐",
       details:
@@ -438,7 +438,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Professional social, print and marketing graphics for everyday business needs.",
       priceRange: "Start from 30 USD",
-      rating: "4.6",
+      rating: "",
       accent: "#7b5bb8",
       emoji: "🎨",
       details:
@@ -453,7 +453,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Memorable logo concepts with clean files for web, print and social use.",
       priceRange: "Start from 50 USD",
-      rating: "4.6",
+      rating: "",
       accent: "#c6613f",
       emoji: "✨",
       details:
@@ -468,7 +468,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Brand identity support with colors, typography, visual style and usage direction.",
       priceRange: "Start from 120 USD",
-      rating: "4.7",
+      rating: "",
       accent: "#101623",
       emoji: "🏷️",
       details:
@@ -483,7 +483,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Remote office support for data entry, documents, research and admin tasks.",
       priceRange: "Start from 25 USD",
-      rating: "4.9",
+      rating: "",
       accent: "#2f3341",
       emoji: "📋",
       details:
@@ -498,7 +498,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Organized bookkeeping, expense tracking, invoice records and financial reports.",
       priceRange: "Start from 60 USD",
-      rating: "4.6",
+      rating: "",
       accent: "#206c3a",
       emoji: "🧾",
       details:
@@ -513,7 +513,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Complete WordPress website setup with design, build, launch and basic optimization.",
       priceRange: "From $125",
-      rating: "4.9",
+      rating: "",
       accent: "#2e3b55",
       emoji: "🧩",
       details:
@@ -528,7 +528,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Conversion-focused Elementor landing page for campaigns, products and services.",
       priceRange: "From $85",
-      rating: "4.8",
+      rating: "",
       accent: "#d86d45",
       emoji: "⚡",
       details:
@@ -543,7 +543,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Modern Next.js web apps with fast UI, clean workflows and scalable structure.",
       priceRange: "From $450",
-      rating: "4.9",
+      rating: "",
       accent: "#267444",
       emoji: "🚀",
       details:
@@ -558,7 +558,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Product-ready UI/UX design in Figma for websites, dashboards and applications.",
       priceRange: "From $95",
-      rating: "4.8",
+      rating: "",
       accent: "#7b5bb8",
       emoji: "🎨",
       details:
@@ -573,7 +573,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Content planning, graphics and social media management for growing brands.",
       priceRange: "From $150/mo",
-      rating: "4.9",
+      rating: "",
       accent: "#1f9fc7",
       emoji: "📣",
       details:
@@ -588,7 +588,7 @@ export const defaultLandingData: LandingPageData = {
       description:
         "Targeted lead lists, outreach messages and campaign follow-up support.",
       priceRange: "From $200/mo",
-      rating: "4.8",
+      rating: "",
       accent: "#b35b14",
       emoji: "✉️",
       details:
@@ -799,7 +799,7 @@ export const defaultLandingData: LandingPageData = {
         // Read off the live profile on 3 August 2026. Update it here, or in
         // the manager, when the profile moves.
         badge: "Level 2 Seller",
-        rating: "4.9",
+        rating: "",
         reviewCount: "33 reviews",
       },
       {
@@ -808,7 +808,7 @@ export const defaultLandingData: LandingPageData = {
         label: "envatoelem",
         profileUrl: "https://www.fiverr.com/envatoelem",
         badge: "Level 2 Seller",
-        rating: "4.9",
+        rating: "",
         reviewCount: "35 reviews",
       },
       {
