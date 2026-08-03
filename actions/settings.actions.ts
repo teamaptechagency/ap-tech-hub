@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { uniqueReferralCode } from "@/lib/referral";
 import { ADMIN_ROLES } from "@/lib/roles";
 import { getLandingPageData } from "@/lib/landing-data";
+import { liveProjects } from "@/lib/live-projects";
 import { marketplaceReviews } from "@/lib/marketplace-reviews";
 import { revalidatePath } from "next/cache";
 
@@ -773,6 +774,35 @@ export async function importMarketplaceReviews(): Promise<
   if ("error" in result) return result;
 
   return { success: true, imported: marketplaceReviews.length, replaced };
+}
+
+/**
+ * Loads the shipped client work into the live portfolio.
+ *
+ * Same reasoning as the review import: the saved content blob wins on read
+ * once the manager has been saved even once, so editing the defaults would
+ * never reach the site.
+ */
+export async function importLiveProjects(): Promise<
+  { error: string } | { success: true; imported: number; replaced: number }
+> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const data = await getLandingPageData();
+
+  const importedIds = new Set(liveProjects.map((project) => project.id));
+  const ownProjects = data.projects.filter(
+    (project) => !importedIds.has(project.id)
+  );
+
+  const replaced = data.projects.length - ownProjects.length;
+  const updated = { ...data, projects: [...liveProjects, ...ownProjects] };
+
+  const result = await updateLandingContent(JSON.stringify(updated));
+  if ("error" in result) return result;
+
+  return { success: true, imported: liveProjects.length, replaced };
 }
 
 // ============================================
