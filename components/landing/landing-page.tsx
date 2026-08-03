@@ -95,6 +95,46 @@ function ratingStars(value: number | string | null | undefined) {
   };
 }
 
+/**
+ * Five stars filled to the fraction actually earned.
+ *
+ * Counting whole stars put five solid stars next to the number "4.2", which
+ * reads as though the score had been rounded up in the agency's favour.
+ */
+function StarRating({
+  value,
+  size = 16,
+}: {
+  value: number | string | null | undefined;
+  size?: number;
+}) {
+  const numeric = Number(value ?? 0);
+  const score = Math.max(0, Math.min(5, Number.isFinite(numeric) ? numeric : 0));
+  const stars = [0, 1, 2, 3, 4];
+
+  return (
+    <span
+      className="relative inline-flex shrink-0"
+      role="img"
+      aria-label={`${score.toFixed(1)} out of 5`}
+    >
+      <span className="flex gap-1 text-[#e3e8ef]">
+        {stars.map((index) => (
+          <Star key={index} size={size} fill="currentColor" />
+        ))}
+      </span>
+      <span
+        className="absolute inset-y-0 left-0 flex gap-1 overflow-hidden text-amber-400"
+        style={{ width: `${(score / 5) * 100}%` }}
+      >
+        {stars.map((index) => (
+          <Star key={index} size={size} fill="currentColor" className="shrink-0" />
+        ))}
+      </span>
+    </span>
+  );
+}
+
 function isFemaleName(name: string) {
   const firstName = name.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
   return [
@@ -1087,10 +1127,8 @@ function LandingModal({
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-1 text-amber-400">
-            {Array.from({ length: ratingStars(modal.item.rating).stars }).map((_, index) => (
-              <Star key={index} size={18} fill="currentColor" />
-            ))}
+          <div className="flex items-center gap-1">
+            <StarRating value={modal.item.rating} size={18} />
             <span className="ml-2 text-sm font-black text-slate-600">
               {ratingStars(modal.item.rating).label}
             </span>
@@ -2632,16 +2670,10 @@ export function LandingPage({
                   key={review.id}
                   type="button"
                   onClick={() => setModal({ type: "review", item: review })}
-                  className="flex h-[220px] flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
+                  className="flex h-full flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
                 >
                   <div className="mb-3 flex items-center justify-between gap-2">
-                    <div className="flex gap-1 text-amber-400">
-                      {Array.from({ length: ratingStars(review.rating).stars }).map(
-                        (_, index) => (
-                          <Star key={index} size={14} fill="currentColor" />
-                        )
-                      )}
-                    </div>
+                    <StarRating value={review.rating} size={14} />
                     {review.country && (
                       <span className="shrink-0 whitespace-nowrap rounded-full bg-[#faf8f5] px-2 py-1 text-[11px] font-bold text-[#6b7280]">
                         {countryFlag(review.country)} {review.country}
@@ -2864,13 +2896,11 @@ export function LandingPage({
                 key={review.id}
                 type="button"
                 onClick={() => setModal({ type: "review", item: review })}
-                className="flex h-[242px] flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
+                className="flex h-full flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
               >
                 <div className="mb-4 flex items-center justify-between gap-2">
-                  <div className="flex gap-1 text-amber-400">
-                    {Array.from({ length: ratingStars(review.rating).stars }).map((_, index) => (
-                      <Star key={index} size={16} fill="currentColor" />
-                    ))}
+                  <div className="flex items-center gap-1">
+                    <StarRating value={review.rating} />
                     <span className="ml-1 text-xs font-black text-[#64748b]">
                       {ratingStars(review.rating).label}
                     </span>
@@ -2881,7 +2911,9 @@ export function LandingPage({
                     </span>
                   )}
                 </div>
-                <p className="line-clamp-4 min-h-24 text-sm leading-6 text-slate-700">
+                {/* No min-height: a one-line quote used to leave a block of
+                    empty card under it. The grid still evens out each row. */}
+                <p className="line-clamp-4 text-sm leading-6 text-slate-700">
                   {review.quote}
                 </p>
                 <div className="mt-auto flex items-center gap-3 pt-5">

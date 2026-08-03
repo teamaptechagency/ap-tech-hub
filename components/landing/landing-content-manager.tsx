@@ -885,6 +885,10 @@ export function LandingContentManager({
                   details: "Long review details.",
                   service: "",
                   serviceCategory: "",
+                  // Starts hidden so a half-filled card cannot reach the public
+                  // site — "Client Name / Short review quote." was being
+                  // published verbatim. Untick once the real words are in.
+                  hidden: true,
                 },
               ],
             }))

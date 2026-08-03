@@ -1238,8 +1238,11 @@ function mergeTeamMembers(
 function mergeReviews(reviews: LandingReviewData[] | undefined) {
   return savedOrDefault(reviews, defaultLandingData.reviews).map((review) => ({
     ...review,
-    avatarUrl: "",
-    rating: Math.max(4.2, Math.min(Number(review.rating) || 4.8, 4.9)),
+    // Every rating used to be forced into 4.2–4.9, so a genuine 5 was published
+    // as 4.9 and a genuine 3 as 4.2. The section calls these real client
+    // feedback, which they then were not. Only the 0–5 bound is kept, because a
+    // rating outside it would render more stars than exist.
+    rating: Math.max(0, Math.min(5, Number(review.rating) || 0)),
   }));
 }
 
