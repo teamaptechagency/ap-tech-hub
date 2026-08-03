@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import {
+  importMarketplaceReviews,
   removeUnnecessaryLandingServices,
   updateLandingContent,
 } from "@/actions/settings.actions";
@@ -291,6 +292,7 @@ export function LandingContentManager({
   const [active, setActive] = useState<SectionKey>("hero");
   const [pending, startTransition] = useTransition();
   const [removingServices, setRemovingServices] = useState(false);
+  const [importingReviews, setImportingReviews] = useState(false);
 
   function save() {
     startTransition(async () => {
@@ -325,6 +327,29 @@ export function LandingContentManager({
     // The removal is already saved server-side (same path as Save changes);
     // reload so this editor's local state — including derived category
     // lists — reflects the new server data instead of drifting from it.
+    window.location.reload();
+  }
+
+  async function handleImportMarketplaceReviews() {
+    if (
+      !window.confirm(
+        "Load the reviews clients left on Fiverr into the public portal? Reviews you wrote yourself are kept."
+      )
+    ) {
+      return;
+    }
+    setImportingReviews(true);
+    const result = await importMarketplaceReviews();
+    setImportingReviews(false);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(
+      `${result.imported} marketplace reviews loaded. Reloading...`
+    );
+    // Saved server-side already, same as the service cleanup above — reload so
+    // the editor shows the server's list rather than its own stale copy.
     window.location.reload();
   }
 
@@ -875,6 +900,16 @@ export function LandingContentManager({
       {active === "reviews" && (
         <EditorList
           title="Verified reviews"
+          action={
+            <button
+              type="button"
+              onClick={handleImportMarketplaceReviews}
+              disabled={importingReviews}
+              className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+            >
+              {importingReviews ? "Loading..." : "Load Fiverr reviews"}
+            </button>
+          }
           onAdd={() =>
             setData((current) => ({
               ...current,
@@ -1105,15 +1140,20 @@ function EditorList({
   title,
   children,
   onAdd,
+  action,
 }: {
   title: string;
   children: React.ReactNode;
   onAdd?: () => void;
+  /** Extra control beside "Add item", e.g. a one-off import. */
+  action?: React.ReactNode;
 }) {
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          {action}
         {onAdd && (
           <button
             type="button"
@@ -1124,6 +1164,7 @@ function EditorList({
             Add item
           </button>
         )}
+        </div>
       </div>
       <div className="grid items-stretch gap-4 xl:grid-cols-2">{children}</div>
     </section>
