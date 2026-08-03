@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { uniqueReferralCode } from "@/lib/referral";
 import { ADMIN_ROLES } from "@/lib/roles";
-import { getLandingPageData } from "@/lib/landing-data";
+import { defaultLandingData, getLandingPageData } from "@/lib/landing-data";
 import { liveProjects } from "@/lib/live-projects";
 import { marketplaceReviews } from "@/lib/marketplace-reviews";
 import { revalidatePath } from "next/cache";
@@ -803,6 +803,41 @@ export async function importLiveProjects(): Promise<
   if ("error" in result) return result;
 
   return { success: true, imported: liveProjects.length, replaced };
+}
+
+/**
+ * Puts the marketplace ratings back to the figures read off the live profiles.
+ *
+ * Same reason as the other two imports: whatever was in the editor the last
+ * time Save was pressed is what the site reads, so a rating filled in here in
+ * code never reaches it.
+ */
+export async function importMarketplaceProfiles(): Promise<
+  { error: string } | { success: true; imported: number }
+> {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const data = await getLandingPageData();
+  const fresh = defaultLandingData.marketplace.profiles;
+  const freshIds = new Set(fresh.map((profile) => profile.id));
+
+  const ownProfiles = data.marketplace.profiles.filter(
+    (profile) => !freshIds.has(profile.id)
+  );
+
+  const updated = {
+    ...data,
+    marketplace: {
+      ...data.marketplace,
+      profiles: [...fresh, ...ownProfiles],
+    },
+  };
+
+  const result = await updateLandingContent(JSON.stringify(updated));
+  if ("error" in result) return result;
+
+  return { success: true, imported: fresh.length };
 }
 
 // ============================================
