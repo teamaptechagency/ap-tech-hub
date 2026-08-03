@@ -1723,6 +1723,13 @@ export function LandingPage({
     () => data.reviews.filter((review) => !review.hidden),
     [data.reviews]
   );
+  const visibleMarketplaceProfiles = useMemo(
+    () =>
+      (data.marketplace?.profiles ?? []).filter(
+        (profile) => !profile.hidden && profile.profileUrl.trim()
+      ),
+    [data.marketplace?.profiles]
+  );
 
   const submitContact = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -3014,6 +3021,60 @@ export function LandingPage({
                 View all posts
               </Link>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Marketplace standing, kept as proof rather than a hire-us button —
+          see LandingMarketplaceProfileData for why it is not a CTA. */}
+      {data.marketplace?.enabled && visibleMarketplaceProfiles.length > 0 && (
+        <section className="border-t border-[#e8e3dc] bg-[#faf8f5] px-4 py-10">
+          <div className="mx-auto max-w-[1140px]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6b7385]">
+              {data.marketplace.heading}
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              {visibleMarketplaceProfiles.map((profile) => (
+                <a
+                  key={profile.id}
+                  href={profile.profileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="flex items-center gap-3 rounded-[10px] border border-[#e8e3dc] bg-white px-4 py-3 transition hover:border-[#101623]"
+                >
+                  <span className="text-sm font-extrabold text-[#101623]">
+                    {profile.platform}
+                  </span>
+                  {profile.label && (
+                    <span className="text-sm text-[#6b7385]">
+                      {profile.label}
+                    </span>
+                  )}
+                  {profile.rating && (
+                    <span className="text-sm font-bold text-[#f5a83c]">
+                      ★ {profile.rating}
+                    </span>
+                  )}
+                  {profile.reviewCount && (
+                    <span className="text-xs text-[#6b7385]">
+                      {profile.reviewCount}
+                    </span>
+                  )}
+                  {profile.badge && (
+                    <span className="rounded-full bg-[#101623] px-2 py-0.5 text-[11px] font-bold text-white">
+                      {profile.badge}
+                    </span>
+                  )}
+                </a>
+              ))}
+            </div>
+
+            {data.marketplace.note && (
+              <p className="mt-4 max-w-2xl text-xs leading-6 text-[#6b7385]">
+                {data.marketplace.note}
+              </p>
+            )}
           </div>
         </section>
       )}
