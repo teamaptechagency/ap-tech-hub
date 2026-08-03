@@ -74,13 +74,11 @@ export function WeekCard({
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<string | null>("MEDIUM");
   const [busy, setBusy] = useState(false);
-  // Only the weeks that need doing something today open on their own. A
-  // six-month job carries 24 weeks of ten tasks each, and expanding the
-  // finished and not-yet-started ones buried the active week under a page
-  // several screens long.
-  const [collapsed, setCollapsed] = useState(
-    week.state === "COMPLETED" || week.state === "UPCOMING"
-  );
+  // Only the week being worked on opens by itself. A six-month job carries 24
+  // weeks of ten tasks each, and anything still owed from a week that has
+  // already passed is listed in the carried-over panel anyway, so opening the
+  // rest only buries the active week under several screens of scrolling.
+  const [collapsed, setCollapsed] = useState(week.state !== "ACTIVE");
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancelReasonInput, setCancelReasonInput] = useState("");
   const [cancelBusy, setCancelBusy] = useState(false);
