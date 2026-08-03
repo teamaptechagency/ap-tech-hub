@@ -1101,12 +1101,14 @@ export const defaultLandingData: LandingPageData = {
       {
         id: "marketplace-upwork",
         platform: "Upwork",
-        label: "AP Tech Agency",
+        // Matches the name on the profile the link opens, so a visitor can see
+        // straight away that the badge and the destination are the same account.
+        label: "Nazmul H.",
         profileUrl:
           "https://www.upwork.com/freelancers/~01930494872738921b",
-        badge: "",
-        rating: "",
-        reviewCount: "",
+        badge: "Top Rated",
+        rating: "5.0",
+        reviewCount: "5 jobs · 100% job success",
       },
       {
         id: "marketplace-fiverr-wp-nahida",
@@ -1124,9 +1126,9 @@ export const defaultLandingData: LandingPageData = {
         platform: "Fiverr",
         label: "envatoelem",
         profileUrl: "https://www.fiverr.com/envatoelem",
-        badge: "",
-        rating: "",
-        reviewCount: "",
+        badge: "Level 2 Seller",
+        rating: "4.9",
+        reviewCount: "35 reviews",
       },
     ],
   },
