@@ -56,12 +56,14 @@ export function MeetingsBoard({
   jobs,
   canCreate,
   isAdmin,
+  currentUserName,
 }: {
   meetings: MeetingRow[];
   people: Option[];
   jobs: Option[];
   canCreate: boolean;
   isAdmin: boolean;
+  currentUserName: string | null;
 }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [joining, setJoining] = useState<MeetingRow | null>(null);
@@ -76,6 +78,20 @@ export function MeetingsBoard({
 
   function meetingUrl(roomCode: string) {
     return `https://meet.jit.si/APTechHub-${roomCode}`;
+  }
+
+  /**
+   * The room URL for the embed, carrying who is joining.
+   *
+   * Jitsi reads config from the URL fragment, JSON-encoded. Without a display
+   * name it opens its own pre-join screen and asks the participant to type a
+   * name this platform already knows. Deliberately not used for the guest
+   * link — that one gets copied to other people, who are not this user.
+   */
+  function embedUrl(roomCode: string) {
+    if (!currentUserName) return meetingUrl(roomCode);
+    const name = encodeURIComponent(JSON.stringify(currentUserName));
+    return `${meetingUrl(roomCode)}#userInfo.displayName=${name}`;
   }
 
   async function copyGuestLink(roomCode: string) {
@@ -146,7 +162,7 @@ export function MeetingsBoard({
           {WARNING}
         </div>
         <iframe
-          src={meetingUrl(inRoom.roomCode)}
+          src={embedUrl(inRoom.roomCode)}
           allow="camera; microphone; fullscreen; display-capture"
           className="h-[70vh] w-full rounded-lg border"
         />

@@ -38,6 +38,7 @@ export default async function ClientMeetingsPage() {
       jobs={[]}
       canCreate={false}
       isAdmin={false}
+      currentUserName={session?.user?.name ?? null}
     />
   );
 }

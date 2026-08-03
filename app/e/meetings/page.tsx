@@ -54,6 +54,7 @@ export default async function EmployeeMeetingsPage() {
       jobs={jobs.map((j) => ({ id: j.id, name: j.title }))}
       canCreate={true}
       isAdmin={false}
+      currentUserName={session.user.name ?? null}
     />
   );
 }
