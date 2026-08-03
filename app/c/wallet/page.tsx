@@ -6,13 +6,31 @@ import { Star } from "lucide-react";
 import { PointExchangeForm } from "@/components/client-portal/point-exchange-form";
 
 const txnLabel: Record<string, string> = {
-  INVOICE_PAYMENT: "Invoice payment",
   ADVANCE: "Advance payment",
   ADJUSTMENT: "Adjustment",
   POINT_EXCHANGE: "Points exchanged",
   INVOICE_DEDUCT: "Applied to invoice",
   REFUND: "Refund",
 };
+
+/**
+ * The movements that are actually the client's money.
+ *
+ * INVOICE_PAYMENT is deliberately absent. Paying a monthly service invoice is
+ * the agency's revenue and never enters the client's balance, but the row was
+ * listed here all the same — so the history showed money the wallet does not
+ * hold, and an advance invoice appeared twice over, once as the payment and
+ * again as the advance it created. The rows in this list now add up to the
+ * balance shown above them. Invoice payments are on the Invoices page, where
+ * they belong.
+ */
+const WALLET_KINDS = [
+  "ADVANCE",
+  "ADJUSTMENT",
+  "POINT_EXCHANGE",
+  "INVOICE_DEDUCT",
+  "REFUND",
+] as const;
 
 export default async function ClientWalletPage() {
   const session = await auth();
@@ -25,7 +43,7 @@ export default async function ClientWalletPage() {
       select: { balance: true, points: true, currency: true },
     }),
     prisma.clientTxn.findMany({
-      where: { clientId },
+      where: { clientId, kind: { in: [...WALLET_KINDS] } },
       orderBy: { createdAt: "desc" },
       take: 15,
     }),
@@ -116,6 +134,10 @@ export default async function ClientWalletPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Wallet history</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Money held in your balance and what it was spent on. Payments for
+              delivered work are on the Invoices page.
+            </p>
           </CardHeader>
           <CardContent className="divide-y p-0 px-4 pb-2">
             {txns.length === 0 && (
