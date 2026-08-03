@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import {
   importLiveProjects,
+  importMarketplaceProfiles,
   importMarketplaceReviews,
   removeUnnecessaryLandingServices,
   updateLandingContent,
@@ -295,6 +296,7 @@ export function LandingContentManager({
   const [removingServices, setRemovingServices] = useState(false);
   const [importingReviews, setImportingReviews] = useState(false);
   const [importingProjects, setImportingProjects] = useState(false);
+  const [importingProfiles, setImportingProfiles] = useState(false);
 
   function save() {
     startTransition(async () => {
@@ -329,6 +331,18 @@ export function LandingContentManager({
     // The removal is already saved server-side (same path as Save changes);
     // reload so this editor's local state — including derived category
     // lists — reflects the new server data instead of drifting from it.
+    window.location.reload();
+  }
+
+  async function handleImportMarketplaceProfiles() {
+    setImportingProfiles(true);
+    const result = await importMarketplaceProfiles();
+    setImportingProfiles(false);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Marketplace figures loaded. Reloading...");
     window.location.reload();
   }
 
@@ -995,6 +1009,16 @@ export function LandingContentManager({
       {active === "marketplace" && (
         <EditorList
           title="Marketplace proof"
+          action={
+            <button
+              type="button"
+              onClick={handleImportMarketplaceProfiles}
+              disabled={importingProfiles}
+              className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+            >
+              {importingProfiles ? "Loading..." : "Load figures"}
+            </button>
+          }
           onAdd={() =>
             setData((current) => ({
               ...current,

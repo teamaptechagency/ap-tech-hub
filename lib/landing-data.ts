@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { liveProjects } from "@/lib/live-projects";
 import { marketplaceReviews } from "@/lib/marketplace-reviews";
 import { parseUserPortfolio, type UserPortfolioItem } from "@/lib/user-portfolio";
 
@@ -178,9 +179,6 @@ export type LandingAdData = {
   desktopOnly?: boolean | null;
 };
 
-const image = (id: string) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1400&q=80`;
-
 export const defaultLandingData: LandingPageData = {
   topBar: {
     enabled: true,
@@ -237,7 +235,6 @@ export const defaultLandingData: LandingPageData = {
       title: "Digital Solutions for Growing Businesses",
       description:
         "AP Tech Agency provides website development, WordPress, UI/UX design, custom software, React development, and digital business solutions for clients in Bangladesh and around the world.",
-      imageUrl: image("photo-1556761175-b413da4baf72"),
       primaryLabel: "Start a Project",
       primaryTarget: "#contact",
       secondaryLabel: "View Our Services",
@@ -249,7 +246,6 @@ export const defaultLandingData: LandingPageData = {
       title: "Launch Fast Websites That Bring Real Leads",
       description:
         "WordPress, Elementor, Next.js and Laravel websites built for speed, trust and conversion.",
-      imageUrl: image("photo-1460925895917-afdab827c52f"),
       primaryLabel: "Start Web Project",
       primaryTarget: "#contact",
       secondaryLabel: "View Services",
@@ -261,7 +257,6 @@ export const defaultLandingData: LandingPageData = {
       title: "Design Clear Interfaces Customers Can Trust",
       description:
         "Figma-first UI/UX, landing pages, product flows and conversion-focused design systems.",
-      imageUrl: image("photo-1559028012-481c04fa702d"),
       primaryLabel: "Plan Design",
       primaryTarget: "#contact",
       secondaryLabel: "Meet Team",
@@ -273,7 +268,6 @@ export const defaultLandingData: LandingPageData = {
       title: "Grow With SEO, Content And Campaign Support",
       description:
         "Search optimization, social media support, outreach and reporting for steady business growth.",
-      imageUrl: image("photo-1551288049-bebda4e38f71"),
       primaryLabel: "Grow My Business",
       primaryTarget: "#contact",
       secondaryLabel: "Popular Services",
@@ -285,7 +279,6 @@ export const defaultLandingData: LandingPageData = {
       title: "Find Better Prospects And Follow Up Smarter",
       description:
         "Targeted lead lists, outreach copy and follow-up systems for agencies, startups and service teams.",
-      imageUrl: image("photo-1556761175-5973dc0f32e7"),
       primaryLabel: "Start Outreach",
       primaryTarget: "#contact",
       secondaryLabel: "View Reviews",
@@ -297,7 +290,6 @@ export const defaultLandingData: LandingPageData = {
       title: "Interior And Exterior 3D Visuals For Projects",
       description:
         "Architecture visualization, interior modeling and exterior renders for presentations and approvals.",
-      imageUrl: image("photo-1503387762-592deb58ef4e"),
       primaryLabel: "Request 3D Work",
       primaryTarget: "#contact",
       secondaryLabel: "View Projects",
@@ -309,7 +301,6 @@ export const defaultLandingData: LandingPageData = {
       title: "Clean Business Support For Daily Operations",
       description:
         "Accounting support, document cleanup, data entry, research and office freelancing help when your team needs backup.",
-      imageUrl: image("photo-1554224155-6726b3ff858f"),
       primaryLabel: "Get Support",
       primaryTarget: "#contact",
       secondaryLabel: "View Services",
@@ -606,44 +597,7 @@ export const defaultLandingData: LandingPageData = {
       tags: ["Lead Generation", "Outreach", "B2B"],
     },
   ],
-  projects: [
-    {
-      id: "project-finance",
-      title: "Finance Dashboard",
-      category: "Web Application",
-      description: "A clean reporting dashboard for finance teams.",
-      details: "Built with performance-focused dashboards, charts and approval flows.",
-      imageUrl: image("photo-1551288049-bebda4e38f71"),
-      review: "“Our finance team finally has one dashboard everyone trusts.” — Ryan Cooper, Ledgerline Partners (USA)",
-    },
-    {
-      id: "project-commerce",
-      title: "TrendStore E-commerce",
-      category: "E-commerce",
-      description: "A modern store experience for product discovery.",
-      details: "Includes product cards, checkout-friendly UI and campaign-ready sections.",
-      imageUrl: image("photo-1556742049-0cfed4f6a45d"),
-      review: "“Product pages finally load fast and checkouts feel effortless.” — Priya Nair, TrendStore Retail (India)",
-    },
-    {
-      id: "project-travel",
-      title: "Travel Explorer",
-      category: "Web Design",
-      description: "A visual landing experience for travel packages.",
-      details: "Designed to highlight locations, packages, reviews and lead capture.",
-      imageUrl: image("photo-1500530855697-b586d89ba3ee"),
-      review: "“Visitors finally spend time browsing instead of bouncing.” — Marco Rossi, Explora Viaggi (Italy)",
-    },
-    {
-      id: "project-health",
-      title: "HealthCare Plus",
-      category: "Web Application",
-      description: "A service platform for patient-friendly scheduling.",
-      details: "Focused on clarity, mobile-first layouts and simple inquiry flows.",
-      imageUrl: image("photo-1576091160399-112ba8d25d1d"),
-      review: "“Patients book appointments without calling the front desk anymore.” — Fatima Al-Sayed, Wellspring Clinic (UAE)",
-    },
-  ],
+  projects: liveProjects,
   team: [
     {
       id: "team-nazmul",
@@ -803,8 +757,9 @@ export const defaultLandingData: LandingPageData = {
     eyebrow: "About AP Tech",
     title: "About AP Tech Agency",
     description:
-      "We are a team of passionate creators, developers and strategists helping businesses grow with smart digital solutions. Our goal is simple: bring your ideas to life and help your business move faster.",
-    imageUrl: image("photo-1551836022-d5d88e9218df"),
+      "We are a small, skilled digital team focused on UI/UX design and website development — UI/UX designers, WordPress developers, React developers and an analyst, working with businesses, startups, agencies and personal brands. The focus is not only design but usability, performance, responsiveness and long-term quality.",
+    // Never rendered anywhere; kept because the type requires it.
+    imageUrl: "",
     points: [
       { title: "Client Focused", text: "Your success is our priority." },
       { title: "Quality Work", text: "We deliver high-quality results." },
