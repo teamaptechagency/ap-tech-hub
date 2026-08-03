@@ -1138,46 +1138,38 @@ function looksLikeOldSampleTeam(team: LandingTeamMemberData[] | undefined) {
   return hasOldPlaceholder || (team.length < defaultLandingData.team.length && missingRequestedMembers);
 }
 
+/**
+ * Defaults seed a section nobody has saved yet. Once the admin has saved one,
+ * the saved list is the whole truth about which items exist — including an
+ * empty one.
+ *
+ * Every section here used to fold the defaults back in on read, so anything
+ * shipped in defaultLandingData could not be removed: it reappeared on the
+ * next load, which is exactly what "I deleted it and it came back" was. That
+ * makes the difference between `undefined` (never saved) and `[]` (emptied on
+ * purpose) load-bearing — do not collapse them with a `.length` check.
+ */
+function savedOrDefault<T>(saved: T[] | undefined, defaults: T[]): T[] {
+  return saved ?? defaults;
+}
+
 function mergeTeamMembers(
   savedTeam: LandingTeamMemberData[] | undefined,
   liveTeam: LandingTeamMemberData[]
 ) {
-  const source =
-    savedTeam?.length && !looksLikeOldSampleTeam(savedTeam)
-      ? savedTeam
-      : liveTeam.length && !looksLikeOldSampleTeam(liveTeam)
-        ? liveTeam
-        : defaultLandingData.team;
+  // An unsaved (or demo) team still falls back to the real staff list, which is
+  // what the manager's "auto-sync" hint promises.
+  if (!savedTeam || looksLikeOldSampleTeam(savedTeam)) {
+    return liveTeam.length && !looksLikeOldSampleTeam(liveTeam)
+      ? liveTeam
+      : defaultLandingData.team;
+  }
 
-  const existingNames = new Set(
-    source.map((member) => normalizeKey(member.name))
-  );
-
-  return [
-    ...source,
-    ...defaultLandingData.team.filter(
-      (member) => !existingNames.has(normalizeKey(member.name))
-    ),
-  ];
+  return savedTeam;
 }
 
 function mergeReviews(reviews: LandingReviewData[] | undefined) {
-  const source = reviews?.length ? reviews : defaultLandingData.reviews;
-  const existingKeys = new Set(
-    source.map((review) =>
-      normalizeKey(`${review.clientName}-${review.company}-${review.quote}`)
-    )
-  );
-
-  return [
-    ...source,
-    ...defaultLandingData.reviews.filter(
-      (review) =>
-        !existingKeys.has(
-          normalizeKey(`${review.clientName}-${review.company}-${review.quote}`)
-        )
-    ),
-  ].map((review) => ({
+  return savedOrDefault(reviews, defaultLandingData.reviews).map((review) => ({
     ...review,
     avatarUrl: "",
     rating: Math.max(4.2, Math.min(Number(review.rating) || 4.8, 4.9)),
@@ -1185,14 +1177,16 @@ function mergeReviews(reviews: LandingReviewData[] | undefined) {
 }
 
 function mergeFooter(savedFooter: Partial<LandingPageData["footer"]> | undefined) {
+  // Any policy the admin actually wrote wins. This used to demand more than
+  // 220 characters, so a shorter edit was silently swapped back for the stock
+  // text and looked like the save had failed.
   const privacyPolicy =
-    savedFooter?.privacyPolicy && savedFooter.privacyPolicy.length > 220
+    savedFooter?.privacyPolicy?.trim()
       ? savedFooter.privacyPolicy
       : defaultLandingData.footer.privacyPolicy;
-  const terms =
-    savedFooter?.terms && savedFooter.terms.length > 220
-      ? savedFooter.terms
-      : defaultLandingData.footer.terms;
+  const terms = savedFooter?.terms?.trim()
+    ? savedFooter.terms
+    : defaultLandingData.footer.terms;
 
   return {
     ...defaultLandingData.footer,
@@ -1203,84 +1197,42 @@ function mergeFooter(savedFooter: Partial<LandingPageData["footer"]> | undefined
 }
 
 function mergeTopBarMessages(savedMessages: string[] | undefined) {
-  const cleanedSaved = (savedMessages ?? [])
-    .map((message) => message.trim())
-    .filter(Boolean);
-  const messages = cleanedSaved.length
-    ? [...cleanedSaved, ...defaultLandingData.topBar.messages]
-    : defaultLandingData.topBar.messages;
+  if (!savedMessages) return defaultLandingData.topBar.messages;
 
-  return Array.from(new Set(messages));
+  return Array.from(
+    new Set(savedMessages.map((message) => message.trim()).filter(Boolean))
+  );
 }
 
 function mergeHeroSlides(savedSlides: LandingHeroSlideData[] | undefined) {
-  const slides = savedSlides?.length ? savedSlides : defaultLandingData.heroSlides;
-  const cleanedSlides = slides.filter(
+  // The one retired slide stays filtered out wherever it is still stored.
+  return savedOrDefault(savedSlides, defaultLandingData.heroSlides).filter(
     (slide) =>
       !(
         slide.id === "hero-2" &&
         slide.title === "Agency Support For Fast-Moving Teams"
       )
   );
-  const existingKeys = new Set(
-    cleanedSlides.map((slide) => (slide.id || slide.title).trim().toLowerCase())
-  );
-  const mergedSlides = [
-    ...cleanedSlides,
-    ...defaultLandingData.heroSlides.filter(
-      (slide) => !existingKeys.has((slide.id || slide.title).trim().toLowerCase())
-    ),
-  ];
-
-  return mergedSlides.length ? mergedSlides : defaultLandingData.heroSlides;
 }
 
 function mergeLandingContent(
   saved: Partial<LandingPageData>,
   liveTeam = defaultLandingData.team
 ): LandingPageData {
-  const mergeByKey = <T>(
-    savedItems: T[] | undefined,
-    defaultItems: T[],
-    getKey: (item: T) => string
-  ) => {
-    const items = savedItems?.length ? savedItems : defaultItems;
-    const existingKeys = new Set(
-      items.map((item) => getKey(item).trim().toLowerCase())
-    );
-    return [
-      ...items,
-      ...defaultItems.filter(
-        (item) => !existingKeys.has(getKey(item).trim().toLowerCase())
-      ),
-    ];
-  };
   const mergeServices = (services: LandingServiceData[] | undefined) =>
-    mergeByKey(
-      services,
-      defaultLandingData.services,
-      (service) => service.id || service.title
-    ).map((service) => {
+    savedOrDefault(services, defaultLandingData.services).map((service) => {
       const defaultService = defaultLandingData.services.find(
         (item) =>
           item.id === service.id ||
           item.title.toLowerCase() === service.title.toLowerCase()
       );
 
-      return defaultService
-        ? {
-            ...defaultService,
-            ...service,
-            title: defaultService.title,
-            description: service.description || defaultService.description,
-            details: service.details || defaultService.details,
-            priceRange: service.priceRange || defaultService.priceRange,
-            rating:
-              service.rating && service.rating !== "5.0"
-                ? service.rating
-                : defaultService.rating,
-          }
-        : service;
+      // The default only fills in keys the saved service does not carry at
+      // all, so a field added in a later release still gets a sensible value.
+      // It must not override what the admin typed — the title used to be taken
+      // from the default outright, which made renaming a service impossible,
+      // and the `||` fallbacks meant a field could never be cleared.
+      return defaultService ? { ...defaultService, ...service } : service;
     });
 
   return {
@@ -1308,15 +1260,12 @@ function mergeLandingContent(
       },
     },
     heroSlides: mergeHeroSlides(saved.heroSlides),
-    categories: mergeByKey(
+    categories: savedOrDefault(
       saved.categories,
-      defaultLandingData.categories,
-      (category) => category.slug
+      defaultLandingData.categories
     ),
     services: mergeServices(saved.services),
-    projects: saved.projects?.length
-      ? saved.projects
-      : defaultLandingData.projects,
+    projects: savedOrDefault(saved.projects, defaultLandingData.projects),
     team: mergeTeamMembers(saved.team, liveTeam),
     reviews: mergeReviews(saved.reviews),
     seo: {

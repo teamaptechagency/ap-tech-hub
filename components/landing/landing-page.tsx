@@ -1661,7 +1661,9 @@ export function LandingPage({
   const activeHero = data.heroSlides[heroIndex] ?? data.heroSlides[0];
 
   useEffect(() => {
-    if (page !== "home") return;
+    // Nothing to rotate through with one slide, and the modulo turns the index
+    // into NaN with none at all — the admin can now delete every slide.
+    if (page !== "home" || data.heroSlides.length < 2) return;
     const timer = window.setInterval(() => {
       setHeroIndex((current) => (current + 1) % data.heroSlides.length);
     }, 6500);
@@ -1741,6 +1743,7 @@ export function LandingPage({
   const heroMove = (direction: number) => {
     setHeroIndex((current) => {
       const total = data.heroSlides.length;
+      if (!total) return current;
       return (current + direction + total) % total;
     });
   };
