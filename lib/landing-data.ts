@@ -776,8 +776,8 @@ export const defaultLandingData: LandingPageData = {
     // Ratings and counts are left blank on purpose: they change, and an
     // invented number is worse than none. Fill them in from the live profiles.
     enabled: true,
-    heading: "Also verified on",
-    note: "Independent ratings from the marketplaces we have delivered on. Work with us directly here — same team, no platform fee.",
+    heading: "Where we have delivered",
+    note: "Independent ratings from the marketplaces we work on, alongside our direct and on-site work. Hire us directly here — same team, no platform fee.",
     profiles: [
       {
         id: "marketplace-upwork",
@@ -789,7 +789,7 @@ export const defaultLandingData: LandingPageData = {
           "https://www.upwork.com/freelancers/~01930494872738921b",
         badge: "Top Rated",
         rating: "5.0",
-        reviewCount: "5 jobs · 100% job success",
+        reviewCount: "5 jobs · 10 hrs · $1K+ earned",
       },
       {
         id: "marketplace-fiverr-wp-nahida",
@@ -810,6 +810,18 @@ export const defaultLandingData: LandingPageData = {
         badge: "Level 2 Seller",
         rating: "4.9",
         reviewCount: "35 reviews",
+      },
+      {
+        // Direct work, so there is no marketplace page to link to and no
+        // third-party rating — deliberately carries a count and nothing else
+        // rather than borrowing a star rating it has not been given.
+        id: "marketplace-direct",
+        platform: "Direct & local",
+        label: "Bangladesh & on-site",
+        profileUrl: "",
+        badge: "",
+        rating: "",
+        reviewCount: "440+ jobs delivered",
       },
     ],
   },
@@ -1039,7 +1051,29 @@ function mergeLandingContent(
       profiles: savedOrDefault(
         saved.marketplace?.profiles,
         defaultLandingData.marketplace.profiles
-      ),
+      ).map((profile) => {
+        // A blank rating, badge or count is nobody's deliberate choice — it is
+        // a field that was never filled in. Those fall back to the figure held
+        // in code, so a profile saved before the numbers were known does not
+        // sit on the page empty forever waiting to be retyped.
+        //
+        // Only fields, never membership: a profile deleted from the list stays
+        // deleted, because this maps over what was saved rather than over the
+        // defaults.
+        const known = defaultLandingData.marketplace.profiles.find(
+          (candidate) => candidate.id === profile.id
+        );
+        if (!known) return profile;
+
+        return {
+          ...profile,
+          badge: profile.badge?.trim() ? profile.badge : known.badge,
+          rating: profile.rating?.trim() ? profile.rating : known.rating,
+          reviewCount: profile.reviewCount?.trim()
+            ? profile.reviewCount
+            : known.reviewCount,
+        };
+      }),
     },
     footer: mergeFooter(saved.footer),
   };

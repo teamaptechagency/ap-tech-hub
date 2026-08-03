@@ -1766,8 +1766,10 @@ export function LandingPage({
   );
   const visibleMarketplaceProfiles = useMemo(
     () =>
+      // A URL is no longer required: direct work has no marketplace page to
+      // link to, and used to be dropped from the row for the lack of one.
       (data.marketplace?.profiles ?? []).filter(
-        (profile) => !profile.hidden && profile.profileUrl.trim()
+        (profile) => !profile.hidden && (profile.platform?.trim() || profile.label?.trim())
       ),
     [data.marketplace?.profiles]
   );
@@ -3200,40 +3202,67 @@ export function LandingPage({
               {data.marketplace.heading}
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-3">
-              {visibleMarketplaceProfiles.map((profile) => (
-                <a
-                  key={profile.id}
-                  href={profile.profileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  className="flex items-center gap-3 rounded-[10px] border border-[#e8e3dc] bg-white px-4 py-3 transition hover:border-[#101623]"
-                >
-                  <span className="text-sm font-extrabold text-[#101623]">
-                    {profile.platform}
+            {/* One row of four once there is room. Below that it swipes, which
+                beats four full-width blocks stacked down a phone screen. */}
+            <div className="mt-4 flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] md:grid md:grid-cols-2 md:overflow-visible md:pb-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              {visibleMarketplaceProfiles.map((profile) => {
+                const body = (
+                  <>
+                    <span className="flex items-baseline gap-2">
+                      <span className="text-sm font-extrabold text-[#101623]">
+                        {profile.platform}
+                      </span>
+                      {profile.label && (
+                        <span className="truncate text-xs text-[#6b7385]">
+                          {profile.label}
+                        </span>
+                      )}
+                    </span>
+
+                    {(profile.rating || profile.reviewCount) && (
+                      <span className="mt-1.5 flex items-baseline gap-2">
+                        {profile.rating && (
+                          <span className="text-sm font-bold text-[#f5a83c]">
+                            ★ {profile.rating}
+                          </span>
+                        )}
+                        {profile.reviewCount && (
+                          <span className="text-xs leading-5 text-[#6b7385]">
+                            {profile.reviewCount}
+                          </span>
+                        )}
+                      </span>
+                    )}
+
+                    {profile.badge && (
+                      <span className="mt-2 w-fit rounded-full bg-[#101623] px-2 py-0.5 text-[11px] font-bold text-white">
+                        {profile.badge}
+                      </span>
+                    )}
+                  </>
+                );
+
+                const shell =
+                  "flex w-[74vw] shrink-0 snap-start flex-col rounded-[10px] border border-[#e8e3dc] bg-white px-4 py-3 sm:w-[46vw] md:w-auto";
+
+                // Direct work has nowhere to send the visitor, so it renders as
+                // a plain badge rather than a link that goes nowhere.
+                return profile.profileUrl?.trim() ? (
+                  <a
+                    key={profile.id}
+                    href={profile.profileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className={`${shell} transition hover:border-[#101623]`}
+                  >
+                    {body}
+                  </a>
+                ) : (
+                  <span key={profile.id} className={shell}>
+                    {body}
                   </span>
-                  {profile.label && (
-                    <span className="text-sm text-[#6b7385]">
-                      {profile.label}
-                    </span>
-                  )}
-                  {profile.rating && (
-                    <span className="text-sm font-bold text-[#f5a83c]">
-                      ★ {profile.rating}
-                    </span>
-                  )}
-                  {profile.reviewCount && (
-                    <span className="text-xs text-[#6b7385]">
-                      {profile.reviewCount}
-                    </span>
-                  )}
-                  {profile.badge && (
-                    <span className="rounded-full bg-[#101623] px-2 py-0.5 text-[11px] font-bold text-white">
-                      {profile.badge}
-                    </span>
-                  )}
-                </a>
-              ))}
+                );
+              })}
             </div>
 
             {data.marketplace.note && (
