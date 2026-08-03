@@ -37,7 +37,7 @@ export function CookieConsent() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-50 rounded-lg border bg-card p-3 text-card-foreground shadow-lg sm:left-auto sm:max-w-md">
+    <div className="fixed inset-x-3 bottom-3 z-50 rounded-lg border bg-card p-3 text-card-foreground shadow-lg sm:left-auto sm:max-w-md print:hidden">
       <p className="text-sm font-medium">Hub cookie permission</p>
       <p className="mt-1 text-xs text-muted-foreground">
         AP Tech Hub uses essential cookies for secure login, role-based portal
