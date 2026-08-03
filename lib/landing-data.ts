@@ -1113,9 +1113,11 @@ export const defaultLandingData: LandingPageData = {
         platform: "Fiverr",
         label: "wp_nahida",
         profileUrl: "https://www.fiverr.com/wp_nahida",
-        badge: "",
-        rating: "",
-        reviewCount: "",
+        // Read off the live profile on 3 August 2026. Update it here, or in
+        // the manager, when the profile moves.
+        badge: "Level 2 Seller",
+        rating: "4.9",
+        reviewCount: "33 reviews",
       },
       {
         id: "marketplace-fiverr-envatoelem",
