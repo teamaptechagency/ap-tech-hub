@@ -1230,6 +1230,124 @@ export async function addSpecialOrderMessage(formData: {
   return { success: true };
 }
 
+export async function updateSpecialOrderMessage(formData: {
+  orderId: string;
+  messageId: string;
+  sender: "BUYER" | "SELLER";
+  message: string;
+  attachment?: string;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const message = formData.message.trim();
+  const attachment = formData.attachment?.trim();
+  if (!message) return { error: "Message is required" };
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: formData.orderId },
+    select: { status: true, conversationMessages: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED") {
+    return { error: "Completed orders are view only" };
+  }
+
+  const messages = jsonArray<ScriptMessage>(order.conversationMessages);
+  const index = messages.findIndex((item) => item.id === formData.messageId);
+  if (index < 0 || messages[index].kind === "BREAK") {
+    return { error: "Message not found" };
+  }
+  messages[index] = {
+    ...messages[index],
+    sender: formData.sender,
+    message,
+    attachment: attachment || undefined,
+  };
+
+  await prisma.specialOrder.update({
+    where: { id: formData.orderId },
+    data: { conversationMessages: messages },
+  });
+  await triggerPusher(`special-order-script-${formData.orderId}`, "messages-updated", {
+    messages,
+  });
+  revalidatePath(`/special-orders/${formData.orderId}`);
+  revalidatePath(`/p/special-orders/${formData.orderId}`);
+  return { success: true };
+}
+
+export async function deleteSpecialOrderMessage(
+  orderId: string,
+  messageId: string
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { status: true, conversationMessages: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED") {
+    return { error: "Completed orders are view only" };
+  }
+
+  const current = jsonArray<ScriptMessage>(order.conversationMessages);
+  if (!current.some((item) => item.id === messageId)) {
+    return { error: "Message not found" };
+  }
+  const messages = current.filter((item) => item.id !== messageId);
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: { conversationMessages: messages },
+  });
+  await triggerPusher(`special-order-script-${orderId}`, "messages-updated", {
+    messages,
+  });
+  revalidatePath(`/special-orders/${orderId}`);
+  revalidatePath(`/p/special-orders/${orderId}`);
+  return { success: true };
+}
+
+export async function reorderSpecialOrderMessages(
+  orderId: string,
+  orderedIds: string[]
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { status: true, conversationMessages: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED") {
+    return { error: "Completed orders are view only" };
+  }
+
+  const current = jsonArray<ScriptMessage>(order.conversationMessages);
+  if (
+    orderedIds.length !== current.length ||
+    new Set(orderedIds).size !== current.length ||
+    current.some((item) => !orderedIds.includes(item.id))
+  ) {
+    return { error: "Conversation changed. Refresh and try again." };
+  }
+  const byId = new Map(current.map((item) => [item.id, item]));
+  const messages = orderedIds.map((id) => byId.get(id)!);
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: { conversationMessages: messages },
+  });
+  await triggerPusher(`special-order-script-${orderId}`, "messages-updated", {
+    messages,
+  });
+  revalidatePath(`/special-orders/${orderId}`);
+  revalidatePath(`/p/special-orders/${orderId}`);
+  return { success: true };
+}
+
 // ============================================
 // ADD A SPECIAL BREAK INTO THE SCRIPT
 // A one-off pause inserted at a specific point in
