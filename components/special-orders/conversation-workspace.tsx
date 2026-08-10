@@ -9,6 +9,7 @@ import {
   addSpecialOrderBreak,
   addSpecialOrderMessage,
   addSpecialOrderOffer,
+  deleteSpecialOrderField,
   deleteSpecialOrderMessage,
   reorderSpecialOrderMessages,
   saveSpecialOrderField,
@@ -531,6 +532,23 @@ export function ConversationWorkspace({
     }
   }
 
+  async function removeField(field: ConversationField) {
+    if (!window.confirm(`Delete this ${fieldLabel(field.type).toLowerCase()}?`)) {
+      return;
+    }
+    setBusy(true);
+    const result = await deleteSpecialOrderField(
+      orderId,
+      field.id ?? field.type
+    );
+    setBusy(false);
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+    router.refresh();
+  }
+
   function toggleFieldAudience(role: "ADMIN" | "PARTNER" | "CLIENT") {
     setFieldAudience((current) =>
       current.includes(role)
@@ -950,15 +968,28 @@ export function ConversationWorkspace({
                           </a>
                         )}
                       </button>
-                      {!readOnly && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                          onClick={() => openField(field.type, field)}
-                        >
-                          Edit
-                        </Button>
+                      {!readOnly && !actionsLocked && (
+                        <div className="flex shrink-0 gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            type="button"
+                            onClick={() => openField(field.type, field)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            type="button"
+                            disabled={busy}
+                            onClick={() => removeField(field)}
+                            className="text-red-500 hover:text-red-600"
+                            title="Delete field"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>

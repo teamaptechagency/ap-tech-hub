@@ -1739,6 +1739,49 @@ export async function toggleSpecialOrderFieldDone(
   return { success: true };
 }
 
+export async function deleteSpecialOrderField(
+  orderId: string,
+  fieldId: string
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const cleanOrderId = orderId.trim();
+  const cleanFieldId = fieldId.trim();
+  if (!cleanOrderId || !cleanFieldId) {
+    return { error: "Field not found" };
+  }
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: cleanOrderId },
+    select: { status: true, conversationFields: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED") {
+    return { error: "Completed orders are view only" };
+  }
+
+  const current = jsonArray<ConversationField>(order.conversationFields);
+  const exists = current.some(
+    (field) => field.id === cleanFieldId || (!field.id && field.type === cleanFieldId)
+  );
+  if (!exists) return { error: "Field not found" };
+
+  const fields = current.filter(
+    (field) =>
+      field.id !== cleanFieldId && !(!field.id && field.type === cleanFieldId)
+  );
+  await prisma.specialOrder.update({
+    where: { id: cleanOrderId },
+    data: { conversationFields: fields },
+  });
+
+  revalidatePath(`/special-orders/${cleanOrderId}`);
+  revalidatePath(`/p/special-orders/${cleanOrderId}`);
+  revalidatePath(`/c/special-orders/${cleanOrderId}`);
+  return { success: true };
+}
+
 export async function updateSpecialOrderBuyerName(
   orderId: string,
   buyerName: string
