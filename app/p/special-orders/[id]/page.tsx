@@ -36,11 +36,17 @@ const statusLabel: Record<string, string> = {
 
 type ScriptMessage = {
   id: string;
+  kind?: "MESSAGE" | "BREAK" | "OFFER";
   sender: "BUYER" | "SELLER";
   message: string;
   attachment?: string;
   done: boolean;
   createdAt: string;
+  copiedAt?: string;
+  breakMinutes?: number;
+  offerAmountUsd?: number;
+  offerDeliveryDays?: number;
+  offerRevisions?: number;
 };
 
 type ConversationField = {
@@ -51,11 +57,13 @@ type ConversationField = {
     | "IMPORTANT"
     | "AIDOC"
     | "DOCUMENT"
+    | "DELIVERY_DOCUMENT"
     | "CLIENT_REVIEW"
     | "SELLER_REVIEW";
   value: string;
   url?: string;
   done?: boolean;
+  audience?: ("ADMIN" | "PARTNER" | "CLIENT")[];
   updatedAt: string;
 };
 
@@ -116,7 +124,9 @@ export default async function PartnerHubSpecialOrderDetailsPage({
   const profileLevel = order.profile?.profileLevel ?? order.profileLevel;
   const gigThumbnailUrl = order.profile?.gigThumbnailUrl ?? order.gigImageUrl;
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
-  const fields = arrayValue<ConversationField>(order.conversationFields);
+  const fields = arrayValue<ConversationField>(order.conversationFields).filter(
+    (field) => !field.audience || field.audience.includes("PARTNER")
+  );
   const isCompleted = order.status === "COMPLETED";
 
   return (

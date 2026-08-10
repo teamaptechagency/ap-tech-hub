@@ -42,7 +42,7 @@ function optionalDate(value?: string) {
 
 type ScriptMessage = {
   id: string;
-  kind?: "MESSAGE" | "BREAK";
+  kind?: "MESSAGE" | "BREAK" | "OFFER";
   sender: "BUYER" | "SELLER";
   message: string;
   attachment?: string;
@@ -50,6 +50,9 @@ type ScriptMessage = {
   createdAt: string;
   copiedAt?: string;
   breakMinutes?: number;
+  offerAmountUsd?: number;
+  offerDeliveryDays?: number;
+  offerRevisions?: number;
 };
 
 type ConversationField = {
@@ -60,11 +63,13 @@ type ConversationField = {
     | "IMPORTANT"
     | "AIDOC"
     | "DOCUMENT"
+    | "DELIVERY_DOCUMENT"
     | "CLIENT_REVIEW"
     | "SELLER_REVIEW";
   value: string;
   url?: string;
   done?: boolean;
+  audience?: ("ADMIN" | "PARTNER" | "CLIENT")[];
   updatedAt: string;
 };
 
@@ -1230,6 +1235,68 @@ export async function addSpecialOrderMessage(formData: {
   return { success: true };
 }
 
+export async function addSpecialOrderOffer(formData: {
+  orderId: string;
+  description: string;
+  amountUsd: number;
+  deliveryDays: number;
+  revisions: number;
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const description = formData.description.trim();
+  const amountUsd = Number(formData.amountUsd);
+  const deliveryDays = Math.trunc(Number(formData.deliveryDays));
+  const revisions = Math.trunc(Number(formData.revisions));
+  if (!formData.orderId) return { error: "Conversation not found" };
+  if (!description) return { error: "Offer description is required" };
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
+    return { error: "Enter a valid offer amount" };
+  }
+  if (!Number.isFinite(deliveryDays) || deliveryDays < 1) {
+    return { error: "Delivery must be at least 1 day" };
+  }
+  if (!Number.isFinite(revisions) || revisions < 0) {
+    return { error: "Revisions cannot be negative" };
+  }
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: formData.orderId },
+    select: { status: true, conversationMessages: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED") {
+    return { error: "Completed orders are view only" };
+  }
+
+  const messages = jsonArray<ScriptMessage>(order.conversationMessages);
+  messages.push({
+    id: crypto.randomUUID(),
+    kind: "OFFER",
+    sender: "SELLER",
+    message: description,
+    offerAmountUsd: amountUsd,
+    offerDeliveryDays: deliveryDays,
+    offerRevisions: revisions,
+    done: false,
+    createdAt: new Date().toISOString(),
+  });
+
+  await prisma.specialOrder.update({
+    where: { id: formData.orderId },
+    data: { conversationMessages: messages },
+  });
+  await triggerPusher(
+    `special-order-script-${formData.orderId}`,
+    "messages-updated",
+    { messages }
+  );
+  revalidatePath(`/special-orders/${formData.orderId}`);
+  revalidatePath(`/p/special-orders/${formData.orderId}`);
+  return { success: true };
+}
+
 export async function updateSpecialOrderMessage(formData: {
   orderId: string;
   messageId: string;
@@ -1551,10 +1618,12 @@ export async function saveSpecialOrderField(formData: {
     | "IMPORTANT"
     | "AIDOC"
     | "DOCUMENT"
+    | "DELIVERY_DOCUMENT"
     | "CLIENT_REVIEW"
     | "SELLER_REVIEW";
   value: string;
   url?: string;
+  audience?: ("ADMIN" | "PARTNER" | "CLIENT")[];
 }) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
@@ -1575,11 +1644,25 @@ export async function saveSpecialOrderField(formData: {
 
   const fields = jsonArray<ConversationField>(order.conversationFields);
   const fieldId = formData.fieldId?.trim();
+  const allowedAudience = new Set(["ADMIN", "PARTNER", "CLIENT"] as const);
+  const audience = Array.from(
+    new Set((formData.audience ?? []).filter((role) => allowedAudience.has(role)))
+  );
+  if (
+    (formData.type === "DOCUMENT" || formData.type === "DELIVERY_DOCUMENT") &&
+    audience.length === 0
+  ) {
+    return { error: "Select at least one read/download permission" };
+  }
   const nextField: ConversationField = {
     id: fieldId || crypto.randomUUID(),
     type: formData.type,
     value,
     url: url || undefined,
+    audience:
+      formData.type === "DOCUMENT" || formData.type === "DELIVERY_DOCUMENT"
+        ? audience
+        : undefined,
     done:
       fields.find((field) =>
         fieldId ? field.id === fieldId : field.type === formData.type
@@ -1601,6 +1684,8 @@ export async function saveSpecialOrderField(formData: {
   });
 
   revalidatePath(`/special-orders/${formData.orderId}`);
+  revalidatePath(`/p/special-orders/${formData.orderId}`);
+  revalidatePath(`/c/special-orders/${formData.orderId}`);
   return { success: true };
 }
 

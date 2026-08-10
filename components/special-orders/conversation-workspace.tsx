@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, Clock, ExternalLink, GripVertical, MessageSquareText, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Check, Clock, ExternalLink, GripVertical, HandCoins, MessageSquareText, Pencil, Plus, Trash2, Upload } from "lucide-react";
 
 import {
   addSpecialOrderBreak,
   addSpecialOrderMessage,
+  addSpecialOrderOffer,
   deleteSpecialOrderMessage,
   reorderSpecialOrderMessages,
   saveSpecialOrderField,
@@ -20,6 +21,7 @@ import {
 import { getPusherClient } from "@/lib/pusher-client";
 import { fileViewUrl } from "@/lib/file-url";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -41,7 +43,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 type ScriptMessage = {
   id: string;
-  kind?: "MESSAGE" | "BREAK";
+  kind?: "MESSAGE" | "BREAK" | "OFFER";
   sender: "BUYER" | "SELLER";
   message: string;
   attachment?: string;
@@ -49,6 +51,9 @@ type ScriptMessage = {
   createdAt: string;
   copiedAt?: string;
   breakMinutes?: number;
+  offerAmountUsd?: number;
+  offerDeliveryDays?: number;
+  offerRevisions?: number;
 };
 
 // Regular break: uniform gap applied between every message pair.
@@ -78,11 +83,13 @@ type ConversationField = {
     | "IMPORTANT"
     | "AIDOC"
     | "DOCUMENT"
+    | "DELIVERY_DOCUMENT"
     | "CLIENT_REVIEW"
     | "SELLER_REVIEW";
   value: string;
   url?: string;
   done?: boolean;
+  audience?: ("ADMIN" | "PARTNER" | "CLIENT")[];
   updatedAt: string;
 };
 
@@ -105,6 +112,7 @@ const fieldLabels: Record<ConversationField["type"], string> = {
   IMPORTANT: "Important",
   AIDOC: "AIDOC",
   DOCUMENT: "Document",
+  DELIVERY_DOCUMENT: "Delivery file",
   CLIENT_REVIEW: "Client review",
   SELLER_REVIEW: "Seller review",
 };
@@ -156,6 +164,7 @@ export function ConversationWorkspace({
   const [buyerEditOpen, setBuyerEditOpen] = useState(false);
   const [buyerValue, setBuyerValue] = useState(buyerName ?? "");
   const [messageOpen, setMessageOpen] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState("");
   const [draggedMessageId, setDraggedMessageId] = useState("");
   const [breakOpen, setBreakOpen] = useState(false);
@@ -164,11 +173,18 @@ export function ConversationWorkspace({
   const [sender, setSender] = useState<"BUYER" | "SELLER">("BUYER");
   const [message, setMessage] = useState("");
   const [attachment, setAttachment] = useState("");
+  const [offerDescription, setOfferDescription] = useState("");
+  const [offerAmount, setOfferAmount] = useState("");
+  const [offerDeliveryDays, setOfferDeliveryDays] = useState("1");
+  const [offerRevisions, setOfferRevisions] = useState("1");
   const [fieldType, setFieldType] =
     useState<ConversationField["type"]>("BRIEF");
   const [editingFieldId, setEditingFieldId] = useState("");
   const [fieldValue, setFieldValue] = useState("");
   const [fieldUrl, setFieldUrl] = useState("");
+  const [fieldAudience, setFieldAudience] = useState<
+    ("ADMIN" | "PARTNER" | "CLIENT")[]
+  >(["ADMIN", "PARTNER"]);
   const [selectedMessageId, setSelectedMessageId] = useState("");
   const [selectedFieldId, setSelectedFieldId] = useState("");
   const [uploadingField, setUploadingField] = useState(false);
@@ -355,6 +371,39 @@ export function ConversationWorkspace({
     router.refresh();
   }
 
+  async function submitOffer(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    const result = await addSpecialOrderOffer({
+      orderId,
+      description: offerDescription,
+      amountUsd: Number(offerAmount),
+      deliveryDays: Number(offerDeliveryDays),
+      revisions: Number(offerRevisions),
+    });
+    setBusy(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setOfferDescription("");
+    setOfferAmount("");
+    setOfferDeliveryDays("1");
+    setOfferRevisions("1");
+    setOfferOpen(false);
+    router.refresh();
+  }
+
+  function openNewOffer() {
+    setOfferDescription("");
+    setOfferAmount("");
+    setOfferDeliveryDays("1");
+    setOfferRevisions("1");
+    setError("");
+    setOfferOpen(true);
+  }
+
   async function submitField(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -365,6 +414,7 @@ export function ConversationWorkspace({
       type: fieldType,
       value: fieldValue,
       url: fieldUrl,
+      audience: fieldAudience,
     });
     setBusy(false);
     if (result.error) {
@@ -374,6 +424,7 @@ export function ConversationWorkspace({
     setEditingFieldId("");
     setFieldValue("");
     setFieldUrl("");
+    setFieldAudience(["ADMIN", "PARTNER"]);
     setFieldOpen(false);
     router.refresh();
   }
@@ -392,7 +443,11 @@ export function ConversationWorkspace({
     if (!item.done && locked) return;
 
     if (!item.done) {
-      const text = replaceNames(item.message, buyerLabel, profileName);
+      const messageText = replaceNames(item.message, buyerLabel, profileName);
+      const text =
+        item.kind === "OFFER"
+          ? `${messageText}\n\nOffer: USD ${Number(item.offerAmountUsd ?? 0).toFixed(2)}\nDelivery: ${item.offerDeliveryDays ?? 1} day${item.offerDeliveryDays === 1 ? "" : "s"}\nRevisions: ${item.offerRevisions ?? 0}`
+          : messageText;
       await navigator.clipboard?.writeText(text);
     }
     const result = await toggleSpecialOrderMessageDone(orderId, messageId);
@@ -435,6 +490,7 @@ export function ConversationWorkspace({
     setFieldType("BRIEF");
     setFieldValue("");
     setFieldUrl("");
+    setFieldAudience(["ADMIN", "PARTNER"]);
     setFieldOpen(true);
   }
 
@@ -443,6 +499,12 @@ export function ConversationWorkspace({
     setEditingFieldId(field?.id ?? "");
     setFieldValue(field?.value ?? "");
     setFieldUrl(field?.url ?? "");
+    setFieldAudience(
+      field?.audience ??
+        (type === "DELIVERY_DOCUMENT"
+          ? ["ADMIN", "PARTNER", "CLIENT"]
+          : ["ADMIN", "PARTNER"])
+    );
     setFieldOpen(true);
   }
 
@@ -469,6 +531,14 @@ export function ConversationWorkspace({
     }
   }
 
+  function toggleFieldAudience(role: "ADMIN" | "PARTNER" | "CLIENT") {
+    setFieldAudience((current) =>
+      current.includes(role)
+        ? current.filter((item) => item !== role)
+        : [...current, role]
+    );
+  }
+
   return (
     <>
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
@@ -480,6 +550,15 @@ export function ConversationWorkspace({
                 Conversation script
               </span>
               <div className={`flex gap-2 ${readOnly ? "hidden" : ""}`}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={openNewOffer}
+                >
+                  <HandCoins className="mr-1 h-3.5 w-3.5" />
+                  Add offer
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -672,6 +751,12 @@ export function ConversationWorkspace({
                         <p className="text-xs font-semibold text-muted-foreground">
                           {label}
                         </p>
+                        {item.kind === "OFFER" && (
+                          <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
+                            <HandCoins className="h-2.5 w-2.5" />
+                            Custom offer
+                          </span>
+                        )}
                         {item.done && (
                           <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-500">
                             Copied
@@ -692,6 +777,26 @@ export function ConversationWorkspace({
                       <p className="mt-1 whitespace-pre-wrap text-sm font-medium">
                         {display}
                       </p>
+                      {item.kind === "OFFER" && (
+                        <div className="mt-3 grid grid-cols-3 gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2 text-xs">
+                          <div>
+                            <p className="text-muted-foreground">Offer</p>
+                            <p className="font-semibold text-emerald-600">
+                              USD {Number(item.offerAmountUsd ?? 0).toFixed(2)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Delivery</p>
+                            <p className="font-semibold">
+                              {item.offerDeliveryDays ?? 1} day{item.offerDeliveryDays === 1 ? "" : "s"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Revisions</p>
+                            <p className="font-semibold">{item.offerRevisions ?? 0}</p>
+                          </div>
+                        </div>
+                      )}
                       {item.attachment && (
                         <p className="mt-2 text-xs text-muted-foreground">
                           Attachment: {item.attachment}
@@ -823,6 +928,15 @@ export function ConversationWorkspace({
                         <p className="mt-1 whitespace-pre-wrap text-sm font-medium">
                           {replaceNames(field.value, buyerLabel, profileName)}
                         </p>
+                        {field.audience && field.audience.length > 0 && (
+                          <p className="mt-2 text-[11px] text-muted-foreground">
+                            Access: {field.audience
+                              .map((role) =>
+                                role === "PARTNER" ? "SO Partner" : role === "CLIENT" ? "Client" : "Admin"
+                              )
+                              .join(", ")}
+                          </p>
+                        )}
                         {field.url && (
                           <a
                             href={fileViewUrl(field.url)}
@@ -966,6 +1080,68 @@ export function ConversationWorkspace({
         </DialogContent>
       </Dialog>
 
+      <Dialog open={offerOpen} onOpenChange={setOfferOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add offer</DialogTitle>
+            <DialogDescription>
+              Add a custom offer to this conversation script.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={submitOffer} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Offer description</Label>
+              <Textarea
+                value={offerDescription}
+                onChange={(event) => setOfferDescription(event.target.value)}
+                placeholder="Describe the work included in this offer"
+                className="min-h-28"
+                required
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label>Amount (USD)</Label>
+                <Input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={offerAmount}
+                  onChange={(event) => setOfferAmount(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Delivery days</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={offerDeliveryDays}
+                  onChange={(event) => setOfferDeliveryDays(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Revisions</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={offerRevisions}
+                  onChange={(event) => setOfferRevisions(event.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Adding offer..." : "Add offer"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={buyerEditOpen} onOpenChange={setBuyerEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -1053,6 +1229,37 @@ export function ConversationWorkspace({
                 </Button>
               </div>
             </div>
+            {(fieldType === "DOCUMENT" ||
+              fieldType === "DELIVERY_DOCUMENT") && (
+              <div className="space-y-2 rounded-md border p-3">
+                <Label>Read and download permission</Label>
+                <p className="text-xs text-muted-foreground">
+                  Choose who can see and download this document.
+                </p>
+                <div className="flex flex-wrap gap-4 pt-1">
+                  {(
+                    ["ADMIN", "PARTNER", "CLIENT"] as const
+                  ).map((role) => (
+                    <label
+                      key={role}
+                      className="flex cursor-pointer items-center gap-2 text-sm"
+                    >
+                      <Checkbox
+                        checked={fieldAudience.includes(role)}
+                        onCheckedChange={() => toggleFieldAudience(role)}
+                      />
+                      <span>
+                        {role === "ADMIN"
+                          ? "Admin"
+                          : role === "PARTNER"
+                            ? "SO Partner"
+                            : "Client"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Saving..." : editingFieldId ? "Save field" : "Add field"}

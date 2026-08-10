@@ -4,6 +4,24 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES } from "@/lib/roles";
 
+type SharedField = {
+  url?: string;
+  audience?: ("ADMIN" | "PARTNER" | "CLIENT")[];
+};
+
+function canAccessSpecialOrderFile(
+  fieldsValue: unknown,
+  fileUrl: string,
+  audience: "PARTNER" | "CLIENT"
+) {
+  if (!Array.isArray(fieldsValue)) return false;
+  return (fieldsValue as SharedField[]).some(
+    (field) =>
+      field.url === fileUrl &&
+      (field.audience?.includes(audience) ?? audience === "PARTNER")
+  );
+}
+
 function resolveBlobToken(pathname: string) {
   return pathname.startsWith("/public-assets/")
     ? process.env.BLOB_READ_WRITE_TOKEN
@@ -56,7 +74,11 @@ export async function GET(request: Request) {
         },
       },
       specialOrder: {
-        select: { clientId: true, partnerId: true },
+        select: {
+          clientId: true,
+          partnerId: true,
+          conversationFields: true,
+        },
       },
     },
   });
@@ -73,9 +95,19 @@ export async function GET(request: Request) {
         (attachment.message?.conversation.participants.some(
           (participant) => participant.userId === session.user.id
         ) ?? false) ||
-        attachment.specialOrder?.partnerId === session.user.id ||
+        (attachment.specialOrder?.partnerId === session.user.id &&
+          canAccessSpecialOrderFile(
+            attachment.specialOrder.conversationFields,
+            fileUrl,
+            "PARTNER"
+          )) ||
         (Boolean(session.user.clientId) &&
-          attachment.specialOrder?.clientId === session.user.clientId);
+          attachment.specialOrder?.clientId === session.user.clientId &&
+          canAccessSpecialOrderFile(
+            attachment.specialOrder.conversationFields,
+            fileUrl,
+            "CLIENT"
+          ));
     }
   }
 
@@ -92,12 +124,30 @@ export async function GET(request: Request) {
             : []),
         ],
       },
-      select: { conversationFields: true, conversationMessages: true },
+      select: {
+        partnerId: true,
+        clientId: true,
+        conversationFields: true,
+      },
     });
     authorized = specialOrders.some(
-      (order) =>
-        (JSON.stringify(order.conversationFields) ?? "").includes(fileUrl) ||
-        (JSON.stringify(order.conversationMessages) ?? "").includes(fileUrl)
+      (order) => {
+        if (order.partnerId === session.user.id) {
+          return canAccessSpecialOrderFile(
+            order.conversationFields,
+            fileUrl,
+            "PARTNER"
+          );
+        }
+        if (order.clientId === session.user.clientId) {
+          return canAccessSpecialOrderFile(
+            order.conversationFields,
+            fileUrl,
+            "CLIENT"
+          );
+        }
+        return false;
+      }
     );
   }
 
