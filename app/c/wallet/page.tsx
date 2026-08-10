@@ -4,6 +4,12 @@ import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { PointExchangeForm } from "@/components/client-portal/point-exchange-form";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import {
+  CLIENT_WALLET_KINDS,
+  getClientWalletBalance,
+} from "@/lib/client-wallet";
 
 const txnLabel: Record<string, string> = {
   ADVANCE: "Advance payment",
@@ -24,26 +30,28 @@ const txnLabel: Record<string, string> = {
  * balance shown above them. Invoice payments are on the Invoices page, where
  * they belong.
  */
-const WALLET_KINDS = [
-  "ADVANCE",
-  "ADJUSTMENT",
-  "POINT_EXCHANGE",
-  "INVOICE_DEDUCT",
-  "REFUND",
-] as const;
+const invoiceStatusBadge: Record<string, string> = {
+  DUE: "bg-amber-100 text-amber-700",
+  PARTIALLY_PAID: "bg-orange-100 text-orange-700",
+  PAYMENT_SUBMITTED: "bg-blue-100 text-blue-700",
+  PAID: "bg-green-100 text-green-700",
+  OVERDUE: "bg-red-100 text-red-600",
+  ON_HOLD: "bg-purple-100 text-purple-700",
+};
 
 export default async function ClientWalletPage() {
   const session = await auth();
   if (!session?.user?.clientId) notFound();
   const clientId = session.user.clientId;
 
-  const [client, txns, pointTxns, settings, hasPending] = await Promise.all([
+  const [client, balance, txns, pointTxns, settings, hasPending, monthlyInvoices] = await Promise.all([
     prisma.client.findUnique({
       where: { id: clientId },
       select: { balance: true, points: true, currency: true },
     }),
+    getClientWalletBalance(clientId),
     prisma.clientTxn.findMany({
-      where: { clientId, kind: { in: [...WALLET_KINDS] } },
+      where: { clientId, kind: { in: [...CLIENT_WALLET_KINDS] } },
       orderBy: { createdAt: "desc" },
       take: 15,
     }),
@@ -56,9 +64,30 @@ export default async function ClientWalletPage() {
     prisma.pointExchangeRequest
       .findFirst({ where: { clientId, status: "PENDING" } })
       .then(Boolean),
+    prisma.invoice.findMany({
+      where: {
+        clientId,
+        creditsClientBalance: false,
+        status: { not: "CANCELLED" },
+        OR: [{ job: { type: "MONTHLY" } }, { periodStart: { not: null } }],
+      },
+      orderBy: [{ periodStart: "desc" }, { createdAt: "desc" }],
+      take: 12,
+      select: {
+        id: true,
+        number: true,
+        title: true,
+        amount: true,
+        amountPaid: true,
+        currency: true,
+        status: true,
+        dueDate: true,
+        periodStart: true,
+        job: { select: { title: true } },
+      },
+    }),
   ]);
 
-  const balance = Number(client?.balance ?? 0);
   const points = client?.points ?? 0;
   const pointsPerDollar = parseInt(settings?.value ?? "100");
   const sym =
@@ -129,6 +158,62 @@ export default async function ClientWalletPage() {
         pointsPerDollar={pointsPerDollar}
         hasPending={hasPending}
       />
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Monthly service payments</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Monthly service invoices are tracked here and never added to your
+            advance wallet balance.
+          </p>
+        </CardHeader>
+        <CardContent className="divide-y p-0 px-4 pb-2">
+          {monthlyInvoices.length === 0 && (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No monthly service invoices yet
+            </p>
+          )}
+          {monthlyInvoices.map((invoice) => {
+            const status =
+              invoice.status === "DUE" && invoice.dueDate < new Date()
+                ? "OVERDUE"
+                : invoice.status;
+            const invoiceSymbol =
+              { USD: "$", EUR: "€", GBP: "£", BDT: "৳" }[
+                invoice.currency
+              ] ?? invoice.currency;
+            return (
+              <Link
+                key={invoice.id}
+                href={`/c/invoices/${invoice.id}`}
+                className="flex items-center justify-between gap-3 py-3"
+              >
+                <div>
+                  <p className="text-sm font-medium">
+                    {invoice.title ?? invoice.job?.title ?? "Monthly service"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {invoice.number} · {invoice.periodStart?.toLocaleDateString("en-GB", { month: "long", year: "numeric" }) ?? `due ${invoice.dueDate.toLocaleDateString("en-GB")}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right text-sm">
+                    <p className="font-semibold">{invoiceSymbol}{Number(invoice.amount).toFixed(2)}</p>
+                    {status === "PARTIALLY_PAID" && (
+                      <p className="text-[10px] text-muted-foreground">
+                        {invoiceSymbol}{(Number(invoice.amount) - Number(invoice.amountPaid)).toFixed(2)} due
+                      </p>
+                    )}
+                  </div>
+                  <Badge variant="secondary" className={`text-xs ${invoiceStatusBadge[status] ?? ""}`}>
+                    {status.replaceAll("_", " ").toLowerCase()}
+                  </Badge>
+                </div>
+              </Link>
+            );
+          })}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
