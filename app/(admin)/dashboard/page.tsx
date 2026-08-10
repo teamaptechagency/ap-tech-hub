@@ -9,6 +9,7 @@ import {
 } from "@/components/pending-approvals";
 import { ClearCacheButton } from "@/components/layout/clear-cache-button";
 import { getVirtualCompletedJobEarnings, sumBdt } from "@/lib/finance-summary";
+import { getDhakaMonthRange } from "@/lib/dhaka-date";
 
 function money(amount: number) {
   return `BDT ${Math.round(amount).toLocaleString()}`;
@@ -53,7 +54,7 @@ type CountryVisitorRow = {
 
 async function getVisitorCountryStats() {
   const now = new Date();
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const { start: monthStart, end: monthEnd } = getDhakaMonthRange(now);
   const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
 
   try {
@@ -61,7 +62,7 @@ async function getVisitorCountryStats() {
       prisma.$queryRaw<CountryVisitorRow[]>`
         SELECT COALESCE(NULLIF("country", ''), 'Unknown') AS "country", COUNT(*)::int AS "visitors"
         FROM "LandingVisitorEvent"
-        WHERE "createdAt" >= ${monthStart}
+        WHERE "createdAt" >= ${monthStart} AND "createdAt" < ${monthEnd}
         GROUP BY 1
         ORDER BY "visitors" DESC, "country" ASC
         LIMIT 8
@@ -93,6 +94,8 @@ async function getVisitorCountryStats() {
 
 export default async function AdminDashboard() {
   const session = await auth();
+  const { start: monthStart, end: monthEnd } = getDhakaMonthRange();
+  const currentMonth = { gte: monthStart, lt: monthEnd };
 
   const [
     totalEarningsAgg,
@@ -120,8 +123,14 @@ export default async function AdminDashboard() {
     visitorCounter,
     visitorCountryStats,
   ] = await Promise.all([
-    prisma.earning.aggregate({ _sum: { amountBdt: true } }),
-    prisma.expense.aggregate({ _sum: { amountBdt: true } }),
+    prisma.earning.aggregate({
+      where: { createdAt: currentMonth },
+      _sum: { amountBdt: true },
+    }),
+    prisma.expense.aggregate({
+      where: { createdAt: currentMonth },
+      _sum: { amountBdt: true },
+    }),
     prisma.user.aggregate({
       where: { role: "TEAM_MEMBER" },
       _sum: { balance: true },
@@ -170,10 +179,12 @@ export default async function AdminDashboard() {
       },
     }),
     prisma.earning.findMany({
+      where: { createdAt: currentMonth },
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
     prisma.expense.findMany({
+      where: { createdAt: currentMonth },
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
@@ -206,7 +217,7 @@ export default async function AdminDashboard() {
       take: 5,
       include: { user: { select: { name: true } } },
     }),
-    getVirtualCompletedJobEarnings(),
+    getVirtualCompletedJobEarnings(monthStart, monthEnd),
     prisma.setting
       .findUnique({
         where: { key: "landing.visitor.count" },
@@ -258,19 +269,19 @@ export default async function AdminDashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total earnings"
+          label="This month earnings"
           value={money(totalEarnings)}
           href="/accounts/earnings"
           hint={`${earningsHistory.length} recent records`}
         />
         <StatCard
-          label="Total expenses"
+          label="This month expenses"
           value={money(totalExpenses)}
           href="/accounts/earnings"
           hint={`${expensesHistory.length} recent records`}
         />
         <StatCard
-          label="Net earnings"
+          label="This month net"
           value={money(netEarnings)}
           href="/reports"
           hint="Earnings minus expenses"
