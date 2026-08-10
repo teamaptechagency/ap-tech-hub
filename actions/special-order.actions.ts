@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher-server";
 import { ADMIN_ROLES, PARTNER_ROLES } from "@/lib/roles";
 import { nextInvoiceNumber } from "@/lib/invoice-number";
+import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
 
 async function triggerPusher(channel: string, event: string, payload: unknown) {
   try {
@@ -932,6 +933,65 @@ export async function updateSpecialOrderDetails(
   revalidatePath("/special-orders");
   revalidatePath("/p/special-orders");
   revalidatePath("/invoices");
+  return { success: true };
+}
+
+export async function deleteSpecialOrder(
+  orderId: string,
+  verificationCode: string
+) {
+  const session = await checkAdmin();
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { error: "Only the super admin can delete a special order" };
+  }
+
+  const verified = await verifySensitiveActionCode(
+    session.user.id,
+    verificationCode
+  );
+  if (!verified) return { error: "Verification code is invalid or expired" };
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: {
+      id: true,
+      status: true,
+      earning: { select: { id: true } },
+      invoice: {
+        select: { id: true, status: true, amountPaid: true, submittedAt: true },
+      },
+    },
+  });
+  if (!order) return { error: "Conversation not found" };
+
+  if (order.status !== "PLANNED") {
+    return {
+      error: "Only a planned conversation can be deleted. Cancel active or completed orders instead.",
+    };
+  }
+  if (
+    order.earning ||
+    Number(order.invoice?.amountPaid ?? 0) > 0 ||
+    order.invoice?.submittedAt ||
+    order.invoice?.status === "PAYMENT_SUBMITTED"
+  ) {
+    return {
+      error: "This conversation has financial activity and cannot be deleted.",
+    };
+  }
+
+  const deletes: Prisma.PrismaPromise<unknown>[] = [];
+  if (order.invoice?.id) {
+    deletes.push(prisma.invoice.delete({ where: { id: order.invoice.id } }));
+  }
+  deletes.push(prisma.specialOrder.delete({ where: { id: order.id } }));
+  await prisma.$transaction(deletes);
+
+  revalidatePath("/special-orders");
+  revalidatePath("/invoices");
+  revalidatePath("/c/special-orders");
+  revalidatePath("/p/special-orders");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
