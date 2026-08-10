@@ -115,7 +115,6 @@ export default async function ClientMessagesPage({
       currentUserId={myId}
       initialOpenId={openId}
       maskAsDisplaySender
-      newConversationHref="/c/team"
     />
   );
 }
