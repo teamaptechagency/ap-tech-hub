@@ -62,14 +62,20 @@ export function SpecialOrderDetailsEditor({
     event.preventDefault();
     setBusy(true);
     setError("");
-    const result = await updateSpecialOrderDetails(orderId, form);
-    setBusy(false);
-    if (result.error) {
-      setError(result.error);
-      return;
+    try {
+      const result = await updateSpecialOrderDetails(orderId, form);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setOpen(false);
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to save conversation details", error);
+      setError("Could not save conversation details. Please try again.");
+    } finally {
+      setBusy(false);
     }
-    setOpen(false);
-    router.refresh();
   }
 
   return (

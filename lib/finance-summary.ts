@@ -12,7 +12,7 @@ export type FinanceEarningRow = {
   createdAt: Date;
 };
 
-export async function getVirtualCompletedJobEarnings(from?: Date) {
+export async function getVirtualCompletedJobEarnings(from?: Date, to?: Date) {
   const [recordedEarnings, completedFixedJobs, receivedUsdRate, exchangeRates] =
     await Promise.all([
       prisma.earning.findMany({
@@ -26,7 +26,11 @@ export async function getVirtualCompletedJobEarnings(from?: Date) {
           // books the earning once it is paid. Synthesising a profit row for
           // an invoiced job as well would count the same work twice.
           invoices: { none: {} },
-          ...(from ? { updatedAt: { gte: from } } : {}),
+          ...(from
+            ? { updatedAt: { gte: from, ...(to ? { lt: to } : {}) } }
+            : to
+              ? { updatedAt: { lt: to } }
+              : {}),
         },
         orderBy: { updatedAt: "desc" },
         select: {

@@ -138,12 +138,12 @@ export function MessagesShell({
             <Plus className="mr-2 h-4 w-4" />
             Find Expert
           </Link>
-        ) : (
+        ) : people.length > 0 ? (
           <Button onClick={() => setNewOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             New message
           </Button>
-        )}
+        ) : null}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]">

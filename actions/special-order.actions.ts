@@ -866,8 +866,9 @@ export async function updateSpecialOrderDetails(
   const profitBdt = clientAmountBdt - partnerCostBdt;
   const dueDate = optionalDate(formData.dueDate);
 
-  await prisma.$transaction(async (tx) => {
-    await tx.specialOrder.update({
+  try {
+    const updates: Prisma.PrismaPromise<unknown>[] = [
+      prisma.specialOrder.update({
       where: { id: orderId },
       data: {
         title,
@@ -893,22 +894,38 @@ export async function updateSpecialOrderDetails(
         reviewUrl: formData.reviewUrl?.trim() || null,
         deliveryNote: formData.deliveryNote?.trim() || null,
       },
-    });
+      }),
+    ];
 
     if (order.invoice?.id) {
-      await tx.invoice.update({
-        where: { id: order.invoice.id },
-        data: {
-          title: `Special order: ${title}`,
-          amount: clientAmountBdt,
-          dueDate: dueDate ?? undefined,
-          paymentNote: `USD ${orderAmountUsd.toFixed(
-            2
-          )} x client rate ${clientUsdRate}`,
-        },
-      });
+      updates.push(
+        prisma.invoice.update({
+          where: { id: order.invoice.id },
+          data: {
+            title: `Special order: ${title}`,
+            amount: clientAmountBdt,
+            dueDate: dueDate ?? undefined,
+            paymentNote: `USD ${orderAmountUsd.toFixed(
+              2
+            )} x client rate ${clientUsdRate}`,
+          },
+        })
+      );
     }
-  });
+
+    // Use a batch transaction instead of an interactive transaction. The
+    // production database runs through a serverless pooler, where holding an
+    // interactive transaction open can stall until its timeout.
+    await prisma.$transaction(updates);
+  } catch (error) {
+    console.error("Failed to update special-order details", {
+      orderId,
+      error,
+    });
+    return {
+      error: "Could not save conversation details. Please try again.",
+    };
+  }
 
   revalidatePath(`/special-orders/${orderId}`);
   revalidatePath(`/p/special-orders/${orderId}`);
