@@ -148,11 +148,9 @@ function formatCountdown(seconds: number) {
 
 function replaceNames(text: string, buyerName: string, sellerName: string) {
   return text
-    .replaceAll("Buyer", buyerName)
-    .replaceAll("buyer", buyerName)
-    .replaceAll("Seller (Me)", sellerName)
-    .replaceAll("Seller", sellerName)
-    .replaceAll("seller", sellerName);
+    .replace(/\bSeller\s*\(Me\)/gi, () => sellerName)
+    .replace(/\bSeller\b/gi, () => sellerName)
+    .replace(/\bBuyer\b/gi, () => buyerName);
 }
 
 export function ConversationWorkspace({
@@ -1199,6 +1197,9 @@ export function ConversationWorkspace({
                 className="min-h-40"
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                Plain text supports Seller and Buyer as automatic name placeholders.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Attachment note / URL</Label>
@@ -1400,6 +1401,10 @@ export function ConversationWorkspace({
                 onChange={(event) => setFieldValue(event.target.value)}
                 className="min-h-40"
               />
+              <p className="text-xs text-muted-foreground">
+                Write plain text. Use Seller or Buyer anywhere and the actual
+                name will appear automatically.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>URL / file note</Label>
