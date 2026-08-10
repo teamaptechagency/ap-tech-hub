@@ -34,28 +34,31 @@ export async function GET(request: Request) {
 
   const isAdmin = ADMIN_ROLES.includes(session.user.role);
   let authorized = isAdmin;
-
-  if (!authorized) {
-    const attachment = await prisma.attachment.findFirst({
-      where: { url: fileUrl },
-      select: {
-        uploadedById: true,
-        job: {
-          select: {
-            clientId: true,
-            members: { select: { userId: true } },
-          },
+  const attachment = await prisma.attachment.findFirst({
+    where: { url: fileUrl },
+    select: {
+      name: true,
+      uploadedById: true,
+      job: {
+        select: {
+          clientId: true,
+          members: { select: { userId: true } },
         },
-        message: {
-          select: {
-            conversation: {
-              select: { participants: { select: { userId: true } } },
-            },
+      },
+      message: {
+        select: {
+          conversation: {
+            select: { participants: { select: { userId: true } } },
           },
         },
       },
-    });
+      specialOrder: {
+        select: { clientId: true, partnerId: true },
+      },
+    },
+  });
 
+  if (!authorized) {
     if (attachment) {
       authorized =
         attachment.uploadedById === session.user.id ||
@@ -66,8 +69,33 @@ export async function GET(request: Request) {
           attachment.job?.clientId === session.user.clientId) ||
         (attachment.message?.conversation.participants.some(
           (participant) => participant.userId === session.user.id
-        ) ?? false);
+        ) ?? false) ||
+        attachment.specialOrder?.partnerId === session.user.id ||
+        (Boolean(session.user.clientId) &&
+          attachment.specialOrder?.clientId === session.user.clientId);
     }
+  }
+
+  // Older special-order uploads were saved before Attachment.specialOrderId
+  // was populated. Match their stored field/message URL so authorized viewers
+  // can still download those existing private blobs.
+  if (!authorized) {
+    const specialOrders = await prisma.specialOrder.findMany({
+      where: {
+        OR: [
+          { partnerId: session.user.id },
+          ...(session.user.clientId
+            ? [{ clientId: session.user.clientId }]
+            : []),
+        ],
+      },
+      select: { conversationFields: true, conversationMessages: true },
+    });
+    authorized = specialOrders.some(
+      (order) =>
+        (JSON.stringify(order.conversationFields) ?? "").includes(fileUrl) ||
+        (JSON.stringify(order.conversationMessages) ?? "").includes(fileUrl)
+    );
   }
 
   if (!authorized) {
@@ -101,6 +129,10 @@ export async function GET(request: Request) {
   if (contentType) headers.set("content-type", contentType);
   const contentLength = blobResponse.headers.get("content-length");
   if (contentLength) headers.set("content-length", contentLength);
+  if (attachment?.name) {
+    const safeName = attachment.name.replace(/["\r\n]/g, "_");
+    headers.set("content-disposition", `attachment; filename="${safeName}"`);
+  }
   headers.set("cache-control", "private, max-age=60");
 
   return new NextResponse(blobResponse.body, { headers });

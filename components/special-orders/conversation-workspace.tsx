@@ -18,6 +18,7 @@ import {
   updateSpecialOrderMessage,
 } from "@/actions/special-order.actions";
 import { getPusherClient } from "@/lib/pusher-client";
+import { fileViewUrl } from "@/lib/file-url";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -451,6 +452,7 @@ export function ConversationWorkspace({
     setError("");
     const body = new FormData();
     body.append("file", file);
+    body.append("specialOrderId", orderId);
     const response = await fetch("/api/upload", {
       method: "POST",
       body,
@@ -823,7 +825,7 @@ export function ConversationWorkspace({
                         </p>
                         {field.url && (
                           <a
-                            href={field.url}
+                            href={fileViewUrl(field.url)}
                             target="_blank"
                             rel="noreferrer"
                             onClick={(event) => event.stopPropagation()}
