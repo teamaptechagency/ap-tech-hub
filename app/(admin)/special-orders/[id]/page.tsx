@@ -5,6 +5,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { ConversationWorkspace } from "@/components/special-orders/conversation-workspace";
 import { SpecialOrderDetailsEditor } from "@/components/special-orders/special-order-details-editor";
+import { DeleteSpecialOrderButton } from "@/components/special-orders/delete-special-order-button";
 import { SpecialOrderPartnerSelector } from "@/components/special-orders/special-order-partner-selector";
 import { SpecialOrderStatusActions } from "@/components/special-orders/special-order-status-actions";
 import { Badge } from "@/components/ui/badge";
@@ -246,6 +247,11 @@ export default async function SpecialOrderDetailsPage({
           <SpecialOrderStatusActions
             orderId={order.id}
             currentStatus={order.status}
+          />
+          <DeleteSpecialOrderButton
+            orderId={order.id}
+            title={order.title}
+            disabled={order.status !== "PLANNED"}
           />
         </div>
       </div>
