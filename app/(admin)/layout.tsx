@@ -124,7 +124,7 @@ export default async function AdminLayout({
       />
 
       {/* Main content */}
-      <main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-4 pb-20 md:p-8 md:pb-8">
+      <main className="min-w-0 flex-1 overflow-visible bg-muted/20 p-4 pb-20 md:h-screen md:overflow-y-auto md:p-8 md:pb-8">
         <div className="mx-auto w-full max-w-[1600px]">
           {session.impersonation && (
             <ImpersonationBanner
