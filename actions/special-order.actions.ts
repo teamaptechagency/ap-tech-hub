@@ -1777,12 +1777,16 @@ export async function toggleSpecialOrderFieldDone(
   if (!targetField) return { error: "Field not found" };
 
   const assignedPartner = isPartner && order.partnerId === session.user.id;
+  const audienceAllowed =
+    !targetField.audience ||
+    targetField.audience.includes(isAdmin ? "ADMIN" : "PARTNER");
   const allowed =
-    targetField.type === "CLIENT_REVIEW"
+    audienceAllowed &&
+    (targetField.type === "CLIENT_REVIEW"
       ? assignedPartner
       : targetField.type === "SELLER_REVIEW"
         ? isAdmin
-        : isAdmin || assignedPartner;
+        : isAdmin || assignedPartner);
 
   if (!allowed) return { error: "You don't have permission for this action" };
 

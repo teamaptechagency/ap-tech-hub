@@ -130,9 +130,7 @@ export default async function PartnerHubSpecialOrderDetailsPage({
   const profileLevel = order.profile?.profileLevel ?? order.profileLevel;
   const gigThumbnailUrl = order.profile?.gigThumbnailUrl ?? order.gigImageUrl;
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
-  const fields = arrayValue<ConversationField>(order.conversationFields).filter(
-    (field) => !field.audience || field.audience.includes("PARTNER")
-  );
+  const fields = arrayValue<ConversationField>(order.conversationFields);
   const isCompleted = order.status === "COMPLETED";
 
   return (
