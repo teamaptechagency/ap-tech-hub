@@ -3,16 +3,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, Clock, ExternalLink, MessageSquareText, Plus, Upload } from "lucide-react";
+import { Check, Clock, ExternalLink, GripVertical, MessageSquareText, Pencil, Plus, Trash2, Upload } from "lucide-react";
 
 import {
   addSpecialOrderBreak,
   addSpecialOrderMessage,
+  deleteSpecialOrderMessage,
+  reorderSpecialOrderMessages,
   saveSpecialOrderField,
   toggleSpecialOrderFieldDone,
   toggleSpecialOrderMessageDone,
   updateSpecialOrderBuyerName,
   updateSpecialOrderConversationBreak,
+  updateSpecialOrderMessage,
 } from "@/actions/special-order.actions";
 import { getPusherClient } from "@/lib/pusher-client";
 import { Button } from "@/components/ui/button";
@@ -152,6 +155,8 @@ export function ConversationWorkspace({
   const [buyerEditOpen, setBuyerEditOpen] = useState(false);
   const [buyerValue, setBuyerValue] = useState(buyerName ?? "");
   const [messageOpen, setMessageOpen] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState("");
+  const [draggedMessageId, setDraggedMessageId] = useState("");
   const [breakOpen, setBreakOpen] = useState(false);
   const [newBreakMinutes, setNewBreakMinutes] = useState("10");
   const [fieldOpen, setFieldOpen] = useState(false);
@@ -258,12 +263,15 @@ export function ConversationWorkspace({
     event.preventDefault();
     setBusy(true);
     setError("");
-    const result = await addSpecialOrderMessage({
-      orderId,
-      sender,
-      message,
-      attachment,
-    });
+    const result = editingMessageId
+      ? await updateSpecialOrderMessage({
+          orderId,
+          messageId: editingMessageId,
+          sender,
+          message,
+          attachment,
+        })
+      : await addSpecialOrderMessage({ orderId, sender, message, attachment });
     setBusy(false);
     if (result.error) {
       setError(result.error);
@@ -271,8 +279,61 @@ export function ConversationWorkspace({
     }
     setMessage("");
     setAttachment("");
+    setEditingMessageId("");
     setMessageOpen(false);
     router.refresh();
+  }
+
+  function openNewMessage() {
+    setEditingMessageId("");
+    setSender("BUYER");
+    setMessage("");
+    setAttachment("");
+    setError("");
+    setMessageOpen(true);
+  }
+
+  function openMessageEditor(item: ScriptMessage) {
+    setEditingMessageId(item.id);
+    setSender(item.sender);
+    setMessage(item.message);
+    setAttachment(item.attachment ?? "");
+    setError("");
+    setMessageOpen(true);
+  }
+
+  async function removeMessage(item: ScriptMessage) {
+    const label = item.kind === "BREAK" ? "this special break" : "this message";
+    if (!window.confirm(`Delete ${label}?`)) return;
+    const previous = messages;
+    setMessages((current) => current.filter((entry) => entry.id !== item.id));
+    const result = await deleteSpecialOrderMessage(orderId, item.id);
+    if (result?.error) {
+      setMessages(previous);
+      toast.error(result.error);
+    }
+  }
+
+  async function dropMessage(targetId: string) {
+    const sourceId = draggedMessageId;
+    setDraggedMessageId("");
+    if (!sourceId || sourceId === targetId) return;
+    const previous = messages;
+    const next = [...messages];
+    const from = next.findIndex((item) => item.id === sourceId);
+    const to = next.findIndex((item) => item.id === targetId);
+    if (from < 0 || to < 0) return;
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setMessages(next);
+    const result = await reorderSpecialOrderMessages(
+      orderId,
+      next.map((item) => item.id)
+    );
+    if (result?.error) {
+      setMessages(previous);
+      toast.error(result.error);
+    }
   }
 
   async function submitBreak(event: React.FormEvent<HTMLFormElement>) {
@@ -430,7 +491,7 @@ export function ConversationWorkspace({
                   size="sm"
                   variant="outline"
                   type="button"
-                  onClick={() => setMessageOpen(true)}
+                  onClick={openNewMessage}
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" />
                   Add message
@@ -505,12 +566,32 @@ export function ConversationWorkspace({
                 return (
                   <div
                     key={item.id}
+                    draggable={!readOnly && !actionsLocked}
+                    onDragStart={() => setDraggedMessageId(item.id)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={() => dropMessage(item.id)}
+                    onDragEnd={() => setDraggedMessageId("")}
                     className="flex items-center gap-2 rounded-md border border-dashed border-amber-400/50 bg-amber-500/5 px-3 py-2 text-xs font-medium text-amber-600"
                   >
+                    {!readOnly && !actionsLocked && (
+                      <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" />
+                    )}
                     <Clock className="h-3.5 w-3.5 shrink-0" />
                     Special break — wait {item.breakMinutes ?? breakMinutes}{" "}
                     minute{(item.breakMinutes ?? breakMinutes) === 1 ? "" : "s"}{" "}
                     before the next message unlocks
+                    {!readOnly && !actionsLocked && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeMessage(item)}
+                        className="ml-auto h-7 px-2 text-red-500 hover:text-red-600"
+                        title="Delete break"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </div>
                 );
               }
@@ -528,6 +609,11 @@ export function ConversationWorkspace({
               return (
                 <div
                   key={item.id}
+                  draggable={!readOnly && !actionsLocked}
+                  onDragStart={() => setDraggedMessageId(item.id)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => dropMessage(item.id)}
+                  onDragEnd={() => setDraggedMessageId("")}
                   onClick={() => setSelectedMessageId(item.id)}
                   className={`rounded-md border p-3 transition-colors ${
                     item.done
@@ -557,6 +643,9 @@ export function ConversationWorkspace({
                   }
                 >
                   <div className="flex items-start gap-3">
+                    {!readOnly && !actionsLocked && (
+                      <GripVertical className="mt-0.5 h-5 w-5 shrink-0 cursor-grab text-muted-foreground" />
+                    )}
                     <button
                       type="button"
                       disabled={disabled}
@@ -607,6 +696,36 @@ export function ConversationWorkspace({
                         </p>
                       )}
                     </div>
+                    {!readOnly && !actionsLocked && (
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openMessageEditor(item);
+                          }}
+                          className="h-7 px-2"
+                          title="Edit message"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeMessage(item);
+                          }}
+                          className="h-7 px-2 text-red-500 hover:text-red-600"
+                          title="Delete message"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -737,9 +856,13 @@ export function ConversationWorkspace({
       <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add message</DialogTitle>
+            <DialogTitle>
+              {editingMessageId ? "Edit message" : "Add message"}
+            </DialogTitle>
             <DialogDescription>
-              Add one script message. It will appear in order below.
+              {editingMessageId
+                ? "Update this script message."
+                : "Add one script message. It will appear in order below."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={submitMessage} className="space-y-4">
@@ -779,7 +902,13 @@ export function ConversationWorkspace({
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Adding..." : "Add message"}
+              {busy
+                ? editingMessageId
+                  ? "Saving..."
+                  : "Adding..."
+                : editingMessageId
+                  ? "Save message"
+                  : "Add message"}
             </Button>
           </form>
         </DialogContent>
