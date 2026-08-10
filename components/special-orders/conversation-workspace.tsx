@@ -615,7 +615,7 @@ export function ConversationWorkspace({
     <>
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <div className="relative min-w-0">
-          <div className="sticky top-14 z-30 rounded-t-xl border-b bg-card/95 p-4 shadow-sm ring-1 ring-foreground/10 backdrop-blur md:top-0">
+          <div className="relative sticky top-14 z-30 rounded-t-xl border-b bg-card p-4 shadow-sm ring-1 ring-foreground/10 md:top-0 md:before:pointer-events-none md:before:absolute md:before:inset-x-0 md:before:bottom-full md:before:h-8 md:before:bg-background md:before:content-['']">
             <div className="flex items-center justify-between gap-3 text-base font-medium">
               <span className="flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4" />
