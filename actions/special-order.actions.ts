@@ -53,6 +53,12 @@ type ScriptMessage = {
   offerAmountUsd?: number;
   offerDeliveryDays?: number;
   offerRevisions?: number;
+  offerConfirmed?: boolean;
+  createdById?: string;
+  createdByName?: string;
+  updatedById?: string;
+  updatedByName?: string;
+  offerConfirmedByName?: string;
 };
 
 type ConversationField = {
@@ -1218,6 +1224,8 @@ export async function addSpecialOrderMessage(formData: {
     attachment: attachment || undefined,
     done: false,
     createdAt: new Date().toISOString(),
+    createdById: session.user.id,
+    createdByName: session.user.name?.trim() || "Admin",
   });
 
   await prisma.specialOrder.update({
@@ -1281,6 +1289,8 @@ export async function addSpecialOrderOffer(formData: {
     offerRevisions: revisions,
     done: false,
     createdAt: new Date().toISOString(),
+    createdById: session.user.id,
+    createdByName: session.user.name?.trim() || "Admin",
   });
 
   await prisma.specialOrder.update({
@@ -1294,6 +1304,56 @@ export async function addSpecialOrderOffer(formData: {
   );
   revalidatePath(`/special-orders/${formData.orderId}`);
   revalidatePath(`/p/special-orders/${formData.orderId}`);
+  return { success: true };
+}
+
+export async function confirmSpecialOrderOffer(
+  orderId: string,
+  offerId: string,
+  confirmed: boolean
+) {
+  const session = await auth();
+  if (!session?.user) return { error: "You don't have permission for this action" };
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { partnerId: true, status: true, conversationMessages: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED") {
+    return { error: "Completed orders are view only" };
+  }
+
+  const isAdmin = ADMIN_ROLES.includes(session.user.role);
+  const isAssignedPartner =
+    PARTNER_ROLES.includes(session.user.role) && order.partnerId === session.user.id;
+  if (!isAdmin && !isAssignedPartner) {
+    return { error: "You don't have permission for this action" };
+  }
+
+  const messages = jsonArray<ScriptMessage>(order.conversationMessages);
+  const index = messages.findIndex(
+    (item) => item.id === offerId && item.kind === "OFFER"
+  );
+  if (index < 0) return { error: "Offer not found" };
+  if (!messages[index].done) {
+    return { error: "Copy the offer before confirming the order" };
+  }
+
+  messages[index] = {
+    ...messages[index],
+    offerConfirmed: confirmed,
+    offerConfirmedByName: session.user.name?.trim() || "User",
+  };
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: { conversationMessages: messages },
+  });
+  await triggerPusher(`special-order-script-${orderId}`, "messages-updated", {
+    messages,
+  });
+  revalidatePath(`/special-orders/${orderId}`);
+  revalidatePath(`/p/special-orders/${orderId}`);
   return { success: true };
 }
 
@@ -1330,6 +1390,8 @@ export async function updateSpecialOrderMessage(formData: {
     sender: formData.sender,
     message,
     attachment: attachment || undefined,
+    updatedById: session.user.id,
+    updatedByName: session.user.name?.trim() || "Admin",
   };
 
   await prisma.specialOrder.update({
@@ -1451,6 +1513,8 @@ export async function addSpecialOrderBreak(
     message: `Special break — ${minutes} minute${minutes === 1 ? "" : "s"}`,
     done: false,
     createdAt: new Date().toISOString(),
+    createdById: session.user.id,
+    createdByName: session.user.name?.trim() || "Admin",
     breakMinutes: minutes,
   });
 

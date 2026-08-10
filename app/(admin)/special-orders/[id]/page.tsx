@@ -35,6 +35,12 @@ type ScriptMessage = {
   offerAmountUsd?: number;
   offerDeliveryDays?: number;
   offerRevisions?: number;
+  offerConfirmed?: boolean;
+  createdById?: string;
+  createdByName?: string;
+  updatedById?: string;
+  updatedByName?: string;
+  offerConfirmedByName?: string;
 };
 
 type ConversationField = {
