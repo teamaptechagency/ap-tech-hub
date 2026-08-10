@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
+import { getClientWalletBalance } from "@/lib/client-wallet";
 
 const typeBadge: Record<string, string> = {
   MONTHLY: "bg-blue-100 text-blue-700",
@@ -17,11 +18,12 @@ export default async function ClientDashboard() {
   if (!session?.user?.clientId) notFound();
   const clientId = session.user.clientId;
 
-  const [client, jobs, dueInvoices] = await Promise.all([
+  const [client, balance, jobs, dueInvoices] = await Promise.all([
     prisma.client.findUnique({
       where: { id: clientId },
       select: { balance: true, points: true, currency: true },
     }),
+    getClientWalletBalance(clientId),
     prisma.job.findMany({
       where: {
         clientId,
@@ -40,7 +42,6 @@ export default async function ClientDashboard() {
     }),
   ]);
 
-  const balance = Number(client?.balance ?? 0);
   const sym =
     { USD: "$", EUR: "€", GBP: "£", BDT: "৳" }[client?.currency ?? "USD"] ??
     "$";
