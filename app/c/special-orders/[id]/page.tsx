@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { ChatPanel } from "@/components/chat/chat-panel";
+import { SharedDocuments } from "@/components/special-orders/shared-documents";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
@@ -101,6 +102,20 @@ export default async function ClientSpecialOrderDetailsPage({
           />
         </CardContent>
       </Card>
+
+      <SharedDocuments
+        fields={
+          Array.isArray(order.conversationFields)
+            ? (order.conversationFields as Array<{
+                id?: string;
+                type: string;
+                value: string;
+                url?: string;
+                audience?: string[];
+              }>)
+            : []
+        }
+      />
 
       {order.clientConversation && (
         <ChatPanel
