@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, Clock, ExternalLink, GripVertical, HandCoins, MessageSquareText, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Check, Clock, Copy, ExternalLink, GripVertical, HandCoins, MessageSquareText, Pencil, Plus, Trash2, Upload } from "lucide-react";
 
 import {
   addSpecialOrderBreak,
   addSpecialOrderMessage,
   addSpecialOrderOffer,
+  confirmSpecialOrderOffer,
   deleteSpecialOrderField,
   deleteSpecialOrderMessage,
   reorderSpecialOrderMessages,
@@ -55,6 +56,12 @@ type ScriptMessage = {
   offerAmountUsd?: number;
   offerDeliveryDays?: number;
   offerRevisions?: number;
+  offerConfirmed?: boolean;
+  createdById?: string;
+  createdByName?: string;
+  updatedById?: string;
+  updatedByName?: string;
+  offerConfirmedByName?: string;
 };
 
 // Regular break: uniform gap applied between every message pair.
@@ -235,22 +242,49 @@ export function ConversationWorkspace({
   }, []);
 
   function messageLockInfo(index: number) {
-    if (index === 0) return { locked: false, waitSec: 0 };
+    if (index === 0) {
+      return { locked: false, waitSec: 0, needsOfferConfirmation: false };
+    }
     const priorItem = messages[index - 1];
     const isSpecialBreak = priorItem.kind === "BREAK";
     const previous = isSpecialBreak ? messages[index - 2] : priorItem;
-    if (!previous) return { locked: false, waitSec: 0 };
-    if (!previous.done) return { locked: true, waitSec: 0 };
+    if (!previous) {
+      return { locked: false, waitSec: 0, needsOfferConfirmation: false };
+    }
+    if (!previous.done) {
+      return { locked: true, waitSec: 0, needsOfferConfirmation: false };
+    }
+    if (previous.kind === "OFFER" && previous.offerConfirmed !== true) {
+      return { locked: true, waitSec: 0, needsOfferConfirmation: true };
+    }
     const effectiveBreakMinutes = isSpecialBreak
       ? (priorItem.breakMinutes ?? breakMinutes)
       : breakMinutes;
     if (effectiveBreakMinutes <= 0 || !previous.copiedAt) {
-      return { locked: false, waitSec: 0 };
+      return { locked: false, waitSec: 0, needsOfferConfirmation: false };
     }
     const elapsedMs = now - new Date(previous.copiedAt).getTime();
     const requiredMs = effectiveBreakMinutes * 60_000;
     const waitSec = Math.max(0, Math.ceil((requiredMs - elapsedMs) / 1000));
-    return { locked: waitSec > 0, waitSec };
+    return { locked: waitSec > 0, waitSec, needsOfferConfirmation: false };
+  }
+
+  async function setOfferConfirmation(item: ScriptMessage, confirmed: boolean) {
+    const previous = messages;
+    setMessages((current) =>
+      current.map((messageItem) =>
+        messageItem.id === item.id
+          ? { ...messageItem, offerConfirmed: confirmed }
+          : messageItem
+      )
+    );
+    const result = await confirmSpecialOrderOffer(orderId, item.id, confirmed);
+    if (result?.error) {
+      setMessages(previous);
+      toast.error(result.error);
+      return;
+    }
+    toast.success(confirmed ? "Order confirmed" : "Order not confirmed");
   }
 
   async function saveBreak(minutes: number) {
@@ -436,6 +470,24 @@ export function ConversationWorkspace({
     return viewerRole === "ADMIN";
   }
 
+  function messageCopyText(item: ScriptMessage) {
+    const messageText = replaceNames(item.message, buyerLabel, profileName);
+    return item.kind === "OFFER"
+      ? `${messageText}\n\nOffer: USD ${Number(item.offerAmountUsd ?? 0).toFixed(2)}\nDelivery: ${item.offerDeliveryDays ?? 1} day${item.offerDeliveryDays === 1 ? "" : "s"}\nRevisions: ${item.offerRevisions ?? 0}`
+      : [messageText, item.attachment ? `Attachment: ${item.attachment}` : ""]
+          .filter(Boolean)
+          .join("\n\n");
+  }
+
+  async function copyText(text: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error("Could not copy. Please allow clipboard access.");
+    }
+  }
+
   async function toggleDone(messageId: string, index: number) {
     const item = messages[index];
     if (!item || !canToggleMessage(item)) return;
@@ -444,12 +496,7 @@ export function ConversationWorkspace({
     if (!item.done && locked) return;
 
     if (!item.done) {
-      const messageText = replaceNames(item.message, buyerLabel, profileName);
-      const text =
-        item.kind === "OFFER"
-          ? `${messageText}\n\nOffer: USD ${Number(item.offerAmountUsd ?? 0).toFixed(2)}\nDelivery: ${item.offerDeliveryDays ?? 1} day${item.offerDeliveryDays === 1 ? "" : "s"}\nRevisions: ${item.offerRevisions ?? 0}`
-          : messageText;
-      await navigator.clipboard?.writeText(text);
+      await copyText(messageCopyText(item), "Message");
     }
     const result = await toggleSpecialOrderMessageDone(orderId, messageId);
     if (result?.error) toast.error(result.error);
@@ -465,8 +512,13 @@ export function ConversationWorkspace({
   async function toggleFieldDone(field: ConversationField) {
     if (!canToggleField(field)) return;
     if (!field.done) {
-      const text = replaceNames(field.value, buyerLabel, profileName);
-      await navigator.clipboard?.writeText(text);
+      const text = [
+        replaceNames(field.value, buyerLabel, profileName),
+        field.url ?? "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+      await copyText(text, fieldLabel(field.type));
     }
     await toggleSpecialOrderFieldDone(orderId, field.id ?? field.type);
     router.refresh();
@@ -679,6 +731,9 @@ export function ConversationWorkspace({
                     Special break — wait {item.breakMinutes ?? breakMinutes}{" "}
                     minute{(item.breakMinutes ?? breakMinutes) === 1 ? "" : "s"}{" "}
                     before the next message unlocks
+                    <span className="text-muted-foreground">
+                      · Added by {item.createdByName ?? "Admin"}
+                    </span>
                     {!readOnly && !actionsLocked && (
                       <Button
                         type="button"
@@ -699,7 +754,8 @@ export function ConversationWorkspace({
                 item.sender === "BUYER" ? buyerLabel : profileName;
               const display = replaceNames(item.message, buyerLabel, profileName);
               const permissionDenied = !canToggleMessage(item);
-              const { locked, waitSec } = messageLockInfo(index);
+              const { locked, waitSec, needsOfferConfirmation } =
+                messageLockInfo(index);
               const sequenceLocked = !item.done && locked;
               const disabled = permissionDenied || sequenceLocked;
               const isNextUp =
@@ -769,6 +825,12 @@ export function ConversationWorkspace({
                         <p className="text-xs font-semibold text-muted-foreground">
                           {label}
                         </p>
+                        <span className="text-[10px] text-muted-foreground">
+                          Added by {item.createdByName ?? "Admin"}
+                          {item.updatedByName
+                            ? ` · Edited by ${item.updatedByName}`
+                            : ""}
+                        </span>
                         {item.kind === "OFFER" && (
                           <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
                             <HandCoins className="h-2.5 w-2.5" />
@@ -791,12 +853,18 @@ export function ConversationWorkspace({
                             {formatCountdown(waitSec)}
                           </span>
                         )}
+                        {sequenceLocked && needsOfferConfirmation && (
+                          <span className="rounded-full bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-600">
+                            Waiting for order confirmation
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 whitespace-pre-wrap text-sm font-medium">
                         {display}
                       </p>
                       {item.kind === "OFFER" && (
-                        <div className="mt-3 grid grid-cols-3 gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2 text-xs">
+                        <div className="mt-3 space-y-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2 text-xs">
+                          <div className="grid grid-cols-3 gap-2">
                           <div>
                             <p className="text-muted-foreground">Offer</p>
                             <p className="font-semibold text-emerald-600">
@@ -813,6 +881,47 @@ export function ConversationWorkspace({
                             <p className="text-muted-foreground">Revisions</p>
                             <p className="font-semibold">{item.offerRevisions ?? 0}</p>
                           </div>
+                          </div>
+                          {item.done && (
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-emerald-500/20 pt-2">
+                              <p className="font-semibold">
+                                Order ki confirm hoyeche? Yes or No
+                              </p>
+                              {item.offerConfirmedByName && (
+                                <p className="text-muted-foreground">
+                                  Answered by {item.offerConfirmedByName}
+                                </p>
+                              )}
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant={item.offerConfirmed === true ? "default" : "outline"}
+                                  disabled={actionsLocked || busy}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setOfferConfirmation(item, true);
+                                  }}
+                                  className="h-7"
+                                >
+                                  Yes
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant={item.offerConfirmed === false ? "destructive" : "outline"}
+                                  disabled={actionsLocked || busy}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setOfferConfirmation(item, false);
+                                  }}
+                                  className="h-7"
+                                >
+                                  No
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                       {item.attachment && (
@@ -821,8 +930,23 @@ export function ConversationWorkspace({
                         </p>
                       )}
                     </div>
-                    {!readOnly && !actionsLocked && (
-                      <div className="flex shrink-0 gap-1">
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={sequenceLocked}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          copyText(messageCopyText(item), "Message");
+                        }}
+                        className="h-7 px-2"
+                        title={sequenceLocked ? "Complete the previous item first" : "Copy message"}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                      {!readOnly && !actionsLocked && (
+                        <>
                         <Button
                           type="button"
                           size="sm"
@@ -849,8 +973,9 @@ export function ConversationWorkspace({
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
-                      </div>
-                    )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -968,8 +1093,29 @@ export function ConversationWorkspace({
                           </a>
                         )}
                       </button>
-                      {!readOnly && !actionsLocked && (
-                        <div className="flex shrink-0 gap-1">
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            copyText(
+                              [
+                                replaceNames(field.value, buyerLabel, profileName),
+                                field.url ?? "",
+                              ]
+                                .filter(Boolean)
+                                .join("\n\n"),
+                              fieldLabel(field.type)
+                            );
+                          }}
+                          title="Copy"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                        {!readOnly && !actionsLocked && (
+                          <>
                           <Button
                             size="sm"
                             variant="outline"
@@ -989,8 +1135,9 @@ export function ConversationWorkspace({
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
-                        </div>
-                      )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
