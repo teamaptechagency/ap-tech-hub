@@ -146,11 +146,8 @@ function formatCountdown(seconds: number) {
   return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
 }
 
-function replaceNames(text: string, buyerName: string, sellerName: string) {
-  return text
-    .replace(/\bSeller\s*\(Me\)/gi, () => sellerName)
-    .replace(/\bSeller\b/gi, () => sellerName)
-    .replace(/\bBuyer\b/gi, () => buyerName);
+function plainText(text: string) {
+  return text;
 }
 
 export function ConversationWorkspace({
@@ -469,7 +466,7 @@ export function ConversationWorkspace({
   }
 
   function messageCopyText(item: ScriptMessage) {
-    const messageText = replaceNames(item.message, buyerLabel, profileName);
+    const messageText = plainText(item.message);
     return item.kind === "OFFER"
       ? `${messageText}\n\nOffer: USD ${Number(item.offerAmountUsd ?? 0).toFixed(2)}\nDelivery: ${item.offerDeliveryDays ?? 1} day${item.offerDeliveryDays === 1 ? "" : "s"}\nRevisions: ${item.offerRevisions ?? 0}`
       : [messageText, item.attachment ? `Attachment: ${item.attachment}` : ""]
@@ -518,7 +515,7 @@ export function ConversationWorkspace({
     if (!canToggleField(field)) return;
     if (!field.done) {
       const text = [
-        replaceNames(field.value, buyerLabel, profileName),
+        plainText(field.value),
         field.url ?? "",
       ]
         .filter(Boolean)
@@ -757,7 +754,7 @@ export function ConversationWorkspace({
 
               const label =
                 item.sender === "BUYER" ? buyerLabel : profileName;
-              const display = replaceNames(item.message, buyerLabel, profileName);
+              const display = plainText(item.message);
               const permissionDenied = !canToggleMessage(item);
               const { locked, waitSec, needsOfferConfirmation } =
                 messageLockInfo(index);
@@ -1074,7 +1071,7 @@ export function ConversationWorkspace({
                           {fieldLabel(field.type)}
                         </p>
                         <p className="mt-1 whitespace-pre-wrap text-sm font-medium">
-                          {replaceNames(field.value, buyerLabel, profileName)}
+                          {plainText(field.value)}
                         </p>
                         {field.audience && field.audience.length > 0 && (
                           <p className="mt-2 text-[11px] text-muted-foreground">
@@ -1114,7 +1111,7 @@ export function ConversationWorkspace({
                             event.stopPropagation();
                             copyText(
                               [
-                                replaceNames(field.value, buyerLabel, profileName),
+                                plainText(field.value),
                                 field.url ?? "",
                               ]
                                 .filter(Boolean)
@@ -1198,7 +1195,7 @@ export function ConversationWorkspace({
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Plain text supports Seller and Buyer as automatic name placeholders.
+                Plain text is shown and copied exactly as written.
               </p>
             </div>
             <div className="space-y-2">
@@ -1402,8 +1399,7 @@ export function ConversationWorkspace({
                 className="min-h-40"
               />
               <p className="text-xs text-muted-foreground">
-                Write plain text. Use Seller or Buyer anywhere and the actual
-                name will appear automatically.
+                Plain text is shown and copied exactly as written.
               </p>
             </div>
             <div className="space-y-2">
