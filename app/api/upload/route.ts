@@ -88,6 +88,11 @@ export async function POST(request: Request) {
       "messageId"
     );
 
+    const specialOrderId = getOptionalFormValue(
+      formData,
+      "specialOrderId"
+    );
+
     if (!(fileValue instanceof File)) {
       return NextResponse.json(
         {
@@ -305,6 +310,25 @@ export async function POST(request: Request) {
       }
     }
 
+    if (specialOrderId) {
+      const specialOrder = await prisma.specialOrder.findUnique({
+        where: { id: specialOrderId },
+        select: { partnerId: true, clientId: true },
+      });
+      const canAccessSpecialOrder =
+        Boolean(specialOrder) &&
+        (isAdmin ||
+          specialOrder?.partnerId === session.user.id ||
+          (Boolean(session.user.clientId) &&
+            specialOrder?.clientId === session.user.clientId));
+      if (!canAccessSpecialOrder) {
+        return NextResponse.json(
+          { success: false, error: "You do not have permission to upload files to this special order" },
+          { status: 403 }
+        );
+      }
+    }
+
     const safeFileName =
       cleanFileName(file.name) || "attachment";
     const publicAssetKinds = new Set([
@@ -355,6 +379,7 @@ export async function POST(request: Request) {
           uploadedById: session.user.id,
           jobId,
           messageId,
+          specialOrderId,
         },
         select: {
           id: true,
@@ -364,6 +389,7 @@ export async function POST(request: Request) {
           mimeType: true,
           jobId: true,
           messageId: true,
+          specialOrderId: true,
           createdAt: true,
         },
       });
@@ -382,6 +408,7 @@ export async function POST(request: Request) {
 
           jobId: attachment.jobId,
           messageId: attachment.messageId,
+          specialOrderId: attachment.specialOrderId,
           createdAt:
             attachment.createdAt.toISOString(),
         },
