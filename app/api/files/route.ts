@@ -28,7 +28,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid url" }, { status: 400 });
   }
 
-  if (!target.hostname.endsWith(".public.blob.vercel-storage.com")) {
+  if (
+    target.protocol !== "https:" ||
+    !target.hostname.endsWith(".blob.vercel-storage.com")
+  ) {
     return NextResponse.json({ error: "Invalid file host" }, { status: 400 });
   }
 
