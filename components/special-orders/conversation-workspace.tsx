@@ -614,8 +614,8 @@ export function ConversationWorkspace({
   return (
     <>
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <Card className="min-h-[520px]">
-          <CardHeader className="border-b">
+        <Card className="min-h-[520px] overflow-visible">
+          <CardHeader className="sticky top-14 z-30 rounded-t-xl border-b bg-card/95 py-4 shadow-sm backdrop-blur md:top-0">
             <CardTitle className="flex items-center justify-between gap-3 text-base">
               <span className="flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4" />
