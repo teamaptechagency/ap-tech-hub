@@ -614,9 +614,9 @@ export function ConversationWorkspace({
   return (
     <>
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <Card className="min-h-[520px] overflow-visible">
-          <CardHeader className="sticky top-14 z-30 rounded-t-xl border-b bg-card/95 py-4 shadow-sm backdrop-blur md:top-0">
-            <CardTitle className="flex items-center justify-between gap-3 text-base">
+        <div className="relative min-w-0">
+          <div className="sticky top-14 z-30 rounded-t-xl border-b bg-card/95 p-4 shadow-sm ring-1 ring-foreground/10 backdrop-blur md:top-0">
+            <div className="flex items-center justify-between gap-3 text-base font-medium">
               <span className="flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4" />
                 Conversation script
@@ -650,8 +650,9 @@ export function ConversationWorkspace({
                   Add message
                 </Button>
               </div>
-            </CardTitle>
-          </CardHeader>
+            </div>
+          </div>
+          <Card className="min-h-[520px] -mt-px rounded-t-none">
           <CardContent className="space-y-3 p-4">
             <p className="text-xs text-muted-foreground">
               {actionsLocked
@@ -983,7 +984,8 @@ export function ConversationWorkspace({
               );
             })}
           </CardContent>
-        </Card>
+          </Card>
+        </div>
 
         <Card className="min-h-[520px]">
           <CardHeader className="border-b">
