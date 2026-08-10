@@ -12,13 +12,13 @@ type SharedField = {
 function canAccessSpecialOrderFile(
   fieldsValue: unknown,
   fileUrl: string,
-  audience: "PARTNER" | "CLIENT"
+  audience: "ADMIN" | "PARTNER" | "CLIENT"
 ) {
   if (!Array.isArray(fieldsValue)) return false;
   return (fieldsValue as SharedField[]).some(
     (field) =>
       field.url === fileUrl &&
-      (field.audience?.includes(audience) ?? audience === "PARTNER")
+      (field.audience?.includes(audience) ?? audience !== "CLIENT")
   );
 }
 
@@ -54,7 +54,8 @@ export async function GET(request: Request) {
   }
 
   const isAdmin = ADMIN_ROLES.includes(session.user.role);
-  let authorized = isAdmin;
+  let authorized = false;
+  let isSpecialOrderFile = false;
   const attachment = await prisma.attachment.findFirst({
     where: { url: fileUrl },
     select: {
@@ -83,9 +84,31 @@ export async function GET(request: Request) {
     },
   });
 
-  if (!authorized) {
-    if (attachment) {
+  if (attachment) {
+    if (attachment.specialOrder) {
+      isSpecialOrderFile = true;
+      authorized = isAdmin
+        ? canAccessSpecialOrderFile(
+            attachment.specialOrder.conversationFields,
+            fileUrl,
+            "ADMIN"
+          )
+        : (attachment.specialOrder.partnerId === session.user.id &&
+            canAccessSpecialOrderFile(
+              attachment.specialOrder.conversationFields,
+              fileUrl,
+              "PARTNER"
+            )) ||
+          (Boolean(session.user.clientId) &&
+            attachment.specialOrder.clientId === session.user.clientId &&
+            canAccessSpecialOrderFile(
+              attachment.specialOrder.conversationFields,
+              fileUrl,
+              "CLIENT"
+            ));
+    } else {
       authorized =
+        isAdmin ||
         attachment.uploadedById === session.user.id ||
         (attachment.job?.members.some(
           (member) => member.userId === session.user.id
@@ -94,20 +117,7 @@ export async function GET(request: Request) {
           attachment.job?.clientId === session.user.clientId) ||
         (attachment.message?.conversation.participants.some(
           (participant) => participant.userId === session.user.id
-        ) ?? false) ||
-        (attachment.specialOrder?.partnerId === session.user.id &&
-          canAccessSpecialOrderFile(
-            attachment.specialOrder.conversationFields,
-            fileUrl,
-            "PARTNER"
-          )) ||
-        (Boolean(session.user.clientId) &&
-          attachment.specialOrder?.clientId === session.user.clientId &&
-          canAccessSpecialOrderFile(
-            attachment.specialOrder.conversationFields,
-            fileUrl,
-            "CLIENT"
-          ));
+        ) ?? false);
     }
   }
 
@@ -116,14 +126,16 @@ export async function GET(request: Request) {
   // can still download those existing private blobs.
   if (!authorized) {
     const specialOrders = await prisma.specialOrder.findMany({
-      where: {
-        OR: [
-          { partnerId: session.user.id },
-          ...(session.user.clientId
-            ? [{ clientId: session.user.clientId }]
-            : []),
-        ],
-      },
+      where: isAdmin
+        ? {}
+        : {
+            OR: [
+              { partnerId: session.user.id },
+              ...(session.user.clientId
+                ? [{ clientId: session.user.clientId }]
+                : []),
+            ],
+          },
       select: {
         partnerId: true,
         clientId: true,
@@ -132,6 +144,19 @@ export async function GET(request: Request) {
     });
     authorized = specialOrders.some(
       (order) => {
+        const fields = Array.isArray(order.conversationFields)
+          ? (order.conversationFields as SharedField[])
+          : [];
+        const hasFile = fields.some((field) => field.url === fileUrl);
+        if (!hasFile) return false;
+        isSpecialOrderFile = true;
+        if (isAdmin) {
+          return canAccessSpecialOrderFile(
+            order.conversationFields,
+            fileUrl,
+            "ADMIN"
+          );
+        }
         if (order.partnerId === session.user.id) {
           return canAccessSpecialOrderFile(
             order.conversationFields,
@@ -149,6 +174,10 @@ export async function GET(request: Request) {
         return false;
       }
     );
+  }
+
+  if (!authorized && isAdmin && !isSpecialOrderFile) {
+    authorized = true;
   }
 
   if (!authorized) {

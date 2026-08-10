@@ -504,6 +504,13 @@ export function ConversationWorkspace({
 
   function canToggleField(field: ConversationField) {
     if (actionsLocked) return false;
+    const audienceRole =
+      viewerRole === "ADMIN" || viewerRole === "PARTNER" || viewerRole === "CLIENT"
+        ? viewerRole
+        : null;
+    if (field.audience && (!audienceRole || !field.audience.includes(audienceRole))) {
+      return false;
+    }
     if (field.type === "CLIENT_REVIEW") return viewerRole === "PARTNER";
     if (field.type === "SELLER_REVIEW") return viewerRole === "ADMIN";
     return viewerRole === "ADMIN" || viewerRole === "PARTNER";
@@ -1080,7 +1087,7 @@ export function ConversationWorkspace({
                               .join(", ")}
                           </p>
                         )}
-                        {field.url && (
+                        {field.url && !disabled && (
                           <a
                             href={fileViewUrl(field.url)}
                             target="_blank"
@@ -1089,8 +1096,14 @@ export function ConversationWorkspace({
                             className="mt-2 inline-flex max-w-full items-center gap-1 truncate text-xs text-primary hover:underline"
                           >
                             <ExternalLink className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{field.url}</span>
+                            <span className="truncate">Download file</span>
                           </a>
+                        )}
+                        {field.url && disabled && (
+                          <span className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50">
+                            <ExternalLink className="h-3 w-3" />
+                            Download disabled
+                          </span>
                         )}
                       </button>
                       <div className="flex shrink-0 gap-1">
@@ -1098,6 +1111,7 @@ export function ConversationWorkspace({
                           size="sm"
                           variant="ghost"
                           type="button"
+                          disabled={disabled}
                           onClick={(event) => {
                             event.stopPropagation();
                             copyText(
@@ -1110,7 +1124,7 @@ export function ConversationWorkspace({
                               fieldLabel(field.type)
                             );
                           }}
-                          title="Copy"
+                          title={disabled ? "You do not have permission to copy this" : "Copy"}
                         >
                           <Copy className="h-3.5 w-3.5" />
                         </Button>
