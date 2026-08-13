@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  BuyerAssignDialog,
+  type AssignableBuyer,
+} from "@/components/special-orders/buyer-assign-dialog";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, Clock, Copy, ExternalLink, GripVertical, HandCoins, MessageSquareText, Pencil, Plus, Trash2, Upload } from "lucide-react";
@@ -111,6 +115,9 @@ type ConversationWorkspaceProps = {
   awaitingVerification?: boolean;
   /** No buyer linked yet, so there is nobody to hold this conversation with. */
   awaitingBuyer?: boolean;
+  /** The buyer list, so one can be attached without leaving the workspace. */
+  buyers?: AssignableBuyer[];
+  buyerId?: string | null;
   readOnly?: boolean;
   buyerNameEditable?: boolean;
   actionsLocked?: boolean;
@@ -163,6 +170,8 @@ export function ConversationWorkspace({
   /** True when the profile asks for client sign-off and it has not come. */
   awaitingVerification = false,
   awaitingBuyer = false,
+  buyers = [],
+  buyerId = null,
   readOnly = viewerRole !== "ADMIN",
   buyerNameEditable = !readOnly,
   // Waiting on the client locks the same things a finished order does: nothing
@@ -172,6 +181,11 @@ export function ConversationWorkspace({
 }: ConversationWorkspaceProps) {
   const actionsLocked =
     actionsLockedProp || awaitingVerification || awaitingBuyer;
+
+  // Assigning is how the lock is lifted, so it stays available while the rest
+  // of the workspace is locked — only a finished order closes it off.
+  const canAssignBuyer = viewerRole === "ADMIN" && !actionsLockedProp;
+  const [buyerAssignOpen, setBuyerAssignOpen] = useState(false);
   const router = useRouter();
   const buyerLabel = fallbackBuyer(buyerName);
   const [buyerEditOpen, setBuyerEditOpen] = useState(false);
@@ -814,17 +828,29 @@ export function ConversationWorkspace({
                 </div>
               </div>
             )}
+            {/* The buyer block is how a buyer gets attached: it opens the list
+                and the add form together, since either the person is already
+                on it or they are not. */}
             <button
               type="button"
               onClick={() => {
-                if (buyerNameEditable && !actionsLocked) setBuyerEditOpen(true);
+                if (canAssignBuyer) setBuyerAssignOpen(true);
+                else if (buyerNameEditable && !actionsLockedProp) {
+                  setBuyerEditOpen(true);
+                }
               }}
-              className={`w-full rounded-md border bg-muted/20 p-3 text-left transition-colors ${
-                buyerNameEditable && !actionsLocked ? "hover:border-primary/40" : ""
-              }`}
+              className={`w-full rounded-md border p-3 text-left transition-colors ${
+                awaitingBuyer
+                  ? "border-amber-500/40 bg-amber-500/5"
+                  : "bg-muted/20"
+              } ${canAssignBuyer ? "hover:border-primary/40" : ""}`}
             >
-              <p className="text-xs text-muted-foreground">Buyer name</p>
-              <p className="mt-1 text-sm font-medium">{buyerLabel}</p>
+              <p className="text-xs text-muted-foreground">
+                {awaitingBuyer ? "Buyer — not set" : "Buyer"}
+              </p>
+              <p className="mt-1 text-sm font-medium">
+                {awaitingBuyer ? "Click to pick or add one" : buyerLabel}
+              </p>
             </button>
             {messages.length === 0 && (
               <p className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
@@ -1449,6 +1475,14 @@ export function ConversationWorkspace({
           </form>
         </DialogContent>
       </Dialog>
+
+      <BuyerAssignDialog
+        open={buyerAssignOpen}
+        onOpenChange={setBuyerAssignOpen}
+        orderId={orderId}
+        buyers={buyers}
+        currentBuyerId={buyerId}
+      />
 
       <Dialog open={buyerEditOpen} onOpenChange={setBuyerEditOpen}>
         <DialogContent className="sm:max-w-lg">

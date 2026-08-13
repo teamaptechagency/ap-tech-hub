@@ -381,6 +381,8 @@ export default async function SpecialOrderDetailsPage({
         viewerRole="ADMIN"
         awaitingVerification={awaitingVerification}
         awaitingBuyer={!order.buyerId}
+        buyers={buyerOptions}
+        buyerId={order.buyerId}
         readOnly={order.status === "COMPLETED"}
         buyerNameEditable={order.status !== "COMPLETED"}
         actionsLocked={order.status === "COMPLETED"}
