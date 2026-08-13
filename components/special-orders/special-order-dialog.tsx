@@ -1,16 +1,9 @@
 "use client";
 
+import { roleLabel } from "@/lib/role-label";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSpecialOrder } from "@/actions/special-order.actions";
-
-export type BuyerOption = {
-  id: string;
-  name: string;
-  username: string;
-  /** Decides whether this is a first order or a return. */
-  orderCount: number;
-};
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,6 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+export type BuyerOption = {
+  id: string;
+  name: string;
+  username: string;
+  /** Decides whether this is a first order or a return. */
+  orderCount: number;
+};
 
 type ProfileContext = {
   id: string;
@@ -142,7 +143,7 @@ export function SpecialOrderDialog({
                 <SelectItem value="none">No partner yet</SelectItem>
                 {partners.map((partner) => (
                   <SelectItem key={partner.id} value={partner.id}>
-                    {partner.name} / {partner.role.replaceAll("_", " ")}
+                    {partner.name} / {roleLabel(partner.role)}
                   </SelectItem>
                 ))}
               </SelectContent>

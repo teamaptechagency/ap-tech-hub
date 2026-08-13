@@ -549,7 +549,7 @@ export function SpecialOrderDashboard({
       {/* Add and remove in one place. Six conversations off one gig read as
           six identical lines, so each row carries enough to tell them apart. */}
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Assign dates</DialogTitle>
             <DialogDescription>
@@ -558,38 +558,39 @@ export function SpecialOrderDashboard({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="grid gap-1.5">
               <Label className="text-xs">Day</Label>
               <Input
                 type="date"
                 value={assignDay}
                 onChange={(event) => setAssignDay(event.target.value)}
+                className="max-w-xs"
               />
             </div>
 
-            <div className="max-h-[46vh] space-y-3 overflow-y-auto pr-1">
-              <AssignGroup
-                label={`Not scheduled (${undated.length})`}
-                empty="Everything has a day"
-                orders={undated}
-                assigningId={assigningId}
-                actionLabel={assignDay ? `Add to ${prettyDate(assignDay)}` : "Pick a day"}
-                disabled={!assignDay}
-                onAction={(order) => assignDate(order.id, assignDay)}
-              />
+            <AssignGroup
+              label={`Not scheduled (${undated.length})`}
+              empty="Everything has a day"
+              orders={undated}
+              assigningId={assigningId}
+              actionLabel={
+                assignDay ? `Add to ${prettyDate(assignDay)}` : "Pick a day"
+              }
+              disabled={!assignDay}
+              onAction={(order) => assignDate(order.id, assignDay)}
+            />
 
-              <AssignGroup
-                label={`Scheduled (${scheduled.length})`}
-                empty="Nothing scheduled yet"
-                orders={scheduled}
-                assigningId={assigningId}
-                actionLabel="Remove date"
-                variant="outline"
-                onAction={(order) => assignDate(order.id, null)}
-                showDate
-              />
-            </div>
+            <AssignGroup
+              label={`Scheduled (${scheduled.length})`}
+              empty="Nothing scheduled yet"
+              orders={scheduled}
+              assigningId={assigningId}
+              actionLabel="Remove date"
+              variant="outline"
+              onAction={(order) => assignDate(order.id, null)}
+              showDate
+            />
           </div>
         </DialogContent>
       </Dialog>
@@ -629,21 +630,38 @@ function AssignGroup({
         orders.map((order) => (
           <div
             key={order.id}
-            className="flex items-center gap-3 rounded-md border p-2.5"
+            className="flex items-center gap-4 rounded-md border p-3"
           >
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium">{order.title}</p>
+            {/* The amount leads, because several conversations off one gig
+                share a title and the money is what tells them apart. */}
+            <div className="w-24 shrink-0">
+              <p className="text-sm font-semibold">
+                USD {order.usd.toFixed(2)}
+              </p>
               <p className="text-[11px] text-muted-foreground">
-                USD {order.usd.toFixed(2)} · BDT {order.bdt.toLocaleString()}
-                {showDate && order.date && ` · ${prettyDate(order.date)}`}
+                BDT {order.bdt.toLocaleString()}
               </p>
             </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs text-muted-foreground">
+                {order.title}
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {showDate && order.date
+                  ? prettyDate(order.date)
+                  : order.status.toLowerCase()}
+                {order.buyerKind && ` · ${buyerKindLabel[order.buyerKind]}`}
+              </p>
+            </div>
+
             <Button
               type="button"
               size="sm"
               variant={variant}
               disabled={disabled || assigningId !== null}
               onClick={() => onAction(order)}
+              className="shrink-0"
             >
               {assigningId === order.id ? "Saving..." : actionLabel}
             </Button>

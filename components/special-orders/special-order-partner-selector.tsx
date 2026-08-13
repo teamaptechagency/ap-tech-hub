@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLabel } from "@/lib/role-label";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -82,7 +83,7 @@ export function SpecialOrderPartnerSelector({
               <SelectItem value="none">No partner assigned</SelectItem>
               {partners.map((partner) => (
                 <SelectItem key={partner.id} value={partner.id}>
-                  {partner.name} / {partner.role.replaceAll("_", " ")}
+                  {partner.name} / {roleLabel(partner.role)}
                 </SelectItem>
               ))}
             </SelectContent>
