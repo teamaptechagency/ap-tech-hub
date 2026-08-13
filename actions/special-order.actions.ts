@@ -9,6 +9,7 @@ import { notify } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher-server";
 import { ADMIN_ROLES, PARTNER_ROLES } from "@/lib/roles";
+import { saveMarketplaceLevelConfig } from "@/lib/marketplace-levels";
 import { nextInvoiceNumber } from "@/lib/invoice-number";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
 
@@ -111,6 +112,39 @@ export async function ensureDefaultMarketplaces() {
     ],
     skipDuplicates: true,
   });
+}
+
+/**
+ * Sets the seller-level ladder every profile is measured against.
+ *
+ * A target of zero means the number is not decided yet, and the profile card
+ * says so instead of showing a bar against an invented figure.
+ */
+export async function saveMarketplaceLevels(formData: {
+  feePercent: number;
+  levels: { name: string; targetUsd: number }[];
+}) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const feePercent = Number(formData.feePercent);
+  if (!Number.isFinite(feePercent) || feePercent < 0 || feePercent >= 100) {
+    return { error: "Marketplace fee must be between 0 and 99 percent" };
+  }
+
+  const levels = formData.levels
+    .map((level) => ({
+      name: level.name.trim(),
+      targetUsd: Math.max(0, Number(level.targetUsd) || 0),
+    }))
+    .filter((level) => level.name);
+
+  if (levels.length === 0) return { error: "Add at least one level" };
+
+  await saveMarketplaceLevelConfig({ feePercent, levels });
+
+  revalidatePath("/special-orders");
+  return { success: true };
 }
 
 export async function saveMarketplace(formData: {

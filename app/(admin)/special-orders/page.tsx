@@ -3,6 +3,10 @@ import type { Role } from "@prisma/client";
 import { SpecialOrdersBoard } from "@/components/special-orders/special-orders-board";
 import { ensureDefaultMarketplaces } from "@/actions/special-order.actions";
 import { PARTNER_ROLES } from "@/lib/roles";
+import {
+  getMarketplaceLevelConfig,
+  levelProgress,
+} from "@/lib/marketplace-levels";
 
 export default async function SpecialOrdersPage() {
   await ensureDefaultMarketplaces();
@@ -94,6 +98,20 @@ export default async function SpecialOrdersPage() {
     }),
   ]);
 
+  const levelConfig = await getMarketplaceLevelConfig();
+
+  // What each profile has taken in total, so its distance from the next seller
+  // level can be worked out. Cancelled work is left out — it never paid.
+  const grossByProfile = new Map<string, number>();
+  for (const order of orders) {
+    if (!order.profileId || order.status === "CANCELLED") continue;
+    grossByProfile.set(
+      order.profileId,
+      (grossByProfile.get(order.profileId) ?? 0) +
+        Number(order.orderAmountUsd)
+    );
+  }
+
   return (
     <div className="space-y-6">
       <SpecialOrdersBoard
@@ -138,6 +156,11 @@ export default async function SpecialOrdersPage() {
           clientRate: Number(profile.marketplace.clientUsdRate),
           partnerRate: Number(profile.marketplace.partnerUsdRate),
           conversationCount: profile._count.orders,
+          progress: levelProgress(
+            grossByProfile.get(profile.id) ?? 0,
+            profile.profileLevel,
+            levelConfig
+          ),
         }))}
         marketplaces={marketplaces.map((marketplace) => ({
           id: marketplace.id,
@@ -146,6 +169,7 @@ export default async function SpecialOrdersPage() {
           partnerRate: Number(marketplace.partnerUsdRate),
           defaultPartnerId: marketplace.defaultPartnerId,
         }))}
+        levelConfig={levelConfig}
         marketplaceSettings={allMarketplaces.map((marketplace) => ({
           id: marketplace.id,
           name: marketplace.name,
