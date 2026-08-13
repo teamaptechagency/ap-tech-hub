@@ -15,6 +15,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { buyerKindLabel, type BuyerKind } from "@/lib/buyer-kind";
 import type { LevelProgress } from "@/lib/marketplace-levels";
 
 export type DashboardOrder = {
@@ -28,6 +29,8 @@ export type DashboardOrder = {
   /** The day this conversation is set for, as YYYY-MM-DD. */
   date: string | null;
   invoiceNumber: string | null;
+  /** Null where the buyer has not been recorded, so neither can be claimed. */
+  buyerKind: BuyerKind | null;
 };
 
 export type DashboardProfile = {
@@ -144,6 +147,9 @@ export function SpecialOrderDashboard({
       (order) => toneFor(order, today) === "overdue"
     );
 
+    const repeat = orders.filter((order) => order.buyerKind === "REPEAT");
+    const known = orders.filter((order) => order.buyerKind !== null);
+
     return {
       usd: orders.reduce((sum, order) => sum + order.usd, 0),
       bdt: orders.reduce((sum, order) => sum + order.bdt, 0),
@@ -151,6 +157,13 @@ export function SpecialOrderDashboard({
       active: active.length,
       delivered: delivered.length,
       overdue: overdue.length,
+      repeat: repeat.length,
+      // Only counted against buyers we can actually tell apart, so an unnamed
+      // buyer does not quietly drag the share down.
+      repeatShare:
+        known.length > 0
+          ? Math.round((repeat.length / known.length) * 100)
+          : null,
     };
   }, [orders, today]);
 
@@ -196,6 +209,18 @@ export function SpecialOrderDashboard({
     () =>
       orders.filter((order) => !order.date && !FINISHED.has(order.status)),
     [orders]
+  );
+
+  // Dated but unfinished, and not already on the day being looked at.
+  const movable = useMemo(
+    () =>
+      orders.filter(
+        (order) =>
+          order.date &&
+          order.date !== selectedDay &&
+          !FINISHED.has(order.status)
+      ),
+    [orders, selectedDay]
   );
 
   async function assignDate(orderId: string, date: string) {
@@ -247,9 +272,19 @@ export function SpecialOrderDashboard({
           hintTone="text-red-600"
         />
         <Stat
+          label="Repeat buyers"
+          value={String(totals.repeat)}
+          hint={
+            totals.repeatShare !== null
+              ? `${totals.repeatShare}% of known buyers`
+              : "No buyers recorded yet"
+          }
+          hintTone="text-violet-600"
+        />
+        <Stat
           label="Delivered"
           value={String(totals.delivered)}
-          hint={`${totals.total} in total`}
+          hint={`${totals.total} in total · ${totals.active} active`}
         />
       </div>
       )}
@@ -366,7 +401,9 @@ export function SpecialOrderDashboard({
                     <button
                       key={key}
                       type="button"
-                      disabled={!tone}
+                      // An empty day has to be selectable when scheduling —
+                      // a free day is exactly where a conversation gets put.
+                      disabled={!tone && !canSchedule}
                       onClick={() =>
                         setSelectedDay(isSelected ? null : key)
                       }
@@ -416,10 +453,12 @@ export function SpecialOrderDashboard({
             {/* Conversations with no day yet, offered against whichever day is
                 picked. A day can take as many as needed — a seller runs
                 several at once. */}
-            {canSchedule && selectedDay && undated.length > 0 && (
+            {canSchedule && selectedDay && (
               <div className="mt-3 space-y-1.5 border-t pt-3">
                 <p className="text-[11px] text-muted-foreground">
-                  Not scheduled — click to put on {prettyDate(selectedDay)}
+                  {undated.length > 0
+                    ? `Not scheduled — click to put on ${prettyDate(selectedDay)}`
+                    : "Every conversation already has a day"}
                 </p>
                 {undated.map((order) => (
                   <button
@@ -432,6 +471,34 @@ export function SpecialOrderDashboard({
                     {assigningId === order.id ? "Saving..." : order.title}
                   </button>
                 ))}
+
+                {/* Moving a conversation matters as much as placing one: plans
+                    slip, and re-dating from the calendar beats opening it. */}
+                {movable.length > 0 && (
+                  <>
+                    <p className="pt-2 text-[11px] text-muted-foreground">
+                      Or move one here
+                    </p>
+                    {movable.map((order) => (
+                      <button
+                        key={order.id}
+                        type="button"
+                        disabled={assigningId !== null}
+                        onClick={() => assignDate(order.id, selectedDay)}
+                        className="flex w-full items-center justify-between gap-2 rounded-md border px-2 py-1.5 text-left text-xs hover:border-primary/50 hover:bg-muted disabled:opacity-60"
+                      >
+                        <span className="truncate">
+                          {assigningId === order.id ? "Saving..." : order.title}
+                        </span>
+                        {order.date && (
+                          <span className="shrink-0 text-muted-foreground">
+                            {prettyDate(order.date)}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             )}
           </CardContent>
@@ -472,6 +539,18 @@ export function SpecialOrderDashboard({
                           >
                             {order.date ? prettyDate(order.date) : "No date"}
                           </Badge>
+                          {order.buyerKind && (
+                            <Badge
+                              variant="secondary"
+                              className={`text-[10px] ${
+                                order.buyerKind === "REPEAT"
+                                  ? "bg-violet-500/10 text-violet-600"
+                                  : "bg-sky-500/10 text-sky-600"
+                              }`}
+                            >
+                              {buyerKindLabel[order.buyerKind]}
+                            </Badge>
+                          )}
                         </p>
                         <p className="truncate text-xs text-muted-foreground">
                           USD {order.usd.toFixed(2)}

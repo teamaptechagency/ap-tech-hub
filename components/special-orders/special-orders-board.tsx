@@ -18,6 +18,7 @@ import { SpecialOrderProfileDialog } from "@/components/special-orders/special-o
 import { ChevronRight, Plus, Settings, ShoppingBag } from "lucide-react";
 import { LevelTargets } from "@/components/special-orders/level-targets";
 import { SpecialOrderDashboard } from "@/components/special-orders/special-order-dashboard";
+import type { BuyerKind } from "@/lib/buyer-kind";
 import type {
   LevelProgress,
   MarketplaceLevelConfig,
@@ -39,6 +40,7 @@ type SpecialOrderRow = {
   status: string;
   plannedDate: string | null;
   dueDate: string | null;
+  buyerKind: BuyerKind | null;
   clientComment: string | null;
   partnerComment: string | null;
   invoiceId: string | null;
@@ -295,6 +297,7 @@ export function SpecialOrdersBoard({
           clientRate: 0,
           date: order.plannedDate ? order.plannedDate.slice(0, 10) : null,
           invoiceNumber: null,
+          buyerKind: order.buyerKind,
         }))}
         profiles={[]}
         today={today}

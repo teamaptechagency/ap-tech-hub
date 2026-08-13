@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher-server";
 import { ADMIN_ROLES, PARTNER_ROLES } from "@/lib/roles";
 import { saveMarketplaceLevelConfig } from "@/lib/marketplace-levels";
+import type { BuyerKind } from "@/lib/buyer-kind";
 import { nextInvoiceNumber } from "@/lib/invoice-number";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
 
@@ -157,6 +158,40 @@ export async function setSpecialOrderDate(
   revalidatePath("/special-orders");
   revalidatePath("/p/special-orders");
   revalidatePath("/c/special-orders");
+  return { success: true };
+}
+
+/**
+ * Marks a conversation as a new buyer or one who has ordered before.
+ *
+ * Passing null clears the mark, which hands the decision back to the buyer
+ * name rather than leaving a wrong answer in place.
+ */
+export async function setSpecialOrderBuyerKind(
+  orderId: string,
+  kind: BuyerKind | null
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  if (kind !== null && kind !== "NEW" && kind !== "REPEAT") {
+    return { error: "Unknown buyer type" };
+  }
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { id: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: { buyerKind: kind },
+  });
+
+  revalidatePath("/special-orders");
+  revalidatePath(`/special-orders/${orderId}`);
+  revalidatePath("/p/special-orders");
   return { success: true };
 }
 
