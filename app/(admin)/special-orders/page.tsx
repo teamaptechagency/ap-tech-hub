@@ -110,16 +110,18 @@ export default async function SpecialOrdersPage() {
     },
   });
 
-  // What each profile has taken in total, so its distance from the next seller
-  // level can be worked out. Cancelled work is left out — it never paid.
+  // Delivered work drives the level; everything still open is reported beside
+  // it as "ready" rather than counted early. Cancelled work is neither.
   const grossByProfile = new Map<string, number>();
+  const readyByProfile = new Map<string, number>();
   for (const order of orders) {
     if (!order.profileId || order.status === "CANCELLED") continue;
-    grossByProfile.set(
-      order.profileId,
-      (grossByProfile.get(order.profileId) ?? 0) +
-        Number(order.orderAmountUsd)
-    );
+    const amount = Number(order.orderAmountUsd);
+    const target =
+      order.status === "DELIVERED" || order.status === "COMPLETED"
+        ? grossByProfile
+        : readyByProfile;
+    target.set(order.profileId, (target.get(order.profileId) ?? 0) + amount);
   }
 
   return (
@@ -172,6 +174,7 @@ export default async function SpecialOrdersPage() {
             profile.profileLevel,
             levelConfig
           ),
+          readyUsd: readyByProfile.get(profile.id) ?? 0,
         }))}
         marketplaces={marketplaces.map((marketplace) => ({
           id: marketplace.id,

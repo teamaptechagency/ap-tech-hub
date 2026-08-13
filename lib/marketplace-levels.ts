@@ -110,8 +110,11 @@ export async function syncProfileLevel(profileId: string) {
   ]);
   if (!profile) return null;
 
+  // Only work that has actually been handed over counts. A marketplace raises
+  // a seller on money earned, not on conversations still in progress, so an
+  // order in flight must not push the level up before it is delivered.
   const orders = await prisma.specialOrder.findMany({
-    where: { profileId, status: { not: "CANCELLED" } },
+    where: { profileId, status: { in: ["DELIVERED", "COMPLETED"] } },
     select: { orderAmountUsd: true },
   });
 

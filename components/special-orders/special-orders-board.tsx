@@ -71,6 +71,8 @@ type ProfileOption = {
   partnerRate: number;
   conversationCount: number;
   progress: LevelProgress;
+  /** Signed up but not yet delivered, so not yet counted toward the level. */
+  readyUsd: number;
 };
 
 type MarketplaceOption = {
@@ -276,6 +278,13 @@ export function SpecialOrdersBoard({
                             : `Target of USD ${profile.progress.targetUsd.toFixed(0)} reached`}
                         </p>
                       </>
+                    )}
+
+                    {/* Signed up but not handed over, so not on the bar yet. */}
+                    {profile.readyUsd > 0 && (
+                      <p className="text-amber-600">
+                        USD {profile.readyUsd.toFixed(2)} ready to deliver
+                      </p>
                     )}
                   </div>
 
