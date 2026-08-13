@@ -142,9 +142,12 @@ export function SpecialOrdersBoard({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Special order profiles</h1>
+          {/* Two separate things, so they are named separately: the USD is the
+              marketplace side, which drives seller levels; the BDT is the
+              conversion margin, which the marketplace fee does not touch. */}
           <p className="text-sm text-muted-foreground">
-            {profiles.length} profiles / USD {totalUsd.toFixed(2)} conversations
-            / BDT {totalProfit.toLocaleString()} net
+            {profiles.length} profiles · USD {totalUsd.toFixed(2)} ordered on
+            marketplaces · BDT {totalProfit.toLocaleString()} conversion profit
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -227,7 +230,7 @@ export function SpecialOrdersBoard({
                         )}
                       </span>
                       <span className="text-muted-foreground">
-                        USD {profile.progress.netUsd.toFixed(2)} net
+                        USD {profile.progress.netUsd.toFixed(2)} after fee
                       </span>
                     </div>
 
@@ -263,8 +266,8 @@ export function SpecialOrdersBoard({
 
                   <div className="flex items-end justify-between gap-3 text-xs">
                     <div className="text-muted-foreground">
-                      <p>Client BDT {profile.clientRate}</p>
-                      <p>Partner BDT {profile.partnerRate}</p>
+                      <p>Conversion · client BDT {profile.clientRate}</p>
+                      <p>Conversion · partner BDT {profile.partnerRate}</p>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
