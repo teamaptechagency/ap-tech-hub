@@ -3,12 +3,55 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
-import { ChatPanel } from "@/components/chat/chat-panel";
+import { ConversationWorkspace } from "@/components/special-orders/conversation-workspace";
 import { SharedDocuments } from "@/components/special-orders/shared-documents";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+type ScriptMessage = {
+  id: string;
+  kind?: "MESSAGE" | "BREAK" | "OFFER";
+  sender: "BUYER" | "SELLER";
+  message: string;
+  attachment?: string;
+  done: boolean;
+  createdAt: string;
+  copiedAt?: string;
+  breakMinutes?: number;
+  offerAmountUsd?: number;
+  offerDeliveryDays?: number;
+  offerRevisions?: number;
+  offerConfirmed?: boolean;
+  createdById?: string;
+  createdByName?: string;
+  updatedById?: string;
+  updatedByName?: string;
+  offerConfirmedByName?: string;
+};
+
+type ConversationField = {
+  id?: string;
+  type:
+    | "BRIEF"
+    | "CREDENTIAL"
+    | "IMPORTANT"
+    | "AIDOC"
+    | "DOCUMENT"
+    | "DELIVERY_DOCUMENT"
+    | "CLIENT_REVIEW"
+    | "SELLER_REVIEW";
+  value: string;
+  url?: string;
+  done?: boolean;
+  audience?: ("ADMIN" | "PARTNER" | "CLIENT")[];
+  updatedAt: string;
+};
+
+function arrayValue<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
 
 export default async function ClientSpecialOrderDetailsPage({
   params,
@@ -23,11 +66,14 @@ export default async function ClientSpecialOrderDetailsPage({
     where: { id, clientId: session.user.clientId },
     include: {
       invoice: { select: { id: true, number: true, status: true } },
-      clientConversation: { select: { id: true } },
+      profile: { select: { profileName: true } },
     },
   });
 
   if (!order) notFound();
+
+  const messages = arrayValue<ScriptMessage>(order.conversationMessages);
+  const fields = arrayValue<ConversationField>(order.conversationFields);
 
   return (
     <div className="space-y-6">
@@ -117,14 +163,21 @@ export default async function ClientSpecialOrderDetailsPage({
         }
       />
 
-      {order.clientConversation && (
-        <ChatPanel
-          conversationId={order.clientConversation.id}
-          currentUserId={session.user.id}
-          title="Special order conversation"
-          heightClass="h-[460px]"
-        />
-      )}
+      {/* The buyer and seller script, the same one the admin and the partner
+          work from. A separate per-order chat used to sit here instead, which
+          nobody had set up and which split the conversation in two. Read only:
+          the client follows the exchange, they do not write it. */}
+      <ConversationWorkspace
+        orderId={order.id}
+        profileName={order.profile?.profileName ?? order.profileName ?? "Seller"}
+        buyerName={order.buyerProfile}
+        messages={messages}
+        fields={fields}
+        viewerRole="CLIENT"
+        readOnly
+        actionsLocked
+        conversationBreakMinutes={order.conversationBreakMinutes}
+      />
     </div>
   );
 }
