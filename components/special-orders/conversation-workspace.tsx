@@ -109,6 +109,8 @@ type ConversationWorkspaceProps = {
   fields: ConversationField[];
   viewerRole?: "ADMIN" | "PARTNER" | "CLIENT" | "EMPLOYEE";
   awaitingVerification?: boolean;
+  /** No buyer linked yet, so there is nobody to hold this conversation with. */
+  awaitingBuyer?: boolean;
   readOnly?: boolean;
   buyerNameEditable?: boolean;
   actionsLocked?: boolean;
@@ -160,6 +162,7 @@ export function ConversationWorkspace({
   viewerRole = "ADMIN",
   /** True when the profile asks for client sign-off and it has not come. */
   awaitingVerification = false,
+  awaitingBuyer = false,
   readOnly = viewerRole !== "ADMIN",
   buyerNameEditable = !readOnly,
   // Waiting on the client locks the same things a finished order does: nothing
@@ -167,7 +170,8 @@ export function ConversationWorkspace({
   actionsLocked: actionsLockedProp = false,
   conversationBreakMinutes = 1,
 }: ConversationWorkspaceProps) {
-  const actionsLocked = actionsLockedProp || awaitingVerification;
+  const actionsLocked =
+    actionsLockedProp || awaitingVerification || awaitingBuyer;
   const router = useRouter();
   const buyerLabel = fallbackBuyer(buyerName);
   const [buyerEditOpen, setBuyerEditOpen] = useState(false);
@@ -753,6 +757,12 @@ export function ConversationWorkspace({
                   </div>
                 )}
               </div>
+            )}
+            {awaitingBuyer && (
+              <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-600">
+                No buyer set — pick one under Edit details before starting.
+                There is nobody to hold this conversation with until you do.
+              </p>
             )}
             {awaitingVerification && (
               <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-600">

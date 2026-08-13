@@ -246,6 +246,7 @@ export default async function PartnerHubSpecialOrderDetailsPage({
         messages={messages}
         fields={fields}
         viewerRole="PARTNER"
+        awaitingBuyer={!order.buyerId}
         readOnly
         buyerNameEditable={!isCompleted && isAssignedPartner}
         actionsLocked={isCompleted}

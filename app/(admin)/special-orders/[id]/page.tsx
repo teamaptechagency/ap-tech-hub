@@ -296,6 +296,7 @@ export default async function SpecialOrderDetailsPage({
             scriptTotal={scriptTotal}
             scriptRemaining={scriptRemaining}
             awaitingVerification={awaitingVerification}
+            awaitingBuyer={!order.buyerId}
           />
           <DeleteSpecialOrderButton
             orderId={order.id}
@@ -379,6 +380,7 @@ export default async function SpecialOrderDetailsPage({
         fields={legacyFields}
         viewerRole="ADMIN"
         awaitingVerification={awaitingVerification}
+        awaitingBuyer={!order.buyerId}
         readOnly={order.status === "COMPLETED"}
         buyerNameEditable={order.status !== "COMPLETED"}
         actionsLocked={order.status === "COMPLETED"}
