@@ -118,6 +118,7 @@ export default async function SpecialOrderDetailsPage({
             niche: true,
             keywords: true,
             gigThumbnailUrl: true,
+            requireClientVerification: true,
             marketplace: { select: { name: true } },
           },
         },
@@ -158,6 +159,15 @@ export default async function SpecialOrderDetailsPage({
   const profileLevel = order.profile?.profileLevel ?? order.profileLevel;
   const gigThumbnailUrl = order.profile?.gigThumbnailUrl ?? order.gigImageUrl;
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
+
+  // Breaks are pauses, not work, so they do not count toward finishing.
+  const scriptSteps = messages.filter((item) => item.kind !== "BREAK");
+  const scriptTotal = scriptSteps.length;
+  const scriptRemaining = scriptSteps.filter((item) => !item.done).length;
+
+  const awaitingVerification = Boolean(
+    order.profile?.requireClientVerification && !order.clientVerifiedAt
+  );
   const fields = arrayValue<ConversationField>(order.conversationFields);
   const legacyMessages =
     messages.length > 0
@@ -277,6 +287,10 @@ export default async function SpecialOrderDetailsPage({
           <SpecialOrderStatusActions
             orderId={order.id}
             currentStatus={order.status}
+            scriptDone={scriptRemaining === 0}
+            scriptTotal={scriptTotal}
+            scriptRemaining={scriptRemaining}
+            awaitingVerification={awaitingVerification}
           />
           <DeleteSpecialOrderButton
             orderId={order.id}
@@ -359,6 +373,7 @@ export default async function SpecialOrderDetailsPage({
         messages={legacyMessages}
         fields={legacyFields}
         viewerRole="ADMIN"
+        awaitingVerification={awaitingVerification}
         readOnly={order.status === "COMPLETED"}
         buyerNameEditable={order.status !== "COMPLETED"}
         actionsLocked={order.status === "COMPLETED"}

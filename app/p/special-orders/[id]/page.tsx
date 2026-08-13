@@ -130,6 +130,11 @@ export default async function PartnerHubSpecialOrderDetailsPage({
   const profileLevel = order.profile?.profileLevel ?? order.profileLevel;
   const gigThumbnailUrl = order.profile?.gigThumbnailUrl ?? order.gigImageUrl;
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
+
+  // Breaks are pauses, not work, so they do not count toward finishing.
+  const scriptSteps = messages.filter((item) => item.kind !== "BREAK");
+  const scriptTotal = scriptSteps.length;
+  const scriptRemaining = scriptSteps.filter((item) => !item.done).length;
   const fields = arrayValue<ConversationField>(order.conversationFields);
   const isCompleted = order.status === "COMPLETED";
 
@@ -180,6 +185,8 @@ export default async function PartnerHubSpecialOrderDetailsPage({
         deliveryDate={order.deliveryDate}
         orderId={order.id}
         isAssignedPartner={isAssignedPartner}
+        scriptTotal={scriptTotal}
+        scriptRemaining={scriptRemaining}
       />
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
@@ -258,11 +265,15 @@ function DeliveryStatusCard({
   deliveryDate,
   orderId,
   isAssignedPartner,
+  scriptTotal,
+  scriptRemaining,
 }: {
   status: string;
   deliveryDate: Date | null;
   orderId: string;
   isAssignedPartner: boolean;
+  scriptTotal: number;
+  scriptRemaining: number;
 }) {
   if (status === "COMPLETED") {
     return (
@@ -315,12 +326,20 @@ function DeliveryStatusCard({
                 Only the assigned partner can update this order.
               </p>
             )}
+            {scriptRemaining > 0 && (
+              <p className="mt-1 text-xs text-amber-100/70">
+                Finish the conversation first — {scriptRemaining} of{" "}
+                {scriptTotal} messages left.
+              </p>
+            )}
           </div>
         </div>
+        {/* Delivery is claimed once, so it waits until the script is worked
+            through rather than being offered halfway. */}
         <PartnerDeliveryAction
           orderId={orderId}
           status={status}
-          disabled={!isAssignedPartner}
+          disabled={!isAssignedPartner || scriptRemaining > 0}
         />
       </CardContent>
     </Card>

@@ -31,9 +31,19 @@ const currentClass: Record<string, string> = {
 export function SpecialOrderStatusActions({
   orderId,
   currentStatus,
+  scriptDone = true,
+  scriptTotal = 0,
+  scriptRemaining = 0,
+  awaitingVerification = false,
 }: {
   orderId: string;
   currentStatus: string;
+  /** Every message in the script copied and ticked off. */
+  scriptDone?: boolean;
+  scriptTotal?: number;
+  scriptRemaining?: number;
+  /** The profile asks for client sign-off and it has not come. */
+  awaitingVerification?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -57,20 +67,45 @@ export function SpecialOrderStatusActions({
     router.refresh();
   }
 
+  // Delivery is claimed once, so it stays out of reach until the script has
+  // actually been worked through. Showing it early invites a conversation to be
+  // marked delivered with half its messages unsent.
+  const canDeliver = scriptDone && !awaitingVerification;
+
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Waiting on the client is the state that matters, so it is what the
+          chip says — "active" would imply work can go ahead when it cannot. */}
       <Button
         type="button"
         size="sm"
         variant="outline"
-        className={currentClass[localStatus]}
+        className={
+          awaitingVerification
+            ? "border-amber-500 bg-amber-500 text-white"
+            : currentClass[localStatus]
+        }
         disabled
       >
-        Current: {localStatus.toLowerCase()}
+        {awaitingVerification
+          ? "Pending verification"
+          : `Current: ${localStatus.toLowerCase()}`}
       </Button>
-      {ACTIONS.filter((action) =>
-        (allowedActions[localStatus] ?? []).includes(action.status)
-      ).map((action) => (
+
+      {!canDeliver && !awaitingVerification && scriptTotal > 0 && (
+        <span className="rounded-md border border-dashed px-3 py-1.5 text-xs text-muted-foreground">
+          Complete conversation first — {scriptRemaining} of {scriptTotal} left
+        </span>
+      )}
+
+      {ACTIONS.filter((action) => {
+        if (!(allowedActions[localStatus] ?? []).includes(action.status)) {
+          return false;
+        }
+        // Cancelling is always available; finishing is not.
+        if (action.status === "CANCELLED") return true;
+        return canDeliver;
+      }).map((action) => (
           <Button
             key={action.status}
             type="button"
