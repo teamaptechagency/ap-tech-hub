@@ -5,10 +5,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 
-import {
-  setSpecialOrderBuyer,
-  updateSpecialOrderDetails,
-} from "@/actions/special-order.actions";
+import { updateSpecialOrderDetails } from "@/actions/special-order.actions";
+import { BuyerAssignDialog } from "@/components/special-orders/buyer-assign-dialog";
 
 export type BuyerOption = {
   id: string;
@@ -69,10 +67,9 @@ export function SpecialOrderDetailsEditor({
   const [form, setForm] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [selectedBuyerId, setSelectedBuyerId] = useState(buyerId ?? "");
-  const [savingBuyer, setSavingBuyer] = useState(false);
+  const [buyerDialogOpen, setBuyerDialogOpen] = useState(false);
 
-  const selectedBuyer = buyers.find((buyer) => buyer.id === selectedBuyerId);
+  const selectedBuyer = buyers.find((buyer) => buyer.id === buyerId);
 
   // New or repeat is read off the record rather than asked for, so the two can
   // never disagree: a buyer with an earlier conversation has ordered before.
@@ -81,27 +78,6 @@ export function SpecialOrderDetailsEditor({
       ? "REPEAT"
       : "NEW"
     : null;
-
-  async function chooseBuyer(nextId: string) {
-    setSelectedBuyerId(nextId);
-    setSavingBuyer(true);
-    const result = await setSpecialOrderBuyer(orderId, nextId || null).catch(
-      () => ({ error: "Could not set the buyer. Please try again." })
-    );
-    setSavingBuyer(false);
-
-    if ("error" in result && result.error) {
-      setError(result.error);
-      return;
-    }
-    if (selectedBuyer) {
-      setForm((current) => ({
-        ...current,
-        buyerProfile: selectedBuyer.name,
-      }));
-    }
-    router.refresh();
-  }
 
   function setField(key: keyof OrderDetailsForm, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -160,22 +136,23 @@ export function SpecialOrderDetailsEditor({
                 />
               </Field>
               <Field label="Buyer">
-                <select
-                  value={selectedBuyerId}
-                  disabled={savingBuyer}
-                  onChange={(event) => chooseBuyer(event.target.value)}
-                  className="h-9 w-full rounded-md border bg-background px-3 text-sm outline-none focus:border-primary disabled:opacity-60"
+                {/* One button rather than a picker with a dead end beside it:
+                    the dialog behind it both lists buyers and adds them, so an
+                    empty list is no longer somewhere to get stuck. */}
+                <button
+                  type="button"
+                  onClick={() => setBuyerDialogOpen(true)}
+                  className="flex h-9 w-full items-center justify-between rounded-md border bg-background px-3 text-left text-sm transition hover:border-primary"
                 >
-                  <option value="">Not set</option>
-                  {buyers.map((buyer) => (
-                    <option key={buyer.id} value={buyer.id}>
-                      {buyer.name} ({buyer.username})
-                      {buyer.orderCount > 0
-                        ? ` — ${buyer.orderCount} order${buyer.orderCount === 1 ? "" : "s"}`
-                        : " — first order"}
-                    </option>
-                  ))}
-                </select>
+                  <span className="truncate">
+                    {selectedBuyer
+                      ? `${selectedBuyer.name} (${selectedBuyer.username})`
+                      : "Not set — pick or add one"}
+                  </span>
+                  <span className="ml-2 shrink-0 text-xs text-muted-foreground">
+                    Change
+                  </span>
+                </button>
                 {buyerKind && (
                   <p
                     className={`mt-1 text-xs font-medium ${
@@ -187,12 +164,6 @@ export function SpecialOrderDetailsEditor({
                     {buyerKind === "REPEAT"
                       ? "Repeat buyer — has ordered before"
                       : "New buyer — no earlier order on record"}
-                  </p>
-                )}
-                {buyers.length === 0 && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    No buyers on the list yet. Add them under Buyer list on the
-                    special orders page.
                   </p>
                 )}
               </Field>
@@ -346,6 +317,14 @@ export function SpecialOrderDetailsEditor({
           </form>
         </DialogContent>
       </Dialog>
+
+      <BuyerAssignDialog
+        open={buyerDialogOpen}
+        onOpenChange={setBuyerDialogOpen}
+        orderId={orderId}
+        buyers={buyers}
+        currentBuyerId={buyerId}
+      />
     </>
   );
 }

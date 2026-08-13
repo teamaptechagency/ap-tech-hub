@@ -3,7 +3,10 @@
 import { roleLabel } from "@/lib/role-label";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createSpecialOrder } from "@/actions/special-order.actions";
+import {
+  createSpecialOrder,
+  saveSpecialOrderBuyer,
+} from "@/actions/special-order.actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -66,8 +69,44 @@ export function SpecialOrderDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const selectedBuyer = buyers.find((buyer) => buyer.id === buyerId);
+  const [addingBuyer, setAddingBuyer] = useState(false);
+  const [newBuyerName, setNewBuyerName] = useState("");
+  const [newBuyerUsername, setNewBuyerUsername] = useState("");
+  // Buyers added here are not on the list the server sent, so they are held
+  // alongside it until the page reloads.
+  const [addedBuyers, setAddedBuyers] = useState<BuyerOption[]>([]);
+
+  const allBuyers = [...addedBuyers, ...buyers];
+  const selectedBuyer = allBuyers.find((buyer) => buyer.id === buyerId);
   const buyerName = selectedBuyer?.name ?? "";
+
+  async function addBuyer() {
+    setError("");
+    setBusy(true);
+
+    const result = await saveSpecialOrderBuyer({
+      name: newBuyerName,
+      username: newBuyerUsername,
+    }).catch(() => ({ error: "Could not add the buyer. Please try again." }));
+
+    setBusy(false);
+    if ("error" in result && result.error) return setError(result.error);
+    if (!("buyerId" in result) || !result.buyerId) return;
+
+    setAddedBuyers((current) => [
+      {
+        id: result.buyerId,
+        name: newBuyerName.trim(),
+        username: newBuyerUsername.trim(),
+        orderCount: 0,
+      },
+      ...current,
+    ]);
+    setBuyerId(result.buyerId);
+    setAddingBuyer(false);
+    setNewBuyerName("");
+    setNewBuyerUsername("");
+  }
 
   const title = useMemo(
     () =>
@@ -167,7 +206,7 @@ export function SpecialOrderDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Not set</SelectItem>
-                {buyers.map((buyer) => (
+                {allBuyers.map((buyer) => (
                   <SelectItem key={buyer.id} value={buyer.id}>
                     {buyer.username}
                   </SelectItem>
@@ -175,17 +214,64 @@ export function SpecialOrderDialog({
               </SelectContent>
             </Select>
             {selectedBuyer && (
-              <p className="text-xs text-muted-foreground">
+              <p
+                className={`text-xs font-medium ${
+                  selectedBuyer.orderCount > 0
+                    ? "text-violet-600"
+                    : "text-sky-600"
+                }`}
+              >
                 {selectedBuyer.name}
                 {selectedBuyer.orderCount > 0
                   ? ` · repeat buyer, ${selectedBuyer.orderCount} order${selectedBuyer.orderCount === 1 ? "" : "s"} so far`
                   : " · new buyer"}
               </p>
             )}
-            {buyers.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                No buyers on the list yet. Add them under Buyer list.
-              </p>
+
+            {/* Adding is here rather than on another page: an empty list is
+                otherwise a dead end at the exact moment a buyer is needed. */}
+            {addingBuyer ? (
+              <div className="grid gap-2 rounded-md border p-3 sm:grid-cols-2">
+                <Input
+                  value={newBuyerName}
+                  onChange={(event) => setNewBuyerName(event.target.value)}
+                  placeholder="Buyer name"
+                />
+                <Input
+                  value={newBuyerUsername}
+                  onChange={(event) => setNewBuyerUsername(event.target.value)}
+                  placeholder="Username"
+                />
+                <div className="flex gap-2 sm:col-span-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="flex-1"
+                    disabled={busy}
+                    onClick={addBuyer}
+                  >
+                    Add and select
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAddingBuyer(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAddingBuyer(true)}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                {buyers.length === 0
+                  ? "No buyers yet — add one"
+                  : "Add a new buyer"}
+              </button>
             )}
           </div>
 
