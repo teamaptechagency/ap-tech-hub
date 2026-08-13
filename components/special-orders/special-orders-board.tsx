@@ -231,7 +231,12 @@ export function SpecialOrdersBoard({
                       </span>
                     </div>
 
-                    {profile.progress.percent === null ? (
+                    {profile.progress.levelUnknown ? (
+                      <p className="text-amber-600">
+                        This level is not on the ladder — set it again under
+                        Marketplace manage
+                      </p>
+                    ) : profile.progress.percent === null ? (
                       <p className="text-muted-foreground">
                         No target set for this level yet
                       </p>
@@ -321,6 +326,7 @@ export function SpecialOrdersBoard({
           clients={clients}
           partners={partners}
           marketplaces={marketplaces}
+          levelNames={levelConfig.levels.map((level) => level.name)}
           existingProfiles={profiles.map((profile) => ({
             id: profile.id,
             profileName: profile.profileName,

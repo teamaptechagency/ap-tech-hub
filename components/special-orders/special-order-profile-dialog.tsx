@@ -54,6 +54,7 @@ export function SpecialOrderProfileDialog({
   partners,
   marketplaces,
   existingProfiles,
+  levelNames,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -61,6 +62,8 @@ export function SpecialOrderProfileDialog({
   partners: PartnerOption[];
   marketplaces: MarketplaceOption[];
   existingProfiles: ExistingProfileOption[];
+  /** The ladder set under Marketplace manage, so progress can match on it. */
+  levelNames: string[];
 }) {
   const router = useRouter();
   const [clientId, setClientId] = useState("");
@@ -229,11 +232,26 @@ export function SpecialOrderProfileDialog({
             </div>
             <div className="space-y-2">
               <Label>Profile level</Label>
-              <Input
+              {/* Chosen from the ladder rather than typed: progress is matched
+                  on the name, so a typo or a renamed level would quietly drop
+                  the profile back to the bottom of the ladder. */}
+              <select
                 value={profileLevel}
                 onChange={(event) => setProfileLevel(event.target.value)}
-                placeholder="Level 2"
-              />
+                className="h-9 w-full rounded-md border bg-background px-3 text-sm outline-none focus:border-primary"
+              >
+                <option value="">Not set</option>
+                {levelNames.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+                {profileLevel && !levelNames.includes(profileLevel) && (
+                  <option value={profileLevel}>
+                    {profileLevel} (not in the ladder)
+                  </option>
+                )}
+              </select>
             </div>
           </div>
 

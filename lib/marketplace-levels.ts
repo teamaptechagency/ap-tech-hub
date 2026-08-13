@@ -99,6 +99,8 @@ export type LevelProgress = {
   remainingUsd: number;
   /** 0–100, or null when this level has no target set yet. */
   percent: number | null;
+  /** True when the profile's level is not one of the ladder's names. */
+  levelUnknown: boolean;
 };
 
 /**
@@ -122,20 +124,28 @@ export function levelProgress(
         (level) => level.name.trim().toLowerCase() === wanted
       )
     : -1;
+  // A level that is set but is not on the ladder — a rename, or a value typed
+  // before the ladder existed — is reported rather than quietly treated as the
+  // bottom rung, which would show progress against the wrong target.
+  const levelUnknown = Boolean(wanted) && index < 0;
+
   const currentIndex = index >= 0 ? index : 0;
   const current = config.levels[currentIndex] ?? config.levels[0];
   const next = config.levels[currentIndex + 1] ?? null;
 
-  const targetUsd = current?.targetUsd ?? 0;
+  const targetUsd = levelUnknown ? 0 : current?.targetUsd ?? 0;
 
   return {
     grossUsd,
     netUsd,
-    currentLevel: current?.name ?? "Level 0",
-    nextLevel: next?.name ?? null,
+    currentLevel: levelUnknown
+      ? (profileLevel ?? "").trim()
+      : current?.name ?? "Level 0",
+    nextLevel: levelUnknown ? null : next?.name ?? null,
     targetUsd,
     remainingUsd: targetUsd > 0 ? Math.max(0, targetUsd - netUsd) : 0,
     percent:
       targetUsd > 0 ? Math.min(100, (netUsd / targetUsd) * 100) : null,
+    levelUnknown,
   };
 }
