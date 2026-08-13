@@ -90,6 +90,65 @@ export async function saveMarketplaceLevelConfig(
   return clean;
 }
 
+/**
+ * Moves a profile up the ladder once it has earned its way there.
+ *
+ * Only ever upward. A marketplace weighs delivery times, ratings and response
+ * rates as well as money, so a level someone has actually been given must not
+ * be taken back by a figure that has dipped — a cancelled conversation should
+ * not demote a Level 2 seller.
+ *
+ * Returns the level the profile now sits on, whether or not anything moved.
+ */
+export async function syncProfileLevel(profileId: string) {
+  const [profile, config] = await Promise.all([
+    prisma.specialOrderProfile.findUnique({
+      where: { id: profileId },
+      select: { profileLevel: true },
+    }),
+    getMarketplaceLevelConfig(),
+  ]);
+  if (!profile) return null;
+
+  const orders = await prisma.specialOrder.findMany({
+    where: { profileId, status: { not: "CANCELLED" } },
+    select: { orderAmountUsd: true },
+  });
+
+  const grossUsd = orders.reduce(
+    (sum, order) => sum + Number(order.orderAmountUsd),
+    0
+  );
+  const netUsd = grossUsd * (1 - config.feePercent / 100);
+
+  // The furthest rung whose target has been met. A rung with no target set is
+  // not something that can be earned into, so it stops the climb.
+  let earnedIndex = 0;
+  for (let index = 1; index < config.levels.length; index++) {
+    const target = config.levels[index].targetUsd;
+    if (target <= 0 || netUsd < target) break;
+    earnedIndex = index;
+  }
+
+  const currentIndex = config.levels.findIndex(
+    (level) =>
+      level.name.trim().toLowerCase() ===
+      profile.profileLevel?.trim().toLowerCase()
+  );
+
+  if (earnedIndex <= currentIndex) {
+    return config.levels[currentIndex]?.name ?? profile.profileLevel;
+  }
+
+  const earned = config.levels[earnedIndex];
+  await prisma.specialOrderProfile.update({
+    where: { id: profileId },
+    data: { profileLevel: earned.name },
+  });
+
+  return earned.name;
+}
+
 export type LevelProgress = {
   /** Gross USD taken on the profile, before the marketplace's cut. */
   grossUsd: number;
