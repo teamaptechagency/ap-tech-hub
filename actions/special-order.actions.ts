@@ -195,6 +195,139 @@ export async function setSpecialOrderBuyerKind(
   return { success: true };
 }
 
+/**
+ * Adds a buyer to the list a partner picks from.
+ *
+ * The handle is what identifies a person on a marketplace, so it has to be
+ * unique — checked here rather than by a database constraint, because a
+ * duplicate already sitting in the data would have failed the migration.
+ */
+export async function saveSpecialOrderBuyer(formData: {
+  id?: string;
+  name: string;
+  username: string;
+  country?: string;
+  note?: string;
+  profileId?: string;
+  marketplaceId?: string;
+}) {
+  const session = await auth();
+  if (!session?.user) return { error: "You must be signed in" };
+
+  const isAdmin = ADMIN_ROLES.includes(session.user.role);
+  const isPartner = PARTNER_ROLES.includes(session.user.role);
+  if (!isAdmin && !isPartner) {
+    return { error: "You don't have permission for this action" };
+  }
+
+  const name = formData.name.trim();
+  const username = formData.username.trim();
+  if (!name) return { error: "Buyer name is required" };
+  if (!username) return { error: "Buyer username is required" };
+
+  const clash = await prisma.specialOrderBuyer.findFirst({
+    where: {
+      username: { equals: username, mode: "insensitive" },
+      ...(formData.id ? { id: { not: formData.id } } : {}),
+    },
+    select: { id: true, name: true },
+  });
+  if (clash) {
+    return {
+      error: `${username} is already on the list as ${clash.name}`,
+    };
+  }
+
+  const data = {
+    name,
+    username,
+    country: formData.country?.trim() || null,
+    note: formData.note?.trim() || null,
+    profileId: formData.profileId || null,
+    marketplaceId: formData.marketplaceId || null,
+  };
+
+  const buyer = formData.id
+    ? await prisma.specialOrderBuyer.update({
+        where: { id: formData.id },
+        data,
+      })
+    : await prisma.specialOrderBuyer.create({
+        data: { ...data, createdById: session.user.id },
+      });
+
+  revalidatePath("/special-orders");
+  revalidatePath("/p/special-orders");
+  return { success: true, buyerId: buyer.id };
+}
+
+export async function deleteSpecialOrderBuyer(buyerId: string) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const inUse = await prisma.specialOrder.count({ where: { buyerId } });
+  if (inUse > 0) {
+    return {
+      error: `This buyer is on ${inUse} conversation${inUse === 1 ? "" : "s"} and cannot be removed`,
+    };
+  }
+
+  await prisma.specialOrderBuyer.delete({ where: { id: buyerId } });
+  revalidatePath("/special-orders");
+  revalidatePath("/p/special-orders");
+  return { success: true };
+}
+
+/**
+ * Puts a buyer on a conversation.
+ *
+ * A buyer with no earlier conversation is new; one who has ordered before is a
+ * repeat, and that is worked out from the record rather than asked for, so the
+ * two can never disagree.
+ */
+export async function setSpecialOrderBuyer(
+  orderId: string,
+  buyerId: string | null
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  if (!buyerId) {
+    await prisma.specialOrder.update({
+      where: { id: orderId },
+      data: { buyerId: null, buyerKind: null },
+    });
+    revalidatePath("/special-orders");
+    revalidatePath(`/special-orders/${orderId}`);
+    return { success: true };
+  }
+
+  const buyer = await prisma.specialOrderBuyer.findUnique({
+    where: { id: buyerId },
+    select: { id: true, name: true, username: true },
+  });
+  if (!buyer) return { error: "Buyer not found" };
+
+  const earlier = await prisma.specialOrder.count({
+    where: { buyerId, id: { not: orderId } },
+  });
+
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: {
+      buyerId,
+      buyerProfile: buyer.name,
+      buyerUsername: buyer.username,
+      buyerKind: earlier > 0 ? "REPEAT" : "NEW",
+    },
+  });
+
+  revalidatePath("/special-orders");
+  revalidatePath(`/special-orders/${orderId}`);
+  revalidatePath("/p/special-orders");
+  return { success: true, buyerKind: earlier > 0 ? "REPEAT" : "NEW" };
+}
+
 export async function saveMarketplaceLevels(formData: {
   feePercent: number;
   levels: { name: string; targetUsd: number }[];
