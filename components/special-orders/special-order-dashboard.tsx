@@ -57,7 +57,14 @@ export type DashboardProfile = {
  * the rest, today is what needs attention now, a past date has been missed,
  * and anything ahead is simply coming.
  */
-type Tone = "done" | "today" | "upcoming" | "overdue" | "undated";
+type Tone =
+  | "delivered"
+  | "completed"
+  | "cancelled"
+  | "today"
+  | "upcoming"
+  | "overdue"
+  | "undated";
 
 const toneStyle: Record<Tone, { dot: string; chip: string; label: string }> = {
   today: {
@@ -75,10 +82,24 @@ const toneStyle: Record<Tone, { dot: string; chip: string; label: string }> = {
     chip: "bg-red-500/10 text-red-600",
     label: "Overdue",
   },
-  done: {
+  // Handed over, waiting to be signed off — its own colour rather than the
+  // grey that a cancelled order wears.
+  delivered: {
+    dot: "bg-sky-500",
+    chip: "bg-sky-500/10 text-sky-600",
+    label: "Delivered",
+  },
+  // Finished and paid for. The strongest colour on the board, because it is
+  // the outcome everything else is working toward.
+  completed: {
+    dot: "bg-violet-500",
+    chip: "bg-violet-500/10 text-violet-600",
+    label: "Completed",
+  },
+  cancelled: {
     dot: "bg-muted-foreground/40",
-    chip: "bg-muted text-muted-foreground",
-    label: "Done",
+    chip: "bg-muted text-muted-foreground line-through",
+    label: "Cancelled",
   },
   undated: {
     dot: "bg-muted-foreground/30",
@@ -90,7 +111,11 @@ const toneStyle: Record<Tone, { dot: string; chip: string; label: string }> = {
 const FINISHED = new Set(["DELIVERED", "COMPLETED", "CANCELLED"]);
 
 function toneFor(order: DashboardOrder, today: string): Tone {
-  if (FINISHED.has(order.status)) return "done";
+  // Where an order has got to outranks its date: delivered work is not late,
+  // and a cancelled one is not waiting for anything.
+  if (order.status === "DELIVERED") return "delivered";
+  if (order.status === "COMPLETED") return "completed";
+  if (order.status === "CANCELLED") return "cancelled";
   if (!order.date) return "undated";
   if (order.date === today) return "today";
   return order.date > today ? "upcoming" : "overdue";
@@ -182,11 +207,15 @@ export function SpecialOrderDashboard({
   // The strongest tone on each day, so one late conversation is not hidden
   // behind three that are merely coming up.
   const dayTones = useMemo(() => {
+    // What needs doing outranks what is finished, so a day carrying one late
+    // conversation shows red even if three delivered ones sit beside it.
     const rank: Record<Tone, number> = {
-      overdue: 4,
-      today: 3,
-      upcoming: 2,
-      done: 1,
+      overdue: 6,
+      today: 5,
+      upcoming: 4,
+      delivered: 3,
+      completed: 2,
+      cancelled: 1,
       undated: 0,
     };
     const map = new Map<string, Tone>();
@@ -342,7 +371,14 @@ export function SpecialOrderDashboard({
                   <>
                     <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-emerald-500 transition-all"
+                        // Violet once the target is met, matching a completed
+                        // order — the bar stops meaning "getting there" and
+                        // starts meaning "got there".
+                        className={`h-full rounded-full transition-all ${
+                          profile.progress.remainingUsd === 0
+                            ? "bg-violet-500"
+                            : "bg-emerald-500"
+                        }`}
                         style={{ width: `${profile.progress.percent}%` }}
                       />
                     </div>
@@ -436,7 +472,15 @@ export function SpecialOrderDashboard({
             </div>
 
             <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t pt-3 text-[10px] text-muted-foreground">
-              {(["today", "upcoming", "overdue", "done"] as Tone[]).map(
+              {(
+                [
+                  "today",
+                  "upcoming",
+                  "overdue",
+                  "delivered",
+                  "completed",
+                ] as Tone[]
+              ).map(
                 (tone) => (
                   <span key={tone} className="flex items-center gap-1">
                     <span
