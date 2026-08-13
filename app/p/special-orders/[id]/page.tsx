@@ -131,11 +131,17 @@ export default async function PartnerHubSpecialOrderDetailsPage({
   const gigThumbnailUrl = order.profile?.gigThumbnailUrl ?? order.gigImageUrl;
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
 
-  // Breaks are pauses, not work, so they do not count toward finishing.
-  const scriptSteps = messages.filter((item) => item.kind !== "BREAK");
-  const scriptTotal = scriptSteps.length;
-  const scriptRemaining = scriptSteps.filter((item) => !item.done).length;
   const fields = arrayValue<ConversationField>(order.conversationFields);
+
+  // Everything that has to be ticked off: the script messages and the brief,
+  // documents, delivery file and reviews beside them. Breaks are pauses, not
+  // work, so they are the only thing left out.
+  const openSteps = [
+    ...messages.filter((item) => item.kind !== "BREAK"),
+    ...fields,
+  ];
+  const scriptTotal = openSteps.length;
+  const scriptRemaining = openSteps.filter((item) => !item.done).length;
   const isCompleted = order.status === "COMPLETED";
 
   return (
