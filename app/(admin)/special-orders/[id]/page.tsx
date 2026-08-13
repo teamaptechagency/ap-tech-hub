@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
+import { ClientVerification } from "@/components/special-orders/client-verification";
 import { ConversationWorkspace } from "@/components/special-orders/conversation-workspace";
 import { SpecialOrderDetailsEditor } from "@/components/special-orders/special-order-details-editor";
 import { DeleteSpecialOrderButton } from "@/components/special-orders/delete-special-order-button";
@@ -313,6 +314,16 @@ export default async function SpecialOrderDetailsPage({
         <SummaryCard label="Partner BDT" value={`BDT ${money(order.partnerCostBdt)}`} />
         <SummaryCard label="Net BDT" value={`BDT ${money(order.profitBdt)}`} />
       </div>
+
+      {/* Shown here because taking an approval back is an admin decision, and
+          this is the only page an admin can make it from. */}
+      {order.profile?.requireClientVerification && (
+        <ClientVerification
+          orderId={order.id}
+          verifiedAt={order.clientVerifiedAt?.toISOString() ?? null}
+          canWithdraw
+        />
+      )}
 
       <SpecialOrderPartnerSelector
         orderId={order.id}
