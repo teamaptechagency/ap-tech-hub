@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 
 import { ProfileConversationLauncher } from "@/components/special-orders/profile-conversation-launcher";
+import { VerificationModeToggle } from "@/components/special-orders/verification-mode-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { syncProfileLevel } from "@/lib/marketplace-levels";
@@ -153,6 +154,11 @@ export default async function SpecialOrderProfilePage({
           <Info label="Note" value={profile.note ?? "Not added"} />
         </CardContent>
       </Card>
+
+      <VerificationModeToggle
+        profileId={profile.id}
+        required={profile.requireClientVerification ?? false}
+      />
 
       <div className="space-y-3">
         <h2 className="text-base font-semibold">Conversations</h2>

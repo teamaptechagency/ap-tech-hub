@@ -359,12 +359,24 @@ export async function setSpecialOrderBuyer(
  */
 export async function verifySpecialOrder(orderId: string, verified: boolean) {
   const session = await auth();
-  if (!session?.user?.clientId) {
+  if (!session?.user) return { error: "Please sign in first" };
+
+  const isAdmin = ADMIN_ROLES.includes(session.user.role);
+
+  // Approving is the client's to give. Taking it back is not: once work has
+  // started on an approved script, withdrawing it mid-way is a decision for
+  // the team, not a button the client can press by themselves.
+  if (verified && !session.user.clientId) {
     return { error: "Only the client can verify this conversation" };
+  }
+  if (!verified && !isAdmin) {
+    return { error: "Only an admin can take a verification back" };
   }
 
   const order = await prisma.specialOrder.findFirst({
-    where: { id: orderId, clientId: session.user.clientId },
+    where: isAdmin
+      ? { id: orderId }
+      : { id: orderId, clientId: session.user.clientId ?? "" },
     select: { id: true },
   });
   if (!order) return { error: "Conversation not found" };

@@ -19,9 +19,12 @@ import { Card, CardContent } from "@/components/ui/card";
 export function ClientVerification({
   orderId,
   verifiedAt,
+  /** Admins are the only ones who can take an approval back. */
+  canWithdraw = false,
 }: {
   orderId: string;
   verifiedAt: string | null;
+  canWithdraw?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -60,24 +63,26 @@ export function ClientVerification({
             </p>
             <p className="text-xs text-muted-foreground">
               {verifiedAt
-                ? `Approved on ${new Date(verifiedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}. Work can go ahead.`
+                ? `Approved on ${new Date(verifiedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}. Work can go ahead.${canWithdraw ? "" : " Ask the team if it needs changing."}`
                 : "Nothing is scheduled or started until you approve this conversation."}
             </p>
           </div>
         </div>
 
-        <Button
-          type="button"
-          variant={verifiedAt ? "outline" : "default"}
-          disabled={busy}
-          onClick={() => submit(!verifiedAt)}
-        >
-          {busy
-            ? "Saving..."
-            : verifiedAt
-              ? "Withdraw approval"
-              : "Verify this conversation"}
-        </Button>
+        {(!verifiedAt || canWithdraw) && (
+          <Button
+            type="button"
+            variant={verifiedAt ? "outline" : "default"}
+            disabled={busy}
+            onClick={() => submit(!verifiedAt)}
+          >
+            {busy
+              ? "Saving..."
+              : verifiedAt
+                ? "Take approval back"
+                : "Verify this conversation"}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
