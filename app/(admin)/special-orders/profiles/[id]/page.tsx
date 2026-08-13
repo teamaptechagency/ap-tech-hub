@@ -58,6 +58,20 @@ export default async function SpecialOrderProfilePage({
 
   if (!profile) notFound();
 
+  // The order count is what makes a buyer new or returning, so it comes from
+  // the record rather than from anything typed on the conversation.
+  const buyerOptions = (
+    await prisma.specialOrderBuyer.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { orders: true } } },
+    })
+  ).map((buyer) => ({
+    id: buyer.id,
+    name: buyer.name,
+    username: buyer.username,
+    orderCount: buyer._count.orders,
+  }));
+
   const totalUsd = profile.orders.reduce(
     (sum, order) => sum + Number(order.orderAmountUsd),
     0
@@ -94,6 +108,7 @@ export default async function SpecialOrderProfilePage({
             partnerRate: Number(profile.marketplace.partnerUsdRate),
           }}
           partners={partners}
+          buyers={buyerOptions}
         />
       </div>
 

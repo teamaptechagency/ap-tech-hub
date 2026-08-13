@@ -4,7 +4,10 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { SpecialOrderDialog } from "@/components/special-orders/special-order-dialog";
+import {
+  SpecialOrderDialog,
+  type BuyerOption,
+} from "@/components/special-orders/special-order-dialog";
 
 type ProfileContext = {
   id: string;
@@ -25,9 +28,11 @@ type PartnerOption = {
 export function ProfileConversationLauncher({
   profile,
   partners,
+  buyers = [],
 }: {
   profile: ProfileContext;
   partners: PartnerOption[];
+  buyers?: BuyerOption[];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -43,6 +48,7 @@ export function ProfileConversationLauncher({
           onOpenChange={setOpen}
           profile={profile}
           partners={partners}
+          buyers={buyers}
         />
       )}
     </>

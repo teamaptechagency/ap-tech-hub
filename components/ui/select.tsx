@@ -6,7 +6,56 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+/**
+ * Collects `value -> label` from the SelectItem elements declared inside.
+ *
+ * Base UI renders the raw value on the trigger unless it is given an `items`
+ * map to look the label up in. Every select in the app was declared without
+ * one, so each showed a database id once something was picked — the label was
+ * only ever visible in the open list. Reading the labels off the children the
+ * caller already wrote fixes all of them at once, with nothing to remember at
+ * the next call site.
+ */
+function collectItems(
+  node: React.ReactNode,
+  into: Record<string, React.ReactNode>
+) {
+  React.Children.forEach(node, (child) => {
+    if (!React.isValidElement(child)) return;
+
+    const props = child.props as {
+      value?: unknown;
+      children?: React.ReactNode;
+    };
+
+    if (child.type === SelectItem && typeof props.value === "string") {
+      into[props.value] = props.children;
+      return;
+    }
+
+    if (props.children) collectItems(props.children, into);
+  });
+}
+
+function Select<Value, Multiple extends boolean | undefined = false>({
+  items,
+  children,
+  ...props
+}: SelectPrimitive.Root.Props<Value, Multiple>) {
+  const derived = React.useMemo(() => {
+    // An explicit map always wins; this only fills the gap.
+    if (items) return items;
+    const collected: Record<string, React.ReactNode> = {};
+    collectItems(children, collected);
+    return Object.keys(collected).length > 0 ? collected : undefined;
+  }, [items, children]);
+
+  return (
+    <SelectPrimitive.Root<Value, Multiple> items={derived} {...props}>
+      {children}
+    </SelectPrimitive.Root>
+  )
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
