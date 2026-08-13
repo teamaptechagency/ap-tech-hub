@@ -1006,7 +1006,7 @@ model SpecialOrder {
   deliveryNote             String?
   conversationMessages     Json?
   conversationFields       Json?
-  conversationBreakMinutes Int                      @default(1)
+  conversationBreakSeconds Int                      @default(30)
   clientId                 String
   client                   Client                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   partnerId                String?

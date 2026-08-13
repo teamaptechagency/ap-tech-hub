@@ -276,6 +276,9 @@ export function SettingsShell({
   const [pointsPerDollar, setPointsPerDollar] = useState(
     settings["loyalty.pointsPerDollar"] ?? "100"
   );
+  const [exchangeMinPoints, setExchangeMinPoints] = useState(
+    settings["loyalty.exchangeMinPoints"] ?? "1000"
+  );
 
   const [receivedUsdRate, setReceivedUsdRate] = useState(
     settings["finance.receivedUsdRate"] ?? "118"
@@ -600,6 +603,13 @@ export function SettingsShell({
       return;
     }
 
+    const minimumPoints = Number(exchangeMinPoints);
+
+    if (!Number.isFinite(minimumPoints) || minimumPoints <= 0) {
+      toast.error("Enter a valid smallest exchange");
+      return;
+    }
+
     setBusy(true);
 
     try {
@@ -615,6 +625,10 @@ export function SettingsShell({
         {
           key: "loyalty.pointsPerDollar",
           value: pointsPerDollar,
+        },
+        {
+          key: "loyalty.exchangeMinPoints",
+          value: exchangeMinPoints,
         },
       ]);
 
@@ -1707,6 +1721,45 @@ export function SettingsShell({
               <span className="text-muted-foreground">
                 points = $1
               </span>
+            </div>
+
+            {/* A floor on exchanges. Approving one is manual work, so a
+                request for a handful of points costs more attention than the
+                credit it produces. */}
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground">
+                Smallest exchange
+              </span>
+
+              {["1000", "2000"].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setExchangeMinPoints(preset)}
+                  className={`rounded-full border px-2.5 py-0.5 text-xs ${
+                    exchangeMinPoints === preset
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "hover:border-primary/40"
+                  }`}
+                >
+                  {Number(preset).toLocaleString()}
+                </button>
+              ))}
+
+              <Input
+                type="number"
+                min={1}
+                step={1}
+                value={exchangeMinPoints}
+                onChange={(event) =>
+                  setExchangeMinPoints(event.target.value)
+                }
+                className="w-24"
+                disabled={busy}
+              />
+
+              <span className="text-muted-foreground">points</span>
             </div>
 
             <p className="rounded-md bg-muted/60 p-2.5 text-xs text-muted-foreground">

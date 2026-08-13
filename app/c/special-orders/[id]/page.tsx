@@ -20,6 +20,7 @@ type ScriptMessage = {
   done: boolean;
   createdAt: string;
   copiedAt?: string;
+  breakSeconds?: number;
   breakMinutes?: number;
   offerAmountUsd?: number;
   offerDeliveryDays?: number;
@@ -186,7 +187,7 @@ export default async function ClientSpecialOrderDetailsPage({
         viewerRole="CLIENT"
         readOnly
         actionsLocked
-        conversationBreakMinutes={order.conversationBreakMinutes}
+        conversationBreakSeconds={order.conversationBreakSeconds}
       />
     </div>
   );

@@ -10,6 +10,7 @@ import {
   CLIENT_WALLET_KINDS,
   getClientWalletBalance,
 } from "@/lib/client-wallet";
+import { pointExchangeMinimum } from "@/lib/point-exchange";
 
 const txnLabel: Record<string, string> = {
   ADVANCE: "Advance payment",
@@ -44,7 +45,7 @@ export default async function ClientWalletPage() {
   if (!session?.user?.clientId) notFound();
   const clientId = session.user.clientId;
 
-  const [client, balance, txns, pointTxns, settings, hasPending, monthlyInvoices] = await Promise.all([
+  const [client, balance, txns, pointTxns, settings, minimumSetting, hasPending, monthlyInvoices] = await Promise.all([
     prisma.client.findUnique({
       where: { id: clientId },
       select: { balance: true, points: true, currency: true },
@@ -61,6 +62,7 @@ export default async function ClientWalletPage() {
       take: 10,
     }),
     prisma.setting.findUnique({ where: { key: "loyalty.pointsPerDollar" } }),
+    prisma.setting.findUnique({ where: { key: "loyalty.exchangeMinPoints" } }),
     prisma.pointExchangeRequest
       .findFirst({ where: { clientId, status: "PENDING" } })
       .then(Boolean),
@@ -90,6 +92,7 @@ export default async function ClientWalletPage() {
 
   const points = client?.points ?? 0;
   const pointsPerDollar = parseInt(settings?.value ?? "100");
+  const minimumPoints = pointExchangeMinimum(minimumSetting?.value);
   const sym =
     { USD: "$", EUR: "€", GBP: "£", BDT: "৳" }[client?.currency ?? "USD"] ??
     "$";
@@ -156,6 +159,7 @@ export default async function ClientWalletPage() {
       <PointExchangeForm
         points={points}
         pointsPerDollar={pointsPerDollar}
+        minimumPoints={minimumPoints}
         hasPending={hasPending}
       />
 

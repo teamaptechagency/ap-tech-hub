@@ -12,12 +12,15 @@ import { Card, CardContent } from "@/components/ui/card";
 type PointExchangeFormProps = {
   points: number;
   pointsPerDollar: number;
+  /** The smallest exchange the team accepts, set by the super admin. */
+  minimumPoints: number;
   hasPending: boolean;
 };
 
 export function PointExchangeForm({
   points,
   pointsPerDollar,
+  minimumPoints,
   hasPending,
 }: PointExchangeFormProps) {
   const [amount, setAmount] = useState("");
@@ -37,6 +40,23 @@ export function PointExchangeForm({
 
   if (points <= 0 || pointsPerDollar <= 0) {
     return null;
+  }
+
+  // Below the floor there is nothing to fill in, so the card says how far off
+  // they are rather than showing a form that can only be refused.
+  if (points < minimumPoints) {
+    const short = minimumPoints - points;
+    return (
+      <Card>
+        <CardContent className="space-y-1 py-4">
+          <p className="text-xs font-medium">Sell points → balance credit</p>
+          <p className="text-sm text-muted-foreground">
+            Exchanges start at {minimumPoints.toLocaleString()} points. You have{" "}
+            {points.toLocaleString()} — {short.toLocaleString()} more to go.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   const numericAmount = Number(amount);
@@ -63,6 +83,13 @@ export function PointExchangeForm({
       requestedPoints <= 0
     ) {
       const message = "Enter a valid whole-number point amount";
+      setError(message);
+      toast.error(message);
+      return;
+    }
+
+    if (requestedPoints < minimumPoints) {
+      const message = `The smallest exchange is ${minimumPoints.toLocaleString()} points`;
       setError(message);
       toast.error(message);
       return;
@@ -116,12 +143,12 @@ export function PointExchangeForm({
 
             <Input
               type="number"
-              min={1}
+              min={minimumPoints}
               max={points}
               step={1}
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
-              placeholder={`Max ${points.toLocaleString()}`}
+              placeholder={`${minimumPoints.toLocaleString()}–${points.toLocaleString()}`}
               className="w-40"
               disabled={busy}
               required
@@ -135,7 +162,7 @@ export function PointExchangeForm({
               busy ||
               !amount ||
               !Number.isFinite(numericAmount) ||
-              numericAmount <= 0 ||
+              numericAmount < minimumPoints ||
               numericAmount > points
             }
           >
@@ -152,7 +179,8 @@ export function PointExchangeForm({
         </form>
 
         <p className="mt-2 text-[10px] text-muted-foreground">
-          Needs team approval — credit lands in your balance once approved.
+          Smallest exchange {minimumPoints.toLocaleString()} points · needs team
+          approval — credit lands in your balance once approved.
         </p>
       </CardContent>
     </Card>
