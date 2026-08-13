@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, ShoppingBag } from "lucide-react";
 
+import { BuyerListButton } from "@/components/special-orders/buyer-list-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { getPartnerScope, partnerWhere } from "@/lib/partner-scope";
@@ -67,15 +68,30 @@ export default async function PartnerHubSpecialOrdersPage() {
 
   const profiles = Array.from(profileMap.values());
 
+  const buyers = (
+    await prisma.specialOrderBuyer.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { orders: true } } },
+    })
+  ).map((buyer) => ({
+    id: buyer.id,
+    name: buyer.name,
+    username: buyer.username,
+    orderCount: buyer._count.orders,
+  }));
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Special orders</h1>
-        <p className="text-sm text-muted-foreground">
-          {isManager
-            ? "Special orders for the partner you manage"
-            : "Assigned special-order work and delivery notes"}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Special orders</h1>
+          <p className="text-sm text-muted-foreground">
+            {isManager
+              ? "Special orders for the partner you manage"
+              : "Assigned special-order work and delivery notes"}
+          </p>
+        </div>
+        <BuyerListButton buyers={buyers} />
       </div>
 
       {profiles.length === 0 ? (

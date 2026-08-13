@@ -19,6 +19,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BellRing, Plus, Search, Briefcase, User } from "lucide-react";
+import { roleLabel } from "@/lib/role-label";
+
+/** Two letters is enough to tell one row from the next at a glance. */
+function initials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
 type ConvoRow = {
   id: string;
@@ -72,6 +83,16 @@ export function MessagesShell({
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [newOpen, setNewOpen] = useState(false);
+  const [personSearch, setPersonSearch] = useState("");
+
+  const visiblePeople = people.filter((person) => {
+    const query = personSearch.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      person.name.toLowerCase().includes(query) ||
+      roleLabel(person.role).toLowerCase().includes(query)
+    );
+  });
   const [busy, setBusy] = useState(false);
   const [reminderBusy, setReminderBusy] = useState(false);
 
@@ -272,23 +293,39 @@ export function MessagesShell({
               Team members and client portal users
             </DialogDescription>
           </DialogHeader>
+          <Input
+            value={personSearch}
+            onChange={(event) => setPersonSearch(event.target.value)}
+            placeholder="Search people..."
+            autoFocus
+          />
+
           <div className="max-h-72 space-y-1 overflow-y-auto">
-            {people.map((p) => (
+            {visiblePeople.map((p) => (
               <button
                 key={p.id}
                 disabled={busy}
                 onClick={() => startDirect(p.id)}
-                className="flex w-full items-center justify-between rounded-md p-2.5 text-left hover:bg-muted"
+                className="flex w-full items-center gap-3 rounded-md p-2.5 text-left transition hover:bg-muted disabled:opacity-60"
               >
-                <span className="text-sm font-medium">{p.name}</span>
-                <Badge variant="secondary" className="text-xs">
-                  {p.role.replace("_", " ").toLowerCase()}
-                </Badge>
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-muted text-xs font-semibold">
+                  {initials(p.name)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">
+                    {p.name}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {roleLabel(p.role)}
+                  </span>
+                </span>
               </button>
             ))}
-            {people.length === 0 && (
+            {visiblePeople.length === 0 && (
               <p className="py-6 text-center text-xs text-muted-foreground">
-                No other users yet
+                {people.length === 0
+                  ? "No other users yet"
+                  : "Nobody matches that"}
               </p>
             )}
           </div>
