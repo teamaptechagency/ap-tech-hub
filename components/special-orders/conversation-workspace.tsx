@@ -179,8 +179,17 @@ export function ConversationWorkspace({
   actionsLocked: actionsLockedProp = false,
   conversationBreakMinutes = 1,
 }: ConversationWorkspaceProps) {
+  // Two different locks, and they were one by mistake.
+  //
+  // actionsLocked stops the work being done — copying text out and ticking it
+  // off — which is what waiting on a buyer or on the client should stop.
+  //
+  // editingLocked stops the conversation being written, and only a finished
+  // order does that. Writing the script and the brief is exactly what happens
+  // before a buyer is attached, so holding it back left nothing to prepare.
   const actionsLocked =
     actionsLockedProp || awaitingVerification || awaitingBuyer;
+  const editingLocked = actionsLockedProp;
 
   // Assigning is how the lock is lifted, so it stays available while the rest
   // of the workspace is locked — only a finished order closes it off.
@@ -785,11 +794,13 @@ export function ConversationWorkspace({
               </p>
             )}
             <p className="text-xs text-muted-foreground">
-              {actionsLocked
+              {editingLocked
                 ? "Completed order is view only. Copy and check actions are locked."
-                : "Click the check box to copy text and mark it done. Each message unlocks after the one before it is copied. Insert a special break to add an extra pause at one spot."}
+                : actionsLocked
+                  ? "Copying and checking are locked for now, but the script can still be written and edited."
+                  : "Click the check box to copy text and mark it done. Each message unlocks after the one before it is copied. Insert a special break to add an extra pause at one spot."}
             </p>
-            {viewerRole === "ADMIN" && !actionsLocked && (
+            {viewerRole === "ADMIN" && !editingLocked && (
               <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/20 p-2 text-xs">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-muted-foreground">
@@ -862,14 +873,14 @@ export function ConversationWorkspace({
                 return (
                   <div
                     key={item.id}
-                    draggable={!readOnly && !actionsLocked}
+                    draggable={!readOnly && !editingLocked}
                     onDragStart={() => setDraggedMessageId(item.id)}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={() => dropMessage(item.id)}
                     onDragEnd={() => setDraggedMessageId("")}
                     className="flex items-center gap-2 rounded-md border border-dashed border-amber-400/50 bg-amber-500/5 px-3 py-2 text-xs font-medium text-amber-600"
                   >
-                    {!readOnly && !actionsLocked && (
+                    {!readOnly && !editingLocked && (
                       <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" />
                     )}
                     <Clock className="h-3.5 w-3.5 shrink-0" />
@@ -879,7 +890,7 @@ export function ConversationWorkspace({
                     <span className="text-muted-foreground">
                       · Added by {item.createdByName ?? "Admin"}
                     </span>
-                    {!readOnly && !actionsLocked && (
+                    {!readOnly && !editingLocked && (
                       <Button
                         type="button"
                         size="sm"
@@ -909,7 +920,7 @@ export function ConversationWorkspace({
               return (
                 <div
                   key={item.id}
-                  draggable={!readOnly && !actionsLocked}
+                  draggable={!readOnly && !editingLocked}
                   onDragStart={() => setDraggedMessageId(item.id)}
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={() => dropMessage(item.id)}
@@ -943,7 +954,7 @@ export function ConversationWorkspace({
                   }
                 >
                   <div className="flex items-start gap-3">
-                    {!readOnly && !actionsLocked && (
+                    {!readOnly && !editingLocked && (
                       <GripVertical className="mt-0.5 h-5 w-5 shrink-0 cursor-grab text-muted-foreground" />
                     )}
                     <button
@@ -1080,17 +1091,30 @@ export function ConversationWorkspace({
                         type="button"
                         size="sm"
                         variant="ghost"
-                        disabled={sequenceLocked}
+                        // The lock has to reach the copy button too. Gating only
+                        // the tick box left the text one click from the
+                        // clipboard on a conversation nobody may start yet.
+                        disabled={sequenceLocked || actionsLocked}
                         onClick={(event) => {
                           event.stopPropagation();
                           copyText(messageCopyText(item), "Message");
                         }}
                         className="h-7 px-2"
-                        title={sequenceLocked ? "Complete the previous item first" : "Copy message"}
+                        title={
+                          awaitingBuyer
+                            ? "Pick a buyer first"
+                            : awaitingVerification
+                              ? "Waiting on the client to verify"
+                              : actionsLocked
+                                ? "This conversation is view only"
+                                : sequenceLocked
+                                  ? "Complete the previous item first"
+                                  : "Copy message"
+                        }
                       >
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
-                      {!readOnly && !actionsLocked && (
+                      {!readOnly && !editingLocked && (
                         <>
                         <Button
                           type="button"
@@ -1147,9 +1171,11 @@ export function ConversationWorkspace({
           </CardHeader>
           <CardContent className="space-y-4 p-4">
             <p className="text-xs text-muted-foreground">
-              {actionsLocked
+              {editingLocked
                 ? "Completed order is view only. Copy and check actions are locked."
-                : "Click the check box to copy text and mark it done."}
+                : actionsLocked
+                  ? "Copying and checking are locked for now, but these can still be added and edited."
+                  : "Click the check box to copy text and mark it done."}
             </p>
             {visibleFields.length === 0 && (
               <p className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
@@ -1267,7 +1293,7 @@ export function ConversationWorkspace({
                         >
                           <Copy className="h-3.5 w-3.5" />
                         </Button>
-                        {!readOnly && !actionsLocked && (
+                        {!readOnly && !editingLocked && (
                           <>
                           <Button
                             size="sm"
