@@ -16,6 +16,11 @@ import {
 import { MarketplaceSettings } from "@/components/special-orders/marketplace-settings";
 import { SpecialOrderProfileDialog } from "@/components/special-orders/special-order-profile-dialog";
 import { ChevronRight, Plus, Settings, ShoppingBag } from "lucide-react";
+import { LevelTargets } from "@/components/special-orders/level-targets";
+import type {
+  LevelProgress,
+  MarketplaceLevelConfig,
+} from "@/lib/marketplace-levels";
 
 type SpecialOrderRow = {
   id: string;
@@ -61,6 +66,7 @@ type ProfileOption = {
   clientRate: number;
   partnerRate: number;
   conversationCount: number;
+  progress: LevelProgress;
 };
 
 type MarketplaceOption = {
@@ -97,6 +103,7 @@ export function SpecialOrdersBoard({
   profiles,
   marketplaces,
   marketplaceSettings,
+  levelConfig,
 }: {
   orders: SpecialOrderRow[];
   clients: ClientOption[];
@@ -104,6 +111,7 @@ export function SpecialOrdersBoard({
   profiles: ProfileOption[];
   marketplaces: MarketplaceOption[];
   marketplaceSettings: MarketplaceSettingsRow[];
+  levelConfig: MarketplaceLevelConfig;
 }) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
@@ -204,6 +212,46 @@ export function SpecialOrdersBoard({
                       {profile.keywords ?? "No keywords added"}
                     </p>
                   </div>
+                  {/* How far this profile is from its next seller level. Net,
+                      not gross: the marketplace takes its cut before any of it
+                      counts toward the target. */}
+                  <div className="space-y-1.5 rounded-md border bg-muted/20 p-2.5 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">
+                        {profile.progress.currentLevel}
+                        {profile.progress.nextLevel && (
+                          <span className="text-muted-foreground">
+                            {" → "}
+                            {profile.progress.nextLevel}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-muted-foreground">
+                        USD {profile.progress.netUsd.toFixed(2)} net
+                      </span>
+                    </div>
+
+                    {profile.progress.percent === null ? (
+                      <p className="text-muted-foreground">
+                        No target set for this level yet
+                      </p>
+                    ) : (
+                      <>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-emerald-500 transition-all"
+                            style={{ width: `${profile.progress.percent}%` }}
+                          />
+                        </div>
+                        <p className="text-muted-foreground">
+                          {profile.progress.remainingUsd > 0
+                            ? `USD ${profile.progress.remainingUsd.toFixed(2)} to go of ${profile.progress.targetUsd.toFixed(0)}`
+                            : `Target of USD ${profile.progress.targetUsd.toFixed(0)} reached`}
+                        </p>
+                      </>
+                    )}
+                  </div>
+
                   <div className="flex items-end justify-between gap-3 text-xs">
                     <div className="text-muted-foreground">
                       <p>Client BDT {profile.clientRate}</p>
@@ -292,6 +340,7 @@ export function SpecialOrdersBoard({
             }))}
             marketplaces={marketplaceSettings}
           />
+          <LevelTargets config={levelConfig} />
         </DialogContent>
       </Dialog>
     </div>
