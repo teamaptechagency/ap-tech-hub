@@ -260,7 +260,13 @@ export function SpecialOrdersBoard({
                       <>
                         <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                           <div
-                            className="h-full rounded-full bg-emerald-500 transition-all"
+                            // Violet once the target is met — see the dashboard
+                            // bar for why the colour changes at the finish.
+                            className={`h-full rounded-full transition-all ${
+                              profile.progress.remainingUsd === 0
+                                ? "bg-violet-500"
+                                : "bg-emerald-500"
+                            }`}
                             style={{ width: `${profile.progress.percent}%` }}
                           />
                         </div>
