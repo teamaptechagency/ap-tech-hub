@@ -913,6 +913,10 @@ export function ConversationWorkspace({
               const { locked, waitSec, needsOfferConfirmation } =
                 messageLockInfo(index);
               const sequenceLocked = !item.done && locked;
+              // Out of reach until the one before it is sent, so the words are
+              // hidden rather than merely dimmed: reading ahead is how a script
+              // gets sent out of order.
+              const blurred = sequenceLocked && !readOnly;
               const disabled = permissionDenied || sequenceLocked;
               const isNextUp =
                 !item.done && !sequenceLocked && !permissionDenied;
@@ -993,6 +997,12 @@ export function ConversationWorkspace({
                             Custom offer
                           </span>
                         )}
+                        {waitSec > 0 && !item.done && (
+                          <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-amber-600">
+                            <Clock className="h-2.5 w-2.5" />
+                            {formatCountdown(waitSec)}
+                          </span>
+                        )}
                         {item.done && (
                           <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-500">
                             Copied
@@ -1015,9 +1025,21 @@ export function ConversationWorkspace({
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 whitespace-pre-wrap text-sm font-medium">
+                      <p
+                        className={`mt-1 whitespace-pre-wrap text-sm font-medium transition ${
+                          blurred ? "select-none blur-sm" : ""
+                        }`}
+                      >
                         {display}
                       </p>
+                      {blurred && (
+                        <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-600">
+                          <Clock className="h-3 w-3" />
+                          {waitSec > 0
+                            ? `Unlocks in ${formatCountdown(waitSec)}`
+                            : "Copy the message above first"}
+                        </p>
+                      )}
                       {item.kind === "OFFER" && (
                         <div className="mt-3 space-y-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2 text-xs">
                           <div className="grid grid-cols-3 gap-2">
