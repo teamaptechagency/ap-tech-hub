@@ -144,11 +144,28 @@ export async function setSpecialOrderDate(
 
   const order = await prisma.specialOrder.findUnique({
     where: { id: orderId },
-    select: { status: true },
+    select: {
+      status: true,
+      clientVerifiedAt: true,
+      profile: { select: { requireClientVerification: true } },
+    },
   });
   if (!order) return { error: "Conversation not found" };
   if (order.status === "COMPLETED") {
     return { error: "Completed conversations are view only" };
+  }
+
+  // Scheduling is the point at which work gets committed to, so it waits for
+  // the client's sign-off wherever the profile asks for one. Clearing a date
+  // is always allowed — taking work off the calendar needs no approval.
+  if (
+    date &&
+    order.profile?.requireClientVerification &&
+    !order.clientVerifiedAt
+  ) {
+    return {
+      error: "The client has not verified this conversation yet",
+    };
   }
 
   await prisma.specialOrder.update({
@@ -329,6 +346,59 @@ export async function setSpecialOrderBuyer(
   revalidatePath(`/special-orders/${orderId}`);
   revalidatePath("/p/special-orders");
   return { success: true, buyerKind: earlier > 0 ? "REPEAT" : "NEW" };
+}
+
+/**
+ * The client signs a conversation off, which unlocks scheduling and the script.
+ *
+ * Only the client who owns the order can do it — an admin approving on their
+ * behalf would make the check meaningless. Passing false withdraws it, so a
+ * conversation changed after approval can be sent back.
+ */
+export async function verifySpecialOrder(orderId: string, verified: boolean) {
+  const session = await auth();
+  if (!session?.user?.clientId) {
+    return { error: "Only the client can verify this conversation" };
+  }
+
+  const order = await prisma.specialOrder.findFirst({
+    where: { id: orderId, clientId: session.user.clientId },
+    select: { id: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: {
+      clientVerifiedAt: verified ? new Date() : null,
+      clientVerifiedById: verified ? session.user.id : null,
+    },
+  });
+
+  revalidatePath("/c/special-orders");
+  revalidatePath(`/c/special-orders/${orderId}`);
+  revalidatePath("/special-orders");
+  revalidatePath(`/special-orders/${orderId}`);
+  revalidatePath("/p/special-orders");
+  return { success: true };
+}
+
+/** Turns the client sign-off requirement on or off for one profile. */
+export async function setProfileVerificationRequired(
+  profileId: string,
+  required: boolean
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  await prisma.specialOrderProfile.update({
+    where: { id: profileId },
+    data: { requireClientVerification: required },
+  });
+
+  revalidatePath("/special-orders");
+  revalidatePath(`/special-orders/profiles/${profileId}`);
+  return { success: true };
 }
 
 export async function saveMarketplaceLevels(formData: {

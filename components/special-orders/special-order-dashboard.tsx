@@ -14,7 +14,17 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { buyerKindLabel, type BuyerKind } from "@/lib/buyer-kind";
 import type { LevelProgress } from "@/lib/marketplace-levels";
 
@@ -132,6 +142,8 @@ export function SpecialOrderDashboard({
 }) {
   const router = useRouter();
   const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignDay, setAssignDay] = useState(today);
   const [monthCursor, setMonthCursor] = useState(() => {
     const [year, month] = today.split("-").map(Number);
     return { year, month: month - 1 };
@@ -211,19 +223,14 @@ export function SpecialOrderDashboard({
     [orders]
   );
 
-  // Dated but unfinished, and not already on the day being looked at.
-  const movable = useMemo(
+  // Dated and still open, so a date can be taken off or moved.
+  const scheduled = useMemo(
     () =>
-      orders.filter(
-        (order) =>
-          order.date &&
-          order.date !== selectedDay &&
-          !FINISHED.has(order.status)
-      ),
-    [orders, selectedDay]
+      orders.filter((order) => order.date && !FINISHED.has(order.status)),
+    [orders]
   );
 
-  async function assignDate(orderId: string, date: string) {
+  async function assignDate(orderId: string, date: string | null) {
     setAssigningId(orderId);
     const result = await setSpecialOrderDate(orderId, date).catch(() => ({
       error: "Could not set the date. Please try again.",
@@ -234,7 +241,7 @@ export function SpecialOrderDashboard({
       toast.error(result.error);
       return;
     }
-    toast.success(`Moved to ${prettyDate(date)}`);
+    toast.success(date ? `Moved to ${prettyDate(date)}` : "Date removed");
     router.refresh();
   }
 
@@ -401,9 +408,10 @@ export function SpecialOrderDashboard({
                     <button
                       key={key}
                       type="button"
-                      // An empty day has to be selectable when scheduling —
-                      // a free day is exactly where a conversation gets put.
-                      disabled={!tone && !canSchedule}
+                      // Tapping a day filters the list. A day with nothing on
+                      // it has nothing to filter to, so it stays inert —
+                      // scheduling lives behind the Assign button instead.
+                      disabled={!tone}
                       onClick={() =>
                         setSelectedDay(isSelected ? null : key)
                       }
@@ -450,56 +458,20 @@ export function SpecialOrderDashboard({
               </button>
             )}
 
-            {/* Conversations with no day yet, offered against whichever day is
-                picked. A day can take as many as needed — a seller runs
-                several at once. */}
-            {canSchedule && selectedDay && (
-              <div className="mt-3 space-y-1.5 border-t pt-3">
-                <p className="text-[11px] text-muted-foreground">
-                  {undated.length > 0
-                    ? `Not scheduled — click to put on ${prettyDate(selectedDay)}`
-                    : "Every conversation already has a day"}
-                </p>
-                {undated.map((order) => (
-                  <button
-                    key={order.id}
-                    type="button"
-                    disabled={assigningId !== null}
-                    onClick={() => assignDate(order.id, selectedDay)}
-                    className="w-full truncate rounded-md border px-2 py-1.5 text-left text-xs hover:border-primary/50 hover:bg-muted disabled:opacity-60"
-                  >
-                    {assigningId === order.id ? "Saving..." : order.title}
-                  </button>
-                ))}
-
-                {/* Moving a conversation matters as much as placing one: plans
-                    slip, and re-dating from the calendar beats opening it. */}
-                {movable.length > 0 && (
-                  <>
-                    <p className="pt-2 text-[11px] text-muted-foreground">
-                      Or move one here
-                    </p>
-                    {movable.map((order) => (
-                      <button
-                        key={order.id}
-                        type="button"
-                        disabled={assigningId !== null}
-                        onClick={() => assignDate(order.id, selectedDay)}
-                        className="flex w-full items-center justify-between gap-2 rounded-md border px-2 py-1.5 text-left text-xs hover:border-primary/50 hover:bg-muted disabled:opacity-60"
-                      >
-                        <span className="truncate">
-                          {assigningId === order.id ? "Saving..." : order.title}
-                        </span>
-                        {order.date && (
-                          <span className="shrink-0 text-muted-foreground">
-                            {prettyDate(order.date)}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </>
-                )}
-              </div>
+            {/* Scheduling lives behind its own button. Tapping a day is for
+                narrowing the list, and mixing the two meant a stray tap on an
+                empty day put work on it. */}
+            {canSchedule && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3 w-full"
+                onClick={() => setAssignOpen(true)}
+              >
+                <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
+                Assign dates
+              </Button>
             )}
           </CardContent>
         </Card>
@@ -573,6 +545,111 @@ export function SpecialOrderDashboard({
           )}
         </div>
       </div>
+
+      {/* Add and remove in one place. Six conversations off one gig read as
+          six identical lines, so each row carries enough to tell them apart. */}
+      <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Assign dates</DialogTitle>
+            <DialogDescription>
+              Pick a day, then add conversations to it. Removing a date puts a
+              conversation back on the unscheduled list.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid gap-1.5">
+              <Label className="text-xs">Day</Label>
+              <Input
+                type="date"
+                value={assignDay}
+                onChange={(event) => setAssignDay(event.target.value)}
+              />
+            </div>
+
+            <div className="max-h-[46vh] space-y-3 overflow-y-auto pr-1">
+              <AssignGroup
+                label={`Not scheduled (${undated.length})`}
+                empty="Everything has a day"
+                orders={undated}
+                assigningId={assigningId}
+                actionLabel={assignDay ? `Add to ${prettyDate(assignDay)}` : "Pick a day"}
+                disabled={!assignDay}
+                onAction={(order) => assignDate(order.id, assignDay)}
+              />
+
+              <AssignGroup
+                label={`Scheduled (${scheduled.length})`}
+                empty="Nothing scheduled yet"
+                orders={scheduled}
+                assigningId={assigningId}
+                actionLabel="Remove date"
+                variant="outline"
+                onAction={(order) => assignDate(order.id, null)}
+                showDate
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function AssignGroup({
+  label,
+  empty,
+  orders,
+  assigningId,
+  actionLabel,
+  onAction,
+  disabled = false,
+  variant = "default",
+  showDate = false,
+}: {
+  label: string;
+  empty: string;
+  orders: DashboardOrder[];
+  assigningId: string | null;
+  actionLabel: string;
+  onAction: (order: DashboardOrder) => void;
+  disabled?: boolean;
+  variant?: "default" | "outline";
+  showDate?: boolean;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
+      {orders.length === 0 ? (
+        <p className="rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
+          {empty}
+        </p>
+      ) : (
+        orders.map((order) => (
+          <div
+            key={order.id}
+            className="flex items-center gap-3 rounded-md border p-2.5"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium">{order.title}</p>
+              <p className="text-[11px] text-muted-foreground">
+                USD {order.usd.toFixed(2)} · BDT {order.bdt.toLocaleString()}
+                {showDate && order.date && ` · ${prettyDate(order.date)}`}
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant={variant}
+              disabled={disabled || assigningId !== null}
+              onClick={() => onAction(order)}
+            >
+              {assigningId === order.id ? "Saving..." : actionLabel}
+            </Button>
+          </div>
+        ))
+      )}
     </div>
   );
 }
