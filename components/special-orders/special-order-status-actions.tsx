@@ -35,6 +35,7 @@ export function SpecialOrderStatusActions({
   scriptTotal = 0,
   scriptRemaining = 0,
   awaitingVerification = false,
+  awaitingBuyer = false,
 }: {
   orderId: string;
   currentStatus: string;
@@ -44,6 +45,8 @@ export function SpecialOrderStatusActions({
   scriptRemaining?: number;
   /** The profile asks for client sign-off and it has not come. */
   awaitingVerification?: boolean;
+  /** No buyer linked yet. */
+  awaitingBuyer?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -70,7 +73,7 @@ export function SpecialOrderStatusActions({
   // Delivery is claimed once, so it stays out of reach until the script has
   // actually been worked through. Showing it early invites a conversation to be
   // marked delivered with half its messages unsent.
-  const canDeliver = scriptDone && !awaitingVerification;
+  const canDeliver = scriptDone && !awaitingVerification && !awaitingBuyer;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -87,12 +90,14 @@ export function SpecialOrderStatusActions({
         }
         disabled
       >
-        {awaitingVerification
-          ? "Pending verification"
-          : `Current: ${localStatus.toLowerCase()}`}
+        {awaitingBuyer
+          ? "No buyer set"
+          : awaitingVerification
+            ? "Pending verification"
+            : `Current: ${localStatus.toLowerCase()}`}
       </Button>
 
-      {!canDeliver && !awaitingVerification && scriptTotal > 0 && (
+      {!canDeliver && !awaitingVerification && !awaitingBuyer && scriptTotal > 0 && (
         <span className="rounded-md border border-dashed px-3 py-1.5 text-xs text-muted-foreground">
           Complete conversation first — {scriptRemaining} of {scriptTotal} left
         </span>
