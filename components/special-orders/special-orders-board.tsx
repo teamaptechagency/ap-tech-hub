@@ -17,6 +17,7 @@ import { MarketplaceSettings } from "@/components/special-orders/marketplace-set
 import { SpecialOrderProfileDialog } from "@/components/special-orders/special-order-profile-dialog";
 import { ChevronRight, Plus, Settings, ShoppingBag } from "lucide-react";
 import { LevelTargets } from "@/components/special-orders/level-targets";
+import { SpecialOrderDashboard } from "@/components/special-orders/special-order-dashboard";
 import type {
   LevelProgress,
   MarketplaceLevelConfig,
@@ -104,6 +105,7 @@ export function SpecialOrdersBoard({
   marketplaces,
   marketplaceSettings,
   levelConfig,
+  today,
 }: {
   orders: SpecialOrderRow[];
   clients: ClientOption[];
@@ -112,6 +114,8 @@ export function SpecialOrdersBoard({
   marketplaces: MarketplaceOption[];
   marketplaceSettings: MarketplaceSettingsRow[];
   levelConfig: MarketplaceLevelConfig;
+  /** Today as YYYY-MM-DD from the server, so the calendar cannot disagree. */
+  today: string;
 }) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
@@ -278,53 +282,29 @@ export function SpecialOrdersBoard({
         </div>
       )}
 
-      <div className="space-y-3">
-        <h2 className="text-base font-semibold">Recent conversations</h2>
-        {orders.length === 0 ? (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              No conversations yet
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {orders.slice(0, 8).map((order) => (
-              <Link
-                key={order.id}
-                href={`/special-orders/${order.id}`}
-                className="block"
-              >
-                <Card className="transition-colors hover:border-primary/40">
-                  <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
-                    <div className="min-w-0 flex-1">
-                      <p className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{order.title}</span>
-                        <Badge
-                          variant="secondary"
-                          className={`text-[10px] ${statusClass[order.status]}`}
-                        >
-                          {order.status.toLowerCase()}
-                        </Badge>
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {order.profileName} / Buyer:{" "}
-                        {order.buyerName ?? "not set"} / Partner:{" "}
-                        {order.partnerName ?? "not assigned"}
-                      </p>
-                    </div>
-                    <div className="text-right text-xs">
-                      <p>USD {order.orderAmountUsd.toFixed(2)}</p>
-                      <p className="font-semibold text-green-600">
-                        Net BDT {order.profitBdt.toLocaleString()}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Calendar and the conversations on it, in date order. Replaces a flat
+          "eight most recent" list, which said nothing about what is due. */}
+      <SpecialOrderDashboard
+        orders={orders.map((order) => ({
+          id: order.id,
+          href: `/special-orders/${order.id}`,
+          title: order.title,
+          status: order.status,
+          usd: order.orderAmountUsd,
+          bdt: order.clientAmountBdt,
+          clientRate: 0,
+          date: order.plannedDate ? order.plannedDate.slice(0, 10) : null,
+          invoiceNumber: null,
+        }))}
+        profiles={[]}
+        today={today}
+        title="Conversations"
+        subtitle=""
+        showHeader={false}
+        showStats={false}
+        showClientRate={false}
+        canSchedule
+      />
 
       {createOpen && (
         <SpecialOrderProfileDialog

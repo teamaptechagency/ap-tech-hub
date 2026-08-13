@@ -120,6 +120,46 @@ export async function ensureDefaultMarketplaces() {
  * A target of zero means the number is not decided yet, and the profile card
  * says so instead of showing a bar against an invented figure.
  */
+/**
+ * Puts a conversation on a day, or takes it off one.
+ *
+ * Several conversations can share a date — a seller runs more than one at a
+ * time — so nothing here checks the day is free.
+ */
+export async function setSpecialOrderDate(
+  orderId: string,
+  /** YYYY-MM-DD, or null to clear the date. */
+  date: string | null
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return { error: "Enter a valid date" };
+  }
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { status: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED") {
+    return { error: "Completed conversations are view only" };
+  }
+
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    // Noon rather than midnight, so a timezone shift either way still lands on
+    // the day that was picked.
+    data: { plannedDate: date ? new Date(`${date}T12:00:00`) : null },
+  });
+
+  revalidatePath("/special-orders");
+  revalidatePath("/p/special-orders");
+  revalidatePath("/c/special-orders");
+  return { success: true };
+}
+
 export async function saveMarketplaceLevels(formData: {
   feePercent: number;
   levels: { name: string; targetUsd: number }[];
