@@ -3,6 +3,14 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSpecialOrder } from "@/actions/special-order.actions";
+
+export type BuyerOption = {
+  id: string;
+  name: string;
+  username: string;
+  /** Decides whether this is a first order or a return. */
+  orderCount: number;
+};
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,17 +50,23 @@ export function SpecialOrderDialog({
   onOpenChange,
   profile,
   partners,
+  buyers = [],
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   profile: ProfileContext;
   partners: PartnerOption[];
+  buyers?: BuyerOption[];
 }) {
   const router = useRouter();
-  const [buyerName, setBuyerName] = useState("");
+  const [buyerId, setBuyerId] = useState("none");
+  const [orderAmountUsd, setOrderAmountUsd] = useState("");
   const [partnerId, setPartnerId] = useState(profile.partnerId ?? "none");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const selectedBuyer = buyers.find((buyer) => buyer.id === buyerId);
+  const buyerName = selectedBuyer?.name ?? "";
 
   const title = useMemo(
     () =>
@@ -67,12 +81,19 @@ export function SpecialOrderDialog({
     setError("");
     setBusy(true);
 
+    const amount = Number(orderAmountUsd);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setBusy(false);
+      return setError("Enter how much the conversation is for");
+    }
+
     const result = await createSpecialOrder({
       profileId: profile.id,
       partnerId: partnerId !== "none" ? partnerId : undefined,
       title,
       buyerProfile: buyerName,
-      orderAmountUsd: "0",
+      buyerId: buyerId !== "none" ? buyerId : undefined,
+      orderAmountUsd: orderAmountUsd,
       clientUsdRate: String(profile.clientRate),
       partnerUsdRate: String(profile.partnerRate),
       createInvoice: false,
@@ -135,11 +156,48 @@ export function SpecialOrderDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Buyer name (optional)</Label>
+            <Label>Buyer (optional)</Label>
+            {/* Both name and handle while choosing, so two people with the same
+                first name can be told apart; the handle alone once chosen,
+                because that is the part that is unique. */}
+            <Select value={buyerId} onValueChange={(value) => setBuyerId(value ?? "none")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Pick a buyer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Not set</SelectItem>
+                {buyers.map((buyer) => (
+                  <SelectItem key={buyer.id} value={buyer.id}>
+                    {buyer.username}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedBuyer && (
+              <p className="text-xs text-muted-foreground">
+                {selectedBuyer.name}
+                {selectedBuyer.orderCount > 0
+                  ? ` · repeat buyer, ${selectedBuyer.orderCount} order${selectedBuyer.orderCount === 1 ? "" : "s"} so far`
+                  : " · new buyer"}
+              </p>
+            )}
+            {buyers.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                No buyers on the list yet. Add them under Buyer list.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Order USD</Label>
             <Input
-              value={buyerName}
-              onChange={(event) => setBuyerName(event.target.value)}
-              placeholder="royellessbro"
+              type="number"
+              step="0.01"
+              min="0"
+              value={orderAmountUsd}
+              onChange={(event) => setOrderAmountUsd(event.target.value)}
+              placeholder="0.00"
+              required
             />
           </div>
 

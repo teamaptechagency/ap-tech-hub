@@ -532,6 +532,7 @@ export async function createSpecialOrder(formData: {
   clientId?: string;
   partnerId?: string;
   profileId?: string;
+  buyerId?: string;
   marketplaceId?: string;
   title: string;
   profileName?: string;
@@ -629,6 +630,30 @@ export async function createSpecialOrder(formData: {
 
   const marketplace = profile.marketplace;
 
+  // Read rather than trusted: the order count is what decides new or repeat.
+  const buyerRecord = formData.buyerId
+    ? await prisma.specialOrderBuyer
+        .findUnique({
+          where: { id: formData.buyerId },
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            _count: { select: { orders: true } },
+          },
+        })
+        .then((found) =>
+          found
+            ? {
+                id: found.id,
+                name: found.name,
+                username: found.username,
+                orderCount: found._count.orders,
+              }
+            : null
+        )
+    : null;
+
   const adjustment = marketplace.adjustments.find(
     (item) =>
       item.thresholdUsd &&
@@ -693,7 +718,16 @@ export async function createSpecialOrder(formData: {
           partnerId: assignedPartnerId,
           createdById: session.user.id,
           profileName: profile.profileName,
-          buyerProfile: formData.buyerProfile?.trim() || null,
+          buyerProfile: buyerRecord?.name ?? formData.buyerProfile?.trim() ?? null,
+          buyerId: buyerRecord?.id ?? null,
+          buyerUsername: buyerRecord?.username ?? null,
+          // Worked out from the buyer's own history rather than asked for, so
+          // "new" can never be claimed for someone already on the list.
+          buyerKind: buyerRecord
+            ? buyerRecord.orderCount > 0
+              ? "REPEAT"
+              : "NEW"
+            : null,
           niche: profile.niche ?? formData.niche?.trim() ?? null,
           conversationSheetUrl:
             formData.externalUrl?.trim() || null,
