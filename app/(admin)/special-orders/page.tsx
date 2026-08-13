@@ -3,6 +3,7 @@ import type { Role } from "@prisma/client";
 import { SpecialOrdersBoard } from "@/components/special-orders/special-orders-board";
 import { ensureDefaultMarketplaces } from "@/actions/special-order.actions";
 import { PARTNER_ROLES } from "@/lib/roles";
+import { resolveBuyerKinds } from "@/lib/buyer-kind";
 import {
   getMarketplaceLevelConfig,
   levelProgress,
@@ -99,6 +100,7 @@ export default async function SpecialOrdersPage() {
   ]);
 
   const levelConfig = await getMarketplaceLevelConfig();
+  const buyerKinds = resolveBuyerKinds(orders);
 
   // What each profile has taken in total, so its distance from the next seller
   // level can be worked out. Cancelled work is left out — it never paid.
@@ -134,6 +136,7 @@ export default async function SpecialOrdersPage() {
           profitBdt: Number(order.profitBdt),
           status: order.status,
           plannedDate: order.plannedDate?.toISOString() ?? null,
+          buyerKind: buyerKinds.get(order.id) ?? null,
           dueDate: order.dueDate?.toISOString() ?? null,
           clientComment: order.clientComment,
           partnerComment: order.partnerComment,

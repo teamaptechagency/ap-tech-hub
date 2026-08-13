@@ -960,6 +960,9 @@ model SpecialOrder {
   marketplace              Marketplace?             @relation(fields: [marketplaceId], references: [id], onDelete: SetNull)
   profileName              String?
   buyerProfile             String?
+  /// "NEW" or "REPEAT". Null means nobody has said, and the app falls back to
+  /// working it out from how often this buyer name has been seen.
+  buyerKind                String?
   niche                    String?
   conversationSheetUrl     String?
   orderDate                DateTime?

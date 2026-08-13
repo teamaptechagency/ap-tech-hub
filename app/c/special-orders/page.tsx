@@ -6,6 +6,7 @@ import {
   type DashboardProfile,
 } from "@/components/special-orders/special-order-dashboard";
 import { auth } from "@/lib/auth";
+import { resolveBuyerKinds } from "@/lib/buyer-kind";
 import {
   getMarketplaceLevelConfig,
   levelProgress,
@@ -40,6 +41,8 @@ export default async function ClientSpecialOrdersPage() {
     getMarketplaceLevelConfig(),
   ]);
 
+  const buyerKinds = resolveBuyerKinds(orders);
+
   const rows: DashboardOrder[] = orders.map((order) => ({
     id: order.id,
     href: `/c/special-orders/${order.id}`,
@@ -56,6 +59,7 @@ export default async function ClientSpecialOrdersPage() {
         ? dayKey(order.orderDate)
         : null,
     invoiceNumber: order.invoice?.number ?? null,
+    buyerKind: buyerKinds.get(order.id) ?? null,
   }));
 
   // Level progress is per profile, so the orders are gathered under theirs
