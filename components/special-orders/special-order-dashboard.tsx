@@ -48,6 +48,8 @@ export type DashboardProfile = {
   name: string;
   marketplaceName: string;
   progress: LevelProgress;
+  /** Signed up but not yet delivered, so not yet counted toward the level. */
+  readyUsd: number;
 };
 
 /**
@@ -340,7 +342,7 @@ export function SpecialOrderDashboard({
                     </p>
                   </div>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    USD {profile.progress.netUsd.toFixed(2)} after fee
+                    USD {profile.progress.netUsd.toFixed(2)} delivered
                   </span>
                 </div>
 
@@ -388,6 +390,15 @@ export function SpecialOrderDashboard({
                         : `Target of USD ${profile.progress.targetUsd.toFixed(0)} reached`}
                     </p>
                   </>
+                )}
+
+                {/* Work signed up but not handed over. It moves the bar only
+                    once it is delivered, so it is said separately rather than
+                    counted early. */}
+                {profile.readyUsd > 0 && (
+                  <p className="text-xs text-amber-600">
+                    USD {profile.readyUsd.toFixed(2)} ready to deliver
+                  </p>
                 )}
               </CardContent>
             </Card>

@@ -62,15 +62,18 @@ export default async function ClientSpecialOrdersPage() {
     buyerKind: buyerKinds.get(order.id) ?? null,
   }));
 
-  // Level progress is per profile, so the orders are gathered under theirs
-  // before the ladder is applied. Cancelled work never paid, so it is left out.
+  // Delivered work drives the level; everything still open is reported beside
+  // it as "ready" rather than counted early. Cancelled work is neither.
   const grossByProfile = new Map<string, number>();
+  const readyByProfile = new Map<string, number>();
   for (const order of orders) {
     if (!order.profileId || order.status === "CANCELLED") continue;
-    grossByProfile.set(
-      order.profileId,
-      (grossByProfile.get(order.profileId) ?? 0) + Number(order.orderAmountUsd)
-    );
+    const amount = Number(order.orderAmountUsd);
+    const target =
+      order.status === "DELIVERED" || order.status === "COMPLETED"
+        ? grossByProfile
+        : readyByProfile;
+    target.set(order.profileId, (target.get(order.profileId) ?? 0) + amount);
   }
 
   const seen = new Set<string>();
@@ -87,6 +90,7 @@ export default async function ClientSpecialOrdersPage() {
         order.profile.profileLevel,
         levelConfig
       ),
+      readyUsd: readyByProfile.get(order.profile.id) ?? 0,
     });
   }
 
