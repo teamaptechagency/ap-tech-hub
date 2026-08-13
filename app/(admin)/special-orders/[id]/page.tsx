@@ -31,6 +31,7 @@ type ScriptMessage = {
   done: boolean;
   createdAt: string;
   copiedAt?: string;
+  breakSeconds?: number;
   breakMinutes?: number;
   offerAmountUsd?: number;
   offerDeliveryDays?: number;
@@ -386,7 +387,7 @@ export default async function SpecialOrderDetailsPage({
         readOnly={order.status === "COMPLETED"}
         buyerNameEditable={order.status !== "COMPLETED"}
         actionsLocked={order.status === "COMPLETED"}
-        conversationBreakMinutes={order.conversationBreakMinutes}
+        conversationBreakSeconds={order.conversationBreakSeconds}
       />
     </div>
   );

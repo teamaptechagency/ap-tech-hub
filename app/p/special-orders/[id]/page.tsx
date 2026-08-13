@@ -43,6 +43,7 @@ type ScriptMessage = {
   done: boolean;
   createdAt: string;
   copiedAt?: string;
+  breakSeconds?: number;
   breakMinutes?: number;
   offerAmountUsd?: number;
   offerDeliveryDays?: number;
@@ -250,7 +251,7 @@ export default async function PartnerHubSpecialOrderDetailsPage({
         readOnly
         buyerNameEditable={!isCompleted && isAssignedPartner}
         actionsLocked={isCompleted}
-        conversationBreakMinutes={order.conversationBreakMinutes}
+        conversationBreakSeconds={order.conversationBreakSeconds}
       />
     </div>
   );

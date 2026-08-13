@@ -56,6 +56,8 @@ type ScriptMessage = {
   done: boolean;
   createdAt: string;
   copiedAt?: string;
+  breakSeconds?: number;
+  /** Older breaks were saved in whole minutes. */
   breakMinutes?: number;
   offerAmountUsd?: number;
   offerDeliveryDays?: number;
@@ -70,11 +72,12 @@ type ScriptMessage = {
 
 // Regular break: uniform gap applied between every message pair.
 // Capped small (max 5m) so the script doesn't stall for long by default.
-const REGULAR_BREAK_MAX_MINUTES = 5;
+const REGULAR_BREAK_MAX_SECONDS = 300;
 const REGULAR_BREAK_PRESETS = [
-  { label: "1 minute", minutes: 1 },
-  { label: "3 minutes", minutes: 3 },
-  { label: "5 minutes", minutes: 5 },
+  { label: "30 seconds", seconds: 30 },
+  { label: "1 minute", seconds: 60 },
+  { label: "3 minutes", seconds: 180 },
+  { label: "5 minutes", seconds: 300 },
 ];
 
 // Special break: one-off pause insertable at a specific point in the
@@ -121,7 +124,7 @@ type ConversationWorkspaceProps = {
   readOnly?: boolean;
   buyerNameEditable?: boolean;
   actionsLocked?: boolean;
-  conversationBreakMinutes?: number;
+  conversationBreakSeconds?: number;
 };
 
 const fieldLabels: Record<ConversationField["type"], string> = {
@@ -156,6 +159,13 @@ function formatCountdown(seconds: number) {
   return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
 }
 
+/** A special break's wait, whichever unit it happened to be saved in. */
+function breakWaitSeconds(item: ScriptMessage) {
+  if (typeof item.breakSeconds === "number") return item.breakSeconds;
+  if (typeof item.breakMinutes === "number") return item.breakMinutes * 60;
+  return undefined;
+}
+
 function plainText(text: string) {
   return text;
 }
@@ -177,7 +187,7 @@ export function ConversationWorkspace({
   // Waiting on the client locks the same things a finished order does: nothing
   // is copied or ticked off work that has not been approved.
   actionsLocked: actionsLockedProp = false,
-  conversationBreakMinutes = 1,
+  conversationBreakSeconds = 30,
 }: ConversationWorkspaceProps) {
   // Two different locks, and they were one by mistake.
   //
@@ -249,9 +259,9 @@ export function ConversationWorkspace({
       confirmedUsd: sum(confirmed),
     };
   }, [messages]);
-  const [breakMinutes, setBreakMinutes] = useState(conversationBreakMinutes);
+  const [breakSeconds, setBreakSeconds] = useState(conversationBreakSeconds);
   const [customBreak, setCustomBreak] = useState(
-    String(conversationBreakMinutes)
+    String(conversationBreakSeconds)
   );
   const [now, setNow] = useState(() => Date.now());
   const visibleFields = fields.filter(
@@ -272,9 +282,9 @@ export function ConversationWorkspace({
     );
     channel.bind(
       "break-updated",
-      (payload: { conversationBreakMinutes: number }) => {
-        setBreakMinutes(payload.conversationBreakMinutes);
-        setCustomBreak(String(payload.conversationBreakMinutes));
+      (payload: { conversationBreakSeconds: number }) => {
+        setBreakSeconds(payload.conversationBreakSeconds);
+        setCustomBreak(String(payload.conversationBreakSeconds));
       }
     );
 
@@ -307,14 +317,14 @@ export function ConversationWorkspace({
     if (previous.kind === "OFFER" && previous.offerConfirmed !== true) {
       return { locked: true, waitSec: 0, needsOfferConfirmation: true };
     }
-    const effectiveBreakMinutes = isSpecialBreak
-      ? (priorItem.breakMinutes ?? breakMinutes)
-      : breakMinutes;
-    if (effectiveBreakMinutes <= 0 || !previous.copiedAt) {
+    const effectiveBreak = isSpecialBreak
+      ? (breakWaitSeconds(priorItem) ?? breakSeconds)
+      : breakSeconds;
+    if (effectiveBreak <= 0 || !previous.copiedAt) {
       return { locked: false, waitSec: 0, needsOfferConfirmation: false };
     }
     const elapsedMs = now - new Date(previous.copiedAt).getTime();
-    const requiredMs = effectiveBreakMinutes * 60_000;
+    const requiredMs = effectiveBreak * 1000;
     const waitSec = Math.max(0, Math.ceil((requiredMs - elapsedMs) / 1000));
     return { locked: waitSec > 0, waitSec, needsOfferConfirmation: false };
   }
@@ -337,16 +347,16 @@ export function ConversationWorkspace({
     toast.success(confirmed ? "Order confirmed" : "Order not confirmed");
   }
 
-  async function saveBreak(minutes: number) {
-    if (!Number.isFinite(minutes) || minutes < 0) return;
-    const clamped = Math.min(minutes, REGULAR_BREAK_MAX_MINUTES);
-    const previous = breakMinutes;
-    setBreakMinutes(clamped);
+  async function saveBreak(seconds: number) {
+    if (!Number.isFinite(seconds) || seconds < 0) return;
+    const clamped = Math.min(seconds, REGULAR_BREAK_MAX_SECONDS);
+    const previous = breakSeconds;
+    setBreakSeconds(clamped);
     setCustomBreak(String(clamped));
     const result = await updateSpecialOrderConversationBreak(orderId, clamped);
     if (result?.error) {
       toast.error(result.error);
-      setBreakMinutes(previous);
+      setBreakSeconds(previous);
       setCustomBreak(String(previous));
     }
   }
@@ -442,9 +452,11 @@ export function ConversationWorkspace({
     event.preventDefault();
     setBusy(true);
     setError("");
+    // The dialog still asks in minutes because a deliberate pause is a long
+    // one; the store keeps seconds so it shares a unit with the regular break.
     const result = await addSpecialOrderBreak(
       orderId,
-      Number(newBreakMinutes)
+      Number(newBreakMinutes) * 60
     );
     setBusy(false);
     if (result.error) {
@@ -808,11 +820,11 @@ export function ConversationWorkspace({
                 </span>
                 {REGULAR_BREAK_PRESETS.map((preset) => (
                   <button
-                    key={preset.minutes}
+                    key={preset.seconds}
                     type="button"
-                    onClick={() => saveBreak(preset.minutes)}
+                    onClick={() => saveBreak(preset.seconds)}
                     className={`rounded-full border px-2 py-0.5 ${
-                      breakMinutes === preset.minutes
+                      breakSeconds === preset.seconds
                         ? "border-primary bg-primary/10 text-primary"
                         : "hover:border-primary/40"
                     }`}
@@ -824,17 +836,17 @@ export function ConversationWorkspace({
                   <Input
                     type="number"
                     min={0}
-                    max={REGULAR_BREAK_MAX_MINUTES}
+                    max={REGULAR_BREAK_MAX_SECONDS}
                     value={customBreak}
                     onChange={(event) => setCustomBreak(event.target.value)}
                     onBlur={() => {
                       const parsed = Number(customBreak);
-                      if (parsed !== breakMinutes) saveBreak(parsed);
+                      if (parsed !== breakSeconds) saveBreak(parsed);
                     }}
                     className="h-6 w-16 text-xs"
                   />
                   <span className="text-muted-foreground">
-                    min (custom, max {REGULAR_BREAK_MAX_MINUTES})
+                    sec (custom, max {REGULAR_BREAK_MAX_SECONDS})
                   </span>
                 </div>
               </div>
@@ -884,8 +896,8 @@ export function ConversationWorkspace({
                       <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" />
                     )}
                     <Clock className="h-3.5 w-3.5 shrink-0" />
-                    Special break — wait {item.breakMinutes ?? breakMinutes}{" "}
-                    minute{(item.breakMinutes ?? breakMinutes) === 1 ? "" : "s"}{" "}
+                    Special break — wait{" "}
+                    {formatCountdown(breakWaitSeconds(item) ?? breakSeconds)}{" "}
                     before the next message unlocks
                     <span className="text-muted-foreground">
                       · Added by {item.createdByName ?? "Admin"}

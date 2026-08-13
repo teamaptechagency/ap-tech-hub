@@ -54,6 +54,8 @@ type ScriptMessage = {
   done: boolean;
   createdAt: string;
   copiedAt?: string;
+  breakSeconds?: number;
+  /** Older breaks were saved in whole minutes; read through breakWaitSeconds. */
   breakMinutes?: number;
   offerAmountUsd?: number;
   offerDeliveryDays?: number;
@@ -1849,13 +1851,13 @@ export async function reorderSpecialOrderMessages(
 // ============================================
 export async function addSpecialOrderBreak(
   orderId: string,
-  minutes: number
+  seconds: number
 ) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 
   if (!orderId) return { error: "Conversation not found" };
-  if (!Number.isFinite(minutes) || minutes <= 0) {
+  if (!Number.isFinite(seconds) || seconds <= 0) {
     return { error: "Enter a valid break duration" };
   }
 
@@ -1873,12 +1875,12 @@ export async function addSpecialOrderBreak(
     id: crypto.randomUUID(),
     kind: "BREAK",
     sender: "SELLER",
-    message: `Special break — ${minutes} minute${minutes === 1 ? "" : "s"}`,
+    message: `Special break — ${formatWaitTime(seconds)}`,
     done: false,
     createdAt: new Date().toISOString(),
     createdById: session.user.id,
     createdByName: session.user.name?.trim() || "Admin",
-    breakMinutes: minutes,
+    breakSeconds: seconds,
   });
 
   await prisma.specialOrder.update({
@@ -1911,7 +1913,7 @@ export async function toggleSpecialOrderMessageDone(
       partnerId: true,
       status: true,
       conversationMessages: true,
-      conversationBreakMinutes: true,
+      conversationBreakSeconds: true,
     },
   });
   if (!order) return { error: "Conversation not found" };
@@ -1945,12 +1947,13 @@ export async function toggleSpecialOrderMessageDone(
       return { error: "Copy the previous message first" };
     }
 
-    const breakMinutes = isSpecialBreak
-      ? (priorItem.breakMinutes ?? order.conversationBreakMinutes ?? 1)
-      : (order.conversationBreakMinutes ?? 1);
-    if (previous && breakMinutes > 0 && previous.copiedAt) {
+    const regularBreak = order.conversationBreakSeconds ?? 30;
+    const breakSeconds = isSpecialBreak
+      ? (breakWaitSeconds(priorItem) ?? regularBreak)
+      : regularBreak;
+    if (previous && breakSeconds > 0 && previous.copiedAt) {
       const elapsedMs = Date.now() - new Date(previous.copiedAt).getTime();
-      const requiredMs = breakMinutes * 60_000;
+      const requiredMs = breakSeconds * 1000;
       if (elapsedMs < requiredMs) {
         const remainingSec = Math.ceil((requiredMs - elapsedMs) / 1000);
         return {
@@ -1985,6 +1988,13 @@ export async function toggleSpecialOrderMessageDone(
   return { success: true };
 }
 
+/** A special break's wait, whichever unit it happened to be saved in. */
+function breakWaitSeconds(item: ScriptMessage) {
+  if (typeof item.breakSeconds === "number") return item.breakSeconds;
+  if (typeof item.breakMinutes === "number") return item.breakMinutes * 60;
+  return undefined;
+}
+
 function formatWaitTime(seconds: number) {
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.ceil(seconds / 60);
@@ -2002,16 +2012,16 @@ function formatWaitTime(seconds: number) {
 // ============================================
 export async function updateSpecialOrderConversationBreak(
   orderId: string,
-  minutes: number
+  seconds: number
 ) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 
-  const REGULAR_BREAK_MAX_MINUTES = 5;
-  if (!Number.isFinite(minutes) || minutes < 0) {
+  const REGULAR_BREAK_MAX_SECONDS = 300;
+  if (!Number.isFinite(seconds) || seconds < 0) {
     return { error: "Enter a valid break duration" };
   }
-  minutes = Math.min(minutes, REGULAR_BREAK_MAX_MINUTES);
+  seconds = Math.min(seconds, REGULAR_BREAK_MAX_SECONDS);
 
   const order = await prisma.specialOrder.findUnique({
     where: { id: orderId },
@@ -2024,11 +2034,11 @@ export async function updateSpecialOrderConversationBreak(
 
   await prisma.specialOrder.update({
     where: { id: orderId },
-    data: { conversationBreakMinutes: Math.round(minutes) },
+    data: { conversationBreakSeconds: Math.round(seconds) },
   });
 
   await triggerPusher(`special-order-script-${orderId}`, "break-updated", {
-    conversationBreakMinutes: Math.round(minutes),
+    conversationBreakSeconds: Math.round(seconds),
   });
 
   revalidatePath(`/special-orders/${orderId}`);
