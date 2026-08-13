@@ -9,7 +9,10 @@ import { notify } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher-server";
 import { ADMIN_ROLES, PARTNER_ROLES } from "@/lib/roles";
-import { saveMarketplaceLevelConfig } from "@/lib/marketplace-levels";
+import {
+  saveMarketplaceLevelConfig,
+  syncProfileLevel,
+} from "@/lib/marketplace-levels";
 import type { BuyerKind } from "@/lib/buyer-kind";
 import { nextInvoiceNumber } from "@/lib/invoice-number";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
@@ -841,6 +844,10 @@ export async function createSpecialOrder(formData: {
     });
   }
 
+  // A new conversation can be the one that carries the profile over its next
+  // target, so the ladder is re-checked here rather than waiting to be asked.
+  await syncProfileLevel(profile.id).catch(() => null);
+
   revalidatePath("/special-orders");
   revalidatePath("/invoices");
   revalidatePath("/c/special-orders");
@@ -1213,6 +1220,16 @@ export async function updateSpecialOrderDetails(
     return {
       error: "Could not save conversation details. Please try again.",
     };
+  }
+
+  // The order amount can change here, which can carry the profile over its
+  // next target.
+  const edited = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { profileId: true },
+  });
+  if (edited?.profileId) {
+    await syncProfileLevel(edited.profileId).catch(() => null);
   }
 
   revalidatePath(`/special-orders/${orderId}`);

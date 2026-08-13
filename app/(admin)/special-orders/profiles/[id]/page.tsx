@@ -5,6 +5,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { ProfileConversationLauncher } from "@/components/special-orders/profile-conversation-launcher";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { syncProfileLevel } from "@/lib/marketplace-levels";
 import { prisma } from "@/lib/prisma";
 import { PARTNER_ROLES } from "@/lib/roles";
 import type { Role } from "@prisma/client";
@@ -72,6 +73,14 @@ export default async function SpecialOrderProfilePage({
     orderCount: buyer._count.orders,
   }));
 
+  // Checked on the way in as well as when a conversation changes, so a level
+  // earned through an edit made elsewhere still shows up here.
+  const syncedLevel = await syncProfileLevel(profile.id).catch(() => null);
+  const levelNote =
+    syncedLevel && syncedLevel !== profile.profileLevel
+      ? "reached on earnings"
+      : null;
+
   const totalUsd = profile.orders.reduce(
     (sum, order) => sum + Number(order.orderAmountUsd),
     0
@@ -132,7 +141,12 @@ export default async function SpecialOrderProfilePage({
           <Info label="Client" value={profile.client?.companyName ?? "Not linked"} />
           <Info label="Assigned partner" value={profile.partner?.name ?? "Not assigned"} />
           <Info label="Marketplace" value={profile.marketplace.name} />
-          <Info label="Profile level" value={profile.profileLevel ?? "Not added"} />
+          <Info
+            label="Profile level"
+            value={`${syncedLevel ?? profile.profileLevel ?? "Not added"}${
+              levelNote ? ` — ${levelNote}` : ""
+            }`}
+          />
           <Info label="Niche / Gig title" value={profile.niche ?? "Not added"} />
           <Info label="Keywords" value={profile.keywords ?? "Not added"} />
           <Info label="Gig thumbnail" value={profile.gigThumbnailUrl ?? "Not added"} />
