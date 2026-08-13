@@ -18,6 +18,7 @@ import { SpecialOrderProfileDialog } from "@/components/special-orders/special-o
 import { ChevronRight, Plus, Settings, ShoppingBag } from "lucide-react";
 import { LevelTargets } from "@/components/special-orders/level-targets";
 import { SpecialOrderDashboard } from "@/components/special-orders/special-order-dashboard";
+import { BuyerList, type BuyerRow } from "@/components/special-orders/buyer-list";
 import type { BuyerKind } from "@/lib/buyer-kind";
 import type {
   LevelProgress,
@@ -108,6 +109,7 @@ export function SpecialOrdersBoard({
   marketplaceSettings,
   levelConfig,
   today,
+  buyers,
 }: {
   orders: SpecialOrderRow[];
   clients: ClientOption[];
@@ -118,6 +120,7 @@ export function SpecialOrdersBoard({
   levelConfig: MarketplaceLevelConfig;
   /** Today as YYYY-MM-DD from the server, so the calendar cannot disagree. */
   today: string;
+  buyers: BuyerRow[];
 }) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
@@ -337,6 +340,14 @@ export function SpecialOrdersBoard({
             marketplaces={marketplaceSettings}
           />
           <LevelTargets config={levelConfig} />
+          <BuyerList
+            buyers={buyers}
+            profiles={profiles.map((profile) => ({
+              id: profile.id,
+              name: profile.profileName,
+            }))}
+            canDelete
+          />
         </DialogContent>
       </Dialog>
     </div>

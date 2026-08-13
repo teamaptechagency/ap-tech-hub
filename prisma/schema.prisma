@@ -147,6 +147,7 @@ model User {
   specialOrdersWorked    SpecialOrder[]             @relation("SpecialOrderPartner")
   specialOrdersCreated   SpecialOrder[]             @relation("SpecialOrderCreator")
   specialProfiles        SpecialOrderProfile[]      @relation("SpecialOrderProfilePartner")
+  specialBuyers          SpecialOrderBuyer[]       @relation("SpecialOrderBuyerCreator")
   defaultMarketplaces    Marketplace[]              @relation("MarketplaceDefaultPartner")
   permissions            UserPermission[]
   blogPosts              BlogPost[]                 @relation("BlogPostAuthor")
@@ -960,6 +961,11 @@ model SpecialOrder {
   marketplace              Marketplace?             @relation(fields: [marketplaceId], references: [id], onDelete: SetNull)
   profileName              String?
   buyerProfile             String?
+  /// The buyer's marketplace handle, kept on the conversation even when no
+  /// buyer record is linked, so an older conversation still says who it was.
+  buyerUsername            String?
+  buyerId                  String?
+  buyer                    SpecialOrderBuyer?       @relation(fields: [buyerId], references: [id], onDelete: SetNull)
   /// "NEW" or "REPEAT". Null means nobody has said, and the app falls back to
   /// working it out from how often this buyer name has been seen.
   buyerKind                String?
@@ -1012,6 +1018,7 @@ model SpecialOrder {
   @@index([clientId])
   @@index([partnerId])
   @@index([profileId])
+  @@index([buyerId])
   @@index([marketplaceId])
   @@index([status])
   @@index([plannedDate])
@@ -1026,6 +1033,7 @@ model Marketplace {
   defaultPartnerId String?
   defaultPartner   User?                   @relation("MarketplaceDefaultPartner", fields: [defaultPartnerId], references: [id], onDelete: SetNull)
   profiles         SpecialOrderProfile[]
+  buyers           SpecialOrderBuyer[]
   specialOrders    SpecialOrder[]
   rateTiers        MarketplaceRateTier[]
   adjustments      MarketplaceAdjustment[]
@@ -1069,6 +1077,34 @@ model MarketplaceAdjustment {
   @@index([active, priority])
 }
 
+/// A buyer on a marketplace, kept once and reused across conversations.
+///
+/// Held separately so a partner can add the people they deal with before a
+/// conversation exists, and so "has this person ordered before" is answered by
+/// a record rather than by matching free text typed twice.
+model SpecialOrderBuyer {
+  id            String               @id @default(cuid())
+  marketplaceId String?
+  marketplace   Marketplace?         @relation(fields: [marketplaceId], references: [id], onDelete: SetNull)
+  profileId     String?
+  profile       SpecialOrderProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  name          String
+  /// The marketplace handle. Uniqueness is checked in code rather than by a
+  /// constraint, so an existing duplicate cannot block the migration.
+  username      String
+  country       String?
+  note          String?
+  createdById   String?
+  createdBy     User?                @relation("SpecialOrderBuyerCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  orders        SpecialOrder[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([profileId])
+  @@index([marketplaceId])
+  @@index([username])
+}
+
 model SpecialOrderProfile {
   id              String         @id @default(cuid())
   clientId        String?
@@ -1085,6 +1121,7 @@ model SpecialOrderProfile {
   active          Boolean        @default(true)
   note            String?
   orders          SpecialOrder[]
+  buyers          SpecialOrderBuyer[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 

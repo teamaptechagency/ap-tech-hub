@@ -102,6 +102,14 @@ export default async function SpecialOrdersPage() {
   const levelConfig = await getMarketplaceLevelConfig();
   const buyerKinds = resolveBuyerKinds(orders);
 
+  const buyerRecords = await prisma.specialOrderBuyer.findMany({
+    orderBy: { name: "asc" },
+    include: {
+      profile: { select: { profileName: true } },
+      _count: { select: { orders: true } },
+    },
+  });
+
   // What each profile has taken in total, so its distance from the next seller
   // level can be worked out. Cancelled work is left out — it never paid.
   const grossByProfile = new Map<string, number>();
@@ -173,6 +181,15 @@ export default async function SpecialOrdersPage() {
           defaultPartnerId: marketplace.defaultPartnerId,
         }))}
         levelConfig={levelConfig}
+        buyers={buyerRecords.map((buyer) => ({
+          id: buyer.id,
+          name: buyer.name,
+          username: buyer.username,
+          country: buyer.country,
+          note: buyer.note,
+          profileName: buyer.profile?.profileName ?? null,
+          orderCount: buyer._count.orders,
+        }))}
         today={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`}
         marketplaceSettings={allMarketplaces.map((marketplace) => ({
           id: marketplace.id,

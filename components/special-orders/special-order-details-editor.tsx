@@ -5,7 +5,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 
-import { updateSpecialOrderDetails } from "@/actions/special-order.actions";
+import {
+  setSpecialOrderBuyer,
+  updateSpecialOrderDetails,
+} from "@/actions/special-order.actions";
+
+export type BuyerOption = {
+  id: string;
+  name: string;
+  username: string;
+  /** How many conversations this buyer already appears on. */
+  orderCount: number;
+};
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,16 +54,54 @@ export function SpecialOrderDetailsEditor({
   orderId,
   initial,
   disabled,
+  buyers = [],
+  buyerId = null,
 }: {
   orderId: string;
   initial: OrderDetailsForm;
   disabled?: boolean;
+  /** The buyer list, with how many conversations each already has. */
+  buyers?: BuyerOption[];
+  buyerId?: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [selectedBuyerId, setSelectedBuyerId] = useState(buyerId ?? "");
+  const [savingBuyer, setSavingBuyer] = useState(false);
+
+  const selectedBuyer = buyers.find((buyer) => buyer.id === selectedBuyerId);
+
+  // New or repeat is read off the record rather than asked for, so the two can
+  // never disagree: a buyer with an earlier conversation has ordered before.
+  const buyerKind = selectedBuyer
+    ? selectedBuyer.orderCount > (buyerId === selectedBuyer.id ? 1 : 0)
+      ? "REPEAT"
+      : "NEW"
+    : null;
+
+  async function chooseBuyer(nextId: string) {
+    setSelectedBuyerId(nextId);
+    setSavingBuyer(true);
+    const result = await setSpecialOrderBuyer(orderId, nextId || null).catch(
+      () => ({ error: "Could not set the buyer. Please try again." })
+    );
+    setSavingBuyer(false);
+
+    if ("error" in result && result.error) {
+      setError(result.error);
+      return;
+    }
+    if (selectedBuyer) {
+      setForm((current) => ({
+        ...current,
+        buyerProfile: selectedBuyer.name,
+      }));
+    }
+    router.refresh();
+  }
 
   function setField(key: keyof OrderDetailsForm, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -110,14 +159,42 @@ export function SpecialOrderDetailsEditor({
                   required
                 />
               </Field>
-              <Field label="Buyer name">
-                <Input
-                  value={form.buyerProfile}
-                  onChange={(event) =>
-                    setField("buyerProfile", event.target.value)
-                  }
-                  placeholder="Buyer name"
-                />
+              <Field label="Buyer">
+                <select
+                  value={selectedBuyerId}
+                  disabled={savingBuyer}
+                  onChange={(event) => chooseBuyer(event.target.value)}
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm outline-none focus:border-primary disabled:opacity-60"
+                >
+                  <option value="">Not set</option>
+                  {buyers.map((buyer) => (
+                    <option key={buyer.id} value={buyer.id}>
+                      {buyer.name} ({buyer.username})
+                      {buyer.orderCount > 0
+                        ? ` — ${buyer.orderCount} order${buyer.orderCount === 1 ? "" : "s"}`
+                        : " — first order"}
+                    </option>
+                  ))}
+                </select>
+                {buyerKind && (
+                  <p
+                    className={`mt-1 text-xs font-medium ${
+                      buyerKind === "REPEAT"
+                        ? "text-violet-600"
+                        : "text-sky-600"
+                    }`}
+                  >
+                    {buyerKind === "REPEAT"
+                      ? "Repeat buyer — has ordered before"
+                      : "New buyer — no earlier order on record"}
+                  </p>
+                )}
+                {buyers.length === 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    No buyers on the list yet. Add them under Buyer list on the
+                    special orders page.
+                  </p>
+                )}
               </Field>
               <Field label="Order USD">
                 <Input

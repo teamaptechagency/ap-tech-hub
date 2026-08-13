@@ -136,6 +136,20 @@ export default async function SpecialOrderDetailsPage({
 
   if (!order) notFound();
 
+  // The order count decides new versus repeat, so it is read here rather than
+  // taken on trust from whatever was typed on the conversation.
+  const buyerOptions = (
+    await prisma.specialOrderBuyer.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { orders: true } } },
+    })
+  ).map((buyer) => ({
+    id: buyer.id,
+    name: buyer.name,
+    username: buyer.username,
+    orderCount: buyer._count.orders,
+  }));
+
   const marketplaceName =
     order.profile?.marketplace.name ?? order.marketplace?.name ?? "Custom";
   const profileName = order.profile?.profileName ?? order.profileName;
@@ -237,6 +251,8 @@ export default async function SpecialOrderDetailsPage({
           <SpecialOrderDetailsEditor
             orderId={order.id}
             disabled={order.status === "COMPLETED"}
+            buyerId={order.buyerId}
+            buyers={buyerOptions}
             initial={{
               title: order.title,
               buyerProfile: order.buyerProfile ?? "",
