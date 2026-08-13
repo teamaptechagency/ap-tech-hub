@@ -236,9 +236,13 @@ export function SpecialOrdersBoard({
                         This level is not on the ladder — set it again under
                         Marketplace manage
                       </p>
+                    ) : !profile.progress.nextLevel ? (
+                      <p className="text-muted-foreground">
+                        Top of the ladder
+                      </p>
                     ) : profile.progress.percent === null ? (
                       <p className="text-muted-foreground">
-                        No target set for this level yet
+                        No target set for {profile.progress.nextLevel} yet
                       </p>
                     ) : (
                       <>

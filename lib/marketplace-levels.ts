@@ -19,8 +19,9 @@ const SETTING_KEY = "specialOrder.levels";
 export type MarketplaceLevel = {
   name: string;
   /**
-   * Net USD the profile must earn to finish this level and move up.
-   * Zero means "not decided yet" — no progress bar is shown for it.
+   * Net USD needed to **reach** this level, not to leave it. The first rung is
+   * where a profile starts, so it carries none. Zero also means "not decided
+   * yet" further up the ladder, and no progress bar is drawn for it.
    */
   targetUsd: number;
 };
@@ -34,11 +35,12 @@ export type MarketplaceLevelConfig = {
 export const defaultLevelConfig: MarketplaceLevelConfig = {
   feePercent: 20,
   levels: [
-    { name: "Level 0", targetUsd: 600 },
-    { name: "Level 1", targetUsd: 3000 },
+    // Where every profile starts, so nothing has to be earned to be here.
+    { name: "Level 0", targetUsd: 0 },
+    { name: "Level 1", targetUsd: 600 },
+    { name: "Level 2", targetUsd: 3000 },
     // Not decided yet. They appear in the ladder but show no target until a
     // number is set, rather than inventing one.
-    { name: "Level 2", targetUsd: 0 },
     { name: "Level 3", targetUsd: 0 },
     { name: "Level 4", targetUsd: 0 },
   ],
@@ -94,10 +96,12 @@ export type LevelProgress = {
   /** What the seller keeps, and what counts toward the target. */
   netUsd: number;
   currentLevel: string;
+  /** The rung being worked toward, or null at the top of the ladder. */
   nextLevel: string | null;
+  /** Net USD needed to reach `nextLevel`. */
   targetUsd: number;
   remainingUsd: number;
-  /** 0–100, or null when this level has no target set yet. */
+  /** 0–100, or null when the next rung has no target set yet. */
   percent: number | null;
   /** True when the profile's level is not one of the ladder's names. */
   levelUnknown: boolean;
@@ -106,10 +110,13 @@ export type LevelProgress = {
 /**
  * Where a profile stands on the ladder.
  *
- * The level is taken from the profile itself rather than worked out from the
+ * Progress is measured against the target of the **next** rung, because that
+ * is the number being worked toward: a profile at Level 0 is climbing to
+ * Level 1, and Level 0 itself is simply where everyone starts.
+ *
+ * The current level is taken from the profile rather than worked out from the
  * money, because a marketplace weighs delivery times, ratings and response
- * rates too — earnings alone would tell the wrong story. An unrecognised or
- * missing level starts at the bottom.
+ * rates too — earnings alone would tell the wrong story.
  */
 export function levelProgress(
   grossUsd: number,
@@ -133,7 +140,9 @@ export function levelProgress(
   const current = config.levels[currentIndex] ?? config.levels[0];
   const next = config.levels[currentIndex + 1] ?? null;
 
-  const targetUsd = levelUnknown ? 0 : current?.targetUsd ?? 0;
+  // The next rung's target, not this one's — Level 0 asks nothing to be stood
+  // on, so what matters is what Level 1 asks for.
+  const targetUsd = levelUnknown ? 0 : next?.targetUsd ?? 0;
 
   return {
     grossUsd,
