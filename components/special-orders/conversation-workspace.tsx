@@ -533,6 +533,32 @@ export function ConversationWorkspace({
     return viewerRole === "ADMIN" || viewerRole === "PARTNER";
   }
 
+  /**
+   * Whether this viewer may take the file, which is a different question from
+   * whether they may tick the row off.
+   *
+   * The two were answered by canToggleField, and that only ever says yes to an
+   * admin or a partner — so a document marked "Access: Client" showed the
+   * client "Download disabled" directly under it. Locking a completed order
+   * stopped downloads too, which takes the delivered file away from the person
+   * it was delivered to. The server already allows exactly this; only the link
+   * was being hidden.
+   */
+  function canDownloadField(field: ConversationField) {
+    if (!field.url) return false;
+    // No audience named means anyone who can open the order can take it.
+    if (!field.audience || field.audience.length === 0) return true;
+
+    const audienceRole =
+      viewerRole === "ADMIN" ||
+      viewerRole === "PARTNER" ||
+      viewerRole === "CLIENT"
+        ? viewerRole
+        : null;
+
+    return Boolean(audienceRole && field.audience.includes(audienceRole));
+  }
+
   async function toggleFieldDone(field: ConversationField) {
     if (!canToggleField(field)) return;
     if (!field.done) {
@@ -1152,7 +1178,7 @@ export function ConversationWorkspace({
                               .join(", ")}
                           </p>
                         )}
-                        {field.url && !disabled && (
+                        {field.url && canDownloadField(field) && (
                           <a
                             href={fileViewUrl(field.url)}
                             target="_blank"
@@ -1164,7 +1190,7 @@ export function ConversationWorkspace({
                             <span className="truncate">Download file</span>
                           </a>
                         )}
-                        {field.url && disabled && (
+                        {field.url && !canDownloadField(field) && (
                           <span className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50">
                             <ExternalLink className="h-3 w-3" />
                             Download disabled
