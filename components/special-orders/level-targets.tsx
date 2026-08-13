@@ -51,8 +51,9 @@ export function LevelTargets({ config }: { config: MarketplaceLevelConfig }) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Seller level targets</CardTitle>
         <p className="text-xs text-muted-foreground">
-          What a profile has to earn to reach the next level. Leave a target
-          empty while the number is still unknown — the profile card will say so
+          Each target is what a profile must earn to <em>reach</em> that level.
+          The first one is where every profile starts, so it needs none. Leave a
+          target empty while the number is still unknown — the card will say so
           rather than show a bar against a made-up figure.
         </p>
       </CardHeader>
@@ -89,11 +90,14 @@ export function LevelTargets({ config }: { config: MarketplaceLevelConfig }) {
                     }
                   />
                 </div>
-                <div className="grid w-32 gap-1.5">
-                  <Label className="text-xs">Target USD</Label>
+                <div className="grid w-36 gap-1.5">
+                  <Label className="text-xs">
+                    {index === 0 ? "Starting level" : "USD to reach it"}
+                  </Label>
                   <Input
                     value={level.targetUsd}
-                    placeholder="not set"
+                    disabled={index === 0}
+                    placeholder={index === 0 ? "no target" : "not set"}
                     onChange={(event) =>
                       setLevels((current) =>
                         current.map((item, i) =>
