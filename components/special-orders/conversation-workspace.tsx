@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, Clock, Copy, ExternalLink, GripVertical, HandCoins, MessageSquareText, Pencil, Plus, Trash2, Upload } from "lucide-react";
@@ -194,6 +194,28 @@ export function ConversationWorkspace({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [messages, setMessages] = useState(initialMessages);
+
+  /**
+   * What the offers in this conversation add up to.
+   *
+   * A conversation can carry several offers — an initial one, then extras as
+   * the buyer asks for more — and the order amount on the record only ever
+   * held the first. Confirmed and total are kept apart because an offer that
+   * has been sent is not money until the buyer says yes.
+   */
+  const offerTotals = useMemo(() => {
+    const offers = messages.filter((item) => item.kind === "OFFER");
+    const sum = (list: ScriptMessage[]) =>
+      list.reduce((total, item) => total + Number(item.offerAmountUsd ?? 0), 0);
+    const confirmed = offers.filter((item) => item.offerConfirmed === true);
+
+    return {
+      count: offers.length,
+      totalUsd: sum(offers),
+      confirmedCount: confirmed.length,
+      confirmedUsd: sum(confirmed),
+    };
+  }, [messages]);
   const [breakMinutes, setBreakMinutes] = useState(conversationBreakMinutes);
   const [customBreak, setCustomBreak] = useState(
     String(conversationBreakMinutes)
@@ -620,6 +642,17 @@ export function ConversationWorkspace({
               <span className="flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4" />
                 Conversation script
+                {offerTotals.count > 0 && (
+                  <span className="flex items-baseline gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600">
+                    <span>
+                      USD {offerTotals.confirmedUsd.toFixed(2)}
+                    </span>
+                    <span className="font-normal text-emerald-600/70">
+                      {offerTotals.confirmedCount}/{offerTotals.count} order
+                      {offerTotals.count === 1 ? "" : "s"}
+                    </span>
+                  </span>
+                )}
               </span>
               <div className={`flex gap-2 ${readOnly ? "hidden" : ""}`}>
                 <Button
@@ -654,6 +687,41 @@ export function ConversationWorkspace({
           </div>
           <Card className="min-h-[520px] -mt-px rounded-t-none">
           <CardContent className="space-y-3 p-4">
+            {offerTotals.count > 0 && (
+              <div className="grid grid-cols-2 gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Confirmed orders
+                  </p>
+                  <p className="text-lg font-semibold text-emerald-600">
+                    USD {offerTotals.confirmedUsd.toFixed(2)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {offerTotals.confirmedCount} of {offerTotals.count} offer
+                    {offerTotals.count === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground">
+                    All offers sent
+                  </p>
+                  <p className="text-lg font-semibold">
+                    USD {offerTotals.totalUsd.toFixed(2)}
+                  </p>
+                </div>
+                {offerTotals.totalUsd > offerTotals.confirmedUsd && (
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Waiting on the buyer
+                    </p>
+                    <p className="text-lg font-semibold text-amber-600">
+                      USD{" "}
+                      {(offerTotals.totalUsd - offerTotals.confirmedUsd).toFixed(2)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               {actionsLocked
                 ? "Completed order is view only. Copy and check actions are locked."
