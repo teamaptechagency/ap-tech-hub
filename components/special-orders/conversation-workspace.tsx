@@ -108,6 +108,7 @@ type ConversationWorkspaceProps = {
   messages: ScriptMessage[];
   fields: ConversationField[];
   viewerRole?: "ADMIN" | "PARTNER" | "CLIENT" | "EMPLOYEE";
+  awaitingVerification?: boolean;
   readOnly?: boolean;
   buyerNameEditable?: boolean;
   actionsLocked?: boolean;
@@ -157,11 +158,16 @@ export function ConversationWorkspace({
   messages: initialMessages,
   fields,
   viewerRole = "ADMIN",
+  /** True when the profile asks for client sign-off and it has not come. */
+  awaitingVerification = false,
   readOnly = viewerRole !== "ADMIN",
   buyerNameEditable = !readOnly,
-  actionsLocked = false,
+  // Waiting on the client locks the same things a finished order does: nothing
+  // is copied or ticked off work that has not been approved.
+  actionsLocked: actionsLockedProp = false,
   conversationBreakMinutes = 1,
 }: ConversationWorkspaceProps) {
+  const actionsLocked = actionsLockedProp || awaitingVerification;
   const router = useRouter();
   const buyerLabel = fallbackBuyer(buyerName);
   const [buyerEditOpen, setBuyerEditOpen] = useState(false);
@@ -747,6 +753,12 @@ export function ConversationWorkspace({
                   </div>
                 )}
               </div>
+            )}
+            {awaitingVerification && (
+              <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-600">
+                Verify pending — the client has not approved this conversation
+                yet. Nothing can be copied, checked or scheduled until they do.
+              </p>
             )}
             <p className="text-xs text-muted-foreground">
               {actionsLocked

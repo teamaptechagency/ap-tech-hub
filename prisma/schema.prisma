@@ -148,6 +148,7 @@ model User {
   specialOrdersCreated   SpecialOrder[]             @relation("SpecialOrderCreator")
   specialProfiles        SpecialOrderProfile[]      @relation("SpecialOrderProfilePartner")
   specialBuyers          SpecialOrderBuyer[]       @relation("SpecialOrderBuyerCreator")
+  verifiedSpecialOrders  SpecialOrder[]            @relation("SpecialOrderVerifier")
   defaultMarketplaces    Marketplace[]              @relation("MarketplaceDefaultPartner")
   permissions            UserPermission[]
   blogPosts              BlogPost[]                 @relation("BlogPostAuthor")
@@ -964,6 +965,11 @@ model SpecialOrder {
   /// The buyer's marketplace handle, kept on the conversation even when no
   /// buyer record is linked, so an older conversation still says who it was.
   buyerUsername            String?
+  /// When the client signed the conversation off. Null means not yet, which
+  /// locks the script wherever the profile asks for verification.
+  clientVerifiedAt         DateTime?
+  clientVerifiedById       String?
+  clientVerifiedBy         User?                    @relation("SpecialOrderVerifier", fields: [clientVerifiedById], references: [id], onDelete: SetNull)
   buyerId                  String?
   buyer                    SpecialOrderBuyer?       @relation(fields: [buyerId], references: [id], onDelete: SetNull)
   /// "NEW" or "REPEAT". Null means nobody has said, and the app falls back to
@@ -1119,6 +1125,10 @@ model SpecialOrderProfile {
   keywords        String?
   gigThumbnailUrl String?
   active          Boolean        @default(true)
+  /// Whether the client has to sign a conversation off before it can be put on
+  /// a date or worked through. Off by default, so nothing changes for a
+  /// profile that has not asked for it.
+  requireClientVerification Boolean @default(false)
   note            String?
   orders          SpecialOrder[]
   buyers          SpecialOrderBuyer[]

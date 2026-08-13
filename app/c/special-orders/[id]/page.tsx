@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
+import { ClientVerification } from "@/components/special-orders/client-verification";
 import { ConversationWorkspace } from "@/components/special-orders/conversation-workspace";
 import { SharedDocuments } from "@/components/special-orders/shared-documents";
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +67,9 @@ export default async function ClientSpecialOrderDetailsPage({
     where: { id, clientId: session.user.clientId },
     include: {
       invoice: { select: { id: true, number: true, status: true } },
-      profile: { select: { profileName: true } },
+      profile: {
+        select: { profileName: true, requireClientVerification: true },
+      },
     },
   });
 
@@ -162,6 +165,13 @@ export default async function ClientSpecialOrderDetailsPage({
             : []
         }
       />
+
+      {order.profile?.requireClientVerification && (
+        <ClientVerification
+          orderId={order.id}
+          verifiedAt={order.clientVerifiedAt?.toISOString() ?? null}
+        />
+      )}
 
       {/* The buyer and seller script, the same one the admin and the partner
           work from. A separate per-order chat used to sit here instead, which
