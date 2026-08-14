@@ -55,6 +55,29 @@ the web app.
   memory.
 - Media thumbnails, in-vault note text, and original filenames are
   encrypted too — nothing about vault content is stored in the clear.
+- **Stored media is neither a `.jpg`/`.mp4` nor a giveaway `.enc`** — each
+  file is `<random-uuid>.dat` in `filesDir/attachments/` (app-private
+  internal storage). Two things follow from that:
+  - It never shows up in Gallery or a File Manager app in the first place.
+    That's not a UI trick — Android runs every app under its own Linux
+    UID, and `filesDir` is that UID's private directory, off-limits to
+    other apps (including Files/Gallery) without root. Media only becomes
+    externally visible when you deliberately Export it, which inserts a
+    fresh copy into `MediaStore`.
+  - Renaming a `.dat` file back to `.jpg`/`.mp4` won't open it. The bytes
+    are real AES-GCM ciphertext (IV + encrypted payload + auth tag), not a
+    valid JPEG/MP4 structure — a renamed copy just fails to open or plays
+    back as corrupted, exactly like the request asked for.
+  - Room's SQLite schema (table/column names) is **not** encrypted, only
+    row *content* is — so table names were deliberately kept generic
+    (`app_settings`, `notes_archive`, `note_attachments`, `profileId`)
+    instead of anything containing "vault", and profile rows are keyed by
+    an opaque `VaultKind.storageCode` (`"p1"`/`"p2"`) rather than the
+    literal strings `"REAL"`/`"DECOY"`. Same reasoning for the biometric
+    Keystore alias in `BiometricVaultUnlock.kt`. None of this replaces the
+    encryption — it's there so that someone who gets at the raw `.db` file
+    (root, a debug `adb backup`) via `sqlite3 notebook.db .schema` doesn't
+    learn "this app has a hidden vault" before ever touching a PIN.
 - Optional **fingerprint/biometric unlock** (`security/BiometricVaultUnlock.kt`)
   wraps the PIN-derived key with a second Android Keystore key that
   requires a fresh biometric check on every use (no grace window). The PIN

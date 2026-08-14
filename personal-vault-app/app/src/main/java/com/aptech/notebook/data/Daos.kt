@@ -28,10 +28,10 @@ interface PublicNoteDao {
 
 @Dao
 interface VaultConfigDao {
-    @Query("SELECT * FROM vault_config WHERE vaultKind = :vaultKind")
-    suspend fun get(vaultKind: String): VaultConfig?
+    @Query("SELECT * FROM app_settings WHERE profileId = :profileId")
+    suspend fun get(profileId: String): VaultConfig?
 
-    @Query("SELECT COUNT(*) FROM vault_config")
+    @Query("SELECT COUNT(*) FROM app_settings")
     suspend fun count(): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -40,10 +40,10 @@ interface VaultConfigDao {
 
 @Dao
 interface VaultNoteDao {
-    @Query("SELECT * FROM vault_notes WHERE vaultKind = :vaultKind ORDER BY updatedAt DESC")
-    fun observeForVault(vaultKind: String): Flow<List<VaultNote>>
+    @Query("SELECT * FROM notes_archive WHERE profileId = :profileId ORDER BY updatedAt DESC")
+    fun observeForVault(profileId: String): Flow<List<VaultNote>>
 
-    @Query("SELECT * FROM vault_notes WHERE id = :id")
+    @Query("SELECT * FROM notes_archive WHERE id = :id")
     suspend fun getById(id: Long): VaultNote?
 
     @Insert
@@ -58,10 +58,10 @@ interface VaultNoteDao {
 
 @Dao
 interface VaultMediaDao {
-    @Query("SELECT * FROM vault_media WHERE vaultKind = :vaultKind ORDER BY addedAt DESC")
-    fun observeForVault(vaultKind: String): Flow<List<VaultMedia>>
+    @Query("SELECT * FROM note_attachments WHERE profileId = :profileId ORDER BY addedAt DESC")
+    fun observeForVault(profileId: String): Flow<List<VaultMedia>>
 
-    @Query("SELECT * FROM vault_media WHERE id = :id")
+    @Query("SELECT * FROM note_attachments WHERE id = :id")
     suspend fun getById(id: Long): VaultMedia?
 
     @Insert

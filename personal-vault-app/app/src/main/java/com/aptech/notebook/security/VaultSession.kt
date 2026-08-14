@@ -2,7 +2,21 @@ package com.aptech.notebook.security
 
 import javax.crypto.SecretKey
 
-enum class VaultKind { REAL, DECOY }
+/**
+ * [storageCode] is what actually gets written to disk (DB rows, nav route
+ * strings, Keystore aliases) instead of the enum name. "REAL"/"DECOY" in a
+ * cleartext SQLite column or table name would tell anyone who opens the raw
+ * database file -- no PIN required -- that a hidden vault feature exists.
+ * The Kotlin identifiers REAL/DECOY only ever exist at compile time.
+ */
+enum class VaultKind(val storageCode: String) {
+    REAL("p1"),
+    DECOY("p2");
+
+    companion object {
+        fun fromStorageCode(code: String): VaultKind = entries.first { it.storageCode == code }
+    }
+}
 
 /**
  * Holds the currently-unlocked vault's AES key in memory only. Nothing here

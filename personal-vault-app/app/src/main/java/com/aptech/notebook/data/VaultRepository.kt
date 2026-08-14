@@ -40,7 +40,7 @@ class VaultRepository(context: Context) {
         val key = CryptoUtil.deriveKey(pin, salt)
         val verifier = CryptoUtil.verifierHash(key)
         return VaultConfig(
-            vaultKind = kind.name,
+            profileId = kind.storageCode,
             salt = salt,
             iterations = CryptoUtil.PBKDF2_ITERATIONS,
             verifierHash = verifier
@@ -55,7 +55,7 @@ class VaultRepository(context: Context) {
      */
     suspend fun tryUnlock(pin: CharArray): VaultKind? = withContext(Dispatchers.IO) {
         for (kind in VaultKind.entries) {
-            val config = configDao.get(kind.name) ?: continue
+            val config = configDao.get(kind.storageCode) ?: continue
             val key = CryptoUtil.deriveKey(pin, config.salt, config.iterations)
             if (CryptoUtil.constantTimeEquals(CryptoUtil.verifierHash(key), config.verifierHash)) {
                 VaultSession.unlock(kind, key)
@@ -66,24 +66,24 @@ class VaultRepository(context: Context) {
     }
 
     suspend fun getConfig(kind: VaultKind): VaultConfig? = withContext(Dispatchers.IO) {
-        configDao.get(kind.name)
+        configDao.get(kind.storageCode)
     }
 
     suspend fun saveBiometricEnrollment(kind: VaultKind, wrappedKey: ByteArray, iv: ByteArray) =
         withContext(Dispatchers.IO) {
-            val existing = configDao.get(kind.name) ?: return@withContext
+            val existing = configDao.get(kind.storageCode) ?: return@withContext
             configDao.upsert(existing.copy(biometricWrappedKey = wrappedKey, biometricIv = iv))
         }
 
     suspend fun clearBiometricEnrollment(kind: VaultKind) = withContext(Dispatchers.IO) {
-        val existing = configDao.get(kind.name) ?: return@withContext
+        val existing = configDao.get(kind.storageCode) ?: return@withContext
         configDao.upsert(existing.copy(biometricWrappedKey = null, biometricIv = null))
     }
 
     // ---- Notes (encrypted with the currently unlocked vault's session key) ----
 
     fun observeNotes(kind: VaultKind): Flow<List<DecryptedVaultNote>> =
-        noteDao.observeForVault(kind.name).map { list ->
+        noteDao.observeForVault(kind.storageCode).map { list ->
             val key = VaultSession.key ?: return@map emptyList()
             list.map { it.decrypt(key) }
         }
@@ -93,7 +93,7 @@ class VaultRepository(context: Context) {
             val key = VaultSession.key ?: error("Vault is locked")
             val note = VaultNote(
                 id = id ?: 0,
-                vaultKind = kind.name,
+                profileId = kind.storageCode,
                 encryptedTitle = CryptoUtil.encryptBytes(title.toByteArray(Charsets.UTF_8), key),
                 encryptedBody = CryptoUtil.encryptBytes(body.toByteArray(Charsets.UTF_8), key),
                 updatedAt = System.currentTimeMillis()

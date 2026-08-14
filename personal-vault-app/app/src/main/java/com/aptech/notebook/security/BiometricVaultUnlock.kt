@@ -25,7 +25,10 @@ object BiometricVaultUnlock {
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
     private const val GCM_TAG_LENGTH_BITS = 128
 
-    private fun alias(vaultKind: VaultKind) = "notebook_vault_biometric_${vaultKind.name}"
+    // storageCode ("p1"/"p2"), not vaultKind.name -- an alias visible in
+    // Android Keystore listing tools shouldn't spell out "vault"/"real"/
+    // "decoy" any more than the on-disk DB should.
+    private fun alias(vaultKind: VaultKind) = "notebook_auth_${vaultKind.storageCode}"
 
     private fun keyStore(): KeyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
 

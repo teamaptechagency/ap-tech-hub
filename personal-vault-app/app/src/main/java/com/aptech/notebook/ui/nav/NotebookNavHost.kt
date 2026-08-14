@@ -157,7 +157,7 @@ fun NotebookNavHost(
                         vaultRepo.setupVaults(realPin.toCharArray(), decoyPin.toCharArray())
                         val kind = vaultRepo.tryUnlock(realPin.toCharArray())
                         if (kind != null) {
-                            navController.navigate("vault_home/${kind.name}") {
+                            navController.navigate("vault_home/${kind.storageCode}") {
                                 popUpTo(ROUTE_NOTES) { inclusive = false }
                             }
                         } else {
@@ -180,7 +180,7 @@ fun NotebookNavHost(
                     scope.launch {
                         val kind = vaultRepo.tryUnlock(pin.toCharArray())
                         if (kind != null) {
-                            navController.navigate("vault_home/${kind.name}") {
+                            navController.navigate("vault_home/${kind.storageCode}") {
                                 popUpTo(ROUTE_NOTES) { inclusive = false }
                             }
                         } else {
@@ -197,7 +197,7 @@ fun NotebookNavHost(
                         if (wrapped != null && iv != null) {
                             requestBiometricUnlock(VaultKind.REAL, wrapped, iv, { key ->
                                 VaultSession.unlock(VaultKind.REAL, key)
-                                navController.navigate("vault_home/${VaultKind.REAL.name}") {
+                                navController.navigate("vault_home/${VaultKind.REAL.storageCode}") {
                                     popUpTo(ROUTE_NOTES) { inclusive = false }
                                 }
                             }, { /* fall back to PIN silently */ })
@@ -211,7 +211,7 @@ fun NotebookNavHost(
             ROUTE_VAULT_HOME,
             arguments = listOf(navArgument("kind") { type = NavType.StringType })
         ) { entry ->
-            val kind = VaultKind.valueOf(entry.arguments!!.getString("kind")!!)
+            val kind = VaultKind.fromStorageCode(entry.arguments!!.getString("kind")!!)
 
             if (!VaultSession.isUnlocked) {
                 LaunchedEffect(Unit) {
@@ -241,17 +241,17 @@ fun NotebookNavHost(
                 kind = kind,
                 notes = notes,
                 media = media,
-                onAddNote = { navController.navigate("vault_note_edit/${kind.name}/-1") },
-                onOpenNote = { id -> navController.navigate("vault_note_edit/${kind.name}/$id") },
+                onAddNote = { navController.navigate("vault_note_edit/${kind.storageCode}/-1") },
+                onOpenNote = { id -> navController.navigate("vault_note_edit/${kind.storageCode}/$id") },
                 onImportMedia = {
                     pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
                 },
-                onOpenMedia = { id -> navController.navigate("vault_media_view/${kind.name}/$id") },
+                onOpenMedia = { id -> navController.navigate("vault_media_view/${kind.storageCode}/$id") },
                 onLock = {
                     VaultSession.lock()
                     navController.navigate(ROUTE_NOTES) { popUpTo(ROUTE_NOTES) { inclusive = true } }
                 },
-                onOpenSettings = { navController.navigate("vault_settings/${kind.name}") }
+                onOpenSettings = { navController.navigate("vault_settings/${kind.storageCode}") }
             )
         }
 
@@ -262,7 +262,7 @@ fun NotebookNavHost(
                 navArgument("id") { type = NavType.LongType }
             )
         ) { entry ->
-            val kind = VaultKind.valueOf(entry.arguments!!.getString("kind")!!)
+            val kind = VaultKind.fromStorageCode(entry.arguments!!.getString("kind")!!)
             val id = entry.arguments!!.getLong("id")
             val isNew = id == -1L
 
@@ -351,7 +351,7 @@ fun NotebookNavHost(
             ROUTE_VAULT_SETTINGS,
             arguments = listOf(navArgument("kind") { type = NavType.StringType })
         ) { entry ->
-            val kind = VaultKind.valueOf(entry.arguments!!.getString("kind")!!)
+            val kind = VaultKind.fromStorageCode(entry.arguments!!.getString("kind")!!)
 
             if (!VaultSession.isUnlocked) {
                 LaunchedEffect(Unit) { navController.navigate(ROUTE_NOTES) { popUpTo(ROUTE_NOTES) { inclusive = true } } }

@@ -34,12 +34,25 @@ class VaultMediaRepository(private val context: Context) {
 
     private val db = NotebookDatabase.get(context)
     private val mediaDao = db.vaultMediaDao()
+
+    // "attachments" (not "vault_media") because a notes app plausibly has
+    // an attachments folder; app-private filesDir already keeps this out of
+    // Gallery/File Manager (see CryptoUtil's doc comment), but the name
+    // matters too if this dir is ever inspected directly (root, debug adb
+    // backup) before that inspector has any PIN.
     private val storageDir: File by lazy {
-        File(context.filesDir, "vault_media").apply { mkdirs() }
+        File(context.filesDir, "attachments").apply {
+            mkdirs()
+            // Belt-and-braces: tells any media scanner that somehow gets
+            // access to this directory to skip it. Not load-bearing on a
+            // normal device -- app-private storage isn't scanned at all --
+            // but harmless and standard practice.
+            File(this, ".nomedia").apply { if (!exists()) runCatching { createNewFile() } }
+        }
     }
 
     fun observeMedia(kind: VaultKind): Flow<List<DecryptedVaultMediaMeta>> =
-        mediaDao.observeForVault(kind.name).map { list ->
+        mediaDao.observeForVault(kind.storageCode).map { list ->
             val key = VaultSession.key ?: return@map emptyList()
             list.map { it.decryptMeta(key) }
         }
@@ -48,7 +61,13 @@ class VaultMediaRepository(private val context: Context) {
     suspend fun import(uri: Uri, mimeType: String, displayName: String, isVideo: Boolean, kind: VaultKind) =
         withContext(Dispatchers.IO) {
             val key = VaultSession.key ?: error("Vault is locked")
-            val storageFileName = "${UUID.randomUUID()}.enc"
+            // .dat, not .jpg/.mp4/.enc: renaming this back to a media
+            // extension won't make it openable -- the bytes are genuine
+            // AES-GCM ciphertext (IV + encrypted payload + auth tag), not a
+            // valid JPEG/MP4 structure, so it just fails to open/plays as
+            // corrupt. .dat also doesn't itself announce "this is encrypted"
+            // the way .enc would.
+            val storageFileName = "${UUID.randomUUID()}.dat"
             val destFile = File(storageDir, storageFileName)
 
             context.contentResolver.openInputStream(uri)?.use { input ->
@@ -59,7 +78,7 @@ class VaultMediaRepository(private val context: Context) {
 
             val thumbBytes = buildThumbnail(uri, isVideo)
             val media = VaultMedia(
-                vaultKind = kind.name,
+                profileId = kind.storageCode,
                 storageFileName = storageFileName,
                 mimeType = mimeType,
                 isVideo = isVideo,
@@ -105,7 +124,7 @@ class VaultMediaRepository(private val context: Context) {
         val key = VaultSession.key ?: error("Vault is locked")
         val media = mediaDao.getById(mediaId) ?: error("Media not found")
         val srcFile = File(storageDir, media.storageFileName)
-        val outFile = File(context.cacheDir, "vault_view_${UUID.randomUUID()}")
+        val outFile = File(context.cacheDir, "preview_${UUID.randomUUID()}")
         srcFile.inputStream().use { input ->
             CryptoUtil.decryptStream(input, key).use { decrypted ->
                 outFile.outputStream().use { output -> decrypted.copyTo(output) }

@@ -17,14 +17,21 @@ data class PublicNote(
 )
 
 /**
- * One row per vault ("REAL" or "DECOY"). Holds only what's needed to derive
- * and verify the vault's key from a typed PIN -- never the PIN or the key
- * itself. See CryptoUtil for why the key is PIN-derived rather than
- * Keystore-only.
+ * Table/column names below are deliberately generic ("settings",
+ * "profileId", "notes_archive", "note_attachments") rather than anything
+ * containing "vault". Row *content* is protected by encryption, but table
+ * and column names live in SQLite's schema in the clear (sqlite_master) --
+ * anyone who can open the raw .db file (root, a debug adb backup, etc.)
+ * reads schema names before ever touching a PIN. profileId itself stores
+ * VaultKind.storageCode ("p1"/"p2"), never the literal "REAL"/"DECOY".
+ *
+ * One row per vault profile. Holds only what's needed to derive and verify
+ * that profile's key from a typed PIN -- never the PIN or the key itself.
+ * See CryptoUtil for why the key is PIN-derived rather than Keystore-only.
  */
-@Entity(tableName = "vault_config")
+@Entity(tableName = "app_settings")
 data class VaultConfig(
-    @PrimaryKey val vaultKind: String, // "REAL" or "DECOY"
+    @PrimaryKey val profileId: String, // VaultKind.storageCode, e.g. "p1"/"p2"
     val salt: ByteArray,
     val iterations: Int,
     val verifierHash: ByteArray,
@@ -35,20 +42,20 @@ data class VaultConfig(
     val biometricIv: ByteArray? = null
 )
 
-@Entity(tableName = "vault_notes")
+@Entity(tableName = "notes_archive")
 data class VaultNote(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val vaultKind: String,
+    val profileId: String,
     val encryptedTitle: ByteArray,
     val encryptedBody: ByteArray,
     val updatedAt: Long
 )
 
-@Entity(tableName = "vault_media")
+@Entity(tableName = "note_attachments")
 data class VaultMedia(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val vaultKind: String,
-    /** File name on disk under filesDir/vault_media/, contents are AES-GCM encrypted. */
+    val profileId: String,
+    /** File name on disk under filesDir/attachments/, contents are AES-GCM encrypted, .dat extension. */
     val storageFileName: String,
     val mimeType: String,
     val isVideo: Boolean,
