@@ -1,0 +1,48 @@
+name: Personal vault app build
+
+# Compiles personal-vault-app/ (the Notebook/vault Android scaffold) on
+# every push that touches it. This exists specifically because the
+# sandbox that generated this project has no Android SDK and its network
+# policy blocks dl.google.com, so the code could not be compile-verified
+# there -- this workflow is the actual build check for it.
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'personal-vault-app/**'
+      - '.github/workflows/personal-vault-app-build.yml'
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Assemble debug APK
+        working-directory: personal-vault-app
+        run: gradle --no-daemon assembleDebug --stacktrace
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-debug-apk
+          path: personal-vault-app/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
