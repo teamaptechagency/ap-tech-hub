@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A plain notebook glyph -- intentionally unremarkable. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#5B4636"
+        android:pathData="M30,20 H78 A6,6 0 0 1 84,26 V82 A6,6 0 0 1 78,88 H30 A6,6 0 0 1 24,82 V26 A6,6 0 0 1 30,20 Z" />
+    <path android:fillColor="#FDE9B0" android:pathData="M34,28 H78 V80 H34 Z" />
+    <path android:fillColor="#5B4636" android:pathData="M40,40 H70 V44 H40 Z" />
+    <path android:fillColor="#5B4636" android:pathData="M40,50 H70 V54 H40 Z" />
+    <path android:fillColor="#5B4636" android:pathData="M40,60 H60 V64 H40 Z" />
+</vector>
