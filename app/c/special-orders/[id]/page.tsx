@@ -10,6 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  verificationRemark,
+  withoutVerificationRemark,
+} from "@/lib/special-order-verification";
 
 type ScriptMessage = {
   id: string;
@@ -77,7 +81,10 @@ export default async function ClientSpecialOrderDetailsPage({
   if (!order) notFound();
 
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
-  const fields = arrayValue<ConversationField>(order.conversationFields);
+  const remark = verificationRemark(order.conversationFields);
+  const fields = withoutVerificationRemark(
+    arrayValue<ConversationField>(order.conversationFields)
+  );
 
   return (
     <div className="space-y-6">
@@ -170,6 +177,7 @@ export default async function ClientSpecialOrderDetailsPage({
       <ClientVerification
         orderId={order.id}
         verifiedAt={order.clientVerifiedAt?.toISOString() ?? null}
+        remark={remark}
       />
 
       {/* The buyer and seller script, the same one the admin and the partner

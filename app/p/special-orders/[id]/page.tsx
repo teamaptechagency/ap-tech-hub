@@ -17,6 +17,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { getPartnerScope, partnerWhere } from "@/lib/partner-scope";
 import { prisma } from "@/lib/prisma";
+import {
+  verificationRemark,
+  withoutVerificationRemark,
+} from "@/lib/special-order-verification";
 
 const statusClass: Record<string, string> = {
   PLANNED: "bg-blue-100 text-blue-700",
@@ -132,7 +136,11 @@ export default async function PartnerHubSpecialOrderDetailsPage({
   const gigThumbnailUrl = order.profile?.gigThumbnailUrl ?? order.gigImageUrl;
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
 
-  const fields = arrayValue<ConversationField>(order.conversationFields);
+  const remark = verificationRemark(order.conversationFields);
+  const pendingRemark = Boolean(remark && !remark.reviewedAt);
+  const fields = withoutVerificationRemark(
+    arrayValue<ConversationField>(order.conversationFields)
+  );
 
   // Everything that has to be ticked off: the script messages and the brief,
   // documents, delivery file and reviews beside them. Breaks are pauses, not
@@ -247,6 +255,7 @@ export default async function PartnerHubSpecialOrderDetailsPage({
         messages={messages}
         fields={fields}
         viewerRole="PARTNER"
+        awaitingVerification={pendingRemark}
         awaitingBuyer={!order.buyerId}
         readOnly
         buyerNameEditable={!isCompleted && isAssignedPartner}
