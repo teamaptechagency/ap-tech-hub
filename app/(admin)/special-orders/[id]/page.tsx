@@ -14,6 +14,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { PARTNER_ROLES } from "@/lib/roles";
 import type { Role } from "@prisma/client";
+import {
+  verificationRemark,
+  withoutVerificationRemark,
+} from "@/lib/special-order-verification";
 
 const statusClass: Record<string, string> = {
   PLANNED: "bg-blue-100 text-blue-700",
@@ -162,10 +166,14 @@ export default async function SpecialOrderDetailsPage({
   const gigThumbnailUrl = order.profile?.gigThumbnailUrl ?? order.gigImageUrl;
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
 
-  const awaitingVerification = Boolean(
-    order.profile?.requireClientVerification && !order.clientVerifiedAt
+  const remark = verificationRemark(order.conversationFields);
+  const pendingRemark = Boolean(remark && !remark.reviewedAt);
+  const awaitingVerification =
+    pendingRemark ||
+    Boolean(order.profile?.requireClientVerification && !order.clientVerifiedAt);
+  const fields = withoutVerificationRemark(
+    arrayValue<ConversationField>(order.conversationFields)
   );
-  const fields = arrayValue<ConversationField>(order.conversationFields);
 
   // Everything that has to be ticked off: the script messages and the brief,
   // documents, delivery file and reviews beside them. Breaks are pauses, not
@@ -317,13 +325,13 @@ export default async function SpecialOrderDetailsPage({
 
       {/* Shown here because taking an approval back is an admin decision, and
           this is the only page an admin can make it from. */}
-      {order.profile?.requireClientVerification && (
-        <ClientVerification
-          orderId={order.id}
-          verifiedAt={order.clientVerifiedAt?.toISOString() ?? null}
-          canWithdraw
-        />
-      )}
+      <ClientVerification
+        orderId={order.id}
+        verifiedAt={order.clientVerifiedAt?.toISOString() ?? null}
+        remark={remark}
+        canWithdraw
+        canReview
+      />
 
       <SpecialOrderPartnerSelector
         orderId={order.id}

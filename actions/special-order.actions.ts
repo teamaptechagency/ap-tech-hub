@@ -16,6 +16,11 @@ import {
 import type { BuyerKind } from "@/lib/buyer-kind";
 import { nextInvoiceNumber } from "@/lib/invoice-number";
 import { verifySensitiveActionCode } from "@/lib/sensitive-verify";
+import {
+  VERIFICATION_REMARK_TYPE,
+  verificationRemark,
+  withoutVerificationRemark,
+} from "@/lib/special-order-verification";
 
 async function triggerPusher(channel: string, event: string, payload: unknown) {
   try {
@@ -357,7 +362,11 @@ export async function setSpecialOrderBuyer(
  * behalf would make the check meaningless. Passing false withdraws it, so a
  * conversation changed after approval can be sent back.
  */
-export async function verifySpecialOrder(orderId: string, verified: boolean) {
+export async function verifySpecialOrder(
+  orderId: string,
+  verified: boolean,
+  remark?: string
+) {
   const session = await auth();
   if (!session?.user) return { error: "Please sign in first" };
 
@@ -377,15 +386,37 @@ export async function verifySpecialOrder(orderId: string, verified: boolean) {
     where: isAdmin
       ? { id: orderId }
       : { id: orderId, clientId: session.user.clientId ?? "" },
-    select: { id: true },
+    select: { id: true, conversationFields: true },
   });
   if (!order) return { error: "Conversation not found" };
+
+  const cleanRemark = remark?.trim().slice(0, 2000) ?? "";
+  const fields = Array.isArray(order.conversationFields)
+    ? withoutVerificationRemark(order.conversationFields)
+    : [];
+  const nextFields =
+    verified && cleanRemark
+      ? [
+          ...fields,
+          {
+            id: `verification-remark-${crypto.randomUUID()}`,
+            type: VERIFICATION_REMARK_TYPE,
+            value: cleanRemark,
+            submittedAt: new Date().toISOString(),
+            submittedById: session.user.id,
+            submittedByName: session.user.name ?? "Client",
+          },
+        ]
+      : fields;
 
   await prisma.specialOrder.update({
     where: { id: orderId },
     data: {
-      clientVerifiedAt: verified ? new Date() : null,
+      // A remark means the client has flagged something for correction. The
+      // sign-off becomes effective only after an admin reviews that remark.
+      clientVerifiedAt: verified && !cleanRemark ? new Date() : null,
       clientVerifiedById: verified ? session.user.id : null,
+      conversationFields: nextFields as Prisma.InputJsonValue,
     },
   });
 
@@ -394,6 +425,51 @@ export async function verifySpecialOrder(orderId: string, verified: boolean) {
   revalidatePath("/special-orders");
   revalidatePath(`/special-orders/${orderId}`);
   revalidatePath("/p/special-orders");
+  return { success: true };
+}
+
+export async function reviewSpecialOrderVerificationRemark(orderId: string) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { conversationFields: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+
+  const remark = verificationRemark(order.conversationFields);
+  if (!remark || remark.reviewedAt) return { error: "No pending client remark" };
+
+  const reviewedAt = new Date();
+  const fields = (Array.isArray(order.conversationFields)
+    ? order.conversationFields
+    : []
+  ).map((field) =>
+    field === remark
+      ? {
+          ...remark,
+          reviewedAt: reviewedAt.toISOString(),
+          reviewedById: session.user.id,
+          reviewedByName: session.user.name ?? "Admin",
+        }
+      : field
+  );
+
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: {
+      conversationFields: fields as Prisma.InputJsonValue,
+      clientVerifiedAt: reviewedAt,
+    },
+  });
+
+  revalidatePath("/c/special-orders");
+  revalidatePath(`/c/special-orders/${orderId}`);
+  revalidatePath("/special-orders");
+  revalidatePath(`/special-orders/${orderId}`);
+  revalidatePath("/p/special-orders");
+  revalidatePath(`/p/special-orders/${orderId}`);
   return { success: true };
 }
 
