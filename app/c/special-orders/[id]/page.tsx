@@ -7,6 +7,7 @@ import { ClientVerification } from "@/components/special-orders/client-verificat
 import { ClientFileReplacements } from "@/components/special-orders/client-file-replacements";
 import { ConversationWorkspace } from "@/components/special-orders/conversation-workspace";
 import { SharedDocuments } from "@/components/special-orders/shared-documents";
+import { UsdRateInfo } from "@/components/special-orders/usd-rate-info";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
@@ -122,7 +123,10 @@ export default async function ClientSpecialOrderDetailsPage({
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Client rate</p>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>USD rate</span>
+              <UsdRateInfo />
+            </div>
             <p className="text-xl font-semibold">
               {Number(order.clientUsdRate)}
             </p>
