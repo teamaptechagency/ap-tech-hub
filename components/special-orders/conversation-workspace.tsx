@@ -7,7 +7,7 @@ import {
 } from "@/components/special-orders/buyer-assign-dialog";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, Clock, Copy, ExternalLink, GripVertical, HandCoins, MessageSquareText, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Check, Clock, Copy, Download, ExternalLink, GripVertical, HandCoins, MessageSquareText, Pencil, Plus, Trash2, Upload } from "lucide-react";
 
 import {
   addSpecialOrderBreak,
@@ -25,7 +25,7 @@ import {
   updateSpecialOrderMessage,
 } from "@/actions/special-order.actions";
 import { getPusherClient } from "@/lib/pusher-client";
-import { fileViewUrl } from "@/lib/file-url";
+import { fileDownloadUrl, fileViewUrl } from "@/lib/file-url";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1266,11 +1266,7 @@ export function ConversationWorkspace({
                       >
                         <Check className="h-3.5 w-3.5" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedFieldId(fieldKey)}
-                        className="min-w-0 flex-1 text-left"
-                      >
+                      <div className="min-w-0 flex-1 text-left">
                         <p className="text-xs text-muted-foreground">
                           {fieldLabel(field.type)}
                         </p>
@@ -1287,16 +1283,29 @@ export function ConversationWorkspace({
                           </p>
                         )}
                         {field.url && canDownloadField(field) && (
-                          <a
-                            href={fileViewUrl(field.url)}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(event) => event.stopPropagation()}
-                            className="mt-2 inline-flex max-w-full items-center gap-1 truncate text-xs text-primary hover:underline"
-                          >
-                            <ExternalLink className="h-3 w-3 shrink-0" />
-                            <span className="truncate">Download file</span>
-                          </a>
+                          <span className="mt-2 flex flex-wrap items-center gap-3">
+                            <a
+                              href={fileViewUrl(field.url)}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(event) => event.stopPropagation()}
+                              className="inline-flex max-w-full items-center gap-1 truncate text-xs text-primary hover:underline"
+                            >
+                              <ExternalLink className="h-3 w-3 shrink-0" />
+                              <span className="truncate">Live preview</span>
+                            </a>
+                            <a
+                              href={fileDownloadUrl(field.url)}
+                              target="_blank"
+                              rel="noreferrer"
+                              download
+                              onClick={(event) => event.stopPropagation()}
+                              className="inline-flex max-w-full items-center gap-1 truncate text-xs text-primary hover:underline"
+                            >
+                              <Download className="h-3 w-3 shrink-0" />
+                              <span className="truncate">Download</span>
+                            </a>
+                          </span>
                         )}
                         {field.url && !canDownloadField(field) && (
                           <span className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50">
@@ -1304,7 +1313,7 @@ export function ConversationWorkspace({
                             Download disabled
                           </span>
                         )}
-                      </button>
+                      </div>
                       <div className="flex shrink-0 gap-1">
                         <Button
                           size="sm"

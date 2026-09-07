@@ -1,11 +1,11 @@
 "use client";
 
-import { Copy, Download, FileText } from "lucide-react";
+import { Copy, Download, Eye, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fileViewUrl } from "@/lib/file-url";
+import { fileDownloadUrl, fileViewUrl } from "@/lib/file-url";
 
 type SharedDocument = {
   id?: string;
@@ -72,6 +72,18 @@ export function SharedDocuments({ fields }: { fields: SharedDocument[] }) {
                   href={fileViewUrl(field.url)}
                   target="_blank"
                   rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  <Eye className="h-4 w-4" />
+                  Live preview
+                </a>
+              )}
+              {field.url && (
+                <a
+                  href={fileDownloadUrl(field.url)}
+                  target="_blank"
+                  rel="noreferrer"
+                  download
                   className="inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
                 >
                   <Download className="h-4 w-4" />
