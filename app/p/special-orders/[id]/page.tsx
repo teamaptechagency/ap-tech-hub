@@ -21,6 +21,9 @@ import {
   verificationRemark,
   withoutVerificationRemark,
 } from "@/lib/special-order-verification";
+import {
+  withoutClientFileReplacements,
+} from "@/lib/special-order-file-replacement";
 
 const statusClass: Record<string, string> = {
   PLANNED: "bg-blue-100 text-blue-700",
@@ -138,8 +141,10 @@ export default async function PartnerHubSpecialOrderDetailsPage({
 
   const remark = verificationRemark(order.conversationFields);
   const pendingRemark = Boolean(remark && !remark.reviewedAt);
-  const fields = withoutVerificationRemark(
-    arrayValue<ConversationField>(order.conversationFields)
+  const fields = withoutClientFileReplacements(
+    withoutVerificationRemark(
+      arrayValue<ConversationField>(order.conversationFields)
+    )
   );
 
   // Everything that has to be ticked off: the script messages and the brief,

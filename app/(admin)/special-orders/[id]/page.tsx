@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { ClientVerification } from "@/components/special-orders/client-verification";
+import { ClientFileReplacements } from "@/components/special-orders/client-file-replacements";
 import { ConversationWorkspace } from "@/components/special-orders/conversation-workspace";
 import { SpecialOrderDetailsEditor } from "@/components/special-orders/special-order-details-editor";
 import { DeleteSpecialOrderButton } from "@/components/special-orders/delete-special-order-button";
@@ -18,6 +19,11 @@ import {
   verificationRemark,
   withoutVerificationRemark,
 } from "@/lib/special-order-verification";
+import {
+  clientFileReplacements,
+  clientFileVersions,
+  withoutClientFileReplacements,
+} from "@/lib/special-order-file-replacement";
 
 const statusClass: Record<string, string> = {
   PLANNED: "bg-blue-100 text-blue-700",
@@ -167,12 +173,16 @@ export default async function SpecialOrderDetailsPage({
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
 
   const remark = verificationRemark(order.conversationFields);
+  const pendingFiles = clientFileReplacements(order.conversationFields);
+  const previousFiles = clientFileVersions(order.conversationFields);
   const pendingRemark = Boolean(remark && !remark.reviewedAt);
   const awaitingVerification =
     pendingRemark ||
     Boolean(order.profile?.requireClientVerification && !order.clientVerifiedAt);
-  const fields = withoutVerificationRemark(
-    arrayValue<ConversationField>(order.conversationFields)
+  const fields = withoutClientFileReplacements(
+    withoutVerificationRemark(
+      arrayValue<ConversationField>(order.conversationFields)
+    )
   );
 
   // Everything that has to be ticked off: the script messages and the brief,
@@ -331,6 +341,14 @@ export default async function SpecialOrderDetailsPage({
         remark={remark}
         canWithdraw
         canReview
+      />
+
+      <ClientFileReplacements
+        orderId={order.id}
+        fields={fields}
+        pending={pendingFiles}
+        previous={previousFiles}
+        admin
       />
 
       <SpecialOrderPartnerSelector
