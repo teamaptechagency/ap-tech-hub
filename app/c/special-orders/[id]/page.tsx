@@ -167,12 +167,10 @@ export default async function ClientSpecialOrderDetailsPage({
         }
       />
 
-      {order.profile?.requireClientVerification && (
-        <ClientVerification
-          orderId={order.id}
-          verifiedAt={order.clientVerifiedAt?.toISOString() ?? null}
-        />
-      )}
+      <ClientVerification
+        orderId={order.id}
+        verifiedAt={order.clientVerifiedAt?.toISOString() ?? null}
+      />
 
       {/* The buyer and seller script, the same one the admin and the partner
           work from. A separate per-order chat used to sit here instead, which
