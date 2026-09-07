@@ -33,6 +33,10 @@ const PUBLIC_PATHS = [
 
 const PUBLIC_EXACT_PATHS = [
   "/",
+  // The file route performs its own session and per-file audience checks.
+  // Let client/partner requests reach it instead of treating `/api/files` as
+  // an admin page and redirecting them to their portal dashboard.
+  "/api/files",
   "/landing",
   "/services",
   "/portfolio",
