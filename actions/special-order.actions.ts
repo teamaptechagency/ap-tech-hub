@@ -21,6 +21,11 @@ import {
   verificationRemark,
   withoutVerificationRemark,
 } from "@/lib/special-order-verification";
+import {
+  FILE_REPLACEMENT_TYPE,
+  FILE_VERSION_TYPE,
+  isClientFileReplacement,
+} from "@/lib/special-order-file-replacement";
 
 async function triggerPusher(channel: string, event: string, payload: unknown) {
   try {
@@ -469,6 +474,154 @@ export async function reviewSpecialOrderVerificationRemark(orderId: string) {
   revalidatePath("/special-orders");
   revalidatePath(`/special-orders/${orderId}`);
   revalidatePath("/p/special-orders");
+  revalidatePath(`/p/special-orders/${orderId}`);
+  return { success: true };
+}
+
+export async function submitSpecialOrderFileReplacement(input: {
+  orderId: string;
+  targetFieldId: string;
+  fileUrl: string;
+  fileName: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.clientId) return { error: "Only the client can replace this file" };
+
+  const order = await prisma.specialOrder.findFirst({
+    where: { id: input.orderId, clientId: session.user.clientId },
+    select: { status: true, conversationFields: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  if (order.status === "COMPLETED" || order.status === "CANCELLED") {
+    return { error: "This order no longer accepts file changes" };
+  }
+
+  const fields = Array.isArray(order.conversationFields)
+    ? order.conversationFields
+    : [];
+  const target = fields.find((field) => {
+    if (!field || typeof field !== "object") return false;
+    const item = field as Record<string, unknown>;
+    return item.id === input.targetFieldId;
+  }) as Record<string, unknown> | undefined;
+  if (
+    !target ||
+    (target.type !== "DOCUMENT" && target.type !== "DELIVERY_DOCUMENT") ||
+    !Array.isArray(target.audience) ||
+    !target.audience.includes("CLIENT")
+  ) {
+    return { error: "You don't have permission to replace this file" };
+  }
+
+  const attachment = await prisma.attachment.findFirst({
+    where: {
+      url: input.fileUrl,
+      specialOrderId: input.orderId,
+      uploadedById: session.user.id,
+    },
+    select: { name: true },
+  });
+  if (!attachment) return { error: "Uploaded file could not be verified" };
+
+  const pending = {
+    id: `file-replacement-${crypto.randomUUID()}`,
+    type: FILE_REPLACEMENT_TYPE,
+    targetFieldId: input.targetFieldId,
+    targetFieldType: target.type,
+    url: input.fileUrl,
+    fileName: attachment.name || input.fileName.trim() || "Replacement file",
+    audience: ["ADMIN", "CLIENT"],
+    submittedAt: new Date().toISOString(),
+    submittedById: session.user.id,
+    submittedByName: session.user.name ?? "Client",
+  };
+  const nextFields = [
+    ...fields.filter(
+      (field) =>
+        !isClientFileReplacement(field) ||
+        field.targetFieldId !== input.targetFieldId
+    ),
+    pending,
+  ];
+
+  await prisma.specialOrder.update({
+    where: { id: input.orderId },
+    data: { conversationFields: nextFields as Prisma.InputJsonValue },
+  });
+  revalidatePath(`/c/special-orders/${input.orderId}`);
+  revalidatePath(`/special-orders/${input.orderId}`);
+  return { success: true };
+}
+
+export async function reviewSpecialOrderFileReplacement(
+  orderId: string,
+  replacementId: string,
+  approved: boolean
+) {
+  const session = await checkAdmin();
+  if (!session) return { error: "You don't have permission for this action" };
+
+  const order = await prisma.specialOrder.findUnique({
+    where: { id: orderId },
+    select: { conversationFields: true },
+  });
+  if (!order) return { error: "Conversation not found" };
+  const fields = Array.isArray(order.conversationFields)
+    ? order.conversationFields
+    : [];
+  const replacement = fields.find(
+    (field) => isClientFileReplacement(field) && field.id === replacementId
+  );
+  if (!replacement || !isClientFileReplacement(replacement)) {
+    return { error: "Pending file not found" };
+  }
+
+  const target = fields.find((field) => {
+    if (!field || typeof field !== "object") return false;
+    return (field as Record<string, unknown>).id === replacement.targetFieldId;
+  }) as Record<string, unknown> | undefined;
+  if (approved && !target) return { error: "Original file not found" };
+
+  let nextFields = fields
+    .filter((field) => field !== replacement)
+    .map((field) => {
+      if (!approved || !field || typeof field !== "object") return field;
+      const item = field as Record<string, unknown>;
+      return item.id === replacement.targetFieldId
+        ? {
+            ...item,
+            value: replacement.fileName,
+            url: replacement.url,
+            done: false,
+            updatedAt: new Date().toISOString(),
+          }
+        : field;
+    });
+  if (approved && target && typeof target.url === "string") {
+    nextFields = [
+      ...nextFields,
+      {
+        id: `file-version-${crypto.randomUUID()}`,
+        type: FILE_VERSION_TYPE,
+        targetFieldId: replacement.targetFieldId,
+        targetFieldType: replacement.targetFieldType,
+        url: target.url,
+        fileName:
+          typeof target.value === "string" && target.value.trim()
+            ? target.value
+            : "Previous file",
+        audience: ["ADMIN", "CLIENT"],
+        replacedAt: new Date().toISOString(),
+      },
+    ];
+  }
+
+  await prisma.specialOrder.update({
+    where: { id: orderId },
+    data: { conversationFields: nextFields as Prisma.InputJsonValue },
+  });
+  revalidatePath(`/c/special-orders/${orderId}`);
+  revalidatePath(`/special-orders/${orderId}`);
   revalidatePath(`/p/special-orders/${orderId}`);
   return { success: true };
 }

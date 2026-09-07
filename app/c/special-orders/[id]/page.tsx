@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { ClientVerification } from "@/components/special-orders/client-verification";
+import { ClientFileReplacements } from "@/components/special-orders/client-file-replacements";
 import { ConversationWorkspace } from "@/components/special-orders/conversation-workspace";
 import { SharedDocuments } from "@/components/special-orders/shared-documents";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,11 @@ import {
   verificationRemark,
   withoutVerificationRemark,
 } from "@/lib/special-order-verification";
+import {
+  clientFileReplacements,
+  clientFileVersions,
+  withoutClientFileReplacements,
+} from "@/lib/special-order-file-replacement";
 
 type ScriptMessage = {
   id: string;
@@ -81,9 +87,12 @@ export default async function ClientSpecialOrderDetailsPage({
   if (!order) notFound();
 
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
+  const rawFields = arrayValue<ConversationField>(order.conversationFields);
   const remark = verificationRemark(order.conversationFields);
-  const fields = withoutVerificationRemark(
-    arrayValue<ConversationField>(order.conversationFields)
+  const pendingFiles = clientFileReplacements(order.conversationFields);
+  const previousFiles = clientFileVersions(order.conversationFields);
+  const fields = withoutClientFileReplacements(
+    withoutVerificationRemark(rawFields)
   );
 
   return (
@@ -172,6 +181,13 @@ export default async function ClientSpecialOrderDetailsPage({
               }>)
             : []
         }
+      />
+
+      <ClientFileReplacements
+        orderId={order.id}
+        fields={fields}
+        pending={pendingFiles}
+        previous={previousFiles}
       />
 
       <ClientVerification
