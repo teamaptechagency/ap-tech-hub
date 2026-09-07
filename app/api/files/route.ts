@@ -34,7 +34,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const fileUrl = new URL(request.url).searchParams.get("url");
+  const searchParams = new URL(request.url).searchParams;
+  const fileUrl = searchParams.get("url");
+  const disposition =
+    searchParams.get("disposition") === "attachment" ? "attachment" : "inline";
   if (!fileUrl) {
     return NextResponse.json({ error: "Missing url" }, { status: 400 });
   }
@@ -213,7 +216,9 @@ export async function GET(request: Request) {
   if (contentLength) headers.set("content-length", contentLength);
   if (attachment?.name) {
     const safeName = attachment.name.replace(/["\r\n]/g, "_");
-    headers.set("content-disposition", `attachment; filename="${safeName}"`);
+    headers.set("content-disposition", `${disposition}; filename="${safeName}"`);
+  } else {
+    headers.set("content-disposition", disposition);
   }
   headers.set("cache-control", "private, max-age=60");
 

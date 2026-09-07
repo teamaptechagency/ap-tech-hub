@@ -6,5 +6,10 @@
  */
 export function fileViewUrl(url: string | null | undefined) {
   if (!url) return "";
-  return `/api/files?url=${encodeURIComponent(url)}`;
+  return `/api/files?url=${encodeURIComponent(url)}&disposition=inline`;
+}
+
+export function fileDownloadUrl(url: string | null | undefined) {
+  if (!url) return "";
+  return `/api/files?url=${encodeURIComponent(url)}&disposition=attachment`;
 }
