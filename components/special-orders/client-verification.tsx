@@ -38,6 +38,7 @@ export function ClientVerification({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [remarkOpen, setRemarkOpen] = useState(false);
+  const [remarkInputOpen, setRemarkInputOpen] = useState(false);
   const [remarkValue, setRemarkValue] = useState("");
   const pendingRemark = Boolean(remark && !remark.reviewedAt);
 
@@ -60,6 +61,7 @@ export function ClientVerification({
           : "Verification removed"
     );
     setRemarkOpen(false);
+    setRemarkInputOpen(false);
     router.refresh();
   }
 
@@ -121,7 +123,7 @@ export function ClientVerification({
           <Button type="button" disabled={busy} onClick={reviewRemark}>
             {busy ? "Saving..." : "Remark reviewed — enable conversation"}
           </Button>
-        ) : (!verifiedAt || canWithdraw) && !pendingRemark ? (
+        ) : (verifiedAt ? canWithdraw : !canReview) && !pendingRemark ? (
           <Button
             type="button"
             variant={verifiedAt ? "outline" : "default"}
@@ -141,24 +143,55 @@ export function ClientVerification({
         {remarkOpen && !verifiedAt && !pendingRemark && (
           <div className="w-full space-y-3 border-t pt-4">
             <div>
-              <p className="text-sm font-medium">Remark (optional)</p>
+              <p className="text-sm font-medium">
+                Verify the conversation or report a problem?
+              </p>
               <p className="text-xs text-muted-foreground">
-                Write the latest update or any problem. If you add a remark, the
-                conversation stays locked until admin reviews it.
+                Verify now if everything is correct. Choose Add remark if the
+                admin needs to fix or review something first.
               </p>
             </div>
-            <Textarea
-              value={remarkValue}
-              onChange={(event) => setRemarkValue(event.target.value)}
-              maxLength={2000}
-              rows={4}
-              placeholder="Write the problem or latest update..."
-            />
+            {remarkInputOpen && (
+              <Textarea
+                value={remarkValue}
+                onChange={(event) => setRemarkValue(event.target.value)}
+                maxLength={2000}
+                rows={4}
+                placeholder="Write the problem or latest update..."
+              />
+            )}
             <div className="flex flex-wrap gap-2">
-              <Button disabled={busy} onClick={() => submit(true, remarkValue)}>
-                {busy ? "Saving..." : remarkValue.trim() ? "Submit for admin review" : "Verify without remark"}
-              </Button>
-              <Button type="button" variant="outline" disabled={busy} onClick={() => setRemarkOpen(false)}>
+              {!remarkInputOpen ? (
+                <>
+                  <Button disabled={busy} onClick={() => submit(true)}>
+                    {busy ? "Saving..." : "Verify without remark"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => setRemarkInputOpen(true)}
+                  >
+                    Add remark
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  disabled={busy || !remarkValue.trim()}
+                  onClick={() => submit(true, remarkValue)}
+                >
+                  {busy ? "Saving..." : "Submit remark for admin review"}
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => {
+                  setRemarkOpen(false);
+                  setRemarkInputOpen(false);
+                }}
+              >
                 Cancel
               </Button>
             </div>
