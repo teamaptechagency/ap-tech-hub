@@ -12,6 +12,7 @@ import {
 } from "@/actions/client.actions";
 import { startUserImpersonation } from "@/actions/impersonation.actions";
 
+import { WorkHoldButton } from "@/components/shared/work-hold-button";
 import { ClientDialog } from "@/components/clients/client-dialog";
 import { SensitiveDeleteDialog } from "@/components/shared/sensitive-delete-dialog";
 
@@ -725,6 +726,7 @@ export function ClientsPageClient({
                       Edit
                     </Button>
 
+                    <WorkHoldButton kind="client" id={client.id} active={client.status === "ACTIVE"} />
                     {client.status !== "ARCHIVED" && (
                       <Button
                         type="button"

@@ -1,3 +1,5 @@
+import { readHoldPeriods, workingSeconds } from "@/lib/work-hold-periods";
+import { availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
@@ -52,7 +54,7 @@ export default async function EmployeeJobDetailsPage({
   }
 
   const job = await prisma.job.findUnique({
-    where: { id },
+    where: availableJobWhere({ id }),
     include: {
       members: {
         include: {
@@ -195,6 +197,10 @@ export default async function EmployeeJobDetailsPage({
       workSession.userId === session.user.id &&
       workSession.endedAt === null
   );
+
+  const holdHistory = myRunning && job.clientId ? await prisma.setting.findUnique({ where: { key: `workHold.client.${job.clientId}` } }) : null;
+  const timerNow = new Date();
+  const runningStartedAt = myRunning ? new Date(timerNow.getTime() - workingSeconds(myRunning.startedAt, timerNow, readHoldPeriods(holdHistory?.value)) * 1000).toISOString() : null;
 
   const totalSeconds = job.workSessions
     .filter((workSession) => workSession.duration !== null)
@@ -395,7 +401,7 @@ export default async function EmployeeJobDetailsPage({
                 })
               )}
               myRunningStart={
-                myRunning?.startedAt.toISOString() ?? null
+                runningStartedAt
               }
               myWeekHours={myWeekHours}
               weeklyLimit={job.weeklyHourLimit}

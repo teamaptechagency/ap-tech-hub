@@ -59,6 +59,8 @@ type PartnerOption = {
 };
 
 type ProfileOption = {
+  active: boolean;
+  clientActive: boolean;
   id: string;
   profileName: string;
   marketplaceId: string;
@@ -186,7 +188,7 @@ export function SpecialOrdersBoard({
         </p>
       )}
 
-      {profiles.length === 0 ? (
+      {profiles.filter((profile) => profile.active && profile.clientActive).length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <ShoppingBag className="mb-3 h-10 w-10 text-muted-foreground" />
@@ -197,7 +199,7 @@ export function SpecialOrdersBoard({
         </Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {profiles.map((profile) => (
+          {profiles.filter((profile) => profile.active && profile.clientActive).map((profile) => (
             <Link
               key={profile.id}
               href={`/special-orders/profiles/${profile.id}`}
@@ -216,7 +218,7 @@ export function SpecialOrdersBoard({
                         </p>
                       </div>
                       <Badge variant="secondary" className="shrink-0 text-[10px]">
-                        {profile.conversationCount} conversations
+                        {!profile.clientActive ? "Client on hold" : !profile.active ? "On hold" : `${profile.conversationCount} conversations`}
                       </Badge>
                     </div>
                     <p className="line-clamp-2 text-sm text-muted-foreground">
@@ -300,6 +302,19 @@ export function SpecialOrdersBoard({
             </Link>
           ))}
         </div>
+      )}
+
+      {profiles.some((profile) => !profile.active || !profile.clientActive) && (
+        <details className="rounded-lg border p-4">
+          <summary className="cursor-pointer text-sm font-medium">Held profiles — manage and restore</summary>
+          <div className="mt-3 space-y-2">
+            {profiles.filter((profile) => !profile.active || !profile.clientActive).map((profile) => (
+              <Link key={profile.id} href={`/special-orders/profiles/${profile.id}`} className="flex items-center justify-between rounded-md border p-3 text-sm">
+                <span>{profile.profileName}</span><span className="text-muted-foreground">{!profile.clientActive ? "Activate the client to restore" : "On hold — manage"}</span>
+              </Link>
+            ))}
+          </div>
+        </details>
       )}
 
       {/* Calendar and the conversations on it, in date order. Replaces a flat

@@ -1,5 +1,8 @@
 "use server";
 
+import { availableJobWhere } from "@/lib/work-availability";
+
+import { readHoldPeriods, workingSeconds } from "@/lib/work-hold-periods";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
@@ -11,6 +14,8 @@ import { revalidatePath } from "next/cache";
 async function canTouchJob(jobId: string) {
   const session = await auth();
   if (!session?.user) return null;
+  const available = await prisma.job.findFirst({ where: availableJobWhere({ id: jobId }), select: { id: true } });
+  if (!available) return null;
 
   if (ADMIN_ROLES.includes(session.user.role)) {
     return { session, isManager: true };
@@ -68,7 +73,7 @@ export async function startTimer(jobId: string) {
   if (!access) return { error: "You don't have access to this job" };
   const userId = access.session.user.id;
 
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await prisma.job.findUnique({ where: availableJobWhere({ id: jobId }) });
   if (!job || job.type !== "HOURLY") {
     return { error: "Timer only works on hourly jobs" };
   }
@@ -122,9 +127,9 @@ export async function stopTimer(jobId: string, note: string) {
   if (!running) return { error: "No running timer found" };
 
   const endedAt = new Date();
-  const duration = Math.round(
-    (endedAt.getTime() - running.startedAt.getTime()) / 1000
-  );
+  const job = await prisma.job.findUnique({ where: availableJobWhere({ id: jobId }), select: { clientId: true } });
+  const history = job?.clientId ? await prisma.setting.findUnique({ where: { key: `workHold.client.${job.clientId}` } }) : null;
+  const duration = workingSeconds(running.startedAt, endedAt, readHoldPeriods(history?.value));
 
   await prisma.workSession.update({
     where: { id: running.id },
@@ -144,7 +149,7 @@ export async function deleteSession(sessionId: string, jobId: string) {
     return { error: "You don't have permission for this action" };
   }
 
-  await prisma.workSession.delete({ where: { id: sessionId } });
+  await prisma.workSession.delete({ where: { id: sessionId, jobId } });
 
   revalidatePath(`/jobs/${jobId}`);
   return { success: true };

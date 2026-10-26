@@ -1,5 +1,7 @@
 "use server";
 
+import { availableJobWhere } from "@/lib/work-availability";
+
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
@@ -28,6 +30,9 @@ export async function submitJobRequest(
   if (!session?.user?.clientId) {
     return { error: "Please sign in as a client first" };
   }
+
+  const activeClient = await prisma.client.findFirst({ where: { id: session.user.clientId, status: "ACTIVE" }, select: { id: true } });
+  if (!activeClient) return { error: "Your work is currently on hold" };
 
   const title = formData.title?.trim() ?? "";
   const description = formData.description?.trim() ?? "";
@@ -93,11 +98,11 @@ export async function submitTaskRequest(formData: {
   }
 
   const job = await prisma.job.findFirst({
-    where: {
+    where: availableJobWhere({
       id: formData.jobId,
       clientId: session.user.clientId,
       publish: "PUBLISHED",
-    },
+    }),
     select: {
       id: true,
       title: true,

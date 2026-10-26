@@ -1,3 +1,4 @@
+import { activeWorkConversation, availableJobWhere, availableSpecialOrderWhere } from "@/lib/work-availability";
 import { del, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
@@ -152,9 +153,9 @@ export async function POST(request: Request) {
      */
     if (jobId) {
       const job = await prisma.job.findUnique({
-        where: {
+        where: availableJobWhere({
           id: jobId,
-        },
+        }),
         select: {
           id: true,
           clientId: true,
@@ -217,6 +218,7 @@ export async function POST(request: Request) {
       const message = await prisma.message.findUnique({
         where: {
           id: messageId,
+          conversation: { is: activeWorkConversation },
         },
         select: {
           id: true,
@@ -312,7 +314,7 @@ export async function POST(request: Request) {
 
     if (specialOrderId) {
       const specialOrder = await prisma.specialOrder.findUnique({
-        where: { id: specialOrderId },
+        where: availableSpecialOrderWhere({ id: specialOrderId }),
         select: { partnerId: true, clientId: true },
       });
       const canAccessSpecialOrder =

@@ -1,3 +1,4 @@
+import { availableMeetingWhere } from "@/lib/work-availability";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { GuestMeeting } from "@/components/meetings/guest-meeting";
@@ -18,7 +19,7 @@ export default async function GuestMeetingPage({
   const { roomCode } = await params;
 
   const meeting = await prisma.meeting.findUnique({
-    where: { roomCode },
+    where: availableMeetingWhere({ roomCode }),
     select: { title: true, status: true },
   });
 

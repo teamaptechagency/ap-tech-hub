@@ -1,5 +1,8 @@
 "use server";
 
+import { availableJobRelatedWhere, availableJobWhere } from "@/lib/work-availability";
+
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES, WORKER_ROLES } from "@/lib/roles";
@@ -34,7 +37,7 @@ export async function applyToJob(
   const userId = session.user.id;
 
   const job = await prisma.job.findUnique({
-    where: { id: jobId },
+    where: availableJobWhere({ id: jobId }),
     include: { requiredSkills: { select: { id: true } } },
   });
   if (!job || job.status !== "OPEN") {
@@ -55,7 +58,7 @@ export async function applyToJob(
   }
 
   const existing = await prisma.application.findUnique({
-    where: { jobId_userId: { jobId, userId } },
+    where: availableJobRelatedWhere({ jobId_userId: { jobId, userId } }),
   });
   if (existing && existing.status !== "WITHDRAWN") {
     return { error: "You already applied to this job" };
@@ -63,7 +66,7 @@ export async function applyToJob(
 
   if (existing) {
     await prisma.application.update({
-      where: { id: existing.id },
+      where: availableJobRelatedWhere({ id: existing.id }),
       data: {
         status: "PENDING",
         message: formData.message || null,
@@ -104,7 +107,7 @@ export async function withdrawApplication(applicationId: string) {
   if (!session?.user) return { error: "You must be logged in" };
 
   const app = await prisma.application.findUnique({
-    where: { id: applicationId },
+    where: availableJobRelatedWhere({ id: applicationId }),
   });
   if (!app || app.userId !== session.user.id) {
     return { error: "Application not found" };
@@ -114,7 +117,7 @@ export async function withdrawApplication(applicationId: string) {
   }
 
   await prisma.application.update({
-    where: { id: applicationId },
+    where: availableJobRelatedWhere({ id: applicationId }),
     data: { status: "WITHDRAWN" },
   });
 
@@ -138,7 +141,7 @@ export async function approveApplication(
   }
 
   const app = await prisma.application.findUnique({
-    where: { id: applicationId },
+    where: availableJobRelatedWhere({ id: applicationId }),
     include: { job: true },
   });
   if (!app || app.status !== "PENDING") {
@@ -152,7 +155,7 @@ export async function approveApplication(
 
   await prisma.$transaction([
     prisma.application.update({
-      where: { id: applicationId },
+      where: availableJobRelatedWhere({ id: applicationId }),
       data: { status: "APPROVED" },
     }),
     prisma.application.updateMany({
@@ -168,7 +171,7 @@ export async function approveApplication(
       },
     }),
     prisma.job.update({
-      where: { id: app.jobId },
+      where: availableJobWhere({ id: app.jobId }),
       data: { status: "PENDING" },
     }),
   ]);
@@ -204,7 +207,7 @@ export async function declineApplication(applicationId: string) {
   }
 
   const app = await prisma.application.findUnique({
-    where: { id: applicationId },
+    where: availableJobRelatedWhere({ id: applicationId }),
     include: { job: { select: { title: true } } },
   });
   if (!app || app.status !== "PENDING") {
@@ -212,7 +215,7 @@ export async function declineApplication(applicationId: string) {
   }
 
   await prisma.application.update({
-    where: { id: applicationId },
+    where: availableJobRelatedWhere({ id: applicationId }),
     data: { status: "DECLINED" },
   });
 

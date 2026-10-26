@@ -1,3 +1,4 @@
+import { availableJobWhere, availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -70,6 +71,7 @@ export default async function ClientDetailPage({
         },
       },
       jobs: {
+        where: availableJobWhere({}),
         orderBy: { createdAt: "desc" },
         take: 6,
         select: {
@@ -112,9 +114,9 @@ export default async function ClientDetailPage({
       },
       _count: {
         select: {
-          jobs: true,
+          jobs: { where: availableJobWhere({}) },
           invoices: true,
-          specialOrders: true,
+          specialOrders: { where: availableSpecialOrderWhere({}) },
         },
       },
     },

@@ -1,3 +1,4 @@
+import { availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -11,11 +12,12 @@ export default async function PartnerDashboardPage() {
   if (!session?.user) redirect("/login");
 
   const scope = await getPartnerScope(session.user);
-  const where = partnerWhere(scope);
+  const where = availableSpecialOrderWhere(partnerWhere(scope));
 
   const [orders, activeCount, pendingCount, totalCount, totals, me] =
     await Promise.all([
       prisma.specialOrder.findMany({
+
         where,
         orderBy: { updatedAt: "desc" },
         take: 5,
@@ -28,10 +30,10 @@ export default async function PartnerDashboardPage() {
         },
       }),
       prisma.specialOrder.count({
-        where: { ...where, status: { in: ["PLANNED", "ACTIVE", "DELIVERED"] } },
+        where: availableSpecialOrderWhere({ ...where, status: { in: ["PLANNED", "ACTIVE", "DELIVERED"] } }),
       }),
       prisma.specialOrder.count({
-        where: { ...where, status: { in: ["PLANNED", "ACTIVE"] } },
+        where: availableSpecialOrderWhere({ ...where, status: { in: ["PLANNED", "ACTIVE"] } }),
       }),
       prisma.specialOrder.count({ where }),
       prisma.specialOrder.aggregate({

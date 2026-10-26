@@ -1,5 +1,7 @@
 "use server";
 
+import { availableJobWhere } from "@/lib/work-availability";
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
@@ -121,7 +123,7 @@ export async function addWeek(jobId: string) {
   if (!session?.user) return { error: "You must be logged in" };
 
   const job = await prisma.job.findUnique({
-    where: { id: jobId },
+    where: availableJobWhere({ id: jobId }),
     include: { weeks: { orderBy: { weekNumber: "desc" }, take: 1 } },
   });
   if (!job || job.type !== "MONTHLY") {
@@ -235,7 +237,7 @@ export async function createJob(formData: CreateJobInput) {
 
   const selectedClient = data.clientId
     ? await prisma.client.findUnique({
-        where: { id: data.clientId },
+        where: { id: data.clientId, status: "ACTIVE" },
         select: {
           id: true,
           contactName: true,
@@ -396,7 +398,7 @@ export async function updateJob(
     return { error: "Job title must be at least 2 characters" };
   }
 
-  const job = await prisma.job.findUnique({ where: { id } });
+  const job = await prisma.job.findUnique({ where: availableJobWhere({ id }) });
   if (!job) return { error: "Job not found" };
 
   // Same rule as completeJob: a job with milestones still open isn't
@@ -417,7 +419,7 @@ export async function updateJob(
   }
 
   await prisma.job.update({
-    where: { id },
+    where: availableJobWhere({ id }),
     data: {
       title: formData.title,
       description: formData.description || null,
@@ -490,7 +492,7 @@ export async function updateJobPricing(
   }
 
   const job = await prisma.job.findUnique({
-    where: { id },
+    where: availableJobWhere({ id }),
     include: {
       members: { select: { id: true, userId: true } },
     },
@@ -511,7 +513,7 @@ export async function updateJobPricing(
 
   await prisma.$transaction([
     prisma.job.update({
-      where: { id },
+      where: availableJobWhere({ id }),
       data: {
         clientValue,
         clientCurrency: "USD",
@@ -673,6 +675,9 @@ export async function deleteJob(id: string, verificationCode: string) {
   );
   if (!verified) return { error: "Verification code is invalid or expired" };
 
+  const available = await prisma.job.findFirst({ where: availableJobWhere({ id }), select: { id: true } });
+  if (!available) return { error: "Job is unavailable or on hold" };
+
   await prisma.earning.deleteMany({
     where: {
       source: "AUTO",
@@ -681,7 +686,7 @@ export async function deleteJob(id: string, verificationCode: string) {
     },
   });
 
-  await prisma.job.delete({ where: { id } });
+  await prisma.job.delete({ where: availableJobWhere({ id }) });
 
   await audit(session.user.id, "JOB_DELETED", "Job", id);
 

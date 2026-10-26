@@ -1,3 +1,4 @@
+import { availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, ShoppingBag } from "lucide-react";
@@ -16,7 +17,7 @@ export default async function PartnerHubSpecialOrdersPage() {
   const isManager = scope.isManager;
 
   const orders = await prisma.specialOrder.findMany({
-    where: partnerWhere(scope),
+    where: availableSpecialOrderWhere(partnerWhere(scope)),
     orderBy: [{ plannedDate: "asc" }, { createdAt: "desc" }],
     include: {
       partner: { select: { name: true } },

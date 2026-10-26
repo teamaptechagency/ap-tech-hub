@@ -1,3 +1,4 @@
+import { availableJobWhere, availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -139,9 +140,9 @@ export default async function AdminDashboard() {
       where: { role: "BUSINESS_PARTNER" },
       _sum: { balance: true },
     }),
-    prisma.job.count({ where: { status: { in: ["PENDING", "IN_PROGRESS"] } } }),
-    prisma.job.count({ where: { status: "COMPLETED" } }),
-    prisma.specialOrder.count({ where: { status: "COMPLETED" } }),
+    prisma.job.count({ where: availableJobWhere({ status: { in: ["PENDING", "IN_PROGRESS"] } }) }),
+    prisma.job.count({ where: availableJobWhere({ status: "COMPLETED" }) }),
+    prisma.specialOrder.count({ where: availableSpecialOrderWhere({ status: "COMPLETED" }) }),
     prisma.specialOrder.aggregate({
       where: { status: "COMPLETED" },
       _sum: { profitBdt: true },
@@ -159,6 +160,7 @@ export default async function AdminDashboard() {
       take: 5,
     }),
     prisma.job.findMany({
+      where: availableJobWhere({}),
       orderBy: { updatedAt: "desc" },
       take: 5,
       select: {
@@ -189,6 +191,7 @@ export default async function AdminDashboard() {
       take: 6,
     }),
     prisma.job.findMany({
+      where: availableJobWhere({}),
       orderBy: { updatedAt: "desc" },
       take: 6,
       include: {
@@ -198,6 +201,7 @@ export default async function AdminDashboard() {
       },
     }),
     prisma.specialOrder.findMany({
+      where: availableSpecialOrderWhere({}),
       orderBy: { updatedAt: "desc" },
       take: 6,
       include: {

@@ -1,5 +1,7 @@
 "use server";
 
+import { activeProfileWork, availableSpecialOrderWhere } from "@/lib/work-availability";
+
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import type { Prisma, Role } from "@prisma/client";
@@ -155,7 +157,7 @@ export async function setSpecialOrderDate(
   }
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: {
       status: true,
       clientVerifiedAt: true,
@@ -181,7 +183,7 @@ export async function setSpecialOrderDate(
   }
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     // Noon rather than midnight, so a timezone shift either way still lands on
     // the day that was picked.
     data: { plannedDate: date ? new Date(`${date}T12:00:00`) : null },
@@ -211,13 +213,13 @@ export async function setSpecialOrderBuyerKind(
   }
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { id: true },
   });
   if (!order) return { error: "Conversation not found" };
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { buyerKind: kind },
   });
 
@@ -323,10 +325,12 @@ export async function setSpecialOrderBuyer(
 ) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
+  const available = await prisma.specialOrder.findFirst({ where: availableSpecialOrderWhere({ id: orderId }), select: { id: true } });
+  if (!available) return { error: "Conversation is unavailable or on hold" };
 
   if (!buyerId) {
     await prisma.specialOrder.update({
-      where: { id: orderId },
+      where: availableSpecialOrderWhere({ id: orderId }),
       data: { buyerId: null, buyerKind: null },
     });
     revalidatePath("/special-orders");
@@ -345,7 +349,7 @@ export async function setSpecialOrderBuyer(
   });
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: {
       buyerId,
       buyerProfile: buyer.name,
@@ -388,9 +392,9 @@ export async function verifySpecialOrder(
   }
 
   const order = await prisma.specialOrder.findFirst({
-    where: isAdmin
+    where: availableSpecialOrderWhere(isAdmin
       ? { id: orderId }
-      : { id: orderId, clientId: session.user.clientId ?? "" },
+      : { id: orderId, clientId: session.user.clientId ?? "" }),
     select: { id: true, conversationFields: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -415,7 +419,7 @@ export async function verifySpecialOrder(
       : fields;
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: {
       // A remark means the client has flagged something for correction. The
       // sign-off becomes effective only after an admin reviews that remark.
@@ -438,7 +442,7 @@ export async function reviewSpecialOrderVerificationRemark(orderId: string) {
   if (!session) return { error: "You don't have permission for this action" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { conversationFields: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -462,7 +466,7 @@ export async function reviewSpecialOrderVerificationRemark(orderId: string) {
   );
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: {
       conversationFields: fields as Prisma.InputJsonValue,
       clientVerifiedAt: reviewedAt,
@@ -488,7 +492,7 @@ export async function submitSpecialOrderFileReplacement(input: {
   if (!session?.user?.clientId) return { error: "Only the client can replace this file" };
 
   const order = await prisma.specialOrder.findFirst({
-    where: { id: input.orderId, clientId: session.user.clientId },
+    where: availableSpecialOrderWhere({ id: input.orderId, clientId: session.user.clientId }),
     select: { status: true, conversationFields: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -545,7 +549,7 @@ export async function submitSpecialOrderFileReplacement(input: {
   ];
 
   await prisma.specialOrder.update({
-    where: { id: input.orderId },
+    where: availableSpecialOrderWhere({ id: input.orderId }),
     data: { conversationFields: nextFields as Prisma.InputJsonValue },
   });
   revalidatePath(`/c/special-orders/${input.orderId}`);
@@ -562,7 +566,7 @@ export async function reviewSpecialOrderFileReplacement(
   if (!session) return { error: "You don't have permission for this action" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { conversationFields: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -617,7 +621,7 @@ export async function reviewSpecialOrderFileReplacement(
   }
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { conversationFields: nextFields as Prisma.InputJsonValue },
   });
   revalidatePath(`/c/special-orders/${orderId}`);
@@ -817,6 +821,8 @@ export async function createSpecialOrderProfile(formData: {
   if (!profileName) return { error: "Profile name is required" };
   if (!formData.clientId) return { error: "Select a client" };
   if (!formData.marketplaceId) return { error: "Select a marketplace" };
+  const activeClient = await prisma.client.findFirst({ where: { id: formData.clientId, status: "ACTIVE" }, select: { id: true } });
+  if (!activeClient) return { error: "Client is unavailable or on hold" };
 
   const marketplace = await prisma.marketplace.findUnique({
     where: { id: formData.marketplaceId },
@@ -917,7 +923,7 @@ export async function createSpecialOrder(formData: {
 
   if (formData.profileId) {
     profile = await prisma.specialOrderProfile.findUnique({
-      where: { id: formData.profileId },
+      where: { id: formData.profileId, AND: [activeProfileWork] },
       select: {
         id: true,
         marketplaceId: true,
@@ -1000,7 +1006,7 @@ export async function createSpecialOrder(formData: {
   }
 
   const client = await prisma.client.findUnique({
-    where: { id: clientId },
+    where: { id: clientId, status: "ACTIVE" },
     select: {
       id: true,
       companyName: true,
@@ -1182,7 +1188,7 @@ export async function updateSpecialOrderStatus(
   if (!session) return { error: "You don't have permission for this action" };
 
   const previous = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: {
       status: true,
       partnerId: true,
@@ -1193,7 +1199,7 @@ export async function updateSpecialOrderStatus(
   if (!previous) return { error: "Special order not found" };
 
   const order = await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: {
       status,
       deliveryDate:
@@ -1456,7 +1462,7 @@ export async function updateSpecialOrderDetails(
   if (!session) return { error: "You don't have permission for this action" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { id: true, title: true, profileId: true, status: true, orderAmountUsd: true, clientUsdRate: true, partnerUsdRate: true, invoice: { select: { id: true } } },
   });
   if (!order) return { error: "Conversation not found" };
@@ -1489,7 +1495,7 @@ export async function updateSpecialOrderDetails(
   try {
     const updates: Prisma.PrismaPromise<unknown>[] = [
       prisma.specialOrder.update({
-      where: { id: orderId },
+      where: availableSpecialOrderWhere({ id: orderId }),
       data: {
         title,
         buyerProfile: formData.buyerProfile === undefined ? undefined : formData.buyerProfile.trim() || null,
@@ -1550,7 +1556,7 @@ export async function updateSpecialOrderDetails(
   // The order amount can change here, which can carry the profile over its
   // next target.
   const edited = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { profileId: true },
   });
   if (edited?.profileId) {
@@ -1588,7 +1594,7 @@ export async function deleteSpecialOrder(
   if (!verified) return { error: "Verification code is invalid or expired" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: {
       id: true,
       status: true,
@@ -1620,7 +1626,7 @@ export async function deleteSpecialOrder(
   if (order.invoice?.id) {
     deletes.push(prisma.invoice.delete({ where: { id: order.invoice.id } }));
   }
-  deletes.push(prisma.specialOrder.delete({ where: { id: order.id } }));
+  deletes.push(prisma.specialOrder.delete({ where: availableSpecialOrderWhere({ id: order.id }) }));
   await prisma.$transaction(deletes);
 
   revalidatePath("/special-orders");
@@ -1638,7 +1644,7 @@ export async function markAssignedSpecialOrderDelivered(orderId: string) {
   }
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: {
       id: true,
       title: true,
@@ -1661,7 +1667,7 @@ export async function markAssignedSpecialOrderDelivered(orderId: string) {
   }
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: {
       status: "DELIVERED",
       deliveryDate: new Date(),
@@ -1693,7 +1699,7 @@ export async function markAssignedSpecialOrderActive(orderId: string) {
   }
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: {
       id: true,
       title: true,
@@ -1712,7 +1718,7 @@ export async function markAssignedSpecialOrderActive(orderId: string) {
   }
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { status: "ACTIVE" },
   });
 
@@ -1739,6 +1745,8 @@ export async function updateSpecialOrderPartner(
 ) {
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
+  const available = await prisma.specialOrder.findFirst({ where: availableSpecialOrderWhere({ id: orderId }), select: { id: true } });
+  if (!available) return { error: "Conversation is unavailable or on hold" };
 
   const cleanOrderId = orderId.trim();
   const cleanPartnerId = partnerId?.trim() || null;
@@ -1762,7 +1770,7 @@ export async function updateSpecialOrderPartner(
   await prisma.$transaction(
     async (tx: Prisma.TransactionClient) => {
       const order = await tx.specialOrder.update({
-        where: { id: cleanOrderId },
+        where: availableSpecialOrderWhere({ id: cleanOrderId }),
         data: { partnerId: cleanPartnerId },
         select: {
           id: true,
@@ -1833,7 +1841,7 @@ export async function addSpecialOrderMessage(formData: {
   if (!message) return { error: "Message is required" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: formData.orderId },
+    where: availableSpecialOrderWhere({ id: formData.orderId }),
     select: { status: true, conversationMessages: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -1854,7 +1862,7 @@ export async function addSpecialOrderMessage(formData: {
   });
 
   await prisma.specialOrder.update({
-    where: { id: formData.orderId },
+    where: availableSpecialOrderWhere({ id: formData.orderId }),
     data: { conversationMessages: messages },
   });
 
@@ -1895,7 +1903,7 @@ export async function addSpecialOrderOffer(formData: {
   }
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: formData.orderId },
+    where: availableSpecialOrderWhere({ id: formData.orderId }),
     select: { status: true, conversationMessages: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -1919,7 +1927,7 @@ export async function addSpecialOrderOffer(formData: {
   });
 
   await prisma.specialOrder.update({
-    where: { id: formData.orderId },
+    where: availableSpecialOrderWhere({ id: formData.orderId }),
     data: { conversationMessages: messages },
   });
   await triggerPusher(
@@ -1941,7 +1949,7 @@ export async function confirmSpecialOrderOffer(
   if (!session?.user) return { error: "You don't have permission for this action" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { partnerId: true, status: true, conversationMessages: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -1971,7 +1979,7 @@ export async function confirmSpecialOrderOffer(
     offerConfirmedByName: session.user.name?.trim() || "User",
   };
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { conversationMessages: messages },
   });
   await triggerPusher(`special-order-script-${orderId}`, "messages-updated", {
@@ -1997,7 +2005,7 @@ export async function updateSpecialOrderMessage(formData: {
   if (!message) return { error: "Message is required" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: formData.orderId },
+    where: availableSpecialOrderWhere({ id: formData.orderId }),
     select: { status: true, conversationMessages: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -2020,7 +2028,7 @@ export async function updateSpecialOrderMessage(formData: {
   };
 
   await prisma.specialOrder.update({
-    where: { id: formData.orderId },
+    where: availableSpecialOrderWhere({ id: formData.orderId }),
     data: { conversationMessages: messages },
   });
   await triggerPusher(`special-order-script-${formData.orderId}`, "messages-updated", {
@@ -2039,7 +2047,7 @@ export async function deleteSpecialOrderMessage(
   if (!session) return { error: "You don't have permission for this action" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { status: true, conversationMessages: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -2053,7 +2061,7 @@ export async function deleteSpecialOrderMessage(
   }
   const messages = current.filter((item) => item.id !== messageId);
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { conversationMessages: messages },
   });
   await triggerPusher(`special-order-script-${orderId}`, "messages-updated", {
@@ -2072,7 +2080,7 @@ export async function reorderSpecialOrderMessages(
   if (!session) return { error: "You don't have permission for this action" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { status: true, conversationMessages: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -2091,7 +2099,7 @@ export async function reorderSpecialOrderMessages(
   const byId = new Map(current.map((item) => [item.id, item]));
   const messages = orderedIds.map((id) => byId.get(id)!);
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { conversationMessages: messages },
   });
   await triggerPusher(`special-order-script-${orderId}`, "messages-updated", {
@@ -2122,7 +2130,7 @@ export async function addSpecialOrderBreak(
   }
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { status: true, conversationMessages: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -2144,7 +2152,7 @@ export async function addSpecialOrderBreak(
   });
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { conversationMessages: messages },
   });
 
@@ -2168,7 +2176,7 @@ export async function toggleSpecialOrderMessageDone(
   const isPartner = PARTNER_ROLES.includes(session.user.role);
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: {
       partnerId: true,
       status: true,
@@ -2235,7 +2243,7 @@ export async function toggleSpecialOrderMessageDone(
   );
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { conversationMessages: messages },
   });
 
@@ -2284,7 +2292,7 @@ export async function updateSpecialOrderConversationBreak(
   seconds = Math.min(seconds, REGULAR_BREAK_MAX_SECONDS);
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { status: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -2293,7 +2301,7 @@ export async function updateSpecialOrderConversationBreak(
   }
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { conversationBreakSeconds: Math.round(seconds) },
   });
 
@@ -2331,7 +2339,7 @@ export async function saveSpecialOrderField(formData: {
   if (!value && !url) return { error: "Add details or URL" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: formData.orderId },
+    where: availableSpecialOrderWhere({ id: formData.orderId }),
     select: { status: true, conversationFields: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -2376,7 +2384,7 @@ export async function saveSpecialOrderField(formData: {
   }
 
   await prisma.specialOrder.update({
-    where: { id: formData.orderId },
+    where: availableSpecialOrderWhere({ id: formData.orderId }),
     data: { conversationFields: fields },
   });
 
@@ -2396,7 +2404,7 @@ export async function toggleSpecialOrderFieldDone(
   const isPartner = PARTNER_ROLES.includes(session.user.role);
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { partnerId: true, status: true, conversationFields: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -2431,7 +2439,7 @@ export async function toggleSpecialOrderFieldDone(
   );
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { conversationFields: fields },
   });
 
@@ -2454,7 +2462,7 @@ export async function deleteSpecialOrderField(
   }
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: cleanOrderId },
+    where: availableSpecialOrderWhere({ id: cleanOrderId }),
     select: { status: true, conversationFields: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -2473,7 +2481,7 @@ export async function deleteSpecialOrderField(
       field.id !== cleanFieldId && !(!field.id && field.type === cleanFieldId)
   );
   await prisma.specialOrder.update({
-    where: { id: cleanOrderId },
+    where: availableSpecialOrderWhere({ id: cleanOrderId }),
     data: { conversationFields: fields },
   });
 
@@ -2491,7 +2499,7 @@ export async function updateSpecialOrderBuyerName(
   if (!session?.user) return { error: "You don't have permission for this action" };
 
   const order = await prisma.specialOrder.findUnique({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     select: { partnerId: true, status: true },
   });
   if (!order) return { error: "Conversation not found" };
@@ -2507,7 +2515,7 @@ export async function updateSpecialOrderBuyerName(
   }
 
   await prisma.specialOrder.update({
-    where: { id: orderId },
+    where: availableSpecialOrderWhere({ id: orderId }),
     data: { buyerProfile: buyerName.trim() || null },
   });
 

@@ -1,3 +1,5 @@
+import { WorkHoldButton } from "@/components/shared/work-hold-button";
+import { availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -30,7 +32,7 @@ export default async function SpecialOrderProfilePage({
     prisma.specialOrderProfile.findUnique({
       where: { id },
       include: {
-        client: { select: { id: true, companyName: true } },
+        client: { select: { id: true, companyName: true, status: true } },
         partner: { select: { id: true, name: true } },
         marketplace: {
           select: {
@@ -40,6 +42,7 @@ export default async function SpecialOrderProfilePage({
           },
         },
         orders: {
+          where: availableSpecialOrderWhere({}),
           orderBy: [{ plannedDate: "asc" }, { createdAt: "desc" }],
           include: {
             client: { select: { companyName: true } },
@@ -107,7 +110,9 @@ export default async function SpecialOrderProfilePage({
             {profile.marketplace.name} / {profile.niche ?? "No gig title"}
           </p>
         </div>
-        <ProfileConversationLauncher
+        <div className="flex flex-wrap items-center gap-2">
+        <WorkHoldButton kind="profile" id={profile.id} active={profile.active} />
+        {profile.active && profile.client?.status === "ACTIVE" && <ProfileConversationLauncher
           profile={{
             id: profile.id,
             profileName: profile.profileName,
@@ -119,8 +124,15 @@ export default async function SpecialOrderProfilePage({
           }}
           partners={partners}
           buyers={buyerOptions}
-        />
+        />}
+        </div>
       </div>
+
+      {(!profile.active || profile.client?.status !== "ACTIVE") && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
+          {!profile.active ? "This profile is on hold. Its conversations are hidden and work is disabled. Activate work to restore them." : "This client is on hold. Activate the client from Clients to restore this profile’s conversations."}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-4">
         <SummaryCard label="Conversations" value={profile.orders.length.toString()} />

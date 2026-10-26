@@ -1,3 +1,4 @@
+import { activeProfileWork, availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -30,6 +31,7 @@ export default async function PartnerSpecialOrderProfilePage({
   const profile = await prisma.specialOrderProfile.findFirst({
     where: {
       id,
+      AND: [activeProfileWork],
       orders: { some: partnerWhere(scope) },
     },
     include: {
@@ -42,7 +44,7 @@ export default async function PartnerSpecialOrderProfilePage({
         },
       },
       orders: {
-        where: partnerWhere(scope),
+        where: availableSpecialOrderWhere(partnerWhere(scope)),
         orderBy: [{ plannedDate: "asc" }, { createdAt: "desc" }],
         select: {
           id: true,

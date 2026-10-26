@@ -1,3 +1,4 @@
+import { availableSpecialOrderWhere } from "@/lib/work-availability";
 import { notFound } from "next/navigation";
 
 import {
@@ -24,7 +25,7 @@ export default async function ClientSpecialOrdersPage() {
 
   const [orders, levelConfig] = await Promise.all([
     prisma.specialOrder.findMany({
-      where: { clientId: session.user.clientId },
+      where: availableSpecialOrderWhere({ clientId: session.user.clientId }),
       orderBy: [{ plannedDate: "asc" }, { createdAt: "desc" }],
       include: {
         invoice: { select: { number: true } },

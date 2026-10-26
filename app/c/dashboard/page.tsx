@@ -1,3 +1,4 @@
+import { availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
@@ -25,11 +26,11 @@ export default async function ClientDashboard() {
     }),
     getClientWalletBalance(clientId),
     prisma.job.findMany({
-      where: {
+      where: availableJobWhere({
         clientId,
         publish: "PUBLISHED",
         status: { in: ["PENDING", "IN_PROGRESS", "PAUSED"] },
-      },
+      }),
       orderBy: { updatedAt: "desc" },
       take: 5,
       select: { id: true, title: true, type: true, status: true },

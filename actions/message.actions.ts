@@ -1,5 +1,8 @@
 "use server";
 
+import { activeWorkAttachment, availableConversationWhere } from "@/lib/work-availability";
+
+
 import type { Prisma, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -350,7 +353,7 @@ export async function getFloatingConversations() {
 
   const conversations: FloatingConversationRecord[] =
     await prisma.conversation.findMany({
-    where,
+    where: availableConversationWhere(where),
     orderBy: { updatedAt: "desc" },
     take: 20,
     include: {
@@ -524,9 +527,9 @@ async function canAccessConversation(
 
   const conversation =
     (await prisma.conversation.findUnique({
-      where: {
+      where: availableConversationWhere({
         id: conversationId,
-      },
+      }),
       include: {
         participants: {
           select: {
@@ -761,6 +764,7 @@ export async function sendMessage(
     ? ((await prisma.attachment.findUnique({
         where: {
           id: cleanAttachmentId,
+          AND: [activeWorkAttachment],
         },
         select: {
           id: true,
@@ -1207,7 +1211,7 @@ export async function getOrCreateDirect(
 
   const possibleConversations =
     (await prisma.conversation.findMany({
-      where: {
+      where: availableConversationWhere({
         isDirect: true,
         AND: [
           {
@@ -1226,7 +1230,7 @@ export async function getOrCreateDirect(
             },
           },
         ],
-      },
+      }),
       include: {
         participants: {
           select: {

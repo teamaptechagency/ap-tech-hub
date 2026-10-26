@@ -1,3 +1,4 @@
+import { availableJobRelatedWhere, availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -24,23 +25,23 @@ export default async function MyHoursPage() {
 
   const [hourlyJobs, weekSessions, recentSessions] = await Promise.all([
     prisma.job.findMany({
-      where: {
+      where: availableJobWhere({
         type: "HOURLY",
         members: { some: { userId: myId } },
         status: { in: ["PENDING", "IN_PROGRESS", "PAUSED"] },
-      },
+      }),
       select: { id: true, title: true, weeklyHourLimit: true },
     }),
     prisma.workSession.findMany({
-      where: {
+      where: availableJobRelatedWhere({
         userId: myId,
         startedAt: { gte: start, lt: end },
         duration: { not: null },
-      },
+      }),
       select: { jobId: true, duration: true },
     }),
     prisma.workSession.findMany({
-      where: { userId: myId },
+      where: availableJobRelatedWhere({ userId: myId }),
       orderBy: { startedAt: "desc" },
       take: 25,
       include: { job: { select: { title: true } } },

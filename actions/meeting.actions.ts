@@ -1,5 +1,8 @@
 "use server";
 
+import { availableJobWhere, availableMeetingWhere } from "@/lib/work-availability";
+
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES, CLIENT_ROLES } from "@/lib/roles";
@@ -42,6 +45,10 @@ export async function createMeeting(formData: {
   }
   if (!formData.scheduledAt) {
     return { error: "Pick a date and time" };
+  }
+
+  if (formData.jobId && !await prisma.job.findFirst({ where: availableJobWhere({ id: formData.jobId }), select: { id: true } })) {
+    return { error: "Project is unavailable or on hold" };
   }
 
   const isAdmin = ADMIN_ROLES.includes(session.user.role);
@@ -91,7 +98,7 @@ export async function processMeeting(
   }
 
   await prisma.meeting.update({
-    where: { id: meetingId },
+    where: availableMeetingWhere({ id: meetingId }),
     data: { status: action },
   });
 
@@ -118,7 +125,7 @@ export async function completeMeeting(meetingId: string) {
   }
 
   await prisma.meeting.update({
-    where: { id: meetingId },
+    where: availableMeetingWhere({ id: meetingId }),
     data: { status: "COMPLETED" },
   });
 
@@ -140,7 +147,7 @@ export async function getMeetingEmbedUrl(
   if (!session?.user) return { error: "You must be signed in" };
 
   const meeting = await prisma.meeting.findUnique({
-    where: { id: meetingId },
+    where: availableMeetingWhere({ id: meetingId }),
     select: {
       roomCode: true,
       status: true,
@@ -186,7 +193,7 @@ export async function getGuestMeetingUrl(
   if (name.length < 2) return { error: "Enter your name to join" };
 
   const meeting = await prisma.meeting.findUnique({
-    where: { roomCode },
+    where: availableMeetingWhere({ roomCode }),
     select: { id: true, status: true },
   });
   if (!meeting) return { error: "Meeting not found" };

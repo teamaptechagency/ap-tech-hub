@@ -1,3 +1,4 @@
+import { availableConversationWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -9,7 +10,7 @@ export default async function EmployeeMessagesPage() {
   const myId = session.user.id;
 
   const conversations = await prisma.conversation.findMany({
-    where: {
+    where: availableConversationWhere({
       OR: [
         { job: { members: { some: { userId: myId } } } },
         { specialOrderPartner: { partnerId: myId } },
@@ -25,7 +26,7 @@ export default async function EmployeeMessagesPage() {
           },
         },
       ],
-    },
+    }),
     orderBy: { updatedAt: "desc" },
     include: {
       job: { select: { title: true } },

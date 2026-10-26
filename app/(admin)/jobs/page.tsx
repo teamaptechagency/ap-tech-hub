@@ -1,3 +1,5 @@
+import type { Role } from "@prisma/client";
+import { availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { JobsBoard } from "@/components/jobs/jobs-board";
 import { ADMIN_ROLES, WORKER_ROLES } from "@/lib/roles";
@@ -5,6 +7,7 @@ import { ADMIN_ROLES, WORKER_ROLES } from "@/lib/roles";
 export default async function JobsPage() {
   const [jobs, clients, teamMembers, skills, receivedUsdRate, receivedEurRate, receivedGbpRate] = await Promise.all([
     prisma.job.findMany({
+      where: availableJobWhere({}),
       orderBy: { updatedAt: "desc" },
       include: {
         client: { select: { companyName: true } },
@@ -33,7 +36,7 @@ export default async function JobsPage() {
       },
     }),
     prisma.user.findMany({
-      where: { role: { in: [...WORKER_ROLES, ...ADMIN_ROLES] as any } },
+      where: { role: { in: [...WORKER_ROLES, ...ADMIN_ROLES] as Role[] } },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),

@@ -1,3 +1,4 @@
+import { availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
@@ -118,7 +119,7 @@ export default async function SpecialOrderDetailsPage({
 
   const [order, partners] = await Promise.all([
     prisma.specialOrder.findUnique({
-      where: { id },
+      where: availableSpecialOrderWhere({ id }),
       include: {
         client: { select: { companyName: true } },
         partner: { select: { id: true, name: true, email: true } },

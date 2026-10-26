@@ -1,5 +1,8 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
+import { availableJobWhere } from "@/lib/work-availability";
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES, PARTNER_ROLES, WORKER_ROLES } from "@/lib/roles";
@@ -162,7 +165,7 @@ export async function completeJob(jobId: string, confirm: boolean) {
   if (!session) return { error: "You don't have permission for this action" };
 
   const job = await prisma.job.findUnique({
-    where: { id: jobId },
+    where: availableJobWhere({ id: jobId }),
     include: {
       members: { include: { user: { select: { name: true } } } },
       invoices: {
@@ -202,7 +205,7 @@ export async function completeJob(jobId: string, confirm: boolean) {
   }
 
   await prisma.job.update({
-    where: { id: jobId },
+    where: availableJobWhere({ id: jobId }),
     data: { status: "COMPLETED" },
   });
 
@@ -478,7 +481,7 @@ export async function applyPenalty(
   const fromBalance = Math.min(balance, amount);
   const fromReserve = amount - fromBalance;
 
-  const ops: any[] = [];
+  const ops: Prisma.PrismaPromise<unknown>[] = [];
   if (fromBalance > 0) {
     ops.push(
       prisma.workerTxn.create({

@@ -1,5 +1,7 @@
 "use server";
 
+import { availableJobWhere } from "@/lib/work-availability";
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
@@ -12,6 +14,8 @@ import { revalidatePath } from "next/cache";
 async function canTouchJob(jobId: string) {
   const session = await auth();
   if (!session?.user) return null;
+  const available = await prisma.job.findFirst({ where: availableJobWhere({ id: jobId }), select: { id: true } });
+  if (!available) return null;
 
   if (ADMIN_ROLES.includes(session.user.role)) {
     return { session, isManager: true };
@@ -42,6 +46,9 @@ export async function addTask(
     return { error: "Task title must be at least 2 characters" };
   }
 
+  const week = await prisma.week.findFirst({ where: { id: weekId, jobId }, select: { id: true } });
+  if (!week) return { error: "Week not found" };
+
   const last = await prisma.weeklyTask.findFirst({
     where: { weekId },
     orderBy: { sortOrder: "desc" },
@@ -67,7 +74,7 @@ export async function toggleTask(taskId: string, jobId: string) {
   const access = await canTouchJob(jobId);
   if (!access) return { error: "You don't have access to this job" };
 
-  const task = await prisma.weeklyTask.findUnique({ where: { id: taskId } });
+  const task = await prisma.weeklyTask.findUnique({ where: { id: taskId, week: { jobId } } });
   if (!task) return { error: "Task not found" };
   if (task.status === "CANCELLED") {
     return { error: "This task is cancelled. Reopen it first." };
@@ -76,7 +83,7 @@ export async function toggleTask(taskId: string, jobId: string) {
   const completing = task.status === "PENDING";
 
   await prisma.weeklyTask.update({
-    where: { id: taskId },
+    where: { id: taskId, week: { jobId } },
     data: {
       status: completing ? "COMPLETED" : "PENDING",
       completedById: completing ? access.session.user.id : null,
@@ -106,11 +113,11 @@ export async function cancelTask(
     return { error: "Enter a reason for cancelling this task" };
   }
 
-  const task = await prisma.weeklyTask.findUnique({ where: { id: taskId } });
+  const task = await prisma.weeklyTask.findUnique({ where: { id: taskId, week: { jobId } } });
   if (!task) return { error: "Task not found" };
 
   await prisma.weeklyTask.update({
-    where: { id: taskId },
+    where: { id: taskId, week: { jobId } },
     data: {
       status: "CANCELLED",
       cancelReason: cleanReason,
@@ -131,14 +138,14 @@ export async function reopenTask(taskId: string, jobId: string) {
     return { error: "You don't have permission for this action" };
   }
 
-  const task = await prisma.weeklyTask.findUnique({ where: { id: taskId } });
+  const task = await prisma.weeklyTask.findUnique({ where: { id: taskId, week: { jobId } } });
   if (!task) return { error: "Task not found" };
   if (task.status !== "CANCELLED") {
     return { error: "This task is not cancelled" };
   }
 
   await prisma.weeklyTask.update({
-    where: { id: taskId },
+    where: { id: taskId, week: { jobId } },
     data: {
       status: "PENDING",
       cancelReason: null,
@@ -160,7 +167,7 @@ export async function deleteTask(taskId: string, jobId: string) {
     return { error: "You don't have permission for this action" };
   }
 
-  await prisma.weeklyTask.delete({ where: { id: taskId } });
+  await prisma.weeklyTask.delete({ where: { id: taskId, week: { jobId } } });
 
   revalidatePath(`/jobs/${jobId}`);
   return { success: true };

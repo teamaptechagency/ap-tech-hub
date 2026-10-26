@@ -1,3 +1,4 @@
+import { availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
@@ -76,7 +77,7 @@ export default async function ClientSpecialOrderDetailsPage({
   if (!session?.user?.clientId) notFound();
 
   const order = await prisma.specialOrder.findFirst({
-    where: { id, clientId: session.user.clientId },
+    where: availableSpecialOrderWhere({ id, clientId: session.user.clientId }),
     include: {
       invoice: { select: { id: true, number: true, status: true } },
       profile: {

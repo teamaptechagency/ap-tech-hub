@@ -1,3 +1,4 @@
+import { activeWorkAttachment, availableSpecialOrderWhere } from "@/lib/work-availability";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
@@ -60,7 +61,7 @@ export async function GET(request: Request) {
   let authorized = false;
   let isSpecialOrderFile = false;
   const attachment = await prisma.attachment.findFirst({
-    where: { url: fileUrl },
+    where: { url: fileUrl, AND: [activeWorkAttachment] },
     select: {
       name: true,
       uploadedById: true,
@@ -129,7 +130,7 @@ export async function GET(request: Request) {
   // can still download those existing private blobs.
   if (!authorized) {
     const specialOrders = await prisma.specialOrder.findMany({
-      where: isAdmin
+      where: availableSpecialOrderWhere(isAdmin
         ? {}
         : {
             OR: [
@@ -138,7 +139,7 @@ export async function GET(request: Request) {
                 ? [{ clientId: session.user.clientId }]
                 : []),
             ],
-          },
+          }),
       select: {
         partnerId: true,
         clientId: true,

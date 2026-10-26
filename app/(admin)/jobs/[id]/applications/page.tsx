@@ -1,3 +1,4 @@
+import { availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -12,7 +13,7 @@ export default async function ApplicationsPage({
   const { id } = await params;
 
   const job = await prisma.job.findUnique({
-    where: { id },
+    where: availableJobWhere({ id }),
     include: {
       requiredSkills: { select: { id: true, name: true } },
       applications: {

@@ -1,3 +1,4 @@
+import { availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -9,7 +10,7 @@ export default async function FindWorkPage() {
 
   const [openJobs, me] = await Promise.all([
     prisma.job.findMany({
-      where: { status: "OPEN" },
+      where: availableJobWhere({ status: "OPEN" }),
       orderBy: { createdAt: "desc" },
       include: {
         requiredSkills: { select: { id: true, name: true } },

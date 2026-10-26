@@ -1,3 +1,4 @@
+import { availableConversationWhere } from "@/lib/work-availability";
 import { redirect } from "next/navigation";
 import { MessagesShell } from "@/components/chat/messages-shell";
 import { auth } from "@/lib/auth";
@@ -38,7 +39,7 @@ export default async function PartnerMessagesPage() {
 
   const conversations: PartnerConversationRecord[] =
     await prisma.conversation.findMany({
-    where: {
+    where: availableConversationWhere({
       OR: [
         {
           // Order threads are limited to the partner(s) in scope — a manager
@@ -52,7 +53,7 @@ export default async function PartnerMessagesPage() {
           AND: [{ participants: { some: partnerSupportParticipant } }],
         },
       ],
-    },
+    }),
     orderBy: { updatedAt: "desc" },
     include: {
       specialOrderPartner: {

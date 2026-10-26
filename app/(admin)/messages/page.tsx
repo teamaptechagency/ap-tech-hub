@@ -1,3 +1,4 @@
+import { availableConversationWhere } from "@/lib/work-availability";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -38,7 +39,7 @@ export default async function MessagesPage() {
   // All conversations relevant to admins: job conversations +
   // directs I'm part of, plus the super-admin oversight above.
   const conversations = await prisma.conversation.findMany({
-    where: { OR: conversationOr },
+    where: availableConversationWhere({ OR: conversationOr }),
     orderBy: { updatedAt: "desc" },
     include: {
       job: {

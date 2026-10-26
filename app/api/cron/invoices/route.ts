@@ -1,3 +1,4 @@
+import { availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { createInvoiceWithNumber } from "@/lib/invoice-number";
 import { NextResponse } from "next/server";
@@ -32,13 +33,13 @@ export async function GET(req: Request) {
 
   // Active monthly jobs billing today (internal clients only)
   const jobs = await prisma.job.findMany({
-    where: {
+    where: availableJobWhere({
       type: "MONTHLY",
       billingDay: day,
       status: { in: ["PENDING", "IN_PROGRESS"] },
       clientId: { not: null },
       clientValue: { not: null },
-    },
+    }),
     include: { client: true },
   });
 

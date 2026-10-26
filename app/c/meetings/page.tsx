@@ -1,3 +1,4 @@
+import { availableMeetingWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
@@ -8,10 +9,10 @@ export default async function ClientMeetingsPage() {
   if (!session?.user?.clientId) notFound();
 
   const meetings = await prisma.meeting.findMany({
-    where: {
+    where: availableMeetingWhere({
       status: { in: ["SCHEDULED", "COMPLETED"] },
       participants: { some: { userId: session.user.id } },
-    },
+    }),
     orderBy: { scheduledAt: "desc" },
     include: {
       job: { select: { title: true } },

@@ -1,3 +1,4 @@
+import { availableJobWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -51,13 +52,13 @@ export default async function ClientJobsPage() {
 
   // Clients can only see published, non-cancelled jobs.
   const jobs = await prisma.job.findMany({
-    where: {
+    where: availableJobWhere({
       clientId: session.user.clientId,
       publish: "PUBLISHED",
       status: {
         not: "CANCELLED",
       },
-    },
+    }),
     orderBy: {
       updatedAt: "desc",
     },

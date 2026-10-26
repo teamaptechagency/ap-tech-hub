@@ -1,5 +1,7 @@
 "use server";
 
+import { availableJobWhere } from "@/lib/work-availability";
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
@@ -11,6 +13,8 @@ import { revalidatePath } from "next/cache";
 async function canTouchJob(jobId: string) {
   const session = await auth();
   if (!session?.user) return null;
+  const available = await prisma.job.findFirst({ where: availableJobWhere({ id: jobId }), select: { id: true } });
+  if (!available) return null;
 
   if (ADMIN_ROLES.includes(session.user.role)) {
     return { session, isManager: true };
@@ -52,7 +56,7 @@ export async function addMilestone(
   }
 
   const job = await prisma.job.findUnique({
-    where: { id: jobId },
+    where: availableJobWhere({ id: jobId }),
     include: {
       milestones: { select: { charge: true } },
       members: { select: { workerValue: true } },
@@ -120,7 +124,7 @@ export async function setMilestoneStatus(
   if (!access) return { error: "You don't have access to this job" };
 
   await prisma.milestone.update({
-    where: { id: milestoneId },
+    where: { id: milestoneId, jobId },
     data: {
       status,
       completedAt: status === "COMPLETED" ? new Date() : null,
@@ -140,7 +144,7 @@ export async function deleteMilestone(milestoneId: string, jobId: string) {
     return { error: "You don't have permission for this action" };
   }
 
-  await prisma.milestone.delete({ where: { id: milestoneId } });
+  await prisma.milestone.delete({ where: { id: milestoneId, jobId } });
 
   revalidatePath(`/jobs/${jobId}`);
   return { success: true };

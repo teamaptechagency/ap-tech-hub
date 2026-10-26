@@ -1,3 +1,4 @@
+import { availableSpecialOrderWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@prisma/client";
 import { SpecialOrdersBoard } from "@/components/special-orders/special-orders-board";
@@ -21,6 +22,7 @@ export default async function SpecialOrdersPage() {
     allMarketplaces,
   ] = await Promise.all([
     prisma.specialOrder.findMany({
+      where: availableSpecialOrderWhere({}),
       orderBy: [{ plannedDate: "asc" }, { createdAt: "desc" }],
       include: {
         client: { select: { companyName: true } },
@@ -54,7 +56,6 @@ export default async function SpecialOrdersPage() {
       select: { id: true, name: true, role: true },
     }),
     prisma.specialOrderProfile.findMany({
-      where: { active: true },
       orderBy: { profileName: "asc" },
       include: {
         marketplace: {
@@ -65,7 +66,8 @@ export default async function SpecialOrdersPage() {
             partnerUsdRate: true,
           },
         },
-        _count: { select: { orders: true } },
+        client: { select: { status: true } },
+        _count: { select: { orders: { where: availableSpecialOrderWhere({}) } } },
       },
     }),
     prisma.marketplace.findMany({
@@ -160,6 +162,8 @@ export default async function SpecialOrdersPage() {
         profiles={profiles.map((profile) => ({
           id: profile.id,
           profileName: profile.profileName,
+          active: profile.active,
+          clientActive: !profile.client || profile.client.status === "ACTIVE",
           marketplaceId: profile.marketplaceId,
           marketplaceName: profile.marketplace.name,
           profileLevel: profile.profileLevel,

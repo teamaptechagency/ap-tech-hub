@@ -1,3 +1,4 @@
+import { availableMeetingWhere, availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -9,6 +10,7 @@ export default async function AdminMeetingsPage() {
 
   const [meetings, people, jobs] = await Promise.all([
     prisma.meeting.findMany({
+      where: availableMeetingWhere({}),
       orderBy: { scheduledAt: "desc" },
       include: {
         job: { select: { title: true } },
@@ -22,7 +24,7 @@ export default async function AdminMeetingsPage() {
       select: { id: true, name: true },
     }),
     prisma.job.findMany({
-      where: { status: { in: ["PENDING", "IN_PROGRESS"] } },
+      where: availableJobWhere({ status: { in: ["PENDING", "IN_PROGRESS"] } }),
       select: { id: true, title: true },
     }),
   ]);

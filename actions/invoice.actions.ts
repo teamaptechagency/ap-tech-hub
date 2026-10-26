@@ -1,5 +1,7 @@
 "use server";
 
+import { availableJobWhere } from "@/lib/work-availability";
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
@@ -1301,7 +1303,7 @@ export async function createJobAdvanceInvoice(input: {
   const total = vat ? Math.round(amount * (1 + vat / 100) * 100) / 100 : amount;
 
   const job = await prisma.job.findUnique({
-    where: { id: input.jobId },
+    where: availableJobWhere({ id: input.jobId }),
     select: { title: true, clientId: true, client: { select: { currency: true } } },
   });
   if (!job) return { error: "Job not found" };

@@ -1,5 +1,7 @@
 "use server";
 
+import { availableJobWhere } from "@/lib/work-availability";
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
@@ -19,7 +21,7 @@ export async function globalSearch(query: string) {
 
   const [jobs, clients, invoices, users] = await Promise.all([
     prisma.job.findMany({
-      where: { title: { contains: q, mode: "insensitive" } },
+      where: availableJobWhere({ title: { contains: q, mode: "insensitive" } }),
       take: 5,
       select: { id: true, title: true, type: true, status: true },
     }),

@@ -1,5 +1,7 @@
 "use server";
 
+import { availableJobWhere } from "@/lib/work-availability";
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -20,7 +22,7 @@ export async function rateWorker(
   }
 
   const job = await prisma.job.findUnique({
-    where: { id: jobId },
+    where: availableJobWhere({ id: jobId }),
     select: { clientId: true, status: true },
   });
   if (!job || job.clientId !== session.user.clientId) {

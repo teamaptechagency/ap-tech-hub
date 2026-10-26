@@ -1,5 +1,8 @@
 "use server";
 
+import { availableJobWhere, availableJobRelatedWhere } from "@/lib/work-availability";
+
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/roles";
@@ -16,7 +19,7 @@ export async function requestExtension(
   if (!session?.user) return { error: "You must be signed in" };
 
   const membership = await prisma.jobMember.findUnique({
-    where: { jobId_userId: { jobId, userId: session.user.id } },
+    where: availableJobRelatedWhere({ jobId_userId: { jobId, userId: session.user.id } }),
   });
   if (!membership && !ADMIN_ROLES.includes(session.user.role)) {
     return { error: "You're not assigned to this job" };
@@ -28,7 +31,7 @@ export async function requestExtension(
   }
 
   const pending = await prisma.extensionRequest.findFirst({
-    where: { jobId, requestedById: session.user.id, status: "PENDING" },
+    where: availableJobRelatedWhere({ jobId, requestedById: session.user.id, status: "PENDING" }),
   });
   if (pending) return { error: "You already have a pending request" };
 
@@ -60,14 +63,14 @@ export async function processExtension(
   }
 
   const request = await prisma.extensionRequest.findUnique({
-    where: { id: requestId },
+    where: availableJobRelatedWhere({ id: requestId }),
   });
   if (!request || request.status !== "PENDING") {
     return { error: "Request not found or already processed" };
   }
 
   await prisma.extensionRequest.update({
-    where: { id: requestId },
+    where: availableJobRelatedWhere({ id: requestId }),
     data: {
       status: action,
       processedById: session.user.id,
@@ -82,7 +85,7 @@ export async function processExtension(
       });
     } else {
       await prisma.job.update({
-        where: { id: request.jobId },
+        where: availableJobWhere({ id: request.jobId }),
         data: { deadline: request.newDate },
       });
     }

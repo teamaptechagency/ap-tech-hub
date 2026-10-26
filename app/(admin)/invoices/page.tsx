@@ -1,3 +1,4 @@
+import { availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { InvoicesBoard } from "@/components/invoices/invoices-board";
 import { invoiceBuyerName } from "@/lib/job-invoice";
@@ -17,7 +18,7 @@ export default async function InvoicesPage() {
       select: { id: true, companyName: true, balance: true, currency: true },
     }),
     prisma.job.findMany({
-      where: { status: { notIn: ["CANCELLED"] } },
+      where: availableJobWhere({ status: { notIn: ["CANCELLED"] } }),
       orderBy: { updatedAt: "desc" },
       select: {
         id: true,

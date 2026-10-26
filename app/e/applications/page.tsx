@@ -1,3 +1,4 @@
+import { availableJobRelatedWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -17,7 +18,7 @@ export default async function MyApplicationsPage() {
   if (!session?.user) redirect("/login");
 
   const applications = await prisma.application.findMany({
-    where: { userId: session.user.id },
+    where: availableJobRelatedWhere({ userId: session.user.id }),
     orderBy: { createdAt: "desc" },
     include: {
       job: { select: { title: true, type: true, status: true } },
@@ -36,7 +37,7 @@ export default async function MyApplicationsPage() {
       {applications.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-sm text-muted-foreground">
-            You haven't applied to any jobs yet
+            You haven&apos;t applied to any jobs yet
           </CardContent>
         </Card>
       ) : (
@@ -57,7 +58,7 @@ export default async function MyApplicationsPage() {
                   </p>
                   {app.message && (
                     <p className="mt-1 truncate text-xs text-muted-foreground">
-                      "{app.message}"
+                      &quot;{app.message}&quot;
                     </p>
                   )}
                 </div>

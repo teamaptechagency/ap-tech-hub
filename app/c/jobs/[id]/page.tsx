@@ -1,3 +1,4 @@
+import { availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
@@ -65,7 +66,7 @@ export default async function ClientJobDetailsPage({
   }
 
   const job = await prisma.job.findUnique({
-    where: { id },
+    where: availableJobWhere({ id }),
     include: {
       weeks: {
         orderBy: {

@@ -1,3 +1,4 @@
+import { availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
@@ -110,7 +111,7 @@ export default async function PartnerHubSpecialOrderDetailsPage({
   const scope = await getPartnerScope(session.user);
 
   const order = await prisma.specialOrder.findFirst({
-    where: { id, ...partnerWhere(scope) },
+    where: availableSpecialOrderWhere({ id, ...partnerWhere(scope) }),
     include: {
       partner: { select: { name: true, email: true } },
       marketplace: { select: { name: true } },

@@ -1,3 +1,4 @@
+import { availableJobRelatedWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -32,7 +33,7 @@ export default async function MyJobsPage({ searchParams }: MyJobsPageProps) {
   const view = params?.view === "hourly" ? "hourly" : "all";
 
   const memberships = await prisma.jobMember.findMany({
-    where: { userId: session.user.id },
+    where: availableJobRelatedWhere({ userId: session.user.id }),
     include: {
       job: {
         select: {

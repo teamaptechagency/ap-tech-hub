@@ -1,3 +1,4 @@
+import { availableConversationWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
@@ -16,7 +17,7 @@ export default async function ClientMessagesPage({
   const openId = params?.open ?? null;
 
   const conversations = await prisma.conversation.findMany({
-    where: {
+    where: availableConversationWhere({
       OR: [
         {
           job: {
@@ -41,7 +42,7 @@ export default async function ClientMessagesPage({
           },
         },
       ],
-    },
+    }),
     orderBy: { updatedAt: "desc" },
     include: {
       job: { select: { title: true } },

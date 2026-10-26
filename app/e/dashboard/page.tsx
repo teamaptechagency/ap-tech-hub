@@ -1,3 +1,4 @@
+import { activeJobWork, availableJobWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -22,17 +23,17 @@ export default async function EmployeeDashboard() {
       select: { name: true, balance: true, reserve: true },
     }),
     prisma.job.findMany({
-      where: {
+      where: availableJobWhere({
         members: { some: { userId: myId } },
         status: { in: ["PENDING", "IN_PROGRESS", "PAUSED"] },
-      },
+      }),
       orderBy: { updatedAt: "desc" },
       take: 5,
       select: { id: true, title: true, type: true, status: true },
     }),
-    prisma.job.count({ where: { status: "OPEN" } }),
+    prisma.job.count({ where: availableJobWhere({ status: "OPEN" }) }),
     prisma.application.count({
-      where: { userId: myId, status: "PENDING" },
+      where: { userId: myId, status: "PENDING", job: { is: activeJobWork } },
     }),
   ]);
 
