@@ -133,10 +133,10 @@ export default async function PartnerHubSpecialOrderDetailsPage({
   const marketplaceName =
     order.profile?.marketplace.name ?? order.marketplace?.name ?? "Custom";
   const profileName = order.profile?.profileName ?? order.profileName;
-  const niche = order.profile?.niche ?? order.niche;
-  const keywords = order.profile?.keywords ?? order.keyword;
-  const profileLevel = order.profile?.profileLevel ?? order.profileLevel;
-  const gigThumbnailUrl = order.profile?.gigThumbnailUrl ?? order.gigImageUrl;
+  const niche = order.niche ?? order.profile?.niche ?? null;
+  const keywords = order.keyword ?? order.profile?.keywords ?? null;
+  const profileLevel = order.profileLevel ?? order.profile?.profileLevel ?? null;
+  const gigThumbnailUrl = order.gigImageUrl ?? order.profile?.gigThumbnailUrl ?? null;
   const messages = arrayValue<ScriptMessage>(order.conversationMessages);
 
   const remark = verificationRemark(order.conversationFields);

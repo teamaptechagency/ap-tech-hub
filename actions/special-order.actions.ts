@@ -883,6 +883,11 @@ export async function createSpecialOrder(formData: {
 
   if (!formData.profileId) return { error: "Select a profile first" };
   if (!title) return { error: "Special order title is required" };
+  const duplicateTitle = await prisma.specialOrder.findFirst({
+    where: { profileId: formData.profileId, title: { equals: title, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (duplicateTitle) return { error: "A conversation in this profile already uses this title. Choose a different title." };
   if (orderAmountUsd < 0) return { error: "Enter a valid dollar amount" };
 
   const rates = await getSpecialRates();
@@ -1452,12 +1457,9 @@ export async function updateSpecialOrderDetails(
 
   const order = await prisma.specialOrder.findUnique({
     where: { id: orderId },
-    select: { id: true, status: true, invoice: { select: { id: true } } },
+    select: { id: true, title: true, profileId: true, status: true, orderAmountUsd: true, clientUsdRate: true, partnerUsdRate: true, invoice: { select: { id: true } } },
   });
   if (!order) return { error: "Conversation not found" };
-  if (order.status === "COMPLETED") {
-    return { error: "Completed orders are view only" };
-  }
 
   const title = formData.title.trim();
   const orderAmountUsd = num(formData.orderAmountUsd);
@@ -1468,6 +1470,16 @@ export async function updateSpecialOrderDetails(
   if (clientUsdRate <= 0 || partnerUsdRate <= 0) {
     return { error: "Dollar rates must be valid" };
   }
+
+  if (order.status === "COMPLETED" && (orderAmountUsd !== Number(order.orderAmountUsd) || clientUsdRate !== Number(order.clientUsdRate) || partnerUsdRate !== Number(order.partnerUsdRate))) {
+    return { error: "Amount and dollar rates cannot change after completion" };
+  }
+
+  const duplicateTitle = await prisma.specialOrder.findFirst({
+    where: { profileId: order.profileId, id: { not: orderId }, title: { equals: title, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (duplicateTitle && title.toLowerCase() !== order.title.toLowerCase()) return { error: "A conversation in this profile already uses this title. Choose a different title." };
 
   const clientAmountBdt = orderAmountUsd * clientUsdRate;
   const partnerCostBdt = orderAmountUsd * partnerUsdRate;
@@ -1480,7 +1492,7 @@ export async function updateSpecialOrderDetails(
       where: { id: orderId },
       data: {
         title,
-        buyerProfile: formData.buyerProfile?.trim() || null,
+        buyerProfile: formData.buyerProfile === undefined ? undefined : formData.buyerProfile.trim() || null,
         niche: formData.niche?.trim() || null,
         conversationSheetUrl: formData.conversationSheetUrl?.trim() || null,
         plannedDate: optionalDate(formData.plannedDate),
@@ -1549,6 +1561,13 @@ export async function updateSpecialOrderDetails(
   revalidatePath(`/p/special-orders/${orderId}`);
   revalidatePath("/special-orders");
   revalidatePath("/p/special-orders");
+  revalidatePath("/c/special-orders");
+  revalidatePath(`/c/special-orders/${orderId}`);
+  revalidatePath("/messages");
+  if (edited?.profileId) {
+    revalidatePath(`/special-orders/profiles/${edited.profileId}`);
+    revalidatePath(`/p/special-orders/profiles/${edited.profileId}`);
+  }
   revalidatePath("/invoices");
   return { success: true };
 }

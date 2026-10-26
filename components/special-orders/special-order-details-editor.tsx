@@ -51,13 +51,13 @@ type OrderDetailsForm = {
 export function SpecialOrderDetailsEditor({
   orderId,
   initial,
-  disabled,
+  financialLocked,
   buyers = [],
   buyerId = null,
 }: {
   orderId: string;
   initial: OrderDetailsForm;
-  disabled?: boolean;
+  financialLocked?: boolean;
   /** The buyer list, with how many conversations each already has. */
   buyers?: BuyerOption[];
   buyerId?: string | null;
@@ -88,7 +88,7 @@ export function SpecialOrderDetailsEditor({
     setBusy(true);
     setError("");
     try {
-      const result = await updateSpecialOrderDetails(orderId, form);
+      const result = await updateSpecialOrderDetails(orderId, { ...form, buyerProfile: undefined });
       if (result.error) {
         setError(result.error);
         return;
@@ -108,9 +108,8 @@ export function SpecialOrderDetailsEditor({
       <Button
         type="button"
         variant="outline"
-        onClick={() => setOpen(true)}
-        disabled={disabled}
-        title={disabled ? "Completed orders are view only" : "Edit details"}
+        onClick={() => { setForm(initial); setError(""); setOpen(true); }}
+        title="Edit details"
       >
         <Pencil className="mr-2 h-4 w-4" />
         Edit details
@@ -127,8 +126,9 @@ export function SpecialOrderDetailsEditor({
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {financialLocked && <p className="text-sm text-muted-foreground">Completed order details can be edited. Amount and dollar rates are locked to preserve the recorded payout.</p>}
             <div className="grid gap-3 md:grid-cols-2">
-              <Field label="Title">
+              <Field label="Conversation title">
                 <Input
                   value={form.title}
                   onChange={(event) => setField("title", event.target.value)}
@@ -171,6 +171,7 @@ export function SpecialOrderDetailsEditor({
                 <Input
                   type="number"
                   step="0.01"
+                  disabled={financialLocked}
                   value={form.orderAmountUsd}
                   onChange={(event) =>
                     setField("orderAmountUsd", event.target.value)
@@ -182,6 +183,7 @@ export function SpecialOrderDetailsEditor({
                 <Input
                   type="number"
                   step="0.01"
+                  disabled={financialLocked}
                   value={form.clientUsdRate}
                   onChange={(event) =>
                     setField("clientUsdRate", event.target.value)
@@ -193,6 +195,7 @@ export function SpecialOrderDetailsEditor({
                 <Input
                   type="number"
                   step="0.01"
+                  disabled={financialLocked}
                   value={form.partnerUsdRate}
                   onChange={(event) =>
                     setField("partnerUsdRate", event.target.value)

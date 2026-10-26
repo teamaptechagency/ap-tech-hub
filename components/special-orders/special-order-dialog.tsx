@@ -1,7 +1,7 @@
 "use client";
 
 import { roleLabel } from "@/lib/role-label";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   createSpecialOrder,
@@ -63,6 +63,7 @@ export function SpecialOrderDialog({
   buyers?: BuyerOption[];
 }) {
   const router = useRouter();
+  const [title, setTitle] = useState("");
   const [buyerId, setBuyerId] = useState("none");
   const [orderAmountUsd, setOrderAmountUsd] = useState("");
   const [partnerId, setPartnerId] = useState(profile.partnerId ?? "none");
@@ -108,18 +109,15 @@ export function SpecialOrderDialog({
     setNewBuyerUsername("");
   }
 
-  const title = useMemo(
-    () =>
-      [profile.profileName, profile.niche, buyerName]
-        .filter(Boolean)
-        .join(" - ") || "Special order conversation",
-    [buyerName, profile.niche, profile.profileName]
-  );
-
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setBusy(true);
+
+    if (!title.trim()) {
+      setBusy(false);
+      return setError("Enter a conversation title");
+    }
 
     const amount = Number(orderAmountUsd);
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -130,14 +128,14 @@ export function SpecialOrderDialog({
     const result = await createSpecialOrder({
       profileId: profile.id,
       partnerId: partnerId !== "none" ? partnerId : undefined,
-      title,
+      title: title.trim(),
       buyerProfile: buyerName,
       buyerId: buyerId !== "none" ? buyerId : undefined,
       orderAmountUsd: orderAmountUsd,
       clientUsdRate: String(profile.clientRate),
       partnerUsdRate: String(profile.partnerRate),
       createInvoice: false,
-    });
+    }).catch(() => ({ error: "Could not create conversation. Please try again.", orderId: undefined }));
 
     setBusy(false);
     if (result.error) {
@@ -145,6 +143,8 @@ export function SpecialOrderDialog({
       return;
     }
 
+    setTitle("");
+    setOrderAmountUsd("");
     onOpenChange(false);
     router.refresh();
     if (result.orderId) router.push(`/special-orders/${result.orderId}`);
@@ -169,6 +169,11 @@ export function SpecialOrderDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="conversation-title">Conversation title</Label>
+            <Input id="conversation-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Homepage animation — October delivery" required />
+            <p className="text-xs text-muted-foreground">Use a different title for each conversation in this profile.</p>
+          </div>
           <div className="space-y-2">
             <Label>Assigned partner</Label>
             <Select
