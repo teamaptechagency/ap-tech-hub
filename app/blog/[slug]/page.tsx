@@ -136,7 +136,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
   const publishedAt = post.publishedAt ?? post.createdAt;
 
   return (
-    <BlogShell
+    <BlogShell compactFooter
       portalHref={session?.user ? homeFor(session.user.role) : null}
       publicLogoUrl={branding.publicLogoUrl}
       copyright={data.footer.copyright}

@@ -126,7 +126,7 @@ export default async function BlogIndexPage({
   };
 
   return (
-    <BlogShell
+    <BlogShell compactFooter
       portalHref={session?.user ? homeFor(session.user.role) : null}
       publicLogoUrl={branding.publicLogoUrl}
       copyright={data.footer.copyright}

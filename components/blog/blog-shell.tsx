@@ -11,6 +11,7 @@ export type BlogShellProps = {
   portalHref?: string | null;
   publicLogoUrl?: string | null;
   copyright: string;
+  compactFooter?: boolean;
   topBar: LandingPageData["topBar"];
   stats: TrustStats | null;
 };
@@ -20,6 +21,7 @@ export function BlogShell({
   portalHref,
   publicLogoUrl,
   copyright,
+  compactFooter = false,
   topBar,
   stats,
 }: BlogShellProps) {
@@ -34,7 +36,8 @@ export function BlogShell({
 
       {children}
 
-      <footer className="bg-[#101623] text-white">
+      <footer className={compactFooter ? "border-t border-[#e8e3dc] bg-white" : "bg-[#101623] text-white"}>
+        {!compactFooter && (
         <div className="mx-auto grid max-w-[1140px] gap-8 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="text-lg font-extrabold">
@@ -88,8 +91,9 @@ export function BlogShell({
             </Link>
           </div>
         </div>
-        <div className="bg-[#0b101b] px-4 py-5 text-center">
-          <p className="text-xs text-[#9aa3b3]">{copyright}</p>
+        )}
+        <div className={compactFooter ? "px-4 py-5 text-center" : "bg-[#0b101b] px-4 py-5 text-center"}>
+          <p className={compactFooter ? "text-xs text-[#6b7280]" : "text-xs text-[#9aa3b3]"}>{copyright}</p>
         </div>
       </footer>
     </main>
