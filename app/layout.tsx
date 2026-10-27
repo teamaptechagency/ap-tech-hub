@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PublicVisitorTracker } from "@/components/public/public-visitor-tracker";
 import { FaviconSync } from "@/components/branding/favicon-sync";
 import { CookieConsent } from "@/components/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
@@ -32,6 +33,7 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         {children}
+        <PublicVisitorTracker />
         <FaviconSync href={branding.faviconUrl} />
         <CookieConsent />
 

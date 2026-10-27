@@ -2,13 +2,8 @@ import type { JsonLdObject } from "@/components/seo/json-ld";
 import type { LandingPageData } from "@/lib/landing-data";
 import { blogMetaDescription, type BlogPostDetail } from "@/lib/blog";
 
-export function publicOrigin(siteUrl: string | null | undefined) {
-  try {
-    return siteUrl ? new URL(siteUrl).origin : "https://aptechagency.com";
-  } catch {
-    return "https://aptechagency.com";
-  }
-}
+export { publicSiteOrigin as publicOrigin } from "@/lib/public-site";
+import { publicSiteOrigin as publicOrigin } from "@/lib/public-site";
 
 function absolute(origin: string, path: string) {
   try {

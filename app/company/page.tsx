@@ -1,3 +1,4 @@
+import { buildLandingMetadata } from "@/lib/landing-metadata";
 import type { Metadata } from "next";
 
 import { getLandingVisitorStats } from "@/actions/landing.actions";
@@ -10,11 +11,16 @@ import { homeFor } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+const pageMetadata: Metadata = {
   title: "Company Information | AP Tech Agency",
   description:
     "Company information for AP Tech Agency, a Bangladesh-based digital service agency working with local and international clients.",
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [data, branding] = await Promise.all([getLandingPageData(), getBrandingSettings()]);
+  return { ...buildLandingMetadata(data, branding, { path: "/company" }), ...pageMetadata };
+}
 
 function statusLabel(value: string) {
   return value.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());

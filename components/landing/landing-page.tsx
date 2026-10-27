@@ -31,7 +31,6 @@ import { toast } from "sonner";
 import {
   getLandingChatMessages,
   getLandingVisitorStats,
-  recordLandingVisit,
   sendLandingChatMessage,
   startLandingChat,
   submitLandingContact,
@@ -1734,17 +1733,6 @@ export function LandingPage({
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
-    const key = "ap-tech-landing-visit-recorded";
-    if (window.sessionStorage.getItem(key)) return;
-
-    window.sessionStorage.setItem(key, "1");
-    recordLandingVisit(pathname || "/").then((result) => {
-      if (result.stats) setTrustStats(result.stats);
-    }).catch(() => {
-      window.sessionStorage.removeItem(key);
-    });
-  }, [pathname]);
 
   const filteredServices = useMemo(() => {
     const visibleServices = data.services.filter((service) => !service.hidden);

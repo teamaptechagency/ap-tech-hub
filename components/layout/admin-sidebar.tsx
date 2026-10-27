@@ -64,6 +64,12 @@ export const adminNavItems: AdminNavItem[] = [
     section: "Overview",
   },
   {
+    label: "Visitors",
+    href: "/visitors",
+    icon: BarChart3,
+    section: "Overview",
+  },
+  {
     label: "Clients",
     href: "/clients",
     icon: Users,
@@ -203,7 +209,7 @@ export function AdminSidebar({ user, branding }: AdminSidebarProps) {
   }
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
+    <aside className="sticky top-0 hidden h-dvh min-h-0 w-60 shrink-0 flex-col border-r bg-background md:flex">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center border-b px-6">
         <BrandMark href="/dashboard" branding={branding} />
@@ -217,7 +223,7 @@ export function AdminSidebar({ user, branding }: AdminSidebarProps) {
       {/* Navigation */}
       <nav
         aria-label="Admin navigation"
-        className="flex-1 space-y-1 overflow-y-auto p-3"
+        className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-y-contain p-3"
       >
         {adminNavItems.map((item, index) => {
           const Icon = item.icon;

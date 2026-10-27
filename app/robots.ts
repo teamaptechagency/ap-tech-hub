@@ -1,51 +1,19 @@
+import { PRIVATE_CRAWL_PATHS, publicSiteOrigin } from "@/lib/public-site";
 import type { MetadataRoute } from "next";
 
 import { getLandingPageData } from "@/lib/landing-data";
 
-function publicBaseUrl(siteUrl: string) {
-  try {
-    return siteUrl ? new URL(siteUrl).origin : "https://aptechagency.com";
-  } catch {
-    return "https://aptechagency.com";
-  }
-}
+export const dynamic = "force-dynamic";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const data = await getLandingPageData();
-  const baseUrl = publicBaseUrl(data.seo.siteUrl.trim());
+  const baseUrl = publicSiteOrigin(data.seo.siteUrl);
 
   return {
     rules: {
       userAgent: "*",
-      allow: data.seo.allowIndexing
-        ? [
-            "/",
-            "/landing",
-            "/blog",
-            "/services",
-            "/portfolio",
-            "/team",
-            "/about",
-            "/contact",
-          ]
-        : [],
-      disallow: data.seo.allowIndexing
-        ? [
-            "/accounts",
-            "/dashboard",
-            "/settings",
-            "/messages",
-            "/invoices",
-            "/jobs",
-            "/clients",
-            "/reports",
-            "/special-orders",
-            "/c",
-            "/e",
-            "/p",
-            "/api",
-          ]
-        : ["/"],
+      allow: data.seo.allowIndexing ? ["/"] : [],
+      disallow: data.seo.allowIndexing ? PRIVATE_CRAWL_PATHS : ["/"],
     },
     sitemap: `${baseUrl}/sitemap.xml`,
   };

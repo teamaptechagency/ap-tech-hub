@@ -4,6 +4,8 @@ import { createHash, randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
+import { getDhakaDayRange } from "@/lib/dhaka-date";
+import { isPublicContentPath } from "@/lib/public-site";
 import { isBotUserAgent } from "@/lib/bot-detect";
 import { notifyAdmins } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
@@ -676,6 +678,7 @@ export async function sendLandingChatAdminReply(leadId: string, body: string) {
 }
 
 export async function recordLandingVisit(path = "/") {
+  if (!isPublicContentPath(path)) return { count: 0, recorded: false };
   const key = "landing.visitor.count";
   const headerList = await headers();
   const country = normalizeCountry(
@@ -712,41 +715,31 @@ export async function recordLandingVisit(path = "/") {
   // a number that never meant anything. Bots still get the page, they just do
   // not get counted as people.
   if (isBotUserAgent(userAgent)) {
-    return { count: 0, stats: await getLandingVisitorStats() };
+    return { count: 0, recorded: false };
   }
 
-  const nextCount = await prisma
-    .$transaction(async (tx) => {
-      const current = await tx.setting.findUnique({
-        where: { key },
-        select: { value: true },
-      });
-      const count = Number(current?.value ?? 0) + 1;
-      await tx.setting.upsert({
-        where: { key },
-        update: { value: String(count) },
-        create: { key, value: String(count) },
-      });
-      return count;
-    })
-    .catch(() => null);
-
-  await prisma
-    .$executeRaw`
-      INSERT INTO "LandingVisitorEvent" ("id", "path", "country", "city", "region", "ipHash", "userAgent")
-      VALUES (${randomUUID()}, ${cleanPath}, ${country}, ${city}, ${region}, ${ipHash}, ${userAgent})
-    `
-    .catch(() => null);
-
-  revalidatePath("/dashboard");
-
-  return { count: nextCount ?? 0, stats: await getLandingVisitorStats() };
+  try {
+    await prisma.$transaction([
+      prisma.landingVisitorEvent.create({
+        data: { id: randomUUID(), path: cleanPath, country, city, region, ipHash, userAgent },
+      }),
+      prisma.$executeRaw`
+        INSERT INTO "Setting" ("key", "value") VALUES (${key}, '1')
+        ON CONFLICT ("key") DO UPDATE SET "value" = (
+          CASE WHEN "Setting"."value" ~ '^[0-9]+$' THEN "Setting"."value"::bigint ELSE 0 END + 1
+        )::text
+      `,
+    ]);
+    return { count: 0, recorded: true };
+  } catch (error) {
+    console.error("Could not record public page visit", error);
+    return { count: 0, recorded: false };
+  }
 }
 
 export async function getLandingVisitorStats() {
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+  const { start: startOfDay, end: endOfDay } = getDhakaDayRange();
 
   const [setting, dbTotal, todayVisits, recentEvents] = await Promise.all([
     prisma.setting
@@ -757,7 +750,7 @@ export async function getLandingVisitorStats() {
       .catch(() => null),
     prisma.landingVisitorEvent.count().catch(() => 0),
     prisma.landingVisitorEvent
-      .count({ where: { createdAt: { gte: startOfDay } } })
+      .count({ where: { createdAt: { gte: startOfDay, lt: endOfDay } } })
       .catch(() => 0),
     prisma.landingVisitorEvent
       .findMany({

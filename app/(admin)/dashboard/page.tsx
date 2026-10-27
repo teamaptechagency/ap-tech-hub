@@ -1,4 +1,5 @@
-import { availableJobWhere, availableSpecialOrderWhere } from "@/lib/work-availability";
+import { getVisitorAnalytics } from "@/lib/visitor-analytics";
+import { activeJobWork, availableJobWhere, availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -48,55 +49,17 @@ function StatCard({
   );
 }
 
-type CountryVisitorRow = {
-  country: string;
-  visitors: number | bigint;
-};
-
-async function getVisitorCountryStats() {
-  const now = new Date();
-  const { start: monthStart, end: monthEnd } = getDhakaMonthRange(now);
-  const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-
-  try {
-    const [month, year] = await Promise.all([
-      prisma.$queryRaw<CountryVisitorRow[]>`
-        SELECT COALESCE(NULLIF("country", ''), 'Unknown') AS "country", COUNT(*)::int AS "visitors"
-        FROM "LandingVisitorEvent"
-        WHERE "createdAt" >= ${monthStart} AND "createdAt" < ${monthEnd}
-        GROUP BY 1
-        ORDER BY "visitors" DESC, "country" ASC
-        LIMIT 8
-      `,
-      prisma.$queryRaw<CountryVisitorRow[]>`
-        SELECT COALESCE(NULLIF("country", ''), 'Unknown') AS "country", COUNT(*)::int AS "visitors"
-        FROM "LandingVisitorEvent"
-        WHERE "createdAt" >= ${yearStart}
-        GROUP BY 1
-        ORDER BY "visitors" DESC, "country" ASC
-        LIMIT 8
-      `,
-    ]);
-
-    return {
-      month: month.map((row) => ({
-        country: row.country,
-        visitors: Number(row.visitors),
-      })),
-      year: year.map((row) => ({
-        country: row.country,
-        visitors: Number(row.visitors),
-      })),
-    };
-  } catch {
-    return { month: [], year: [] };
-  }
-}
-
 export default async function AdminDashboard() {
   const session = await auth();
   const { start: monthStart, end: monthEnd } = getDhakaMonthRange();
   const currentMonth = { gte: monthStart, lt: monthEnd };
+  const completedSoThisMonth = availableSpecialOrderWhere({
+    status: "COMPLETED",
+    OR: [
+      { earning: { is: { createdAt: currentMonth } } },
+      { earning: { is: null }, deliveryDate: currentMonth },
+    ],
+  });
 
   const [
     totalEarningsAgg,
@@ -121,8 +84,7 @@ export default async function AdminDashboard() {
     recentEmployeePayments,
     recentPartnerPayments,
     virtualJobEarnings,
-    visitorCounter,
-    visitorCountryStats,
+    visitorAnalytics,
   ] = await Promise.all([
     prisma.earning.aggregate({
       where: { createdAt: currentMonth },
@@ -141,10 +103,10 @@ export default async function AdminDashboard() {
       _sum: { balance: true },
     }),
     prisma.job.count({ where: availableJobWhere({ status: { in: ["PENDING", "IN_PROGRESS"] } }) }),
-    prisma.job.count({ where: availableJobWhere({ status: "COMPLETED" }) }),
-    prisma.specialOrder.count({ where: availableSpecialOrderWhere({ status: "COMPLETED" }) }),
+    prisma.job.count({ where: availableJobWhere({ status: "COMPLETED", updatedAt: currentMonth }) }),
+    prisma.specialOrder.count({ where: completedSoThisMonth }),
     prisma.specialOrder.aggregate({
-      where: { status: "COMPLETED" },
+      where: completedSoThisMonth,
       _sum: { profitBdt: true },
     }),
     prisma.invoice.count({
@@ -160,7 +122,7 @@ export default async function AdminDashboard() {
       take: 5,
     }),
     prisma.job.findMany({
-      where: availableJobWhere({}),
+      where: availableJobWhere({ updatedAt: currentMonth }),
       orderBy: { updatedAt: "desc" },
       take: 5,
       select: {
@@ -190,18 +152,14 @@ export default async function AdminDashboard() {
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
-    prisma.job.findMany({
-      where: availableJobWhere({}),
-      orderBy: { updatedAt: "desc" },
+    prisma.earning.findMany({
+      where: { createdAt: currentMonth, invoice: { is: { job: { is: activeJobWork } } } },
+      orderBy: { createdAt: "desc" },
       take: 6,
-      include: {
-        client: { select: { companyName: true } },
-        invoices: { select: { amountPaid: true, amount: true, status: true } },
-        members: { select: { workerValue: true } },
-      },
+      include: { invoice: { select: { number: true, job: { select: { id: true, title: true } } } } },
     }),
     prisma.specialOrder.findMany({
-      where: availableSpecialOrderWhere({}),
+      where: completedSoThisMonth,
       orderBy: { updatedAt: "desc" },
       take: 6,
       include: {
@@ -210,25 +168,19 @@ export default async function AdminDashboard() {
       },
     }),
     prisma.workerTxn.findMany({
-      where: { kind: "WITHDRAWAL", user: { role: "TEAM_MEMBER" } },
+      where: { createdAt: currentMonth, kind: "WITHDRAWAL", user: { role: "TEAM_MEMBER" } },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { user: { select: { name: true } } },
     }),
     prisma.workerTxn.findMany({
-      where: { kind: "WITHDRAWAL", user: { role: "BUSINESS_PARTNER" } },
+      where: { createdAt: currentMonth, kind: "WITHDRAWAL", user: { role: "BUSINESS_PARTNER" } },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { user: { select: { name: true } } },
     }),
     getVirtualCompletedJobEarnings(monthStart, monthEnd),
-    prisma.setting
-      .findUnique({
-        where: { key: "landing.visitor.count" },
-        select: { value: true },
-      })
-      .catch(() => null),
-    getVisitorCountryStats(),
+    getVisitorAnalytics(),
   ]);
 
   const earningsHistory = [...savedEarningsHistory, ...virtualJobEarnings]
@@ -241,7 +193,7 @@ export default async function AdminDashboard() {
   const employeeDue = safeNumber(employeeBalanceAgg._sum.balance);
   const partnerDue = safeNumber(partnerBalanceAgg._sum.balance);
   const specialOrderEarnings = safeNumber(specialOrderProfitAgg._sum.profitBdt);
-  const websiteVisitors = safeNumber(visitorCounter?.value);
+  const visitorValue = (value: number) => visitorAnalytics.available ? value.toLocaleString() : "—";
   const needsAction =
     submittedInvoices +
     pendingWithdrawals +
@@ -309,36 +261,29 @@ export default async function AdminDashboard() {
           hint={`${dueInvoices} invoices due`}
         />
         <StatCard
-          label="Completed projects"
+          label="Completed projects this month"
           value={completedProjects}
           href="/jobs"
-          hint={`${submittedInvoices} payments to review`}
+          hint="Completed projects updated this month"
         />
         <StatCard
-          label="Special order earnings"
+          label="This month SO earnings"
           value={money(specialOrderEarnings)}
           href="/special-orders"
-          hint={`${specialOrdersCompleted} completed SP orders`}
+          hint={`${specialOrdersCompleted} orders · booked this month`}
         />
-        <StatCard
-          label="Website visitors"
-          value={websiteVisitors.toLocaleString()}
-          href="/leads"
-          hint="Public portal visits"
-        />
+        <StatCard label="Visitors today" value={visitorValue(visitorAnalytics.summary.todayVisitors)} href="/visitors" hint="Estimated unique visitors · Dhaka time" />
+        <StatCard label="Visitors this month" value={visitorValue(visitorAnalytics.summary.monthVisitors)} href="/visitors" hint="Estimated unique visitors" />
+        <StatCard label="Page visits this month" value={visitorValue(visitorAnalytics.summary.monthVisits)} href="/visitors" hint="All public pages, including blog articles" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <CountryVisitorsCard
           title="Visitor countries - this month"
-          rows={visitorCountryStats.month}
+          rows={visitorAnalytics.countries}
           empty="No country data for this month yet"
         />
-        <CountryVisitorsCard
-          title="Visitor countries - this year"
-          rows={visitorCountryStats.year}
-          empty="No country data for this year yet"
-        />
+        <Card><CardHeader><CardTitle className="text-base">Daily visitor activity</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-3xl font-bold">{visitorValue(visitorAnalytics.summary.todayVisits)} <span className="text-sm font-normal text-muted-foreground">page visits today</span></p><p className="text-sm text-muted-foreground">{visitorValue(visitorAnalytics.summary.activeVisitors)} visitors active in the last 5 minutes.</p><Link href="/visitors" className="inline-flex text-sm font-medium text-primary hover:underline">View daily visitors and top pages →</Link>{!visitorAnalytics.available && <p role="status" className="text-sm text-amber-600">Visitor data could not be loaded. Refresh to try again.</p>}</CardContent></Card>
       </div>
 
       <PendingApprovals
@@ -362,7 +307,7 @@ export default async function AdminDashboard() {
 
       <div className="grid gap-4 xl:grid-cols-2">
         <HistoryCard
-          title="Earnings history"
+          title="Earnings history this month"
           empty="No earnings yet"
           rows={earningsHistory.map((item) => ({
             id: item.id,
@@ -373,7 +318,7 @@ export default async function AdminDashboard() {
           }))}
         />
         <HistoryCard
-          title="Expenses history"
+          title="Expenses history this month"
           empty="No expenses yet"
           rows={expensesHistory.map((item) => ({
             id: item.id,
@@ -384,31 +329,20 @@ export default async function AdminDashboard() {
           }))}
         />
         <HistoryCard
-          title="Project-wise earnings"
-          empty="No project earnings yet"
-          rows={projectRows.map((job) => {
-            const income = job.invoices.reduce(
-              (sum, invoice) =>
-                sum + safeNumber(invoice.amountPaid || invoice.amount),
-              0
-            );
-            const employeeCost = job.members.reduce(
-              (sum, member) => sum + safeNumber(member.workerValue),
-              0
-            );
-            return {
-              id: job.id,
-              title: job.title,
-              meta: `${job.client?.companyName ?? job.externalName ?? "No client"} · cost ${money(employeeCost)}`,
-              amount: money(income - employeeCost),
-              href: `/jobs/${job.id}`,
-              tone: income - employeeCost >= 0 ? "green" : "red",
-            };
-          })}
+          title="Project income booked this month"
+          empty="No project income booked this month"
+          rows={projectRows.map((entry) => ({
+            id: entry.id,
+            title: entry.invoice?.job?.title ?? entry.title,
+            meta: entry.invoice?.number ?? "Booked income",
+            amount: money(safeNumber(entry.amountBdt)),
+            href: entry.invoice?.job ? `/jobs/${entry.invoice.job.id}` : undefined,
+            tone: "green",
+          }))}
         />
         <HistoryCard
-          title="Special order earnings"
-          empty="No special orders yet"
+          title="Special order earnings this month"
+          empty="No special order earnings this month"
           rows={specialOrderRows.map((order) => ({
             id: order.id,
             title: order.title,
@@ -419,7 +353,7 @@ export default async function AdminDashboard() {
           }))}
         />
         <HistoryCard
-          title="Recent employee payments"
+          title="Employee payments this month"
           empty="No employee payments yet"
           rows={recentEmployeePayments.map((payment) => ({
             id: payment.id,
@@ -430,7 +364,7 @@ export default async function AdminDashboard() {
           }))}
         />
         <HistoryCard
-          title="Recent partner payments"
+          title="Partner payments this month"
           empty="No partner payments yet"
           rows={recentPartnerPayments.map((payment) => ({
             id: payment.id,

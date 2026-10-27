@@ -1,3 +1,4 @@
+import { buildLandingMetadata } from "@/lib/landing-metadata";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -8,11 +9,16 @@ import { getBrandingSettings } from "@/lib/branding";
 import { getLandingPageData } from "@/lib/landing-data";
 import { homeFor } from "@/lib/roles";
 
-export const metadata: Metadata = {
+const pageMetadata: Metadata = {
   title: "Client Documents | AP Tech Agency",
   description:
     "Documents clients may receive from AP Tech Agency during project planning, delivery, payment and support.",
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [data, branding] = await Promise.all([getLandingPageData(), getBrandingSettings()]);
+  return { ...buildLandingMetadata(data, branding, { path: "/client-documents" }), ...pageMetadata };
+}
 
 const documents = [
   "Project proposal",

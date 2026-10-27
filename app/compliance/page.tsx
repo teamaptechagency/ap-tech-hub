@@ -1,3 +1,4 @@
+import { buildLandingMetadata } from "@/lib/landing-metadata";
 import type { Metadata } from "next";
 
 import { getLandingVisitorStats } from "@/actions/landing.actions";
@@ -7,11 +8,16 @@ import { getBrandingSettings } from "@/lib/branding";
 import { getLandingPageData } from "@/lib/landing-data";
 import { homeFor } from "@/lib/roles";
 
-export const metadata: Metadata = {
+const pageMetadata: Metadata = {
   title: "Compliance and Business Transparency | AP Tech Agency",
   description:
     "How AP Tech Agency manages project documentation, financial records, compliance and international remote operations.",
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [data, branding] = await Promise.all([getLandingPageData(), getBrandingSettings()]);
+  return { ...buildLandingMetadata(data, branding, { path: "/compliance" }), ...pageMetadata };
+}
 
 export default async function CompliancePage() {
   const [session, branding, landing, stats] = await Promise.all([

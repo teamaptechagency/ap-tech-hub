@@ -1,3 +1,4 @@
+import { buildLandingMetadata } from "@/lib/landing-metadata";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -18,8 +19,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { policy } = await params;
   if (!BUSINESS_POLICY_KEYS.includes(policy as BusinessPolicySlug)) return {};
-  const data = await getPolicy(policy as BusinessPolicySlug);
+  const [data, landing, branding] = await Promise.all([getPolicy(policy as BusinessPolicySlug), getLandingPageData(), getBrandingSettings()]);
   return {
+    ...buildLandingMetadata(landing, branding, { path: `/${policy}` }),
     title: `${data.title} | AP Tech Agency`,
     description: `${data.title} for AP Tech Agency clients and website visitors.`,
   };

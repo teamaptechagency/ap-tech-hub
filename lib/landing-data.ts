@@ -744,7 +744,7 @@ export const defaultLandingData: LandingPageData = {
       "AP Tech Agency is a Bangladesh-based digital agency providing WordPress development, UI/UX design, custom software, React development, eCommerce solutions, and international project support.",
     keywords:
       "AP Tech Agency, web development agency, website development service, UI UX design agency, digital marketing services, SEO services, graphics design service, logo design service, branding service, virtual office support, accounting and bookkeeping service, interior 3D modeling, exterior 3D modeling, architecture service, ecommerce website development, business website design, remote agency support",
-    siteUrl: "https://aptechagency.com",
+    siteUrl: "https://www.aptechagency.com",
     targetMarkets:
       "United States, United Kingdom, Europe, Americas, and international markets outside Bangladesh, India and Pakistan.",
     phone: "+8801799664826",
@@ -752,7 +752,7 @@ export const defaultLandingData: LandingPageData = {
     address: "Dhaka, Bangladesh",
     socialImageUrl: "",
     importantLinks:
-      "https://aptechagency.com, https://aptechagency.com/landing, https://aptechagency.com/login, https://aptechagency.com/register",
+      "https://www.aptechagency.com, https://www.aptechagency.com/services, https://www.aptechagency.com/portfolio, https://www.aptechagency.com/blog, https://www.aptechagency.com/contact",
     googleVerification: "",
     bingVerification: "",
     allowIndexing: true,

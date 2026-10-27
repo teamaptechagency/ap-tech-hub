@@ -103,7 +103,7 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex min-h-dvh flex-col md:h-dvh md:min-h-0 md:flex-row md:overflow-hidden">
       {/* Mobile top navigation and drawer */}
       <PortalMobileNav
         portal="admin"
@@ -124,7 +124,7 @@ export default async function AdminLayout({
       />
 
       {/* Main content */}
-      <main className="min-w-0 flex-1 overflow-visible bg-muted/20 p-4 pb-20 md:h-screen md:overflow-y-auto md:p-8 md:pb-8">
+      <main className="min-h-0 min-w-0 flex-1 overflow-visible bg-muted/20 p-4 pb-20 md:h-full md:overflow-y-auto md:overscroll-y-contain md:p-8 md:pb-8">
         <div className="mx-auto w-full max-w-[1600px]">
           {session.impersonation && (
             <ImpersonationBanner

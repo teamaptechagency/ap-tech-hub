@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      { source: "/landing", destination: "/", permanent: true },
       // /process and /testimonials were folded into /services and /about.
       // Permanent redirects hand their existing search ranking to the new
       // pages instead of leaving indexed URLs to 404.
@@ -38,6 +39,9 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      ...["/login", "/register", "/forgot-password", "/reset-password"].map((source) => ({
+        source, headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }],
+      })),
       {
         source: "/:path*\\.(svg|png|jpg|jpeg|gif|webp|ico)",
         headers: [

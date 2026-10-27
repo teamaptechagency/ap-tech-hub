@@ -1,13 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
-export const BUSINESS_POLICY_KEYS = [
-  "privacy-policy",
-  "terms-and-conditions",
-  "refund-policy",
-  "cookie-policy",
-  "service-agreement",
-  "payment-policy",
-] as const;
+import { BUSINESS_POLICY_KEYS } from "@/lib/business-policy-slugs";
+export { BUSINESS_POLICY_KEYS } from "@/lib/business-policy-slugs";
 
 export type BusinessPolicySlug = (typeof BUSINESS_POLICY_KEYS)[number];
 
