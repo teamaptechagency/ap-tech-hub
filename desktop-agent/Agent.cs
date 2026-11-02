@@ -12,11 +12,11 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 public class WorkAgent : Form {
-    const string AppVersion = "0.2.0";
+    const string AppVersion = "0.3.0";
     [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint size; public uint time; }
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     readonly TextBox url = new TextBox(), token = new TextBox();
-    readonly CheckBox consent = new CheckBox();
+    readonly CheckBox consent = new CheckBox(), autoResume = new CheckBox();
     readonly Label state = new Label();
     readonly Button start = new Button(), pause = new Button();
     readonly NotifyIcon tray = new NotifyIcon();
@@ -37,14 +37,16 @@ public class WorkAgent : Form {
         BackColor = Color.FromArgb(16, 22, 32); ForeColor = Color.White; Font = new Font("Segoe UI", 10);
         AddLabel("AP TECH  /  WORK TRACKER", 24, 20, 510, 26, 15);
         AddLabel("PC: " + Environment.MachineName, 24, 57, 510, 24, 10);
-        AddLabel("Hub address", 24, 95, 510, 22, 10); url.SetBounds(24, 121, 510, 28); url.Text = "https://www.aptechagency.com"; Controls.Add(url);
-        AddLabel("Device credential (from Hub > Device Activity)", 24, 160, 510, 22, 10); token.SetBounds(24, 185, 510, 28); token.UseSystemPasswordChar = true; Controls.Add(token);
+        url.Text = "https://www.aptechagency.com";
+        AddLabel("Connected to AP Tech Hub automatically", 24, 95, 510, 22, 10);
+        autoResume.Text = "Remember consent and start tracking when this app opens"; autoResume.SetBounds(24, 121, 510, 30); Controls.Add(autoResume);
+        AddLabel("First setup only: paste the pairing credential from your admin", 24, 160, 510, 22, 10); token.SetBounds(24, 185, 510, 28); token.UseSystemPasswordChar = true; Controls.Add(token);
         consent.Text = "I have read the notice and agree to start this work session."; consent.SetBounds(24, 227, 510, 40); Controls.Add(consent);
         AddLabel("Sends PC name and active/idle status every 30 seconds. Browser extension\nrecords work-site refreshes and interaction counts only. No typed text,\nclipboard contents, screenshots, passwords or private messages are read.", 24, 276, 510, 64, 9);
-        start.Text = "Start work session"; start.SetBounds(24, 349, 240, 34); start.ForeColor = Color.Black; start.Click += async (s,e) => { if (sending || !ValidateSettings()) return; SaveConfig(); tracking = true; url.Enabled = token.Enabled = false; start.Enabled = false; timer.Start(); await Send(false); }; Controls.Add(start);
-        pause.Text = "Pause tracking"; pause.SetBounds(280, 349, 254, 34); pause.ForeColor = Color.Black; pause.Click += (s,e) => Pause(); Controls.Add(pause);
+        start.Text = "Start work session"; start.SetBounds(24, 349, 240, 34); start.ForeColor = Color.Black; start.BackColor = Color.White; start.Click += async (s,e) => { if (sending || !ValidateSettings()) return; try { SaveConfig(); } catch { MessageBox.Show("Could not save settings for this Windows user."); return; } tracking = true; url.Enabled = token.Enabled = false; start.Enabled = false; timer.Start(); await Send(false); }; Controls.Add(start);
+        pause.Text = "Pause tracking"; pause.SetBounds(280, 349, 254, 34); pause.ForeColor = Color.Black; pause.BackColor = Color.White; pause.Click += (s,e) => Pause(); Controls.Add(pause);
         state.SetBounds(24, 393, 510, 24); state.Text = "Paused. Nothing is being collected."; Controls.Add(state);
-        var update = new Button(); update.Text = "Check for software updates"; update.SetBounds(24, 433, 510, 32); update.ForeColor = Color.Black;
+        var update = new Button(); update.Text = "Check for software updates"; update.SetBounds(24, 433, 510, 32); update.ForeColor = Color.Black; update.BackColor = Color.White;
         update.Click += async (s,e) => {
             update.Enabled = false;
             try {
@@ -65,6 +67,7 @@ public class WorkAgent : Form {
         client.Timeout = TimeSpan.FromSeconds(15);
         FormClosing += (s,e) => { tracking = false; timer.Stop(); tray.Visible = false; tray.Dispose(); client.Dispose(); };
         LoadConfig();
+        Shown += (s,e) => { if (autoResume.Checked && consent.Checked) start.PerformClick(); };
     }
     void AddLabel(string text, int x, int y, int w, int h, int size) { var l = new Label(); l.Text = text; l.SetBounds(x,y,w,h); l.Font = new Font("Segoe UI", size); Controls.Add(l); }
     bool ValidateSettings() {
@@ -73,7 +76,7 @@ public class WorkAgent : Form {
         if (!consent.Checked) { MessageBox.Show("Read the notice and enable the consent checkbox to start."); return false; }
         return true;
     }
-    void Pause() { tracking = false; timer.Stop(); pendingPayload = null; url.Enabled = token.Enabled = true; start.Enabled = !sending; consent.Checked = false; state.Text = "Paused locally. Browser extension must also be paused separately."; tray.Text = "AP Tech Work Tracker - paused"; }
+    void Pause() { tracking = false; timer.Stop(); pendingPayload = null; url.Enabled = token.Enabled = true; start.Enabled = !sending; consent.Checked = false; autoResume.Checked = false; try { SaveConfig(); } catch {} state.Text = "Paused locally. Browser extension must also be paused separately."; tray.Text = "AP Tech Work Tracker - paused"; }
     async System.Threading.Tasks.Task Send(bool unused) {
         if (sending || !tracking) return; sending = true;
         try {
@@ -93,6 +96,6 @@ public class WorkAgent : Form {
         } catch { if (tracking) state.Text = "Not synced. Retrying in 30 seconds. No offline history is saved."; }
         finally { sending = false; if (!tracking) start.Enabled = true; }
     }
-    void SaveConfig() { Directory.CreateDirectory(Path.GetDirectoryName(config)); var bytes = Encoding.UTF8.GetBytes(url.Text.Trim() + "\n" + token.Text.Trim()); File.WriteAllBytes(config, ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser)); }
-    void LoadConfig() { try { var parts = Encoding.UTF8.GetString(ProtectedData.Unprotect(File.ReadAllBytes(config), null, DataProtectionScope.CurrentUser)).Split('\n'); url.Text = parts[0]; token.Text = parts[1]; } catch {} }
+    void SaveConfig() { Directory.CreateDirectory(Path.GetDirectoryName(config)); var bytes = Encoding.UTF8.GetBytes("https://www.aptechagency.com\n" + token.Text.Trim() + "\n" + (autoResume.Checked && consent.Checked ? "yes" : "no")); File.WriteAllBytes(config, ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser)); }
+    void LoadConfig() { try { var parts = Encoding.UTF8.GetString(ProtectedData.Unprotect(File.ReadAllBytes(config), null, DataProtectionScope.CurrentUser)).Split('\n'); url.Text = "https://www.aptechagency.com"; token.Text = parts[1]; autoResume.Checked = consent.Checked = parts.Length > 2 && parts[2] == "yes"; } catch {} }
 }

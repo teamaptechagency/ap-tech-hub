@@ -1,6 +1,14 @@
+# AP Tech Work Tracker 0.3.0 setup
+
+Run APTechWorkTrackerSetup.exe. The installer displays a monitoring notice, installs for the current Windows user, and offers a clearly labeled Windows sign-in startup option. A desktop and Start menu shortcut are created. No admin rights, hidden service or security bypass are used. Re-run Setup and select Uninstall to remove the app and saved credential after exiting the tracker.
+
+Hub address and PC name are automatic. First-time pairing still requires the credential from the admin panel; this prevents unauthorized devices enrolling themselves. Windows starts the app visibly after sign-in if startup was selected. If the employee explicitly enables Remember consent, it resumes the work session on later launches. Pause clears remembered auto-resume consent. The tray icon, main window, Pause and Exit stay available. Browser extension collection is separate and remains opt-in.
+
+Unsigned executables can trigger SmartScreen. Do not disable Windows protections. Trusted publisher identity needs a legitimate code-signing certificate; no certificate was available for this build.
+
 # AP Tech visible work tracker
 
-Version 0.2.0 is a pilot, not a signed installer. Windows 10/11 with .NET Framework 4.5+ (normally present) is required. It does not install a service, auto-start, conceal itself or generate marketplace activity.
+Version 0.3.0 includes an unsigned per-user installer. Windows 10/11 with .NET Framework 4.5+ (normally present) is required. It does not install a service, conceal itself or generate marketplace activity.
 
 ## Deploy the Hub first
 
@@ -12,7 +20,7 @@ Version 0.2.0 is a pilot, not a signed installer. Windows 10/11 with .NET Framew
 
 Build: `powershell -NoProfile -File desktop-agent/build.ps1`.
 
-Run `desktop-agent/dist/APTechWorkTracker.exe` on the employee's PC. No admin privileges or installation service are needed. Enter the Hub HTTPS origin and device credential. The PC's actual machine name appears at the top. The employee reads the notice, checks consent, and starts the session. Minimize normally; tray status and Pause remain available. Exit closes the app. Every launch starts paused. Credentials are encrypted locally with Windows DPAPI for the current Windows user.
+Run `desktop-agent/dist/APTechWorkTrackerSetup.exe` on the employee's PC. No admin privileges or installation service are needed. The Hub HTTPS origin is automatic. Enter the device credential once. The PC's actual machine name appears at the top. The employee reads the notice, checks consent, and starts the session. Minimize normally; tray status and Pause remain available. Exit closes the app. Launches start paused unless the employee explicitly enabled remembered consent. Credentials are encrypted locally with Windows DPAPI for the current Windows user.
 
 It sends only machine name and current active/idle status every 30 seconds. Idle means no Windows input for five minutes. It does not read keyboard values, mouse clicks globally, window titles, app lists, clipboard, screenshots or messages. Closing/pausing stops collection immediately; Hub marks an unseen device offline after 90 seconds. There is no offline history spool.
 
@@ -43,8 +51,8 @@ Revoke a credential from the PC detail page to block new ingestion while preserv
 - Pause both components; verify no new collection. Revoke credential; verify ingestion rejects it.
 - Verify non-admins cannot enroll/view/revoke devices and a credential cannot bind to a second PC name.
 
-No live database or employee PC has been connected during authoring. The unsigned binary may trigger Windows SmartScreen; a production rollout needs a trusted code-signing certificate and a signed installer/update strategy.
+Live installation and Windows startup have not been tested on an employee PC. The unsigned binary may trigger Windows SmartScreen; a production rollout needs a trusted code-signing certificate and a signed installer/update strategy.
 
 ## Website downloads and updates
 
-Device Activity main panel has direct EXE and App + extension download buttons. Public setup page: /work-tracker. Release metadata and artifacts are under public/downloads/work-tracker. For each new release, bump AppVersion, rebuild, regenerate both artifact SHA-256 values and release.json, then deploy together. The app checks the fixed official HTTPS release endpoint and offers the official setup page; no binary is silently replaced or executed. PCs need outbound HTTPS only, on any network that permits the Hub domain. Server migrations still need to run before real enrollment works.
+Device Activity main panel has Windows installer and App + extension download buttons. Public setup page: /work-tracker. Release metadata and artifacts are under public/downloads/work-tracker. For each new release, bump AppVersion, rebuild, regenerate all three artifact SHA-256 values and release.json, then deploy together. The app checks the fixed official HTTPS release endpoint and offers the official setup page; no binary is silently replaced or executed. PCs need outbound HTTPS only, on any network that permits the Hub domain. Server migrations still need to run before real enrollment works.
