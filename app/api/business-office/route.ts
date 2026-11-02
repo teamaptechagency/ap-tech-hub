@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { workstationAccess, sameOriginWrite, parseSetting } from "@/lib/workstation-access";
 import { businessUnits, readOfficeProfile } from "@/lib/office-roles";
@@ -69,7 +69,9 @@ export async function POST(request: Request) {
     }
     const actorId = access.employee?.id || access.admin!.id, actorName = access.employee?.name || access.admin!.name;
     const operationKey = `office.operation.${actorId}.${data.operationId}`;
-    if (await prisma.setting.findUnique({ where: { key: operationKey } })) return reply({ success: true, duplicate: true });
+    const fingerprint = createHash("sha256").update(JSON.stringify(data)).digest("hex");
+    const previousOperation = await prisma.setting.findUnique({ where: { key: operationKey } });
+    if (previousOperation) return parseSetting(previousOperation.value).fingerprint === fingerprint ? reply({ success: true, duplicate: true }) : reply({ error: "This request was already saved with different values. Refresh records, then start a new entry." }, 409);
     await prisma.$transaction(async tx => {
       const audit = { actorId, actorName, pcName: access.device?.pcName || null, at: new Date().toISOString() };
       if (data.op === "void" || data.op === "status") {
@@ -86,7 +88,7 @@ export async function POST(request: Request) {
         const { operationId: _operation, op, ...fields } = data; void _operation;
         await tx.setting.create({ data: { key: `office.${op === "salary" ? "money" : op}.${data.unit}.${data.day}.${id}`, value: JSON.stringify({ id, ...fields, ...(op === "salary" ? { direction: "EXPENSE", category: "Salary payment", employeeName: salaryEmployee!.name, paymentType: "SALARY" } : {}), ...(op === "case" ? { status: "WAITING", serial: data.day.replaceAll("-", "") + "-" + String(serialNumber).padStart(3, "0") } : {}), createdBy: audit }) } });
       }
-      await tx.setting.create({ data: { key: operationKey, value: JSON.stringify({ ...audit, op: data.op, unit: data.unit, ...(data.op === "void" || data.op === "status" ? { recordId: data.id, reason: data.reason, ...(data.op === "status" ? { status: data.status } : {}) } : {}) }) } });
+      await tx.setting.create({ data: { key: operationKey, value: JSON.stringify({ ...audit, fingerprint, op: data.op, unit: data.unit, ...(data.op === "void" || data.op === "status" ? { recordId: data.id, reason: data.reason, ...(data.op === "status" ? { status: data.status } : {}) } : {}) }) } });
     }, { isolationLevel: "Serializable" });
     return reply({ success: true });
   } catch (error) { return reply({ error: error instanceof Error && error.message === "MISSING_RECORD" ? "Record not found" : "Record changed or could not be saved. Refresh and retry; the request ID prevents duplicates." }, 409); }
