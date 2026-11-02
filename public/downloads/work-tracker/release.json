@@ -1,8 +1,8 @@
 {
   "version": "0.4.0",
   "publishedDate": "2026-11-02",
-  "exeSha256": "6a1a9d74fb1eacc32b3bce8762c82e354156cc0d9741ac88aa494fd9680676c1",
-  "installerSha256": "0b96d0d7a87419325cc6a41c0bf9dda4be40377954a71dc93fef824f7d4a4662",
-  "packageSha256": "fc8dbcb94afd0fcf72aec3bc11d58a66613e399703d638d299cb99891b0d9b8d",
-  "releaseNotes": "Work Station: separate employee attendance login/logout with three Dhaka shifts.\nEight-hour timer excluding breaks, shortfall, early-leave reasons and overtime.\nDaily checklist in the app: blog, news portal and LinkedIn for morning shift.\nEmployee daily/weekly/monthly/yearly records, shift activity timeline and CSV exports.\nSeparate Windows/extension health, refresh gaps and targets. Requires the updated server database and extension 0.2.0."
+  "exeSha256": "39ee47b5835891f8106c450994c33a8105cb8651a94a0d9609cacef9a23b71cf",
+  "installerSha256": "0dd99f623ed0ab1399cc83ceb851278fcf048b3edfe19fc021d0c1af119e2372",
+  "packageSha256": "cc651ee9892047532a3e10cda7131bc58bbe6a025d811ef1195edc4dfe29fe22",
+  "releaseNotes": "Work Station: employee attendance with three Dhaka shifts and eight-hour timer.\nMorning primary and evening fallback share one daily task; night has no checklist.\nHold/Cancel with reasons, actor history and unresolved backlog.\nEmployee daily/weekly/monthly/yearly records, shift logs, work links and CSV.\nRequires updated server storage and extension 0.2.0."
 }

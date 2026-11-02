@@ -12,6 +12,12 @@ export const scheduleInput = z.object({
 });
 export const dhakaDay = (now = new Date()) => new Date(now.getTime() + 6 * 3600000).toISOString().slice(0, 10);
 export const shiftStart = { MORNING: "07:00", EVENING: "15:00", NIGHT: "23:00" } as const;
+export function canWorkDailyTask(template: { shiftLabel: string; primaryEmployeeId: string | null; fallbackEmployeeId: string | null }, employeeId: string, shiftLabel: string) {
+  if (template.shiftLabel !== "MORNING" || shiftLabel === "NIGHT") return false;
+  if (shiftLabel === "MORNING") return !template.primaryEmployeeId || template.primaryEmployeeId === employeeId;
+  if (shiftLabel === "EVENING") return !template.fallbackEmployeeId || template.fallbackEmployeeId === employeeId;
+  return false;
+}
 export function plannedShift(now: Date, expectedStart: string) {
   let start = new Date(dhakaDay(now) + "T" + expectedStart + ":00+06:00");
   // Choose the nearest scheduled start so an after-midnight night login stays on the prior duty day.

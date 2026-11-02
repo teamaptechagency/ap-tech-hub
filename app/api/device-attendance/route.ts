@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { credentialDevice } from "@/lib/device-access";
 import { tokenHash } from "@/lib/device-agent";
-import { employeeInput, lateMinutes, breakSeconds, plannedShift, dhakaDay, attendanceTotals } from "@/lib/device-attendance";
+import { employeeInput, lateMinutes, breakSeconds, plannedShift, dhakaDay, attendanceTotals, canWorkDailyTask } from "@/lib/device-attendance";
 import { deviceServiceFailure } from "@/lib/device-response";
 
 export const runtime = "nodejs";
@@ -13,15 +13,18 @@ const inputSchema = z.discriminatedUnion("action", [
   employeeInput.extend({ action: z.literal("register"), pcName: sessionFields.pcName }).strict(),
   z.object({ action: z.literal("login"), pcName: sessionFields.pcName, code: z.string().trim().toLowerCase().min(3).max(40), password: z.string().min(1).max(100) }).strict(),
   z.object({ ...sessionFields, action: z.enum(["status", "break", "resume", "logout"]), earlyLeaveReason: z.string().trim().max(500).optional() }).strict(),
-  z.object({ ...sessionFields, action: z.literal("checklist"), taskId: z.string().min(1), done: z.boolean(), proofUrl: z.union([z.literal(""), z.string().url().refine((value) => /^https?:\/\//.test(value))]).optional() }).strict(),
+  z.object({ ...sessionFields, action: z.literal("checklist"), taskId: z.string().min(1), done: z.boolean().optional(), status: z.enum(["PENDING", "COMPLETED", "HOLD", "CANCELLED"]).optional(), reason: z.string().trim().max(1000).optional(), proofUrl: z.union([z.literal(""), z.string().url().refine((value) => /^https?:\/\//.test(value))]).optional() }).strict(),
   z.object({ ...sessionFields, action: z.literal("task"), task: z.string().trim().max(1000), handover: z.string().trim().max(2000) }).strict(),
 ]);
 const reply = (body: Record<string, unknown>, status = 200) => Response.json({ ...body, serverNow: new Date().toISOString() }, { status, headers: { "Cache-Control": "no-store" } });
-async function dailyTasks(employeeId: string, shiftLabel: string, date: Date) {
+async function dailyTasks(employeeId: string, shiftLabel: string, date: Date, assign = true) {
+  if (shiftLabel === "NIGHT") return [];
   const day = dhakaDay(date);
-  const templates = await prisma.deviceDailyTemplate.findMany({ where: { active: true, shiftLabel }, orderBy: { sortOrder: "asc" } });
-  await prisma.deviceDailyTask.createMany({ data: templates.map((template) => ({ employeeId, templateId: template.id, day, title: template.title })), skipDuplicates: true });
-  return prisma.deviceDailyTask.findMany({ where: { employeeId, day }, orderBy: { templateId: "asc" } });
+  if (shiftLabel === "EVENING" && Date.now() < new Date(day + "T15:00:00+06:00").getTime()) return [];
+  const templates = (await prisma.deviceDailyTemplate.findMany({ where: { shiftLabel: "MORNING" }, orderBy: { sortOrder: "asc" } })).filter((template) => canWorkDailyTask(template, employeeId, shiftLabel));
+  if (assign) await prisma.deviceDailyTask.createMany({ data: templates.filter((t) => t.active).map((template) => ({ employeeId: template.primaryEmployeeId || employeeId, templateId: template.id, day, title: template.title })), skipDuplicates: true });
+  const tasks = await prisma.deviceDailyTask.findMany({ where: { templateId: { in: templates.map((t) => t.id) }, OR: [{ day }, { day: { lt: day }, status: { in: ["PENDING", "HOLD"] } }] }, orderBy: [{ day: "asc" }, { templateId: "asc" }], take: 300 });
+  return shiftLabel === "EVENING" ? tasks.filter((task) => task.status !== "CANCELLED" && (task.status !== "COMPLETED" || task.completedByEmployeeId === employeeId)) : tasks;
 }
 export async function POST(request: Request) {
   try {
@@ -58,12 +61,21 @@ export async function POST(request: Request) {
     const shift = await prisma.deviceShift.findUnique({ where: { sessionHash: tokenHash(data.sessionToken) }, include: { employee: { select: { name: true, code: true, status: true, shiftLabel: true } } } });
     if (!shift || shift.deviceId !== device.id || shift.employee.status !== "ACTIVE") return reply({ error: "Attendance login expired or disabled. Log in again." }, 401);
     if (shift.endedAt && data.action !== "status" && data.action !== "logout") return reply({ error: "Shift has ended. Log in for attendance again." }, 409);
-    if (data.action === "status" || shift.endedAt) return reply({ shift, employee: shift.employee, dailyTasks: await dailyTasks(shift.employeeId, shift.employee.shiftLabel, shift.scheduledStartAt) });
+    if (data.action === "status" || shift.endedAt) return reply({ shift, employee: shift.employee, dailyTasks: await dailyTasks(shift.employeeId, shift.employee.shiftLabel, shift.scheduledStartAt, !shift.endedAt) });
     const now = new Date();
     if (data.action === "checklist") {
-      const task = await prisma.deviceDailyTask.findFirst({ where: { id: data.taskId, employeeId: shift.employeeId, day: dhakaDay(shift.scheduledStartAt) } });
-      if (!task) return reply({ error: "Task is not assigned to your duty day" }, 403);
-      await prisma.deviceDailyTask.update({ where: { id: task.id }, data: { done: data.done, completedAt: data.done ? now : null, ...(data.proofUrl !== undefined ? { proofUrl: data.proofUrl } : {}) } });
+      const task = await prisma.deviceDailyTask.findFirst({ where: { id: data.taskId, day: { lte: dhakaDay(shift.scheduledStartAt) } }, include: { template: true } });
+      if (!task || !canWorkDailyTask(task.template, shift.employeeId, shift.employee.shiftLabel)) return reply({ error: "Task is not assigned to your shift/worker" }, 403);
+      if (shift.employee.shiftLabel === "EVENING" && (now < new Date(dhakaDay(shift.scheduledStartAt) + "T15:00:00+06:00") || task.status === "CANCELLED")) return reply({ error: "Evening takeover starts at 15:00 and excludes cancelled work" }, 403);
+      if (task.status === "COMPLETED" && task.completedByEmployeeId !== shift.employeeId) return reply({ error: "Another employee already completed this shared task. Refresh your list." }, 409);
+      const next = data.status || (data.done !== undefined ? data.done ? "COMPLETED" : "PENDING" : null);
+      if (!next) return reply({ error: "Choose a task status" }, 400);
+      if (["HOLD", "CANCELLED"].includes(next) && !data.reason) return reply({ error: "A reason is required for Hold or Cancel (for example: no ad material supplied)" }, 400);
+      await prisma.$transaction(async (tx) => {
+        const changed = await tx.deviceDailyTask.updateMany({ where: { id: task.id, version: task.version }, data: { status: next, done: next === "COMPLETED", completedAt: next === "COMPLETED" ? now : null, completedByEmployeeId: next === "COMPLETED" ? shift.employeeId : null, updatedByEmployeeId: shift.employeeId, reason: data.reason || "", version: { increment: 1 }, ...(data.proofUrl !== undefined ? { proofUrl: data.proofUrl } : {}) } });
+        if (!changed.count) throw new Error("DAILY_TASK_CONFLICT");
+        await tx.deviceDailyTaskChange.create({ data: { taskId: task.id, employeeId: shift.employeeId, fromStatus: task.status, toStatus: next, reason: data.reason || "", proofUrl: data.proofUrl ?? task.proofUrl } });
+      });
     } else if (data.action === "task") {
       await prisma.deviceShift.updateMany({ where: { id: shift.id, endedAt: null }, data: { task: data.task, handover: data.handover } });
     } else {
@@ -77,6 +89,7 @@ export async function POST(request: Request) {
     }
     return reply({ shift: await prisma.deviceShift.findUnique({ where: { id: shift.id } }), employee: shift.employee, dailyTasks: await dailyTasks(shift.employeeId, shift.employee.shiftLabel, shift.scheduledStartAt) });
   } catch (error) {
+    if (error instanceof Error && error.message === "DAILY_TASK_CONFLICT") return reply({ error: "Someone changed this task. Refresh before trying again." }, 409);
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") return reply({ error: "Employee ID already exists or this PC already has an open shift. Refresh attendance or ask the administrator." }, 409);
     console.error("Attendance request failed", error instanceof Error ? error.name : "Unknown error");
     const failure = deviceServiceFailure(error); return reply({ error: failure.error }, failure.status);

@@ -11,7 +11,7 @@ const inputSchema = z.discriminatedUnion("action", [
   employeeInput.merge(scheduleInput).extend({ action: z.literal("create") }).strict(),
   scheduleInput.extend({ action: z.literal("update"), id: z.string().min(1), name: z.string().trim().min(1).max(80), status: z.enum(["ACTIVE", "DISABLED"]), password: z.string().min(10).max(100).optional() }).strict(),
   z.object({ action: z.literal("endShift"), id: z.string().min(1) }).strict(),
-  z.object({ action: z.literal("template"), id: z.string().optional(), title: z.string().trim().min(1).max(200), shiftLabel: z.enum(["MORNING", "EVENING", "NIGHT"]), active: z.boolean() }).strict(),
+  z.object({ action: z.literal("template"), id: z.string().optional(), title: z.string().trim().min(1).max(200), shiftLabel: z.literal("MORNING"), active: z.boolean(), primaryEmployeeId: z.string().nullable().optional(), fallbackEmployeeId: z.string().nullable().optional() }).strict(),
 ]);
 async function guard(action: () => Promise<Response>) {
   try { if (!await deviceAdminAllowed()) return reply({ error: "Unauthorized" }, 401); return await action(); }
@@ -22,6 +22,8 @@ async function guard(action: () => Promise<Response>) {
 }
 export async function GET(request: Request) { return guard(async () => {
   const params = new URL(request.url).searchParams;
+  const taskId = params.get("taskId");
+  if (taskId) return reply({ changes: await prisma.deviceDailyTaskChange.findMany({ where: { taskId }, include: { employee: { select: { code: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 500 }) });
   const shiftId = params.get("shiftId");
   if (shiftId) {
     const shift = await prisma.deviceShift.findUnique({ where: { id: shiftId }, select: { id: true } });
@@ -36,7 +38,7 @@ export async function GET(request: Request) { return guard(async () => {
     prisma.deviceEmployee.findMany({ select: { id: true, code: true, name: true, status: true, expectedStart: true, graceMinutes: true, shiftLabel: true }, orderBy: { name: "asc" } }),
     prisma.deviceShift.findMany({ where: { employeeId, startedAt: { gte: start, lt: end } }, include: { employee: { select: { code: true, name: true } } }, orderBy: { startedAt: "desc" }, take: 2000 }),
     prisma.deviceShift.findMany({ where: { employeeId, endedAt: null }, include: { employee: { select: { code: true, name: true } } }, orderBy: { startedAt: "asc" }, take: 200 }),
-    prisma.deviceDailyTask.findMany({ where: { employeeId, day: { gte: dhakaDay(start), lte: dhakaDay(new Date(end.getTime() - 1)) } }, include: { employee: { select: { name: true, code: true } } }, orderBy: [{ day: "desc" }, { title: "asc" }], take: 6000 }),
+    prisma.deviceDailyTask.findMany({ where: { ...(employeeId ? { OR: [{ employeeId }, { completedByEmployeeId: employeeId }, { updatedByEmployeeId: employeeId }, { template: { primaryEmployeeId: employeeId } }, { template: { fallbackEmployeeId: employeeId } }] } : {}), day: { gte: dhakaDay(start), lte: dhakaDay(new Date(end.getTime() - 1)) } }, include: { employee: { select: { name: true, code: true } }, completedBy: { select: { name: true, code: true } }, updatedBy: { select: { name: true, code: true } } }, orderBy: [{ day: "desc" }, { title: "asc" }], take: 6000 }),
     prisma.deviceDailyTemplate.findMany({ orderBy: [{ shiftLabel: "asc" }, { sortOrder: "asc" }] }),
   ]);
   const activity = await prisma.workDeviceEvent.groupBy({ by: ["shiftId", "type"], where: { shiftId: { in: shifts.map((shift) => shift.id) } }, _count: { _all: true }, _sum: { clicks: true, keys: true } });
@@ -54,7 +56,12 @@ export async function POST(request: Request) { return guard(async () => {
   } else if (data.action === "update") {
     await prisma.deviceEmployee.update({ where: { id: data.id }, data: { name: data.name, status: data.status, expectedStart: shiftStart[data.shiftLabel], shiftLabel: data.shiftLabel, graceMinutes: data.graceMinutes, ...(data.password ? { passwordHash: await bcrypt.hash(data.password, 12) } : {}) } });
   } else if (data.action === "template") {
-    const values = { title: data.title, shiftLabel: data.shiftLabel, active: data.active };
+    for (const [id, label] of [[data.primaryEmployeeId, "MORNING"], [data.fallbackEmployeeId, "EVENING"]] as const) {
+      if (!id) continue;
+      const employee = await prisma.deviceEmployee.findUnique({ where: { id }, select: { status: true, shiftLabel: true } });
+      if (!employee || employee.status !== "ACTIVE" || employee.shiftLabel !== label) return reply({ error: `Choose an active ${label.toLowerCase()} worker for this assignment` }, 400);
+    }
+    const values = { title: data.title, shiftLabel: data.shiftLabel, active: data.active, primaryEmployeeId: data.primaryEmployeeId || null, fallbackEmployeeId: data.fallbackEmployeeId || null };
     if (data.id) await prisma.deviceDailyTemplate.update({ where: { id: data.id }, data: values });
     else await prisma.deviceDailyTemplate.create({ data: values });
   } else {

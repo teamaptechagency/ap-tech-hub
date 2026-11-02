@@ -43,6 +43,8 @@ function setup() {
   let shift = null;
   const tasks = [];
   const writes = [];
+  const changes = [];
+  const template = { id: 'morning-blog', title: 'Daily blog', shiftLabel: 'MORNING', active: true, primaryEmployeeId: 'emp-1', fallbackEmployeeId: 'emp-2' };
   const prisma = {
     workDevice: { updateMany: async ({ data }) => { writes.push(data); return { count: 1 }; } },
     workDeviceEvent: { count: async () => 0, create: async () => ({}) },
@@ -58,20 +60,22 @@ function setup() {
       update: async ({ data }) => { Object.assign(shift, data); return shift; },
       updateMany: async ({ data }) => { Object.assign(shift, data); return { count: 1 }; },
     },
-    deviceDailyTemplate: { findMany: async () => [{ id: 'morning-blog', title: 'Daily blog' }] },
+    deviceDailyTemplate: { findMany: async () => [template] },
     deviceDailyTask: {
-      createMany: async ({ data }) => { for (const row of data) if (!tasks.find((t) => t.employeeId === row.employeeId && t.day === row.day && t.templateId === row.templateId)) tasks.push({ id: 'task-1', done: false, proofUrl: '', ...row }); return { count: data.length }; },
+      createMany: async ({ data }) => { for (const row of data) if (!tasks.find((t) => t.day === row.day && t.templateId === row.templateId)) tasks.push({ id: 'task-1', status: 'PENDING', version: 0, reason: '', done: false, proofUrl: '', ...row }); return { count: data.length }; },
       findMany: async () => tasks,
-      findFirst: async ({ where }) => tasks.find((t) => t.id === where.id && t.employeeId === where.employeeId && t.day === where.day) || null,
-      update: async ({ where, data }) => { Object.assign(tasks.find((t) => t.id === where.id), data); return {}; },
+      findFirst: async ({ where }) => { const found = tasks.find((t) => t.id === where.id && t.day <= where.day.lte); return found ? { ...found, template } : null; },
+      updateMany: async ({ where, data }) => { const found = tasks.find((t) => t.id === where.id && t.version === where.version); if (!found) return { count: 0 }; const version = found.version + 1; Object.assign(found, data, { version }); return { count: 1 }; },
     },
+    deviceDailyTaskChange: { create: async ({ data }) => { changes.push(data); return data; } },
+    $transaction: async (action) => action(prisma),
   };
   const route = load('app/api/device-attendance/route.ts', {
     '@/lib/prisma': { prisma }, '@/lib/device-access': { credentialDevice: async () => device.revoked ? null : device },
     '@/lib/device-agent': agent, '@/lib/device-attendance': attendance, '@/lib/device-response': load('lib/device-response.ts'),
   });
   const send = (body) => route.POST(new Request('https://hub.test/api/device-attendance', { method: 'POST', body: JSON.stringify({ pcName: 'WORK-PC', ...body }) }));
-  return { send, device, employee, tasks, writes, getShift: () => shift };
+  return { send, device, employee, template, tasks, writes, changes, getShift: () => shift };
 }
 test('attendance login, checklist and early logout do not stop activity tracking', async () => {
   const s = setup();
@@ -95,8 +99,52 @@ test('pending/revoked accounts and another employee task cannot be used', async 
   assert.equal((await s.send({ action: 'login', code: 'staff-01', password: 'a-long-password' })).status, 403);
   s.employee.status = 'ACTIVE';
   const login = await (await s.send({ action: 'login', code: 'staff-01', password: 'a-long-password' })).json();
-  s.tasks[0].employeeId = 'another-employee';
+  s.template.primaryEmployeeId = 'another-employee';
   assert.equal((await s.send({ action: 'checklist', sessionToken: login.sessionToken, taskId: 'task-1', done: true })).status, 403);
   s.device.revoked = true;
   assert.equal((await s.send({ action: 'status', sessionToken: login.sessionToken })).status, 401);
+});
+test('morning holds require a reason; evening takes over the same task and night stays free', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-02T16:00:00+06:00') });
+  const s = setup();
+  const morning = await (await s.send({ action: 'login', code: 'staff-01', password: 'a-long-password' })).json();
+  assert.equal((await s.send({ action: 'checklist', sessionToken: morning.sessionToken, taskId: 'task-1', status: 'HOLD' })).status, 400);
+  assert.equal((await s.send({ action: 'checklist', sessionToken: morning.sessionToken, taskId: 'task-1', status: 'HOLD', reason: 'Waiting for ad material' })).status, 200);
+  await s.send({ action: 'logout', sessionToken: morning.sessionToken, earlyLeaveReason: 'Test shift handover' });
+  Object.assign(s.employee, { id: 'emp-2', code: 'staff-02', shiftLabel: 'EVENING', expectedStart: '15:00' });
+  const evening = await (await s.send({ action: 'login', code: 'staff-02', password: 'a-long-password' })).json();
+  assert.equal(s.tasks.length, 1); assert.equal(evening.dailyTasks[0].status, 'HOLD');
+  assert.equal((await s.send({ action: 'checklist', sessionToken: evening.sessionToken, taskId: 'task-1', status: 'COMPLETED', reason: 'Material received, published' })).status, 200);
+  assert.equal(s.tasks[0].completedByEmployeeId, 'emp-2');
+  assert.deepEqual(s.changes.map((c) => [c.employeeId, c.toStatus]), [['emp-1', 'HOLD'], ['emp-2', 'COMPLETED']]);
+  await s.send({ action: 'logout', sessionToken: evening.sessionToken, earlyLeaveReason: 'Test shift handover' });
+  Object.assign(s.employee, { id: 'emp-3', code: 'staff-03', shiftLabel: 'NIGHT', expectedStart: '23:00' });
+  const night = await (await s.send({ action: 'login', code: 'staff-03', password: 'a-long-password' })).json();
+  assert.deepEqual(night.dailyTasks, []);
+  assert.equal((await s.send({ action: 'checklist', sessionToken: night.sessionToken, taskId: 'task-1', status: 'PENDING' })).status, 403);
+});
+test('cancelled tasks are not handed over and fallback cannot reopen them', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-02T16:00:00+06:00') });
+  const s = setup();
+  const morning = await (await s.send({ action: 'login', code: 'staff-01', password: 'a-long-password' })).json();
+  assert.equal((await s.send({ action: 'checklist', sessionToken: morning.sessionToken, taskId: 'task-1', status: 'CANCELLED', reason: 'No ad campaign today' })).status, 200);
+  await s.send({ action: 'logout', sessionToken: morning.sessionToken, earlyLeaveReason: 'Test shift handover' });
+  Object.assign(s.employee, { id: 'emp-2', code: 'staff-02', shiftLabel: 'EVENING', expectedStart: '15:00' });
+  const evening = await (await s.send({ action: 'login', code: 'staff-02', password: 'a-long-password' })).json();
+  assert.deepEqual(evening.dailyTasks, []);
+  assert.equal((await s.send({ action: 'checklist', sessionToken: evening.sessionToken, taskId: 'task-1', status: 'PENDING' })).status, 403);
+});
+test('evening cannot take over before 15:00 or overwrite another worker completion', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-02T10:00:00+06:00') });
+  const s = setup();
+  const morning = await (await s.send({ action: 'login', code: 'staff-01', password: 'a-long-password' })).json();
+  await s.send({ action: 'checklist', sessionToken: morning.sessionToken, taskId: 'task-1', status: 'COMPLETED' });
+  await s.send({ action: 'logout', sessionToken: morning.sessionToken, earlyLeaveReason: 'Test handover' });
+  Object.assign(s.employee, { id: 'emp-2', code: 'staff-02', shiftLabel: 'EVENING', expectedStart: '15:00' });
+  const evening = await (await s.send({ action: 'login', code: 'staff-02', password: 'a-long-password' })).json();
+  assert.deepEqual(evening.dailyTasks, []);
+  assert.equal((await s.send({ action: 'checklist', sessionToken: evening.sessionToken, taskId: 'task-1', status: 'PENDING' })).status, 403);
+  t.mock.timers.setTime(new Date('2026-11-02T16:00:00+06:00').getTime());
+  assert.equal((await s.send({ action: 'checklist', sessionToken: evening.sessionToken, taskId: 'task-1', status: 'PENDING' })).status, 409);
+  assert.equal(s.tasks[0].completedByEmployeeId, 'emp-1');
 });

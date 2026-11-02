@@ -122,7 +122,7 @@ public class AttendanceForm : Form {
                         status.Text = Convert.ToString(employee["name"]) + " (" + Convert.ToString(employee["code"]) + ")\nArrival: " + Stamp(shift["startedAt"]).AddHours(6).ToString("dd MMM yyyy HH:mm") + " Dhaka\n" + (ended ? "Shift ended. Activity tracking is unchanged." : onBreak ? "Attendance is on break." : "Attendance is open. Log out before leaving.");
                         if (action == "login" || action == "status") { task.Text = Convert.ToString(shift["task"]); handover.Text = Convert.ToString(shift["handover"]); }
                         if (ended) { sessionToken = null; StoreSession(); }
-                        if (action == "login" && !ended) { using (var daily = new DailyTasksForm(credential, sessionToken)) daily.ShowDialog(this); }
+                        if (action == "login" && !ended && Convert.ToString(employee["shiftLabel"]) != "NIGHT") { using (var daily = new DailyTasksForm(credential, sessionToken)) daily.ShowDialog(this); }
                     }
                 }
             }

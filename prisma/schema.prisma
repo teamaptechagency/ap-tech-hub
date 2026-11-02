@@ -32,7 +32,12 @@ model DeviceEmployee {
   shiftLabel String @default("MORNING")
   createdAt DateTime @default(now())
   shifts DeviceShift[]
-  dailyTasks DeviceDailyTask[]
+  dailyTasks DeviceDailyTask[] @relation("DailyTaskOwner")
+  completedDailyTasks DeviceDailyTask[] @relation("DailyTaskCompleter")
+  updatedDailyTasks DeviceDailyTask[] @relation("DailyTaskUpdater")
+  primaryDailyTemplates DeviceDailyTemplate[] @relation("PrimaryDailyWorker")
+  fallbackDailyTemplates DeviceDailyTemplate[] @relation("FallbackDailyWorker")
+  dailyTaskChanges DeviceDailyTaskChange[]
 }
 
 model DeviceDailyTemplate {
@@ -42,12 +47,16 @@ model DeviceDailyTemplate {
   active Boolean @default(true)
   sortOrder Int @default(0)
   tasks DeviceDailyTask[]
+  primaryEmployeeId String?
+  primaryEmployee DeviceEmployee? @relation("PrimaryDailyWorker", fields: [primaryEmployeeId], references: [id], onDelete: SetNull)
+  fallbackEmployeeId String?
+  fallbackEmployee DeviceEmployee? @relation("FallbackDailyWorker", fields: [fallbackEmployeeId], references: [id], onDelete: SetNull)
 }
 
 model DeviceDailyTask {
   id String @id @default(cuid())
   employeeId String
-  employee DeviceEmployee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  employee DeviceEmployee @relation("DailyTaskOwner", fields: [employeeId], references: [id], onDelete: Restrict)
   templateId String
   template DeviceDailyTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
   day String
@@ -55,8 +64,30 @@ model DeviceDailyTask {
   done Boolean @default(false)
   completedAt DateTime?
   proofUrl String @default("")
-  @@unique([employeeId, templateId, day])
+  status String @default("PENDING")
+  reason String @default("")
+  version Int @default(0)
+  completedByEmployeeId String?
+  completedBy DeviceEmployee? @relation("DailyTaskCompleter", fields: [completedByEmployeeId], references: [id], onDelete: SetNull)
+  updatedByEmployeeId String?
+  updatedBy DeviceEmployee? @relation("DailyTaskUpdater", fields: [updatedByEmployeeId], references: [id], onDelete: SetNull)
+  changes DeviceDailyTaskChange[]
+  @@unique([templateId, day])
   @@index([day, employeeId])
+}
+
+model DeviceDailyTaskChange {
+  id String @id @default(cuid())
+  taskId String
+  task DeviceDailyTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  employeeId String
+  employee DeviceEmployee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  fromStatus String
+  toStatus String
+  reason String @default("")
+  proofUrl String @default("")
+  createdAt DateTime @default(now())
+  @@index([taskId, createdAt])
 }
 
 model WorkStationGrowthArchive {
