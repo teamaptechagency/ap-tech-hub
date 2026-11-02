@@ -16,15 +16,19 @@ export async function POST(request: Request) {
     if (!device || device.revoked) return Response.json({ error: "Device is revoked or unknown" }, { status: 401 });
     if (device.pcName && device.pcName !== input.data.pcName) return Response.json({ error: "Token belongs to another PC" }, { status: 403 });
     const browser = input.data.source === "BROWSER";
-    if (input.data.events.some((event) => browser ? event.platform === "Windows" || !["REFRESH", "NAVIGATION", "INTERACTIONS", "PAUSED"].includes(event.type) : event.platform !== "Windows" || !["ACTIVE", "IDLE", "PAUSED"].includes(event.type))) return Response.json({ error: "Invalid event source" }, { status: 400 });
+    if (input.data.events.some((event) => browser ? event.platform === "Windows" || !["REFRESH", "NAVIGATION", "INTERACTIONS", "PAUSED", "HEARTBEAT"].includes(event.type) : event.platform !== "Windows" || !["ACTIVE", "IDLE", "PAUSED"].includes(event.type))) return Response.json({ error: "Invalid event source" }, { status: 400 });
     const recent = await prisma.workDeviceEvent.count({ where: { deviceId: device.id, createdAt: { gte: new Date(Date.now() - 60000) } } });
     if (recent + input.data.events.length > 180) return Response.json({ error: "Too many events" }, { status: 429 });
     const last = input.data.events[input.data.events.length - 1];
+    const attendance = await prisma.deviceShift.findUnique({ where: { openDeviceKey: device.id }, select: { id: true, startedAt: true } });
     const syncRequestId = input.data.syncRequestId;
     if (syncRequestId && browser) return Response.json({ error: "Only the Windows app can acknowledge a status sync" }, { status: 400 });
     await prisma.$transaction([
-      prisma.workDevice.update({ where: { id: device.id, revoked: false, OR: [{ pcName: null }, { pcName: input.data.pcName }] }, data: { pcName: input.data.pcName, lastSeenAt: new Date(), ...(!browser ? { status: last.type } : {}) } }),
-      prisma.workDeviceEvent.createMany({ data: input.data.events.map((event) => ({ ...event, source: input.data.source, deviceId: device.id })), skipDuplicates: true }),
+      prisma.workDevice.update({ where: { id: device.id, revoked: false, OR: [{ pcName: null }, { pcName: input.data.pcName }] }, data: { pcName: input.data.pcName, lastSeenAt: new Date(), ...(browser ? { lastBrowserAt: new Date(), ...(input.data.appVersion ? { extensionVersion: input.data.appVersion } : {}) } : { status: last.type, lastWindowsAt: new Date(), ...(input.data.appVersion ? { appVersion: input.data.appVersion } : {}) }) } }),
+      prisma.workDeviceEvent.createMany({ data: input.data.events.map(({ observedAt, ...event }) => ({ ...event, source: input.data.source, deviceId: device.id,
+        // Do not assign queued events from before this employee arrived, or un-timestamped old clients.
+        shiftId: attendance && observedAt !== undefined && observedAt >= attendance.startedAt.getTime() && observedAt <= Date.now() + 30000 && Date.now() - observedAt <= 300000 ? attendance.id : null,
+      })), skipDuplicates: true }),
       ...(syncRequestId ? [prisma.workDeviceEvent.updateMany({ where: { id: syncRequestId, deviceId: device.id, source: "SYSTEM", type: "SYNC_REQUEST" }, data: { type: "SYNCED" } })] : []),
     ]);
     const pending = !browser ? await prisma.workDeviceEvent.findFirst({ where: { deviceId: device.id, source: "SYSTEM", type: "SYNC_REQUEST", createdAt: { gte: new Date(Date.now() - 300000) } }, orderBy: { createdAt: "desc" }, select: { id: true } }) : null;

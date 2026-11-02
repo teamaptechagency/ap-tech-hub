@@ -39,6 +39,7 @@ const PUBLIC_EXACT_PATHS = [
   "/downloads/work-tracker/release.json",
   // Device agents use their own revocable bearer credential, not login cookies.
   "/api/device-agent",
+  "/api/device-attendance",
   "/",
   // The file route performs its own session and per-file audience checks.
   // Let client/partner requests reach it instead of treating `/api/files` as

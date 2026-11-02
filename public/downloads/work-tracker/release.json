@@ -1,8 +1,8 @@
 {
-  "version": "0.3.3",
+  "version": "0.4.0",
   "publishedDate": "2026-11-02",
-  "exeSha256": "7a3d1759d62805f57c1ddee421409bd639a720d5061d4573668075938805fea3",
-  "installerSha256": "47ba48c789dbec7bcdbe50e92ee9461ab7c65e91b8aef62ea95e632902c0df7e",
-  "packageSha256": "85a668a494edb407e6c05d4bc80ec29217508cf06a702bc1222ca6a1fab98674",
-  "releaseNotes": "Responds to Sync logs from the PC detail page with a fresh Windows status.\nWebsite shows waiting, acknowledged or expired sync requests.\nLive range includes newly received activity. Browser counts still sync separately."
+  "exeSha256": "6a1a9d74fb1eacc32b3bce8762c82e354156cc0d9741ac88aa494fd9680676c1",
+  "installerSha256": "0b96d0d7a87419325cc6a41c0bf9dda4be40377954a71dc93fef824f7d4a4662",
+  "packageSha256": "fc8dbcb94afd0fcf72aec3bc11d58a66613e399703d638d299cb99891b0d9b8d",
+  "releaseNotes": "Work Station: separate employee attendance login/logout with three Dhaka shifts.\nEight-hour timer excluding breaks, shortfall, early-leave reasons and overtime.\nDaily checklist in the app: blog, news portal and LinkedIn for morning shift.\nEmployee daily/weekly/monthly/yearly records, shift activity timeline and CSV exports.\nSeparate Windows/extension health, refresh gaps and targets. Requires the updated server database and extension 0.2.0."
 }

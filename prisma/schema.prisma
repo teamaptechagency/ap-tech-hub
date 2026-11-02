@@ -13,12 +13,92 @@ model WorkDevice {
   status      String   @default("OFFLINE")
   createdAt   DateTime @default(now())
   events      WorkDeviceEvent[]
+  lastWindowsAt DateTime?
+  lastBrowserAt DateTime?
+  appVersion String?
+  extensionVersion String?
+  shifts DeviceShift[]
+}
+
+// Physical staff accounts are attendance-only: they do not grant website access.
+model DeviceEmployee {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  passwordHash String
+  status String @default("PENDING")
+  expectedStart String @default("07:00")
+  graceMinutes Int @default(10)
+  shiftLabel String @default("MORNING")
+  createdAt DateTime @default(now())
+  shifts DeviceShift[]
+  dailyTasks DeviceDailyTask[]
+}
+
+model DeviceDailyTemplate {
+  id String @id @default(cuid())
+  title String
+  shiftLabel String @default("MORNING")
+  active Boolean @default(true)
+  sortOrder Int @default(0)
+  tasks DeviceDailyTask[]
+}
+
+model DeviceDailyTask {
+  id String @id @default(cuid())
+  employeeId String
+  employee DeviceEmployee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  templateId String
+  template DeviceDailyTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  day String
+  title String
+  done Boolean @default(false)
+  completedAt DateTime?
+  proofUrl String @default("")
+  @@unique([employeeId, templateId, day])
+  @@index([day, employeeId])
+}
+
+model WorkStationGrowthArchive {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  reason String
+  snapshot Json
+}
+
+model DeviceShift {
+  id String @id @default(cuid())
+  employeeId String
+  employee DeviceEmployee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  deviceId String?
+  device WorkDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  deviceName String
+  sessionHash String @unique
+  openEmployeeKey String? @unique
+  openDeviceKey String? @unique
+  startedAt DateTime @default(now())
+  scheduledStartAt DateTime
+  scheduledEndAt DateTime
+  endedAt DateTime?
+  breakStartedAt DateTime?
+  breakSeconds Int @default(0)
+  lateMinutes Int @default(0)
+  task String @default("")
+  handover String @default("")
+  endReason String?
+  earlyLeaveReason String?
+  events WorkDeviceEvent[]
+
+  @@index([startedAt])
+  @@index([employeeId, startedAt])
 }
 
 model WorkDeviceEvent {
   id          String   @id
-  deviceId    String
-  device      WorkDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  deviceId    String?
+  device      WorkDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  shiftId String?
+  shift DeviceShift? @relation(fields: [shiftId], references: [id], onDelete: SetNull)
   source      String
   type        String
   platform    String
@@ -28,6 +108,7 @@ model WorkDeviceEvent {
   createdAt   DateTime @default(now())
 
   @@index([deviceId, createdAt])
+  @@index([shiftId, createdAt])
 }
 
 datasource db {

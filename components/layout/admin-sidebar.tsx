@@ -28,7 +28,6 @@ import {
   Monitor,
   Newspaper,
   Receipt,
-  Rocket,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -59,8 +58,8 @@ type AdminSidebarProps = {
 
 export const adminNavItems: AdminNavItem[] = [
   {
-    label: "Device Activity",
-    href: "/device-activity",
+    label: "Work Station",
+    href: "/work-station",
     icon: Monitor,
     section: "Overview",
   },
@@ -116,12 +115,6 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Meetings",
     href: "/meetings",
     icon: Video,
-    section: "Delivery",
-  },
-  {
-    label: "Growth Roadmap",
-    href: "/growth-roadmap",
-    icon: Rocket,
     section: "Delivery",
   },
   {

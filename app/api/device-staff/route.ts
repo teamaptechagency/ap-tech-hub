@@ -1,0 +1,68 @@
+import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { deviceAdminAllowed } from "@/lib/device-access";
+import { employeeInput, scheduleInput, breakSeconds, shiftSeconds, dhakaDay, shiftStart, attendanceTotals } from "@/lib/device-attendance";
+import { deviceServiceFailure } from "@/lib/device-response";
+
+export const runtime = "nodejs";
+const reply = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
+const inputSchema = z.discriminatedUnion("action", [
+  employeeInput.merge(scheduleInput).extend({ action: z.literal("create") }).strict(),
+  scheduleInput.extend({ action: z.literal("update"), id: z.string().min(1), name: z.string().trim().min(1).max(80), status: z.enum(["ACTIVE", "DISABLED"]), password: z.string().min(10).max(100).optional() }).strict(),
+  z.object({ action: z.literal("endShift"), id: z.string().min(1) }).strict(),
+  z.object({ action: z.literal("template"), id: z.string().optional(), title: z.string().trim().min(1).max(200), shiftLabel: z.enum(["MORNING", "EVENING", "NIGHT"]), active: z.boolean() }).strict(),
+]);
+async function guard(action: () => Promise<Response>) {
+  try { if (!await deviceAdminAllowed()) return reply({ error: "Unauthorized" }, 401); return await action(); }
+  catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") return reply({ error: "Employee ID already exists" }, 409);
+    const failure = deviceServiceFailure(error); return reply({ error: failure.error }, failure.status);
+  }
+}
+export async function GET(request: Request) { return guard(async () => {
+  const params = new URL(request.url).searchParams;
+  const shiftId = params.get("shiftId");
+  if (shiftId) {
+    const shift = await prisma.deviceShift.findUnique({ where: { id: shiftId }, select: { id: true } });
+    if (!shift) return reply({ error: "Attendance record not found" }, 404);
+    return reply({ events: await prisma.workDeviceEvent.findMany({ where: { shiftId }, select: { id: true, type: true, platform: true, clicks: true, keys: true, idleSeconds: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 1000 }), limit: 1000 });
+  }
+  const end = params.get("to") ? new Date(params.get("to")!) : new Date();
+  const start = params.get("from") ? new Date(params.get("from")!) : new Date(end.getTime() - 86400000);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start || end.getTime() - start.getTime() > 366 * 86400000) return reply({ error: "Select an attendance range up to 366 days" }, 400);
+  const employeeId = params.get("employeeId") || undefined;
+  const [employees, shifts, openShifts, tasks, templates] = await Promise.all([
+    prisma.deviceEmployee.findMany({ select: { id: true, code: true, name: true, status: true, expectedStart: true, graceMinutes: true, shiftLabel: true }, orderBy: { name: "asc" } }),
+    prisma.deviceShift.findMany({ where: { employeeId, startedAt: { gte: start, lt: end } }, include: { employee: { select: { code: true, name: true } } }, orderBy: { startedAt: "desc" }, take: 2000 }),
+    prisma.deviceShift.findMany({ where: { employeeId, endedAt: null }, include: { employee: { select: { code: true, name: true } } }, orderBy: { startedAt: "asc" }, take: 200 }),
+    prisma.deviceDailyTask.findMany({ where: { employeeId, day: { gte: dhakaDay(start), lte: dhakaDay(new Date(end.getTime() - 1)) } }, include: { employee: { select: { name: true, code: true } } }, orderBy: [{ day: "desc" }, { title: "asc" }], take: 6000 }),
+    prisma.deviceDailyTemplate.findMany({ orderBy: [{ shiftLabel: "asc" }, { sortOrder: "asc" }] }),
+  ]);
+  const activity = await prisma.workDeviceEvent.groupBy({ by: ["shiftId", "type"], where: { shiftId: { in: shifts.map((shift) => shift.id) } }, _count: { _all: true }, _sum: { clicks: true, keys: true } });
+  // Never expose attendance bearer hashes, even to the browser admin interface.
+  const safe = (shift: typeof shifts[number]) => { const { sessionHash: _secret, ...data } = shift; void _secret; return { ...data, attendanceSeconds: shiftSeconds(shift), ...attendanceTotals(shift) }; };
+  return reply({ employees, shifts: shifts.map(safe), openShifts: openShifts.map(safe), activity, tasks, templates, limit: 2000 });
+}); }
+export async function POST(request: Request) { return guard(async () => {
+  let body: unknown; try { body = await request.json(); } catch { return reply({ error: "Invalid JSON" }, 400); }
+  const result = inputSchema.safeParse(body);
+  if (!result.success) return reply({ error: "Check ID (3–40 letters/numbers), name, password (10+), schedule and grace minutes" }, 400);
+  const data = result.data;
+  if (data.action === "create") {
+    await prisma.deviceEmployee.create({ data: { code: data.code, name: data.name, passwordHash: await bcrypt.hash(data.password, 12), status: "ACTIVE", expectedStart: shiftStart[data.shiftLabel], shiftLabel: data.shiftLabel, graceMinutes: data.graceMinutes } });
+  } else if (data.action === "update") {
+    await prisma.deviceEmployee.update({ where: { id: data.id }, data: { name: data.name, status: data.status, expectedStart: shiftStart[data.shiftLabel], shiftLabel: data.shiftLabel, graceMinutes: data.graceMinutes, ...(data.password ? { passwordHash: await bcrypt.hash(data.password, 12) } : {}) } });
+  } else if (data.action === "template") {
+    const values = { title: data.title, shiftLabel: data.shiftLabel, active: data.active };
+    if (data.id) await prisma.deviceDailyTemplate.update({ where: { id: data.id }, data: values });
+    else await prisma.deviceDailyTemplate.create({ data: values });
+  } else {
+    const shift = await prisma.deviceShift.findUnique({ where: { id: data.id } });
+    if (!shift) return reply({ error: "Shift not found" }, 404);
+    const now = new Date();
+    const changed = await prisma.deviceShift.updateMany({ where: { id: shift.id, endedAt: null, breakStartedAt: shift.breakStartedAt }, data: { endedAt: now, endReason: "ADMIN_CLOSED_AT_CURRENT_TIME", openEmployeeKey: null, openDeviceKey: null, breakStartedAt: null, breakSeconds: shift.breakSeconds + breakSeconds(shift.breakStartedAt, now) } });
+    if (!changed.count && !shift.endedAt) return reply({ error: "Shift changed. Refresh and retry closing it." }, 409);
+  }
+  return reply({ success: true });
+}); }

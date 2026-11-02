@@ -8,7 +8,7 @@ async function badge() { const { enabled } = await chrome.storage.local.get("ena
 async function enqueue(event) {
   const data = await chrome.storage.local.get(["enabled", "queue"]);
   if (!data.enabled) return;
-  await chrome.storage.local.set({ queue: [...(data.queue || []), { id: crypto.randomUUID(), ...event }].slice(-120) });
+  await chrome.storage.local.set({ queue: [...(data.queue || []), { id: crypto.randomUUID(), observedAt: Date.now(), ...event }].slice(-120) });
 }
 chrome.webNavigation.onCommitted.addListener((details) => {
   if (details.frameId !== 0) return;
@@ -25,10 +25,10 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
 chrome.alarms.create("sync", { periodInMinutes: 0.5 });
 chrome.alarms.onAlarm.addListener(() => serial(async () => {
   const data = await chrome.storage.local.get(["enabled", "queue", "token", "pcName"]);
-  if (!data.enabled || !data.token || !data.pcName || !data.queue?.length) return;
-  const events = data.queue.slice(0, 60);
+  if (!data.enabled || !data.token || !data.pcName) return;
+  const events = data.queue?.length ? data.queue.slice(0, 60) : [{ id: crypto.randomUUID(), observedAt: Date.now(), type: "HEARTBEAT", platform: "Browser" }];
   try {
-    const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.token}` }, body: JSON.stringify({ source: "BROWSER", pcName: data.pcName, consent: true, events }), signal: AbortSignal.timeout(15000) });
+    const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.token}` }, body: JSON.stringify({ source: "BROWSER", pcName: data.pcName, consent: true, appVersion: chrome.runtime.getManifest().version, events }), signal: AbortSignal.timeout(15000) });
     if ([401, 403].includes(response.status)) { await chrome.storage.local.set({ enabled: false, queue: [], lastError: "Credential rejected. Tracking paused." }); await badge(); return; }
     if (!response.ok) throw new Error("Not synced");
     const current = await chrome.storage.local.get(["enabled", "queue"]);

@@ -12,7 +12,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 public class WorkAgent : Form {
-    const string AppVersion = "0.3.3";
+    const string AppVersion = "0.4.0";
     [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint size; public uint time; }
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     readonly TextBox url = new TextBox(), token = new TextBox();
@@ -33,7 +33,7 @@ public class WorkAgent : Form {
         Application.Run(new WorkAgent());
     }
     public WorkAgent() {
-        Text = "AP Tech Work Tracker " + AppVersion; ClientSize = new Size(560, 490); MinimumSize = new Size(576, 529);
+        Text = "AP Tech Work Tracker " + AppVersion; ClientSize = new Size(560, 540); MinimumSize = new Size(576, 579);
         BackColor = Color.FromArgb(16, 22, 32); ForeColor = Color.White; Font = new Font("Segoe UI", 10);
         AddLabel("AP TECH  /  WORK TRACKER", 24, 20, 510, 26, 15);
         AddLabel("PC: " + Environment.MachineName, 24, 57, 510, 24, 10);
@@ -42,11 +42,13 @@ public class WorkAgent : Form {
         autoResume.Text = "Remember consent and start tracking when this app opens"; autoResume.SetBounds(24, 121, 510, 30); Controls.Add(autoResume);
         AddLabel("First setup only: paste the pairing credential from your admin", 24, 160, 510, 22, 10); token.SetBounds(24, 185, 510, 28); token.UseSystemPasswordChar = true; Controls.Add(token);
         consent.Text = "I have read the notice and agree to start this work session."; consent.SetBounds(24, 227, 510, 40); Controls.Add(consent);
-        AddLabel("Sends PC name and active/idle status every 30 seconds. Browser extension\nrecords work-site refreshes and interaction counts only. No typed text,\nclipboard contents, screenshots, passwords or private messages are read.", 24, 276, 510, 64, 9);
+        AddLabel("Sends PC status and work-site interaction counts. Attendance saves\nyour submitted login and work notes. No background keystroke text,\nclipboard contents, screenshots or private messages are collected.", 24, 276, 510, 64, 9);
         start.Text = "Start work session"; start.SetBounds(24, 349, 240, 34); start.ForeColor = Color.Black; start.BackColor = Color.White; start.Click += async (s,e) => { if (sending || !ValidateSettings()) return; try { SaveConfig(); } catch { MessageBox.Show("Could not save settings for this Windows user."); return; } tracking = true; url.Enabled = token.Enabled = false; start.Enabled = false; timer.Start(); await Send(false); }; Controls.Add(start);
         pause.Text = "Pause tracking"; pause.SetBounds(280, 349, 254, 34); pause.ForeColor = Color.Black; pause.BackColor = Color.White; pause.Click += (s,e) => Pause(); Controls.Add(pause);
         state.SetBounds(24, 393, 510, 24); state.Text = "Paused. Nothing is being collected."; Controls.Add(state);
-        var update = new Button(); update.Text = "Check for software updates"; update.SetBounds(24, 433, 510, 32); update.ForeColor = Color.Black; update.BackColor = Color.White;
+        var attendance = new Button(); attendance.Text = "Employee attendance / Login / Logout"; attendance.SetBounds(24, 433, 510, 32); attendance.ForeColor = Color.Black; attendance.BackColor = Color.White;
+        attendance.Click += (s,e) => { if (!System.Text.RegularExpressions.Regex.IsMatch(token.Text.Trim(), "^[a-f0-9]{64}$")) { MessageBox.Show("Pair this PC with its device credential first."); return; } using (var form = new AttendanceForm(token.Text.Trim())) form.ShowDialog(this); }; Controls.Add(attendance);
+        var update = new Button(); update.Text = "Check for software updates"; update.SetBounds(24, 483, 510, 32); update.ForeColor = Color.Black; update.BackColor = Color.White;
         update.Click += async (s,e) => {
             update.Enabled = false;
             try {
@@ -127,8 +129,8 @@ public class WorkAgent : Form {
                 var info = new LASTINPUTINFO(); info.size = (uint)Marshal.SizeOf(info);
                 if (!GetLastInputInfo(ref info)) throw new Exception("Cannot read idle status");
                 uint elapsed = unchecked((uint)Environment.TickCount - info.time); int idle = (int)Math.Min(elapsed / 1000, 86400u);
-                var evt = new { id = Guid.NewGuid().ToString(), type = idle >= 300 ? "IDLE" : "ACTIVE", platform = "Windows", idleSeconds = idle };
-                pendingPayload = json.Serialize(new { source = "WINDOWS", pcName = Environment.MachineName, consent = true, syncRequestId = syncRequestId, events = new [] { evt } });
+                var evt = new { id = Guid.NewGuid().ToString(), type = idle >= 300 ? "IDLE" : "ACTIVE", platform = "Windows", idleSeconds = idle, observedAt = (long)(DateTime.UtcNow - new DateTime(1970,1,1,0,0,0,DateTimeKind.Utc)).TotalMilliseconds };
+                pendingPayload = json.Serialize(new { source = "WINDOWS", pcName = Environment.MachineName, consent = true, appVersion = AppVersion, syncRequestId = syncRequestId, events = new [] { evt } });
             }
             var request = new HttpRequestMessage(HttpMethod.Post, url.Text.Trim().TrimEnd('/') + "/api/device-agent"); request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Text.Trim()); request.Content = new StringContent(pendingPayload, Encoding.UTF8, "application/json");
             using (request) using (var response = await client.SendAsync(request)) {

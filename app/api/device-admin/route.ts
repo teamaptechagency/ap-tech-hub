@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { ADMIN_ROLES } from "@/lib/roles";
 import { refreshWindow, tokenHash } from "@/lib/device-agent";
 import { deviceServiceFailure } from "@/lib/device-response";
+import { deviceMetrics } from "@/lib/device-metrics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,17 +31,22 @@ async function getDevices(request: Request) {
   const window = refreshWindow(params.get("from"), params.get("to"));
   if (!window) return Response.json({ error: "Choose a valid time range up to 31 days" }, { status: 400 });
   const id = params.get("id");
-  const devices = await prisma.workDevice.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, employee: true, pcName: true, revoked: true, status: true, lastSeenAt: true } });
+  const devices = await prisma.workDevice.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, employee: true, pcName: true, revoked: true, status: true, lastSeenAt: true, lastWindowsAt: true, lastBrowserAt: true, appVersion: true, extensionVersion: true } });
   if (!id) return Response.json({ devices }, { headers: { "Cache-Control": "no-store" } });
   const syncRequest = await prisma.workDeviceEvent.findFirst({ where: { deviceId: id, source: "SYSTEM", type: { in: ["SYNC_REQUEST", "SYNCED"] } }, orderBy: { createdAt: "desc" }, select: { id: true, type: true, createdAt: true } });
   const where = { deviceId: id, createdAt: { gte: window.start, lt: window.end } };
-  const [events, refreshes, totalRefreshes, totals] = await Promise.all([
+  const [events, refreshes, totalRefreshes, totals, samples, lastRefresh, activeSamples, idleSamples] = await Promise.all([
     prisma.workDeviceEvent.findMany({ where, orderBy: { createdAt: "desc" }, take: 300 }),
     prisma.workDeviceEvent.count({ where: { ...where, type: "REFRESH" } }),
     prisma.workDeviceEvent.count({ where: { deviceId: id, type: "REFRESH" } }),
     prisma.workDeviceEvent.aggregate({ where, _sum: { clicks: true, keys: true } }),
+    prisma.workDeviceEvent.findMany({ where: { ...where, type: "REFRESH" }, select: { type: true, createdAt: true }, orderBy: { createdAt: "asc" }, take: 10001 }),
+    prisma.workDeviceEvent.findFirst({ where: { deviceId: id, type: "REFRESH" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    prisma.workDeviceEvent.count({ where: { ...where, type: "ACTIVE" } }),
+    prisma.workDeviceEvent.count({ where: { ...where, type: "IDLE" } }),
   ]);
-  return Response.json({ devices, events, refreshes, totalRefreshes, totals: totals._sum, syncRequest }, { headers: { "Cache-Control": "no-store" } });
+  const metrics = { ...deviceMetrics(samples.slice(0, 10000), window.start, window.end), activeSamples, idleSamples, truncated: samples.length > 10000, lastRefreshAt: lastRefresh?.createdAt ?? null };
+  return Response.json({ devices, events, refreshes, totalRefreshes, totals: totals._sum, syncRequest, metrics }, { headers: { "Cache-Control": "no-store" } });
 }
 async function requestSync(request: Request) {
   if (!await allowed()) return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -68,7 +74,7 @@ async function revokeDevice(request: Request) {
   const id = new URL(request.url).searchParams.get("id");
   if (!id) return Response.json({ error: "Device required" }, { status: 400 });
   if (new URL(request.url).searchParams.get("remove") === "true") {
-    // The existing foreign key cascades event deletion; the credential disappears too.
+    // Device credentials disappear, while attendance-linked history is retained.
     await prisma.workDevice.delete({ where: { id } });
   } else {
     await prisma.workDevice.update({ where: { id }, data: { revoked: true, status: "REVOKED" } });

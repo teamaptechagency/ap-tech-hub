@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AP Tech Visible Work Tracker",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Opt-in work-site refresh and interaction counts. No messages or clipboard contents.",
   "permissions": ["storage", "alarms", "webNavigation"],
   "host_permissions": ["https://www.aptechagency.com/*"],

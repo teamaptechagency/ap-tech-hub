@@ -24,8 +24,10 @@ function setup() {
   const events = [];
   const changes = [];
   let authorized = true;
+  let attendanceShift = null;
   const device = { id: 'pc-one', revoked: false, pcName: 'WORK-PC' };
   const prisma = {
+    deviceShift: { findUnique: async () => attendanceShift },
     user: { findUnique: async () => ({ role: 'ADMIN', accountStatus: 'ACTIVE' }) },
     workDevice: {
       findUnique: async () => device,
@@ -46,16 +48,17 @@ function setup() {
     '@/lib/auth': { auth: async () => authorized ? { user: { id: 'admin' } } : null },
     '@/lib/roles': { ADMIN_ROLES: ['ADMIN'] },
     '@/lib/device-response': loadTS('lib/device-response.ts'),
+    '@/lib/device-metrics': loadTS('lib/device-metrics.ts'),
   };
   return {
-    events, device, changes, deny: () => { authorized = false; },
+    events, device, changes, deny: () => { authorized = false; }, setAttendance: (id) => { attendanceShift = id ? { id, startedAt: new Date(Date.now() - 60000) } : null; },
     admin: loadTS('app/api/device-admin/route.ts', dependencies),
     agent: loadTS('app/api/device-agent/route.ts', dependencies),
   };
 }
 const request = () => new Request('https://hub.test/api/device-admin?id=pc-one', { method: 'PATCH' });
 function heartbeat(source = 'WINDOWS', syncRequestId) {
-  return new Request('https://hub.test/api/device-agent', { method: 'POST', headers: { authorization: `Bearer ${'a'.repeat(64)}` }, body: JSON.stringify({ source, pcName: 'WORK-PC', consent: true, syncRequestId, events: [{ id: crypto.randomUUID(), type: source === 'WINDOWS' ? 'ACTIVE' : 'REFRESH', platform: source === 'WINDOWS' ? 'Windows' : 'Fiverr' }] }) });
+  return new Request('https://hub.test/api/device-agent', { method: 'POST', headers: { authorization: `Bearer ${'a'.repeat(64)}` }, body: JSON.stringify({ source, pcName: 'WORK-PC', consent: true, syncRequestId, events: [{ id: crypto.randomUUID(), observedAt: Date.now(), type: source === 'WINDOWS' ? 'ACTIVE' : 'REFRESH', platform: source === 'WINDOWS' ? 'Windows' : 'Fiverr' }] }) });
 }
 test('sync requests require an active admin and an unrevoked PC', async () => {
   const s = setup(); s.deny();
@@ -108,4 +111,27 @@ test('unauthorized users cannot rename or remove devices', async () => {
   assert.equal((await s.admin.PUT(new Request('https://hub.test/api/device-admin?id=pc-one', { method: 'PUT', body: JSON.stringify({ name: 'Changed' }) }))).status, 401);
   assert.equal((await s.admin.DELETE(new Request('https://hub.test/api/device-admin?id=pc-one&remove=true', { method: 'DELETE' }))).status, 401);
   assert.equal(s.changes.length, 0);
+});
+test('activity continues outside attendance and only open shifts receive attribution', async () => {
+  const s = setup();
+  await s.agent.POST(heartbeat());
+  assert.equal(s.events[0].shiftId, null);
+  s.setAttendance('employee-shift');
+  await s.agent.POST(heartbeat('BROWSER'));
+  assert.equal(s.events[1].shiftId, 'employee-shift');
+  s.setAttendance(null);
+  await s.agent.POST(heartbeat());
+  assert.equal(s.events[2].shiftId, null);
+  assert.equal(s.events.filter((e) => e.type === 'ACTIVE').length, 2);
+});
+test('queued pre-arrival and old untimestamped events stay device-only', async () => {
+  const s = setup(); s.setAttendance('new-employee-shift');
+  const body = await heartbeat('BROWSER').json();
+  body.events[0].observedAt = Date.now() - 120000;
+  await s.agent.POST(new Request('https://hub.test/api/device-agent', { method: 'POST', headers: { authorization: `Bearer ${'a'.repeat(64)}` }, body: JSON.stringify(body) }));
+  assert.equal(s.events[0].shiftId, null);
+  assert.equal('observedAt' in s.events[0], false);
+  delete body.events[0].observedAt; body.events[0].id = crypto.randomUUID();
+  await s.agent.POST(new Request('https://hub.test/api/device-agent', { method: 'POST', headers: { authorization: `Bearer ${'a'.repeat(64)}` }, body: JSON.stringify(body) }));
+  assert.equal(s.events[1].shiftId, null);
 });

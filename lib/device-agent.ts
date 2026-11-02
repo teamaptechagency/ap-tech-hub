@@ -7,13 +7,15 @@ export const agentBatchSchema = z.object({
   pcName: z.string().trim().min(1).max(80),
   consent: z.literal(true),
   syncRequestId: z.string().uuid().nullable().optional(),
+  appVersion: z.string().regex(/^\d+\.\d+\.\d+$/).max(32).optional(),
   events: z.array(z.object({
     id: z.string().uuid(),
-    type: z.enum(["ACTIVE", "IDLE", "PAUSED", "REFRESH", "NAVIGATION", "INTERACTIONS"]),
-    platform: z.enum(["Windows", "Fiverr", "Upwork", "Freelancer"]),
+    type: z.enum(["ACTIVE", "IDLE", "PAUSED", "REFRESH", "NAVIGATION", "INTERACTIONS", "HEARTBEAT"]),
+    platform: z.enum(["Windows", "Fiverr", "Upwork", "Freelancer", "Browser"]),
     clicks: z.number().int().min(0).max(10000).default(0),
     keys: z.number().int().min(0).max(10000).default(0),
     idleSeconds: z.number().int().min(0).max(86400).default(0),
+    observedAt: z.number().int().min(0).optional(),
   }).strict()).min(1).max(60),
 }).strict();
 

@@ -15,6 +15,7 @@ async function checkAdmin() {
 
 function revalidateGrowthPaths() {
   revalidatePath("/growth-roadmap");
+  revalidatePath("/work-station/growth");
   revalidatePath("/g/dashboard");
 }
 
