@@ -67,11 +67,29 @@ async function revokeDevice(request: Request) {
   if (!await allowed()) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const id = new URL(request.url).searchParams.get("id");
   if (!id) return Response.json({ error: "Device required" }, { status: 400 });
-  await prisma.workDevice.update({ where: { id }, data: { revoked: true, status: "REVOKED" } });
+  if (new URL(request.url).searchParams.get("remove") === "true") {
+    // The existing foreign key cascades event deletion; the credential disappears too.
+    await prisma.workDevice.delete({ where: { id } });
+  } else {
+    await prisma.workDevice.update({ where: { id }, data: { revoked: true, status: "REVOKED" } });
+  }
   return Response.json({ success: true });
+}
+async function renameDevice(request: Request) {
+  if (!await allowed()) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) return Response.json({ error: "Device required" }, { status: 400 });
+  let body: unknown;
+  try { body = await request.json(); }
+  catch { return Response.json({ error: "Send a valid JSON rename request" }, { status: 400 }); }
+  const input = z.object({ name: z.string().trim().min(1).max(80) }).strict().safeParse(body);
+  if (!input.success) return Response.json({ error: "Device name must contain 1–80 characters" }, { status: 400 });
+  await prisma.workDevice.update({ where: { id }, data: input.data });
+  return Response.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function GET(request: Request) { return handleDeviceRequest(() => getDevices(request)); }
 export async function POST(request: Request) { return handleDeviceRequest(() => createDevice(request)); }
 export async function DELETE(request: Request) { return handleDeviceRequest(() => revokeDevice(request)); }
 export async function PATCH(request: Request) { return handleDeviceRequest(() => requestSync(request)); }
+export async function PUT(request: Request) { return handleDeviceRequest(() => renameDevice(request)); }

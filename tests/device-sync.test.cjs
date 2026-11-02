@@ -22,11 +22,16 @@ function loadTS(file, overrides = {}) {
 const helpers = loadTS('lib/device-agent.ts');
 function setup() {
   const events = [];
+  const changes = [];
   let authorized = true;
   const device = { id: 'pc-one', revoked: false, pcName: 'WORK-PC' };
   const prisma = {
     user: { findUnique: async () => ({ role: 'ADMIN', accountStatus: 'ACTIVE' }) },
-    workDevice: { findUnique: async () => device, update: async () => device },
+    workDevice: {
+      findUnique: async () => device,
+      update: async ({ where, data }) => { changes.push({ action: 'update', where, data }); return { ...device, ...data }; },
+      delete: async ({ where }) => { changes.push({ action: 'delete', where }); return device; },
+    },
     workDeviceEvent: {
       findFirst: async ({ where }) => events.find((e) => e.deviceId === where.deviceId && e.source === where.source && e.type === where.type && e.createdAt >= where.createdAt.gte) || null,
       create: async ({ data }) => { const e = { ...data, createdAt: new Date() }; events.push(e); return e; },
@@ -43,7 +48,7 @@ function setup() {
     '@/lib/device-response': loadTS('lib/device-response.ts'),
   };
   return {
-    events, device, deny: () => { authorized = false; },
+    events, device, changes, deny: () => { authorized = false; },
     admin: loadTS('app/api/device-admin/route.ts', dependencies),
     agent: loadTS('app/api/device-agent/route.ts', dependencies),
   };
@@ -81,4 +86,26 @@ test('browser cannot acknowledge Windows sync and acknowledgements cannot modify
   s.events[0].deviceId = 'another-pc';
   await s.agent.POST(heartbeat('WINDOWS', requestId));
   assert.equal(s.events[0].type, 'SYNC_REQUEST');
+});
+test('rename changes only the display name and validates empty names and malformed JSON', async () => {
+  const s = setup();
+  const rename = (body) => new Request('https://hub.test/api/device-admin?id=pc-one', { method: 'PUT', body });
+  assert.equal((await s.admin.PUT(rename(JSON.stringify({ name: '  Sales PC  ' })))).status, 200);
+  assert.deepEqual(s.changes[0], { action: 'update', where: { id: 'pc-one' }, data: { name: 'Sales PC' } });
+  assert.equal((await s.admin.PUT(rename(JSON.stringify({ name: '  ' })))).status, 400);
+  assert.equal((await s.admin.PUT(rename('{'))).status, 400);
+  assert.equal(s.changes.length, 1);
+});
+test('remove deletes the selected device; ordinary revoke preserves it', async () => {
+  const s = setup();
+  assert.equal((await s.admin.DELETE(new Request('https://hub.test/api/device-admin?id=pc-one&remove=true', { method: 'DELETE' }))).status, 200);
+  assert.deepEqual(s.changes[0], { action: 'delete', where: { id: 'pc-one' } });
+  assert.equal((await s.admin.DELETE(new Request('https://hub.test/api/device-admin?id=pc-one', { method: 'DELETE' }))).status, 200);
+  assert.deepEqual(s.changes[1].data, { revoked: true, status: 'REVOKED' });
+});
+test('unauthorized users cannot rename or remove devices', async () => {
+  const s = setup(); s.deny();
+  assert.equal((await s.admin.PUT(new Request('https://hub.test/api/device-admin?id=pc-one', { method: 'PUT', body: JSON.stringify({ name: 'Changed' }) }))).status, 401);
+  assert.equal((await s.admin.DELETE(new Request('https://hub.test/api/device-admin?id=pc-one&remove=true', { method: 'DELETE' }))).status, 401);
+  assert.equal(s.changes.length, 0);
 });
