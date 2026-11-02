@@ -754,7 +754,9 @@ export async function requestReferralWithdrawal(input: {
   const context = await checkReferralPartner();
   if (!context) return { error: "Your partner profile is not active" };
 
-  const amount = parseFloat(input.amount);
+  const amountText = input.amount?.trim() || "";
+  if (!/^\d{1,9}(\.\d{1,2})?$/.test(amountText)) return { error: "Enter an amount with at most two decimal places" };
+  const amount = Number(amountText);
   if (!Number.isFinite(amount) || amount <= 0) {
     return { error: "Enter a valid withdrawal amount" };
   }
@@ -767,7 +769,7 @@ export async function requestReferralWithdrawal(input: {
   ]);
 
   if (minimum > 0 && amount < minimum) {
-    return { error: `Minimum withdrawal amount is ${minimum.toFixed(2)}` };
+    return { error: `Minimum AP Tech payout is USD ${minimum.toFixed(2)}. Smaller balances carry forward.` };
   }
   if (amount > balance.withdrawable + 0.01) {
     return {

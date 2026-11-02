@@ -37,6 +37,7 @@ export function BlogShell({
       {children}
 
       <footer className={compactFooter ? "border-t border-[#e8e3dc] bg-white" : "bg-[#101623] text-white"}>
+        <div className="mx-auto max-w-[1140px] px-4 py-4 text-sm"><Link href="/partners/payment-policy" className="underline">Referral Partner Payment &amp; Commission Policy</Link></div>
         {!compactFooter && (
         <div className="mx-auto grid max-w-[1140px] gap-8 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
           <div>

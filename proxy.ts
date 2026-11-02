@@ -61,6 +61,7 @@ const PUBLIC_EXACT_PATHS = [
   // Referral partner recruitment: the pitch and the application form are
   // public, since applicants have no account yet.
   "/partners",
+  "/partners/payment-policy",
   "/partners/apply",
   // Generated favicon routes. Search engines fetch these unauthenticated, so
   // redirecting them to /login would leave the site with no crawlable icon.

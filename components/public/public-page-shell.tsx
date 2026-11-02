@@ -44,6 +44,7 @@ const footerGroups = [
       ["Terms and Conditions", "/terms-and-conditions"],
       ["Refund Policy", "/refund-policy"],
       ["Payment Policy", "/payment-policy"],
+      ["Partner Payment Policy", "/partners/payment-policy"],
       ["Compliance", "/compliance"],
     ],
   },

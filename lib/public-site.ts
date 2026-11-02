@@ -14,7 +14,7 @@ export function publicSiteOrigin(value?: string | null): string {
 
 export const PUBLIC_CONTENT_PATHS = [
   "/", "/services", "/portfolio", "/team", "/about", "/contact", "/blog",
-  "/partners", "/company", "/compliance", "/client-documents", "/download",
+  "/partners", "/partners/payment-policy", "/company", "/compliance", "/client-documents", "/download",
   ...BUSINESS_POLICY_KEYS.map((slug) => `/${slug}`),
 ];
 

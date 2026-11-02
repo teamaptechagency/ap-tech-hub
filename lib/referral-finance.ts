@@ -1,3 +1,4 @@
+import { REFERRAL_MINIMUM_PAYOUT_USD } from "@/lib/referral-policy";
 import { prisma } from "@/lib/prisma";
 
 export const COMMISSION_PAYABLE_STATUSES = ["AVAILABLE", "APPROVED"] as const;
@@ -123,12 +124,12 @@ export async function getReferralPartnerBalance(partnerId: string) {
   const [commissions, withdrawals] = await Promise.all([
     prisma.referralCommission.groupBy({
       by: ["status", "currency"],
-      where: { partnerId },
+      where: { partnerId, currency: "USD" },
       _sum: { amount: true },
     }),
     prisma.referralWithdrawal.groupBy({
       by: ["status", "currency"],
-      where: { partnerId },
+      where: { partnerId, currency: "USD" },
       _sum: { amount: true },
     }),
   ]);
@@ -148,7 +149,7 @@ export async function getReferralPartnerBalance(partnerId: string) {
 
   for (const row of commissions) {
     const amount = Number(row._sum.amount ?? 0);
-    totals.currency = row.currency || totals.currency;
+
     if (row.status === "PENDING") totals.pending += amount;
     if (COMMISSION_PAYABLE_STATUSES.includes(row.status as never)) {
       totals.available += amount;
@@ -176,12 +177,5 @@ export async function getReferralPartnerBalance(partnerId: string) {
 }
 
 export async function getMinimumReferralWithdrawal() {
-  const setting = await prisma.setting
-    .findUnique({
-      where: { key: "referral.minimumWithdrawalAmount" },
-      select: { value: true },
-    })
-    .catch(() => null);
-  const amount = Number(setting?.value ?? 0);
-  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+  return REFERRAL_MINIMUM_PAYOUT_USD;
 }

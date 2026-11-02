@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ReferralWithdrawalForm } from "@/components/referral/referral-withdrawal-form";
@@ -36,6 +37,7 @@ export default async function ReferralWithdrawalsPage() {
           Withdrawal requests become available once AP Tech approves payable commission.
         </p>
       </div>
+      <section className="rounded-xl border bg-card p-5 text-sm leading-7"><h2 className="font-semibold">Choose your payment arrangement</h2><p><strong>Option A — Keep your commission:</strong> agree collection first, retain your share and remit AP Tech’s balance. Notify Partnership/Accounts for reconciliation. No $50 minimum; do not request a second payout for the retained amount.</p><p><strong>Option B — Receive from AP Tech:</strong> verified USD commission is payable from $50. Smaller balances carry forward. Confirm eligible payment methods and fees before requesting.</p><Link href="/partners/payment-policy" className="text-primary underline">Full policy</Link> · <Link href="/r/support" className="text-primary underline">Arrange collection / payment help</Link></section>
       <Card>
         <CardHeader>
           <CardTitle>Request withdrawal</CardTitle>

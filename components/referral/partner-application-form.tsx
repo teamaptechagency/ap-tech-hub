@@ -218,6 +218,7 @@ export function PartnerApplicationForm() {
         and your commission, and sets the account up afterwards.
       </p>
 
+      <p className="text-xs leading-6 text-[#6b7280]">Review the <a href="/partners/payment-policy" target="_blank" rel="noopener noreferrer" className="underline">Payment &amp; Commission Policy</a>. The 10%–20% rate or custom margin is agreed before project confirmation.</p>
       <button
         type="submit"
         disabled={pending}

@@ -526,6 +526,7 @@ const footerGroups = [
       ["Terms and Conditions", "/terms-and-conditions"],
       ["Refund Policy", "/refund-policy"],
       ["Payment Policy", "/payment-policy"],
+      ["Partner Payment Policy", "/partners/payment-policy"],
       ["Compliance", "/compliance"],
     ],
   },
@@ -3329,6 +3330,7 @@ export function LandingPage({
               <Link href="/refund-policy" className="text-xs text-[#9aa3b3] hover:text-white">
                 Refund Policy
               </Link>
+              <Link href="/partners/payment-policy" className="text-xs text-[#9aa3b3] hover:text-white">Partner Payment Policy</Link>
               <Link href="/cookie-policy" className="text-xs text-[#9aa3b3] hover:text-white">
                 Cookie Policy
               </Link>

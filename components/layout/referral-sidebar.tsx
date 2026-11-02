@@ -48,6 +48,7 @@ export const referralNavItems: ReferralNavItem[] = [
   { label: "Submit a client", href: "/r/submit", icon: UserPlus, ready: true },
   { label: "My referrals", href: "/r/referrals", icon: Users, ready: true },
   { label: "Commission", href: "/r/commission", icon: Coins, ready: true },
+  { label: "Payment & commission policy", href: "/partners/payment-policy", icon: FileText, ready: true },
   { label: "Withdrawals", href: "/r/withdrawals", icon: Wallet, ready: true },
   { label: "Documents", href: "/r/documents", icon: FileText, ready: true },
   { label: "Team", href: "/r/team", icon: UserCog, ready: true },

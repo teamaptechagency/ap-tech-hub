@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,7 +45,7 @@ export default async function ReferralCommissionPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6"><p className="rounded-lg border p-4 text-sm text-muted-foreground">Summary balances are USD only. Other currencies remain in individual records; contact Partnership for an agreed conversion. Rates are project-specific, usually 10%–20%; direct-retention amounts must not be paid twice. <Link href="/partners/payment-policy" className="text-primary underline">Payment &amp; commission policy</Link></p>
       <div>
         <h1 className="text-2xl font-bold">Commission</h1>
         <p className="text-sm text-muted-foreground">

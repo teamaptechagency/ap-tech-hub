@@ -153,7 +153,7 @@ export default async function PartnersPage() {
                   Discounts and commission
                 </h3>
                 <p className="mt-2 text-sm leading-7 text-[#6b7280]">
-                  Clients who come through a partner receive a discount, and
+                  Referral partners can earn 10%–20% depending on project type, value and scope. Where agreed, referred clients receive a discount, and
                   partners earn a commission percentage on the work delivered.
                   The exact figures are agreed with you before you start — they
                   are not one-size-fits-all.
@@ -161,10 +161,11 @@ export default async function PartnersPage() {
                 <p className="mt-2 text-sm leading-7 text-[#6b7280]">
                   Commission becomes available once the client has paid and
                   that payment has been approved. If a client pays in
-                  instalments, commission is released alongside them.
+                  instalments, commission is released alongside them. With prior agreement, you can instead collect the client payment, retain your agreed share and remit the remainder. AP Tech-sent USD payouts have a $50 minimum; direct retention does not.
                 </p>
               </div>
 
+              <Link href="/partners/payment-policy" className="block rounded-2xl border border-[#e8e3dc] p-5 font-semibold text-[#c6613f]">Read all partner payment, commission and custom profit terms →</Link>
               <div className="rounded-2xl border border-[#e8e3dc] p-5">
                 <h3 className="font-extrabold text-[#101623]">
                   What each side does
@@ -192,6 +193,7 @@ export default async function PartnersPage() {
           </div>
         </div>
       </section>
+      <section className="border-t border-[#e8e3dc] bg-[#faf8f5] px-4 py-12"><div className="mx-auto max-w-[1140px]"><h2 className="text-2xl font-extrabold text-[#101623]">Partner payments &amp; policies</h2><p className="mt-4 max-w-3xl text-sm leading-7 text-[#6b7280]">Agree a 10%–20% commission or custom profit before your project starts. Collect and retain your agreed share, or receive a payout from AP Tech after the client payment is verified. AP Tech-sent USD payouts start at $50; smaller balances carry forward. Direct retention has no minimum and must be reconciled with our team.</p><Link href="/partners/payment-policy" className="mt-5 inline-flex rounded-lg bg-[#c6613f] px-5 py-3 text-sm font-bold text-white">Read Payment &amp; Commission Policy →</Link><Link href="/contact" className="ml-4 inline-flex py-3 text-sm font-semibold text-[#c6613f]">Ask our Partnership Team</Link></div></section>
     </BlogShell>
   );
 }
