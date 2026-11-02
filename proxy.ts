@@ -36,6 +36,7 @@ const PUBLIC_EXACT_PATHS = [
   "/downloads/work-tracker/APTechWorkTracker.exe",
   "/downloads/work-tracker/APTechWorkTrackerSetup.exe",
   "/downloads/work-tracker/APTechWorkTracker-Pilot.zip",
+  "/downloads/work-tracker/APTechChromeExtension.zip",
   "/downloads/work-tracker/release.json",
   // Device agents use their own revocable bearer credential, not login cookies.
   "/api/device-agent",

@@ -31,7 +31,8 @@ async function getDevices(request: Request) {
   const window = refreshWindow(params.get("from"), params.get("to"));
   if (!window) return Response.json({ error: "Choose a valid time range up to 31 days" }, { status: 400 });
   const id = params.get("id");
-  const devices = await prisma.workDevice.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, employee: true, pcName: true, revoked: true, status: true, lastSeenAt: true, lastWindowsAt: true, lastBrowserAt: true, appVersion: true, extensionVersion: true } });
+  const rows = await prisma.workDevice.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, employee: true, pcName: true, revoked: true, status: true, lastSeenAt: true, lastWindowsAt: true, lastBrowserAt: true, appVersion: true, extensionVersion: true, events: { where: { source: "BROWSER", type: "HEARTBEAT" }, orderBy: { createdAt: "desc" }, take: 1, select: { platform: true } } } });
+  const devices = rows.map(({ events, ...device }) => ({ ...device, browserName: events[0]?.platform || null }));
   if (!id) return Response.json({ devices }, { headers: { "Cache-Control": "no-store" } });
   const syncRequest = await prisma.workDeviceEvent.findFirst({ where: { deviceId: id, source: "SYSTEM", type: { in: ["SYNC_REQUEST", "SYNCED"] } }, orderBy: { createdAt: "desc" }, select: { id: true, type: true, createdAt: true } });
   const where = { deviceId: id, createdAt: { gte: window.start, lt: window.end } };

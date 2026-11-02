@@ -26,7 +26,8 @@ chrome.alarms.create("sync", { periodInMinutes: 0.5 });
 chrome.alarms.onAlarm.addListener(() => serial(async () => {
   const data = await chrome.storage.local.get(["enabled", "queue", "token", "pcName"]);
   if (!data.enabled || !data.token || !data.pcName) return;
-  const events = data.queue?.length ? data.queue.slice(0, 60) : [{ id: crypto.randomUUID(), observedAt: Date.now(), type: "HEARTBEAT", platform: "Browser" }];
+  const browserName = /Edg\//.test(navigator.userAgent) ? "Edge" : "Chrome";
+  const events = [...(data.queue || []).slice(0, 59), { id: crypto.randomUUID(), observedAt: Date.now(), type: "HEARTBEAT", platform: browserName }];
   try {
     const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.token}` }, body: JSON.stringify({ source: "BROWSER", pcName: data.pcName, consent: true, appVersion: chrome.runtime.getManifest().version, events }), signal: AbortSignal.timeout(15000) });
     if ([401, 403].includes(response.status)) { await chrome.storage.local.set({ enabled: false, queue: [], lastError: "Credential rejected. Tracking paused." }); await badge(); return; }

@@ -11,7 +11,7 @@ export const agentBatchSchema = z.object({
   events: z.array(z.object({
     id: z.string().uuid(),
     type: z.enum(["ACTIVE", "IDLE", "PAUSED", "REFRESH", "NAVIGATION", "INTERACTIONS", "HEARTBEAT"]),
-    platform: z.enum(["Windows", "Fiverr", "Upwork", "Freelancer", "Browser"]),
+    platform: z.enum(["Windows", "Fiverr", "Upwork", "Freelancer", "Browser", "Chrome", "Edge"]),
     clicks: z.number().int().min(0).max(10000).default(0),
     keys: z.number().int().min(0).max(10000).default(0),
     idleSeconds: z.number().int().min(0).max(86400).default(0),

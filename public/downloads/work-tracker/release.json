@@ -3,6 +3,8 @@
   "publishedDate": "2026-11-02",
   "exeSha256": "39ee47b5835891f8106c450994c33a8105cb8651a94a0d9609cacef9a23b71cf",
   "installerSha256": "0dd99f623ed0ab1399cc83ceb851278fcf048b3edfe19fc021d0c1af119e2372",
-  "packageSha256": "cc651ee9892047532a3e10cda7131bc58bbe6a025d811ef1195edc4dfe29fe22",
-  "releaseNotes": "Work Station: employee attendance with three Dhaka shifts and eight-hour timer.\nMorning primary and evening fallback share one daily task; night has no checklist.\nHold/Cancel with reasons, actor history and unresolved backlog.\nEmployee daily/weekly/monthly/yearly records, shift logs, work links and CSV.\nRequires updated server storage and extension 0.2.0."
+  "packageSha256": "19156c72836638bab7dd3e0634a81e009981c09ff36530cb1b83c71c2803839f",
+  "releaseNotes": "Work Station: employee attendance with three Dhaka shifts and eight-hour timer.\nMorning primary and evening fallback share one daily task; night has no checklist.\nHold/Cancel with reasons, actor history and unresolved backlog.\nEmployee daily/weekly/monthly/yearly records, shift logs, work links and CSV.\nRequires updated server storage and extension 0.2.0.",
+  "extensionVersion": "0.2.1",
+  "extensionSha256": "44694f1c8c55c062060ba46512d8f6b4bc166b4426e3b62c0e6e0496d161493c"
 }

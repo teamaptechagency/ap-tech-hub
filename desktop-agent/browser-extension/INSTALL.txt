@@ -1,0 +1,19 @@
+AP Tech Chrome / Edge extension 0.2.1
+
+1. Extract this ZIP into a permanent folder.
+2. In Chrome open chrome://extensions (Edge: edge://extensions).
+3. Turn on Developer mode and choose Load unpacked.
+4. Select the extracted folder containing manifest.json.
+5. Pin AP Tech Visible Work Tracker. Open its icon.
+6. Enter the PC name and that PC's credential from Work Station.
+7. Read the notice and explicitly enable the work session.
+
+The panel receives browser identity (Chrome/Edge), health heartbeats and
+approved work-site refresh/interaction counts. The full user-agent is not
+uploaded. No message text, passwords or clipboard contents are recorded.
+Browser restart requires enabling the work session again.
+
+This archive contains extension files only, with no Windows EXE or installer.
+It is an unpacked development extension, not a Chrome Web Store release.
+Do not disable Safe Browsing or endpoint protection to install it. If Chrome
+flags the archive, wait for the check and review its result; do not ignore it.
