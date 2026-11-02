@@ -1,7 +1,8 @@
 {
-  "version": "0.3.1",
+  "version": "0.3.2",
   "publishedDate": "2026-11-02",
-  "exeSha256": "ce32582ec96a0ed2ddc0f8dff49acad24a0d8211368b31492e1d54dc7317c10c",
-  "installerSha256": "4861144b110fd8cb681bf4e34dd019d55729bf924df0f5b985e594b64a43e009",
-  "packageSha256": "5803da024cf4826bfaf5bd07103684fbab3e3c9d8700505664d8c03b6eff2550"
+  "exeSha256": "48b78c05f20ab52478b6604e1bf99c554453bbab2d5e6403088a0e422bfc384a",
+  "installerSha256": "0d69d3a27768e48f290b0843d6a8db226f0fe277c8ed852e218a01626ba8d416",
+  "packageSha256": "e66b670e0864757c16d39ba4446468aeeb32a7dd6f2712f06dad13338d85b3ca",
+  "releaseNotes": "In-app update download with SHA-256 verification.\nCurrent/new version and release notes with Update now / Later.\nVisible installer preserves settings; close button keeps the tracker in the tray."
 }

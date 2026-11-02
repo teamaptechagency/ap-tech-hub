@@ -12,7 +12,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 public class WorkAgent : Form {
-    const string AppVersion = "0.3.1";
+    const string AppVersion = "0.3.2";
     [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint size; public uint time; }
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     readonly TextBox url = new TextBox(), token = new TextBox();
@@ -50,15 +50,33 @@ public class WorkAgent : Form {
         update.Click += async (s,e) => {
             update.Enabled = false;
             try {
-                var text = await client.GetStringAsync("https://www.aptechagency.com/downloads/work-tracker/release.json");
+                var text = await client.GetStringAsync("https://www.aptechagency.com/downloads/work-tracker/release.json?check=" + DateTime.UtcNow.Ticks);
                 var release = json.Deserialize<Dictionary<string, object>>(text);
                 Version latest; if (!release.ContainsKey("version") || !Version.TryParse(Convert.ToString(release["version"]), out latest)) throw new Exception();
                 if (latest <= new Version(AppVersion)) { MessageBox.Show("You have the current version: " + AppVersion); return; }
-                if (MessageBox.Show("Version " + latest + " is available. Open the official download page? Close this app before replacing the EXE. No update will run automatically.", "Software update", MessageBoxButtons.YesNo) == DialogResult.Yes) {
-                    Process.Start(new ProcessStartInfo("https://www.aptechagency.com/work-tracker") { UseShellExecute = true });
+                string notes = release.ContainsKey("releaseNotes") ? Convert.ToString(release["releaseNotes"]) : "Improvements and fixes. See the official download page for details.";
+                if (notes.Length > 4000) notes = notes.Substring(0, 4000);
+                if (!ConfirmUpdate(latest.ToString(), notes)) return;
+                string expected = release.ContainsKey("installerSha256") ? Convert.ToString(release["installerSha256"]) : "";
+                if (!System.Text.RegularExpressions.Regex.IsMatch(expected, "^[a-fA-F0-9]{64}$")) throw new Exception("Release is missing its installer verification hash.");
+                update.Text = "Downloading update...";
+                byte[] binary;
+                using (var downloader = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })) {
+                    downloader.Timeout = TimeSpan.FromMinutes(2); downloader.MaxResponseContentBufferSize = 16 * 1024 * 1024;
+                    using (var response = await downloader.GetAsync("https://www.aptechagency.com/downloads/work-tracker/APTechWorkTrackerSetup.exe?version=" + latest)) {
+                        response.EnsureSuccessStatusCode(); binary = await response.Content.ReadAsByteArrayAsync();
+                    }
                 }
-            } catch { MessageBox.Show("Could not check updates. Visit https://www.aptechagency.com/work-tracker"); }
-            finally { update.Enabled = true; }
+                VerifyInstaller(binary, expected);
+                if (IsDisposed || Disposing) return;
+                string updateFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "APTechWorkAgent", "Updates", Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(updateFolder);
+                string installer = Path.Combine(updateFolder, "APTechWorkTrackerSetup.exe"); File.WriteAllBytes(installer, binary);
+                // Keep the installer visible: the employee reviews its notice and clicks Install.
+                Process.Start(new ProcessStartInfo(installer) { UseShellExecute = true });
+                exitRequested = true; Close();
+            } catch (Exception ex) { if (!IsDisposed) MessageBox.Show("Update was not installed: " + ex.Message + "\nYou can retry or visit https://www.aptechagency.com/work-tracker"); }
+            finally { if (!update.IsDisposed) { update.Enabled = true; update.Text = "Check for software updates"; } }
         }; Controls.Add(update);
         tray.Icon = SystemIcons.Application; tray.Text = "AP Tech Work Tracker - paused"; tray.Visible = true;
         var menu = new ContextMenuStrip(); menu.Items.Add("Open tracker", null, (s,e) => { Show(); WindowState = FormWindowState.Normal; Activate(); }); menu.Items.Add("Pause tracking", null, (s,e) => Pause()); menu.Items.Add("Exit", null, (s,e) => { exitRequested = true; Close(); }); tray.ContextMenuStrip = menu;
@@ -75,6 +93,23 @@ public class WorkAgent : Form {
         };
         LoadConfig();
         Shown += (s,e) => { if (autoResume.Checked && consent.Checked) start.PerformClick(); };
+    }
+    static void VerifyInstaller(byte[] binary, string expected) {
+        string actual; using (var sha = SHA256.Create()) actual = BitConverter.ToString(sha.ComputeHash(binary)).Replace("-", "");
+        if (!String.Equals(actual, expected, StringComparison.OrdinalIgnoreCase)) throw new Exception("Installer verification failed. The release may still be deploying. Try again later.");
+    }
+    bool ConfirmUpdate(string latest, string notes) {
+        using (var dialog = new Form()) {
+            dialog.Text = "New update available"; dialog.ClientSize = new Size(520, 370); dialog.StartPosition = FormStartPosition.CenterParent;
+            dialog.FormBorderStyle = FormBorderStyle.FixedDialog; dialog.MaximizeBox = false; dialog.MinimizeBox = false; dialog.Font = Font;
+            var versions = new Label { Text = "Current version: " + AppVersion + "    New version: " + latest, Left = 20, Top = 20, Width = 480, Height = 30 };
+            var changes = new TextBox { Text = notes, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Left = 20, Top = 60, Width = 480, Height = 180 };
+            var notice = new Label { Text = "Downloads and verifies the official installer, then closes this app.\nReview the installer and click Install. Windows may request approval.", Left = 20, Top = 252, Width = 480, Height = 55 };
+            var now = new Button { Text = "Update now", DialogResult = DialogResult.OK, Left = 20, Top = 320, Width = 230, Height = 32 };
+            var later = new Button { Text = "Later", DialogResult = DialogResult.Cancel, Left = 270, Top = 320, Width = 230, Height = 32 };
+            dialog.Controls.AddRange(new Control[] { versions, changes, notice, now, later }); dialog.AcceptButton = now; dialog.CancelButton = later;
+            return dialog.ShowDialog(this) == DialogResult.OK;
+        }
     }
     void AddLabel(string text, int x, int y, int w, int h, int size) { var l = new Label(); l.Text = text; l.SetBounds(x,y,w,h); l.Font = new Font("Segoe UI", size); Controls.Add(l); }
     bool ValidateSettings() {

@@ -1,4 +1,4 @@
-# AP Tech Work Tracker 0.3.1 setup
+# AP Tech Work Tracker 0.3.2 setup
 
 Run APTechWorkTrackerSetup.exe. The installer displays a monitoring notice, installs for the current Windows user, and offers a clearly labeled Windows sign-in startup option. A desktop and Start menu shortcut are created. No admin rights, hidden service or security bypass are used. Re-run Setup and select Uninstall to remove the app and saved credential after exiting the tracker.
 
@@ -8,7 +8,7 @@ Unsigned executables can trigger SmartScreen. Do not disable Windows protections
 
 # AP Tech visible work tracker
 
-Version 0.3.1 includes an unsigned per-user installer. Windows 10/11 with .NET Framework 4.5+ (normally present) is required. It does not install a service, conceal itself or generate marketplace activity.
+Version 0.3.2 includes an unsigned per-user installer. Windows 10/11 with .NET Framework 4.5+ (normally present) is required. It does not install a service, conceal itself or generate marketplace activity.
 
 ## Deploy the Hub first
 
@@ -40,7 +40,7 @@ Click a PC card to view its own logs. From/To inputs explicitly use Bangladesh t
 
 Event IDs deduplicate retries. Data is timestamped when received by Hub, so delayed extension retries do not represent original event time. Extension retry queue is bounded to 120; oldest events are dropped when full, with a sync warning. History is not guaranteed during network failures. Browser SPA navigation without a committed document load is not counted in this pilot. Windows idle heartbeats are snapshots, not exact billable work durations. No retention cleanup is installed yet; set a retention policy before broad rollout.
 
-Revoke a credential from the PC detail page to block new ingestion while preserving history. Replacement requires a new device enrollment. No remote commands, screen capture, clipboard logging or executable updates are implemented.
+Revoke a credential from the PC detail page to block new ingestion while preserving history. Replacement requires a new device enrollment. No remote commands, screen capture or clipboard logging are implemented.
 
 ## Acceptance check before employee rollout
 
@@ -55,4 +55,4 @@ Live installation and Windows startup have not been tested on an employee PC. Th
 
 ## Website downloads and updates
 
-Device Activity main panel has Windows installer and App + extension download buttons. Public setup page: /work-tracker. Release metadata and artifacts are under public/downloads/work-tracker. For each new release, bump AppVersion, rebuild, regenerate all three artifact SHA-256 values and release.json, then deploy together. The app checks the fixed official HTTPS release endpoint and offers the official setup page; no binary is silently replaced or executed. PCs need outbound HTTPS only, on any network that permits the Hub domain. Server migrations still need to run before real enrollment works.
+Device Activity main panel has Windows installer and App + extension download buttons. Public setup page: /work-tracker. Release metadata and artifacts are under public/downloads/work-tracker. For each new release, bump AppVersion, rebuild, regenerate all three artifact SHA-256 values and release.json, then deploy together. Version 0.3.2+ shows current/new versions and release notes with Update now / Later. Update now downloads the fixed official HTTPS installer (maximum 16 MB, no redirects), checks SHA-256 against release metadata and opens the visible installer before exiting. The user reviews the notice and clicks Install; settings are preserved. A failed download or hash mismatch leaves the app running. Windows security prompts remain. Versions 0.3.0/0.3.1 need one manual installation of 0.3.2 to get this feature. Release metadata and installer share a host, so SHA-256 is an integrity check, not publisher signing. PCs need outbound HTTPS only, on any network that permits the Hub domain. Server migrations still need to run before real enrollment works.
