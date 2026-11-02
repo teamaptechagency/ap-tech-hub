@@ -12,7 +12,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 public partial class WorkAgent : Form {
-    const string AppVersion = "0.5.0";
+    const string AppVersion = "0.5.1";
     [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint size; public uint time; }
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     readonly TextBox url = new TextBox(), token = new TextBox();
@@ -40,6 +40,7 @@ public partial class WorkAgent : Form {
         }
     }
     public WorkAgent() {
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
         Text = "AP Tech Work Tracker " + AppVersion; ClientSize = new Size(560, 540); MinimumSize = new Size(576, 579);
         BackColor = Color.FromArgb(16, 22, 32); ForeColor = Color.White; Font = new Font("Segoe UI", 10);
         AddLabel("AP TECH  /  WORK TRACKER", 24, 20, 510, 26, 15);
@@ -87,7 +88,7 @@ public partial class WorkAgent : Form {
             } catch (Exception ex) { if (!IsDisposed) MessageBox.Show("Update was not installed: " + ex.Message + "\nYou can retry or visit https://www.aptechagency.com/work-tracker"); }
             finally { if (!update.IsDisposed) { update.Enabled = true; update.Text = "Check for software updates"; } }
         }; update.Click += async (s,e) => await checkUpdates(); Controls.Add(update);
-        tray.Icon = SystemIcons.Application; tray.Text = "AP Tech Work Tracker - paused"; tray.Visible = true;
+        tray.Icon = Icon; tray.Text = "AP Tech Work Tracker - paused"; tray.Visible = true;
         var menu = new ContextMenuStrip(); menu.Items.Add("Open tracker", null, (s,e) => { Show(); WindowState = FormWindowState.Normal; Activate(); }); menu.Items.Add("Pause tracking", null, (s,e) => Pause()); menu.Items.Add("Exit", null, (s,e) => { exitRequested = true; Close(); }); tray.ContextMenuStrip = menu;
         tray.DoubleClick += (s,e) => { Show(); WindowState = FormWindowState.Normal; Activate(); };
         timer.Interval = 30000; timer.Tick += async (s,e) => { if (tracking) await Send(false); };

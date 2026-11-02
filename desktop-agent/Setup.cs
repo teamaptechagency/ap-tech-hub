@@ -10,7 +10,8 @@ public class Setup : Form {
     readonly string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "APTechWorkTracker");
     [STAThread] static void Main() { Application.EnableVisualStyles(); Application.Run(new Setup()); }
     Setup() {
-        Text = "Install AP Tech Work Station 0.5.0 (Windows x64)"; ClientSize = new Size(560, 350); FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; Font = new Font("Segoe UI", 10);
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
+        Text = "Install AP Tech Work Station 0.5.1 (Windows x64)"; ClientSize = new Size(560, 350); FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; Font = new Font("Segoe UI", 10);
         var title = new Label { Text = "AP Tech Work Tracker", Left = 24, Top = 24, Width = 510, Height = 35, Font = new Font("Segoe UI", 18, FontStyle.Bold) }; Controls.Add(title);
         var notice = new Label { Text = "Installs for this Windows user, without administrator rights.\nSends PC name and active/idle status to AP Tech Hub. Browser\nrefresh counts require the separate visible extension.\nNo background typed text, passwords, screenshots or clipboard is read.\nThe app and its tray icon remain visible. Pause or exit anytime.", Left = 24, Top = 75, Width = 510, Height = 115 }; Controls.Add(notice);
         startup.Text = "Open the tracker automatically when I sign in to Windows"; startup.SetBounds(24, 203, 510, 32); startup.Checked = true; Controls.Add(startup);
