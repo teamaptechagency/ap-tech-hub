@@ -3,12 +3,11 @@
 import {
   ArrowLeft,
   BarChart3,
-  Eye,
   FileText,
   ImageUp,
   Plus,
-  Save,
   Search,
+  Save,
   Tags,
   Trash2,
 } from "lucide-react";
@@ -24,9 +23,9 @@ import {
   saveBlogPost,
   setBlogPostStatus,
 } from "@/actions/blog.actions";
+import { BlogImageButton } from "@/components/blog/blog-image-button";
 import { RichTextEditor } from "@/components/blog/rich-text-editor";
 import {
-  buildBlogExcerpt,
   estimateReadingMinutes,
   slugifyBlogTitle,
 } from "@/lib/blog-content";
@@ -37,7 +36,6 @@ import type {
   BlogVisibilityValue,
 } from "@/lib/blog";
 import {
-  searchInternalLinkTargets,
   type InternalLinkTarget,
 } from "@/lib/internal-link-targets";
 
@@ -106,22 +104,8 @@ type EditorState = {
   showViewCount: boolean;
 };
 
-// Google truncates around these widths, so the editor scores against them.
-const TITLE_TARGET = { min: 30, max: 60 };
-const DESCRIPTION_TARGET = { min: 120, max: 160 };
 
-const CONTENT_PLACEHOLDER = `## Start with the question your customer types into Google
 
-Write a short answer in the first paragraph.
-
-### Supporting point
-
-- Keep list items short
-- Link to a service page: [Web development](/services)
-
-> Pull out the single line worth quoting.
-
-![Describe the image for screen readers and image search](https://example.com/image.jpg)`;
 
 const STATUS_OPTIONS: { value: BlogStatusValue; label: string }[] = [
   { value: "DRAFT", label: "Draft" },
@@ -180,8 +164,8 @@ function toEditor(post: AdminBlogPost): EditorState {
     keywords: post.keywords ?? "",
     // Posts written before the keyword split fall back to the legacy field so
     // their existing term is not silently dropped on the next save.
-    primaryKeyword: post.primaryKeyword ?? "",
-    secondaryKeywords: post.secondaryKeywords ?? "",
+    primaryKeyword: post.primaryKeyword || post.tags[0] || "",
+    secondaryKeywords: (post.secondaryKeywords ? post.secondaryKeywords.split(",") : post.tags.filter(tag => tag.toLowerCase() !== (post.primaryKeyword || post.tags[0] || "").toLowerCase())).map(tag => tag.trim()).filter(Boolean).slice(0, 5).join(", "),
     targetAudience: post.targetAudience ?? "",
     canonicalUrl: post.canonicalUrl ?? "",
     ogImageUrl: post.ogImageUrl ?? "",
@@ -190,142 +174,6 @@ function toEditor(post: AdminBlogPost): EditorState {
     visibility: post.visibility,
     showViewCount: post.showViewCount,
   };
-}
-
-/**
- * Attaches pages from the public site to a post.
- *
- * Blog posts are usually where organic traffic lands, so pointing them at the
- * pages that convert is the whole reason to write them. Typing a keyword
- * searches the live landing content — services included — so an author finds
- * "wordpress" without scanning a wall of buttons or typing a URL that 404s.
- */
-function InternalLinksField({
-  value,
-  onChange,
-  targets,
-}: {
-  value: BlogInternalLink[];
-  onChange: (links: BlogInternalLink[]) => void;
-  targets: InternalLinkTarget[];
-}) {
-  const [query, setQuery] = useState("");
-
-  const chosen = new Set(value.map((link) => `${link.href}::${link.label}`));
-  const matches = useMemo(
-    () => searchInternalLinkTargets(targets, query),
-    [targets, query]
-  );
-
-  function add(link: BlogInternalLink) {
-    if (chosen.has(`${link.href}::${link.label}`)) return;
-    onChange([...value, { label: link.label, href: link.href }]);
-    setQuery("");
-  }
-
-  function remove(link: BlogInternalLink) {
-    onChange(
-      value.filter(
-        (item) => !(item.href === link.href && item.label === link.label)
-      )
-    );
-  }
-
-  const typedPath = query.trim().startsWith("/") ? query.trim() : "";
-
-  return (
-    <div className="grid gap-2 text-sm">
-      <div>
-        <span className="font-medium">Internal links</span>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Type a keyword to find a page or service. Selected links show at the
-          end of the post.
-        </p>
-      </div>
-
-      <input
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search pages and services, e.g. wordpress, seo, contact"
-        className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
-      />
-
-      {matches.length > 0 ? (
-        <ul className="max-h-56 overflow-y-auto rounded-md border">
-          {matches.map((target) => {
-            const already = chosen.has(`${target.href}::${target.label}`);
-            return (
-              <li key={target.group + target.href + target.label}>
-                <button
-                  type="button"
-                  disabled={already}
-                  onClick={() => add(target)}
-                  className={`flex w-full items-center justify-between gap-3 border-b px-3 py-2 text-left text-xs transition last:border-b-0 ${
-                    already ? "cursor-not-allowed opacity-50" : "hover:bg-muted"
-                  }`}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">
-                      {target.label}
-                    </span>
-                    <span className="block truncate font-mono text-muted-foreground">
-                      {target.href}
-                    </span>
-                  </span>
-                  <span className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
-                    {already ? "added" : target.group}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <p className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-          No page matched that word. Try another, or type a path starting with /.
-        </p>
-      )}
-
-      {typedPath ? (
-        <button
-          type="button"
-          onClick={() => add({ label: typedPath, href: typedPath })}
-          className="rounded-md border px-3 py-1.5 text-xs font-medium transition hover:bg-muted"
-        >
-          Add {typedPath} as a link
-        </button>
-      ) : null}
-
-      {value.length > 0 && (
-        <div className="grid gap-1.5 rounded-md border bg-muted/30 p-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            Attached ({value.length})
-          </span>
-          {value.map((link) => (
-            <div
-              key={link.href + link.label}
-              className="flex items-center justify-between gap-2 text-xs"
-            >
-              <span className="truncate">
-                {link.label}{" "}
-                <span className="font-mono text-muted-foreground">
-                  {link.href}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => remove(link)}
-                className="shrink-0 text-muted-foreground transition hover:text-destructive"
-                aria-label={`Remove ${link.label}`}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 function Field({
@@ -375,74 +223,18 @@ function Field({
   );
 }
 
-/**
- * Meta title/description only help if they actually fit in the search result,
- * so the counter turns amber outside the useful range.
- */
-function CountedField({
-  label,
-  value,
-  onChange,
-  target,
-  placeholder,
-  hint,
-  textarea,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  target: { min: number; max: number };
-  placeholder?: string;
-  hint?: string;
-  textarea?: boolean;
-}) {
-  const length = value.trim().length;
-  const status =
-    length === 0
-      ? "text-muted-foreground"
-      : length < target.min || length > target.max
-        ? "text-amber-600"
-        : "text-emerald-600";
-
-  return (
-    <div className="grid gap-1.5 text-sm">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium">{label}</span>
-        <span className={`text-xs font-semibold ${status}`}>
-          {length}/{target.max}
-        </span>
-      </div>
-      {textarea ? (
-        <textarea
-          value={value}
-          rows={3}
-          placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
-          className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
-        />
-      ) : (
-        <input
-          value={value}
-          placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
-          className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
-        />
-      )}
-      {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
-    </div>
-  );
-}
-
 function ImageField({
   label,
   value,
   onChange,
   hint,
+  onBusyChange,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   hint?: string;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [uploading, setUploading] = useState(false);
 
@@ -453,14 +245,14 @@ function ImageField({
       return;
     }
 
-    setUploading(true);
+    setUploading(true); onBusyChange?.(true);
     const formData = new FormData();
     formData.append("file", file);
     formData.append("visibility", "public");
     formData.append("assetKind", "blog-image");
 
     try {
-      const response = await fetch("/api/upload", {
+      const response = await fetch("/api/blog-image", {
         method: "POST",
         body: formData,
       });
@@ -478,7 +270,7 @@ function ImageField({
       console.error("Blog image upload failed:", error);
       toast.error("Image upload failed");
     } finally {
-      setUploading(false);
+      setUploading(false); onBusyChange?.(false);
     }
   }
 
@@ -496,6 +288,7 @@ function ImageField({
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          aria-label={label}
           placeholder="Image URL or attached image link"
           className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
         />
@@ -504,7 +297,7 @@ function ImageField({
           {uploading ? "Uploading..." : "Attach"}
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/avif"
             disabled={uploading}
             onChange={(event) =>
               void uploadImage(event.currentTarget.files?.[0] ?? null)
@@ -515,35 +308,6 @@ function ImageField({
       </div>
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
-  );
-}
-
-function Toggle({
-  label,
-  checked,
-  onChange,
-  hint,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  hint?: string;
-}) {
-  return (
-    <label className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="mt-1"
-      />
-      <span>
-        <span className="font-medium">{label}</span>
-        {hint ? (
-          <span className="block text-xs text-muted-foreground">{hint}</span>
-        ) : null}
-      </span>
-    </label>
   );
 }
 
@@ -564,50 +328,11 @@ function StatusBadge({ status }: { status: BlogStatusValue }) {
   );
 }
 
-/** Approximates how the post will look in a Google result. */
-function SerpPreview({
-  siteUrl,
-  slug,
-  title,
-  description,
-}: {
-  siteUrl: string;
-  slug: string;
-  title: string;
-  description: string;
-}) {
-  const host = (() => {
-    try {
-      return new URL(siteUrl).host;
-    } catch {
-      return "aptechagency.com";
-    }
-  })();
-
-  return (
-    <div className="rounded-xl border bg-card p-4">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Google result preview
-      </p>
-      <p className="text-xs text-muted-foreground">
-        {host} › blog › {slug || "your-post-slug"}
-      </p>
-      <p className="mt-1 line-clamp-1 text-lg text-[#1a0dab] dark:text-[#8ab4f8]">
-        {title || "Your meta title shows here"}
-      </p>
-      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-        {description || "Your meta description shows here."}
-      </p>
-    </div>
-  );
-}
-
 export function BlogManager({
   initialPosts,
   initialCategories,
   authors,
   siteUrl,
-  linkTargets,
 }: {
   initialPosts: AdminBlogPost[];
   initialCategories: BlogCategorySummary[];
@@ -628,6 +353,8 @@ export function BlogManager({
     description: "",
   });
   const [pending, startTransition] = useTransition();
+  const [imageUploads, setImageUploads] = useState(0);
+  const imageBusy = (busy: boolean) => setImageUploads(count => Math.max(0, count + (busy ? 1 : -1)));
   const router = useRouter();
 
   const posts = initialPosts;
@@ -670,9 +397,13 @@ export function BlogManager({
 
   const savePost = (overrideStatus?: BlogStatusValue) => {
     if (!editor) return;
+    if (imageUploads) { toast.error("Wait for the image upload to finish"); return; }
     const payload = {
       ...editor,
       status: overrideStatus ?? editor.status,
+      metaTitle: editor.title,
+      metaDescription: editor.excerpt,
+      authorName: editor.authorName || "AP Tech Agency",
     };
 
     startTransition(async () => {
@@ -752,330 +483,29 @@ export function BlogManager({
   };
 
   if (editor) {
-    const effectiveTitle = editor.metaTitle.trim() || editor.title;
-    const effectiveDescription =
-      editor.metaDescription.trim() ||
-      editor.excerpt.trim() ||
-      (editor.content ? buildBlogExcerpt(editor.content) : "");
-
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => setEditor(null)}
-            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to posts
-          </button>
-          <div className="flex flex-wrap gap-2">
-            {editor.id && editor.status === "PUBLISHED" ? (
-              <Link
-                href={`/blog/${editor.slug}`}
-                target="_blank"
-                className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
-              >
-                <Eye className="h-4 w-4" />
-                View live
-              </Link>
-            ) : null}
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => savePost("DRAFT")}
-              className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
-            >
-              <Save className="h-4 w-4" />
-              Save draft
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => savePost("PUBLISHED")}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-            >
-              {pending ? "Saving..." : "Publish"}
-            </button>
-          </div>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-6">
-            <section className="rounded-xl border bg-card p-4">
-              <h2 className="mb-4 font-semibold">Post content</h2>
-              <div className="grid gap-4">
-                <Field
-                  label="Title"
-                  value={editor.title}
-                  onChange={onTitleChange}
-                  placeholder="How to choose a web development agency in 2026"
-                  hint="This becomes the H1 on the page and the default meta title."
-                />
-                <Field
-                  label="URL slug"
-                  value={editor.slug}
-                  onChange={(value) => update("slug", slugifyBlogTitle(value))}
-                  placeholder="choose-web-development-agency"
-                  hint={`Final URL: /blog/${editor.slug || "your-post-slug"}`}
-                />
-                <Field
-                  label="Excerpt"
-                  value={editor.excerpt}
-                  onChange={(value) => update("excerpt", value)}
-                  textarea
-                  rows={3}
-                  placeholder="One or two sentences shown on the blog list and used as the fallback meta description."
-                />
-                <div className="grid gap-1.5 text-sm">
-                  <span className="font-medium">Content</span>
-                  <RichTextEditor
-                    value={editor.content}
-                    onChange={(value) => update("content", value)}
-                    placeholder={CONTENT_PLACEHOLDER}
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    Paste from Word, Google Docs or a web page and the headings,
-                    bold and lists come with it — no need to re-style anything.
-                    Headings become real h2/h3/h4 tags and a table of contents;
-                    the post title is already the page&apos;s H1.
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Estimated read time:{" "}
-                  {editor.content ? estimateReadingMinutes(editor.content) : 0}{" "}
-                  min
-                </p>
-              </div>
-            </section>
-
-            <section className="rounded-xl border bg-card p-4">
-              <h2 className="mb-1 font-semibold">Search engine listing</h2>
-              <p className="mb-4 text-xs text-muted-foreground">
-                Leave these empty to reuse the title and excerpt above.
-              </p>
-              <div className="grid gap-4">
-                <SerpPreview
-                  siteUrl={siteUrl}
-                  slug={editor.slug}
-                  title={effectiveTitle}
-                  description={effectiveDescription}
-                />
-                <CountedField
-                  label="Meta title"
-                  value={editor.metaTitle}
-                  onChange={(value) => update("metaTitle", value)}
-                  target={TITLE_TARGET}
-                  placeholder={editor.title || "Meta title"}
-                />
-                <CountedField
-                  label="Meta description"
-                  value={editor.metaDescription}
-                  onChange={(value) => update("metaDescription", value)}
-                  target={DESCRIPTION_TARGET}
-                  textarea
-                  placeholder={editor.excerpt || "Meta description"}
-                />
-                <Field
-                  label="Primary keyword (focus keyword)"
-                  value={editor.primaryKeyword}
-                  onChange={(value) => update("primaryKeyword", value)}
-                  placeholder="web development agency"
-                  hint="The single term this post is written to rank for."
-                />
-                <Field
-                  label="Secondary keywords"
-                  value={editor.secondaryKeywords}
-                  onChange={(value) => update("secondaryKeywords", value)}
-                  placeholder="hire web developers, custom website design"
-                  hint="Comma separated supporting terms. These plus the primary keyword build the keywords meta tag."
-                />
-                <Field
-                  label="Target audience"
-                  value={editor.targetAudience}
-                  onChange={(value) => update("targetAudience", value)}
-                  placeholder="Startup founders and small business owners in Bangladesh"
-                  hint="Who this post is written for. Keeps the writing focused and is published as the article's schema.org audience."
-                />
-                <Field
-                  label="Canonical URL"
-                  value={editor.canonicalUrl}
-                  onChange={(value) => update("canonicalUrl", value)}
-                  placeholder="Leave empty to use this post's own URL"
-                  hint="Set this only when the same article is published elsewhere first."
-                />
-                <ImageField
-                  label="Social share image (Open Graph)"
-                  value={editor.ogImageUrl}
-                  onChange={(value) => update("ogImageUrl", value)}
-                  hint="1200×630 works best. Falls back to the cover image."
-                />
-                <Toggle
-                  label="Hide from search engines"
-                  checked={editor.noIndex}
-                  onChange={(value) => update("noIndex", value)}
-                  hint="Adds noindex and keeps the post out of sitemap.xml."
-                />
-              </div>
-            </section>
-          </div>
-
-          <div className="space-y-6">
-            <section className="rounded-xl border bg-card p-4">
-              <h2 className="mb-4 font-semibold">Publishing</h2>
-              <div className="grid gap-4">
-                <label className="grid gap-1.5 text-sm">
-                  <span className="font-medium">Status</span>
-                  <select
-                    value={editor.status}
-                    onChange={(event) =>
-                      update("status", event.target.value as BlogStatusValue)
-                    }
-                    className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
-                  >
-                    {STATUS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="grid gap-1.5 text-sm">
-                  <span className="font-medium">Visibility</span>
-                  <select
-                    value={editor.visibility}
-                    onChange={(event) =>
-                      update(
-                        "visibility",
-                        event.target.value as BlogVisibilityValue
-                      )
-                    }
-                    className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
-                  >
-                    <option value="PUBLIC">Public</option>
-                    <option value="PRIVATE">Private</option>
-                  </select>
-                  <span className="text-xs text-muted-foreground">
-                    Private keeps a finished post off the blog, the sitemap and
-                    search — even with the direct link. It stays editable here.
-                  </span>
-                </label>
-                <Toggle
-                  label="Show view count publicly"
-                  checked={editor.showViewCount}
-                  onChange={(value) => update("showViewCount", value)}
-                  hint="Off by default — reach and views still track either way, this only controls whether readers see the number on the post."
-                />
-                <label className="grid gap-1.5 text-sm">
-                  <span className="font-medium">Publish date</span>
-                  <input
-                    type="date"
-                    value={editor.publishedAt}
-                    onChange={(event) =>
-                      update("publishedAt", event.target.value)
-                    }
-                    // Clicking anywhere in the field opens the calendar. By
-                    // default only the small icon does, and in dark mode that
-                    // icon is nearly invisible — which reads as "the date
-                    // picker is broken".
-                    onClick={(event) => {
-                      const input = event.currentTarget as HTMLInputElement & {
-                        showPicker?: () => void;
-                      };
-                      try {
-                        input.showPicker?.();
-                      } catch {
-                        // Safari/older browsers: the native icon still works.
-                      }
-                    }}
-                    className="w-full cursor-pointer rounded-md border bg-background px-3 py-2 outline-none [color-scheme:light] focus:border-primary dark:[color-scheme:dark]"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    A future date keeps the post hidden until then.
-                  </span>
-                </label>
-                <label className="grid gap-1.5 text-sm">
-                  <span className="font-medium">Category</span>
-                  <select
-                    value={editor.categoryId}
-                    onChange={(event) =>
-                      update("categoryId", event.target.value)
-                    }
-                    className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
-                  >
-                    <option value="">No category</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <InternalLinksField
-                  value={editor.internalLinks}
-                  onChange={(links) => update("internalLinks", links)}
-                  targets={linkTargets}
-                />
-                <Field
-                  label="Tags"
-                  value={editor.tags}
-                  onChange={(value) => update("tags", value)}
-                  placeholder="SEO, WordPress, Next.js"
-                  hint="Comma separated, up to 12."
-                />
-                <label className="grid gap-1.5 text-sm">
-                  <span className="font-medium">Author</span>
-                  <select
-                    value={editor.authorId}
-                    onChange={(event) => update("authorId", event.target.value)}
-                    className="rounded-md border bg-background px-3 py-2 outline-none focus:border-primary"
-                  >
-                    <option value="">Use custom name below</option>
-                    {authors.map((author) => (
-                      <option key={author.id} value={author.id}>
-                        {author.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {!editor.authorId && (
-                  <Field
-                    label="Author name"
-                    value={editor.authorName}
-                    onChange={(value) => update("authorName", value)}
-                    placeholder="AP Tech Agency"
-                  />
-                )}
-                <Toggle
-                  label="Feature this post"
-                  checked={editor.featured}
-                  onChange={(value) => update("featured", value)}
-                  hint="Featured posts sort to the top of the blog."
-                />
-              </div>
-            </section>
-
-            <section className="rounded-xl border bg-card p-4">
-              <h2 className="mb-4 font-semibold">Cover image</h2>
-              <div className="grid gap-4">
-                <ImageField
-                  label="Cover image"
-                  value={editor.coverImageUrl}
-                  onChange={(value) => update("coverImageUrl", value)}
-                />
-                <Field
-                  label="Cover image alt text"
-                  value={editor.coverImageAlt}
-                  onChange={(value) => update("coverImageAlt", value)}
-                  placeholder="Team reviewing a website design on a laptop"
-                  hint="Required for image SEO and screen readers. Describe the image, don't stuff keywords."
-                />
-              </div>
-            </section>
-          </div>
+    return <div className="mx-auto max-w-4xl space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button type="button" onClick={() => setEditor(null)} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"><ArrowLeft className="h-4 w-4" />Back to posts</button>
+        <div className="flex gap-2">
+          {editor.id && editor.status === "PUBLISHED" && <Link href={"/blog/" + editor.slug} target="_blank" className="rounded-md border px-3 py-2 text-sm">View live</Link>}
+          <button type="button" disabled={pending || imageUploads > 0} onClick={() => savePost("DRAFT")} className="rounded-md border px-3 py-2 text-sm disabled:opacity-50">Save draft</button>
+          <button type="button" disabled={pending} onClick={() => savePost("PUBLISHED")} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">{pending ? "Saving…" : "Publish"}</button>
         </div>
       </div>
-    );
+      <section className="grid gap-5 rounded-xl border bg-card p-5">
+        <div><h1 className="text-xl font-semibold">{editor.id ? "Edit blog post" : "New blog post"}</h1><p className="mt-1 text-sm text-muted-foreground">Write, add an image and save. Your title and summary also fill the search listing.</p></div>
+        <Field label="Title" value={editor.title} onChange={onTitleChange} placeholder="What is this post about?" />
+        <Field label="Summary (optional)" value={editor.excerpt} onChange={value => update("excerpt", value)} textarea rows={2} hint="Shown on the blog list and in the search description. Leave blank to generate from your article." />
+        <div className="grid gap-2"><span className="text-sm font-medium">Content</span><RichTextEditor value={editor.content} onChange={value => update("content", value)} placeholder="Write your article here…" /><BlogImageButton onBusyChange={imageBusy} onInsert={markdown => setEditor(current => current ? { ...current, content: current.content + markdown } : current)} /></div>
+        <ImageField onBusyChange={imageBusy} label="Cover image (optional)" value={editor.coverImageUrl} onChange={value => update("coverImageUrl", value)} hint="Upload an image or use an HTTPS image link. Up to 4 MB." />
+        {editor.coverImageUrl && <Field label="Cover image description" value={editor.coverImageAlt} onChange={value => update("coverImageAlt", value)} placeholder="Describe what is in the image" />}
+        <label className="grid gap-1.5 text-sm"><span className="font-medium">Category (optional)</span><select value={editor.categoryId} onChange={event => update("categoryId", event.target.value)} className="rounded-md border bg-background p-2"><option value="">No category</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+        <Field label="Primary tag (optional)" value={editor.primaryKeyword} onChange={value => update("primaryKeyword", value)} placeholder="e.g. Web development" hint="One main topic, up to 80 characters." />
+        <Field label="Additional tags (optional)" value={editor.secondaryKeywords} onChange={value => update("secondaryKeywords", value)} placeholder="e.g. WordPress, SEO, Website design" hint="Comma separated. Maximum five; duplicate tags are ignored." />
+        <p className="text-xs text-muted-foreground">Author: {editor.authorName || authors.find(author => author.id === editor.authorId)?.name || "AP Tech Agency"} · {editor.status} · Read time {estimateReadingMinutes(editor.content)} min</p>
+        <p className="break-all text-xs text-muted-foreground">Post URL: {siteUrl}/blog/{editor.slug || "generated-from-title"}. Existing post URLs and publishing settings are preserved.</p>
+      </section>
+    </div>;
   }
 
   return (

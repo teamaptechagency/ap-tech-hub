@@ -1,5 +1,6 @@
 "use server";
 
+import { blogTopics, blogImageUrl } from "@/lib/blog-editor";
 import { createHash } from "crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -81,18 +82,6 @@ function optional(value: string | undefined | null) {
   return trimmed ? trimmed : null;
 }
 
-function parseTags(value: string | undefined) {
-  return Array.from(
-    new Set(
-      (value ?? "")
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean)
-        .slice(0, 12)
-    )
-  );
-}
-
 export type BlogPostInput = {
   id?: string;
   title: string;
@@ -150,6 +139,10 @@ export async function saveBlogPost(input: BlogPostInput) {
   if (title.length > 180) return { error: "Post title is too long" };
   if (!content) return { error: "Post content is required" };
 
+  let topics;
+  try { topics = blogTopics(input.primaryKeyword, input.secondaryKeywords); } catch (error) { return { error: error instanceof Error ? error.message : "Invalid tags" }; }
+  if (!blogImageUrl.safeParse(input.coverImageUrl || "").success) return { error: "Use an HTTPS cover image link" };
+  if (input.coverImageUrl && !input.coverImageAlt?.trim()) return { error: "Describe the cover image before saving" };
   const status: BlogStatusValue = input.status ?? "DRAFT";
   const slug = await uniqueSlug(input.slug?.trim() || title, input.id);
   const excerpt = input.excerpt?.trim() || buildBlogExcerpt(content, 180);
@@ -193,7 +186,7 @@ export async function saveBlogPost(input: BlogPostInput) {
     coverImageUrl: optional(input.coverImageUrl),
     coverImageAlt: optional(input.coverImageAlt),
     categoryId: optional(input.categoryId),
-    tags: parseTags(input.tags),
+    tags: topics.tags,
     status,
     featured: Boolean(input.featured),
     publishedAt,
@@ -205,8 +198,8 @@ export async function saveBlogPost(input: BlogPostInput) {
     // The keywords meta tag is built from the primary + secondary terms so
     // there is one place to edit; the legacy field keeps whatever it had.
     keywords: optional(input.keywords),
-    primaryKeyword: optional(input.primaryKeyword),
-    secondaryKeywords: optional(input.secondaryKeywords),
+    primaryKeyword: topics.primaryKeyword,
+    secondaryKeywords: topics.secondaryKeywords,
     targetAudience: optional(input.targetAudience),
     canonicalUrl: optional(input.canonicalUrl),
     ogImageUrl: optional(input.ogImageUrl),

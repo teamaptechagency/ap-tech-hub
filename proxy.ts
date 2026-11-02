@@ -42,6 +42,7 @@ const PUBLIC_EXACT_PATHS = [
   "/api/device-agent",
   "/api/device-attendance",
   "/api/workstation",
+  "/api/blog-image",
   "/api/workstation-chat",
   "/workstation-app",
   "/",

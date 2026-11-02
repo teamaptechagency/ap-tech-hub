@@ -1,3 +1,4 @@
+import { blogTopics, blogImageUrl } from "@/lib/blog-editor";
 import { randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { NextResponse } from "next/server";
@@ -5,14 +6,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { workstationAccess, parseSetting, sameOriginWrite } from "@/lib/workstation-access";
 import { availableJobWhere } from "@/lib/work-availability";
-import { slugifyBlogTitle, estimateReadingMinutes } from "@/lib/blog";
+import { slugifyBlogTitle, estimateReadingMinutes, buildBlogExcerpt } from "@/lib/blog";
 import { deviceServiceFailure } from "@/lib/device-response";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const reply = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store, private" } });
 const jobInput = z.object({ operationId: z.string().uuid(), title: z.string().trim().min(2).max(200), description: z.string().trim().max(10000).default(""), source: z.enum(["Fiverr", "Upwork", "Freelancer", "Website", "Direct"]), clientName: z.string().trim().min(1).max(120), clientId: z.string().max(80).optional(), currency: z.enum(["USD", "BDT"]), amount: z.string().regex(/^\d{1,9}(\.\d{1,2})?$/), entryKind: z.enum(["PROJECT", "TASK"]), orderId: z.string().trim().max(120).default("") }).strict();
-const blogInput = z.object({ operationId: z.string().uuid(), id: z.string().max(80).optional(), title: z.string().trim().min(3).max(200), content: z.string().trim().min(10).max(100000), excerpt: z.string().trim().max(1000), categoryId: z.string().max(80).nullable().optional(), metaDescription: z.string().trim().max(320).default(""), submitReview: z.boolean().default(false) }).strict();
+const blogInput = z.object({ operationId: z.string().uuid(), id: z.string().max(80).optional(), title: z.string().trim().min(3).max(200), content: z.string().trim().min(10).max(100000), excerpt: z.string().trim().max(1000), categoryId: z.string().max(80).nullable().optional(), metaDescription: z.string().trim().max(320).default(""), primaryKeyword: z.string().max(80).optional(), secondaryKeywords: z.string().max(500).optional(), coverImageUrl: blogImageUrl.optional(), coverImageAlt: z.string().trim().max(300).optional(), submitReview: z.boolean().default(false) }).strict();
 async function failure(error: unknown) { console.error("Work Station request failed", error instanceof Error ? error.name : "Unknown"); const info = deviceServiceFailure(error); return reply({ error: info.error }, info.status); }
 export async function GET(request: Request) {
   try {
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
       const entries = await prisma.setting.findMany({ where: { key: { startsWith: "workstation.blog." } }, take: 5000 });
       const metadata = new Map(entries.map((entry) => [entry.key.slice("workstation.blog.".length), parseSetting(entry.value)]));
       const own = [...metadata].filter(([, meta]) => meta.employeeId === access.employee?.id).map(([id]) => id);
-      const posts = await prisma.blogPost.findMany({ where: access.admin ? {} : { id: { in: own } }, select: { id: true, title: true, slug: true, content: true, excerpt: true, status: true, categoryId: true, category: { select: { name: true } }, authorName: true, metaDescription: true, updatedAt: true }, orderBy: { updatedAt: "desc" }, take: 200 });
+      const posts = await prisma.blogPost.findMany({ where: access.admin ? {} : { id: { in: own } }, select: { id: true, title: true, slug: true, content: true, excerpt: true, status: true, categoryId: true, category: { select: { name: true } }, authorName: true, metaDescription: true, primaryKeyword: true, secondaryKeywords: true, tags: true, coverImageUrl: true, coverImageAlt: true, updatedAt: true }, orderBy: { updatedAt: "desc" }, take: 200 });
       return reply({ posts: posts.map((post) => ({ ...post, reviewRequested: Boolean(metadata.get(post.id)?.reviewRequested) })), categories: await prisma.blogCategory.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }) });
     }
     if (view === "applications") {
@@ -80,6 +81,9 @@ export async function POST(request: Request) {
       if (!access.admin && !access.permissions.blog) return reply({ error: "Blog access is disabled" }, 403);
       const parsed = blogInput.safeParse(body.data); if (!parsed.success) return reply({ error: "Check blog title, content, excerpt and description" }, 400);
       const data = parsed.data;
+      let topics;
+      try { topics = data.primaryKeyword !== undefined || data.secondaryKeywords !== undefined ? blogTopics(data.primaryKeyword, data.secondaryKeywords) : {}; } catch (error) { return reply({ error: error instanceof Error ? error.message : "Invalid tags" }, 400); }
+      if (data.coverImageUrl && !data.coverImageAlt) return reply({ error: "Describe the cover image before saving" }, 400);
       const operationKey = `workstation.blog-operation.${access.admin?.id || access.employee!.id}.${data.operationId}`;
       const previous = !data.id ? await prisma.setting.findUnique({ where: { key: operationKey } }) : null;
       const id = data.id || previous?.value || randomUUID();
@@ -88,7 +92,7 @@ export async function POST(request: Request) {
       if (!access.admin && existing && (parseSetting(owner?.value).employeeId !== access.employee!.id || existing.status !== "DRAFT")) return reply({ error: "Employees can edit their own drafts only. Published articles require admin review." }, 403);
       if (data.categoryId && !await prisma.blogCategory.findUnique({ where: { id: data.categoryId }, select: { id: true } })) return reply({ error: "Category no longer exists" }, 400);
       await prisma.$transaction(async (tx) => {
-        const values = { title: data.title, content: data.content, excerpt: data.excerpt, categoryId: data.categoryId || null, metaDescription: data.metaDescription || null, readingMinutes: estimateReadingMinutes(data.content) };
+        const values = { ...topics, ...(data.coverImageUrl !== undefined ? { coverImageUrl: data.coverImageUrl || null } : {}), ...(data.coverImageAlt !== undefined ? { coverImageAlt: data.coverImageAlt || null } : {}), title: data.title, content: data.content, excerpt: data.excerpt || buildBlogExcerpt(data.content, 180), categoryId: data.categoryId || null, metaDescription: data.metaDescription || null, readingMinutes: estimateReadingMinutes(data.content) };
         if (existing) await tx.blogPost.update({ where: { id, ...(!access.admin ? { status: "DRAFT" as const } : {}) }, data: values });
         else await tx.blogPost.create({ data: { id, ...values, slug: (slugifyBlogTitle(data.title) || "post").slice(0, 160) + "-" + randomBytes(4).toString("hex"), status: "DRAFT", authorName: access.employee?.name || access.admin?.name } });
         const value = JSON.stringify({ ...parseSetting(owner?.value), employeeId: parseSetting(owner?.value).employeeId || access.employee?.id || null, reviewRequested: data.submitReview, updatedAt: new Date().toISOString() });
