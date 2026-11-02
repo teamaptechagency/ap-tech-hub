@@ -1,3 +1,4 @@
+import { effectiveEmployeeShift, recordedEmployeeShift } from "@/lib/employee-roster";
 import { randomBytes, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -47,10 +48,12 @@ export async function POST(request: Request) {
         await prisma.deviceEmployee.create({ data: { code: data.code || "emp-" + randomBytes(4).toString("hex"), name: data.name, passwordHash: await bcrypt.hash(data.password, 12), status: "PENDING" } });
         return reply({ message: "Account requested. Your administrator must approve it before attendance login." });
       }
-      const employee = await prisma.deviceEmployee.findUnique({ where: { code: data.code } });
+      const account = await prisma.deviceEmployee.findUnique({ where: { code: data.code } });
+      const employee = account ? await effectiveEmployeeShift(account) : null;
       if (!employee || !await bcrypt.compare(data.password, employee.passwordHash)) return reply({ error: "Invalid employee ID or password" }, 401);
       if (employee.status !== "ACTIVE") return reply({ error: "Attendance account is pending approval or disabled" }, 403);
       const existing = await prisma.deviceShift.findUnique({ where: { openEmployeeKey: employee.id } });
+      if (existing) { const hour = new Date(existing.scheduledStartAt.getTime() + 6 * 3600000).getUTCHours(); employee.shiftLabel = hour === 15 ? "EVENING" : hour === 23 ? "NIGHT" : "MORNING"; }
       if (existing && existing.deviceId !== device.id) return reply({ error: "Your shift is open on another PC. End it there or ask your administrator." }, 409);
       const sessionToken = randomBytes(32).toString("hex");
       const shift = existing
@@ -58,7 +61,8 @@ export async function POST(request: Request) {
         : await prisma.deviceShift.create({ data: { employeeId: employee.id, deviceId: device.id, deviceName: device.name, openEmployeeKey: employee.id, openDeviceKey: device.id, sessionHash: tokenHash(sessionToken), ...plannedShift(new Date(), employee.expectedStart), lateMinutes: lateMinutes(new Date(), employee.expectedStart, employee.graceMinutes) } });
       return reply({ sessionToken, shift, employee: { code: employee.code, name: employee.name, shiftLabel: employee.shiftLabel }, dailyTasks: await dailyTasks(employee.id, employee.shiftLabel, shift.scheduledStartAt) });
     }
-    const shift = await prisma.deviceShift.findUnique({ where: { sessionHash: tokenHash(data.sessionToken) }, include: { employee: { select: { name: true, code: true, status: true, shiftLabel: true } } } });
+    const foundShift = await prisma.deviceShift.findUnique({ where: { sessionHash: tokenHash(data.sessionToken) }, include: { employee: { select: { name: true, code: true, status: true, shiftLabel: true } } } });
+    const shift = foundShift ? await recordedEmployeeShift(foundShift) : null;
     if (!shift || shift.deviceId !== device.id || shift.employee.status !== "ACTIVE") return reply({ error: "Attendance login expired or disabled. Log in again." }, 401);
     if (shift.endedAt && data.action !== "status" && data.action !== "logout") return reply({ error: "Shift has ended. Log in for attendance again." }, 409);
     if (data.action === "status" || shift.endedAt) return reply({ shift, employee: shift.employee, dailyTasks: await dailyTasks(shift.employeeId, shift.employee.shiftLabel, shift.scheduledStartAt, !shift.endedAt) });

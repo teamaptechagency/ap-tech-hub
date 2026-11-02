@@ -71,6 +71,7 @@ function setup() {
     $transaction: async (action) => action(prisma),
   };
   const route = load('app/api/device-attendance/route.ts', {
+    '@/lib/employee-roster': { effectiveEmployeeShift: async employee => employee, recordedEmployeeShift: async shift => shift },
     '@/lib/prisma': { prisma }, '@/lib/device-access': { credentialDevice: async () => device.revoked ? null : device },
     '@/lib/device-agent': agent, '@/lib/device-attendance': attendance, '@/lib/device-response': load('lib/device-response.ts'),
   });

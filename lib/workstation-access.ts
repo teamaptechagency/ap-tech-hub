@@ -1,3 +1,4 @@
+import { recordedEmployeeShift } from "@/lib/employee-roster";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -18,7 +19,8 @@ export async function workstationAccess(request: Request) {
   const pcName = request.headers.get("x-pc-name") || "";
   const bound = device && pcName.length > 0 && pcName.length <= 80 && (!device.pcName || device.pcName === pcName) ? { ...device, pcName } : null;
   const token = request.headers.get("x-attendance-token") || "";
-  const shift = bound && /^[a-f0-9]{64}$/.test(token) ? await prisma.deviceShift.findUnique({ where: { sessionHash: tokenHash(token) }, include: { employee: { select: { id: true, code: true, name: true, shiftLabel: true, status: true } } } }) : null;
+  const foundShift = bound && /^[a-f0-9]{64}$/.test(token) ? await prisma.deviceShift.findUnique({ where: { sessionHash: tokenHash(token) }, include: { employee: { select: { id: true, code: true, name: true, shiftLabel: true, status: true } } } }) : null;
+  const shift = foundShift ? await recordedEmployeeShift(foundShift) : null;
   const employee = shift && shift.deviceId === bound?.id && !shift.endedAt && shift.employee.status === "ACTIVE" ? shift.employee : null;
   const setting = employee ? await prisma.setting.findUnique({ where: { key: `workstation.permissions.${employee.id}` } }) : null;
   const permissions = appPermissions.safeParse(parseSetting(setting?.value));
