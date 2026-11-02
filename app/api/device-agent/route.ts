@@ -20,11 +20,15 @@ export async function POST(request: Request) {
     const recent = await prisma.workDeviceEvent.count({ where: { deviceId: device.id, createdAt: { gte: new Date(Date.now() - 60000) } } });
     if (recent + input.data.events.length > 180) return Response.json({ error: "Too many events" }, { status: 429 });
     const last = input.data.events[input.data.events.length - 1];
+    const syncRequestId = input.data.syncRequestId;
+    if (syncRequestId && browser) return Response.json({ error: "Only the Windows app can acknowledge a status sync" }, { status: 400 });
     await prisma.$transaction([
       prisma.workDevice.update({ where: { id: device.id, revoked: false, OR: [{ pcName: null }, { pcName: input.data.pcName }] }, data: { pcName: input.data.pcName, lastSeenAt: new Date(), ...(!browser ? { status: last.type } : {}) } }),
       prisma.workDeviceEvent.createMany({ data: input.data.events.map((event) => ({ ...event, source: input.data.source, deviceId: device.id })), skipDuplicates: true }),
+      ...(syncRequestId ? [prisma.workDeviceEvent.updateMany({ where: { id: syncRequestId, deviceId: device.id, source: "SYSTEM", type: "SYNC_REQUEST" }, data: { type: "SYNCED" } })] : []),
     ]);
-    return Response.json({ accepted: true }, { headers: { "Cache-Control": "no-store" } });
+    const pending = !browser ? await prisma.workDeviceEvent.findFirst({ where: { deviceId: device.id, source: "SYSTEM", type: "SYNC_REQUEST", createdAt: { gte: new Date(Date.now() - 300000) } }, orderBy: { createdAt: "desc" }, select: { id: true } }) : null;
+    return Response.json({ accepted: true, syncRequestId: pending?.id ?? null }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Device activity ingestion failed", error);
     return Response.json({ error: "Device storage unavailable" }, { status: 503 });

@@ -1,8 +1,8 @@
 {
-  "version": "0.3.2",
+  "version": "0.3.3",
   "publishedDate": "2026-11-02",
-  "exeSha256": "48b78c05f20ab52478b6604e1bf99c554453bbab2d5e6403088a0e422bfc384a",
-  "installerSha256": "0d69d3a27768e48f290b0843d6a8db226f0fe277c8ed852e218a01626ba8d416",
-  "packageSha256": "e66b670e0864757c16d39ba4446468aeeb32a7dd6f2712f06dad13338d85b3ca",
-  "releaseNotes": "In-app update download with SHA-256 verification.\nCurrent/new version and release notes with Update now / Later.\nVisible installer preserves settings; close button keeps the tracker in the tray."
+  "exeSha256": "7a3d1759d62805f57c1ddee421409bd639a720d5061d4573668075938805fea3",
+  "installerSha256": "47ba48c789dbec7bcdbe50e92ee9461ab7c65e91b8aef62ea95e632902c0df7e",
+  "packageSha256": "85a668a494edb407e6c05d4bc80ec29217508cf06a702bc1222ca6a1fab98674",
+  "releaseNotes": "Responds to Sync logs from the PC detail page with a fresh Windows status.\nWebsite shows waiting, acknowledged or expired sync requests.\nLive range includes newly received activity. Browser counts still sync separately."
 }

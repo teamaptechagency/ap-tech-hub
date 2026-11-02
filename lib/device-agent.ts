@@ -6,6 +6,7 @@ export const agentBatchSchema = z.object({
   source: z.enum(["WINDOWS", "BROWSER"]),
   pcName: z.string().trim().min(1).max(80),
   consent: z.literal(true),
+  syncRequestId: z.string().uuid().nullable().optional(),
   events: z.array(z.object({
     id: z.string().uuid(),
     type: z.enum(["ACTIVE", "IDLE", "PAUSED", "REFRESH", "NAVIGATION", "INTERACTIONS"]),

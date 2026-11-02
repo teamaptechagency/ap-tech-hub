@@ -12,7 +12,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 public class WorkAgent : Form {
-    const string AppVersion = "0.3.2";
+    const string AppVersion = "0.3.3";
     [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint size; public uint time; }
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     readonly TextBox url = new TextBox(), token = new TextBox();
@@ -25,7 +25,7 @@ public class WorkAgent : Form {
     readonly JavaScriptSerializer json = new JavaScriptSerializer();
     readonly string config = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "APTechWorkAgent", "settings.dat");
     bool tracking, sending, exitRequested;
-    string pendingPayload;
+    string pendingPayload, syncRequestId;
 
     [STAThread] public static void Main() {
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -121,22 +121,29 @@ public class WorkAgent : Form {
     void Pause() { tracking = false; timer.Stop(); pendingPayload = null; url.Enabled = token.Enabled = true; start.Enabled = !sending; consent.Checked = false; autoResume.Checked = false; try { SaveConfig(); } catch {} state.Text = "Paused locally. Browser extension must also be paused separately."; tray.Text = "AP Tech Work Tracker - paused"; }
     async System.Threading.Tasks.Task Send(bool unused) {
         if (sending || !tracking) return; sending = true;
+        bool followUp = false;
         try {
             if (pendingPayload == null) {
                 var info = new LASTINPUTINFO(); info.size = (uint)Marshal.SizeOf(info);
                 if (!GetLastInputInfo(ref info)) throw new Exception("Cannot read idle status");
                 uint elapsed = unchecked((uint)Environment.TickCount - info.time); int idle = (int)Math.Min(elapsed / 1000, 86400u);
                 var evt = new { id = Guid.NewGuid().ToString(), type = idle >= 300 ? "IDLE" : "ACTIVE", platform = "Windows", idleSeconds = idle };
-                pendingPayload = json.Serialize(new { source = "WINDOWS", pcName = Environment.MachineName, consent = true, events = new [] { evt } });
+                pendingPayload = json.Serialize(new { source = "WINDOWS", pcName = Environment.MachineName, consent = true, syncRequestId = syncRequestId, events = new [] { evt } });
             }
             var request = new HttpRequestMessage(HttpMethod.Post, url.Text.Trim().TrimEnd('/') + "/api/device-agent"); request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Text.Trim()); request.Content = new StringContent(pendingPayload, Encoding.UTF8, "application/json");
             using (request) using (var response = await client.SendAsync(request)) {
                 if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden) { Pause(); state.Text = "Credential rejected. Ask your admin to reconnect this PC."; return; }
                 response.EnsureSuccessStatusCode(); pendingPayload = null;
+                var reply = json.Deserialize<Dictionary<string, object>>(await response.Content.ReadAsStringAsync());
+                string requested = reply.ContainsKey("syncRequestId") ? Convert.ToString(reply["syncRequestId"]) : null;
+                Guid parsedRequest;
+                followUp = Guid.TryParse(requested, out parsedRequest) && requested != syncRequestId;
+                syncRequestId = followUp ? requested : null;
             }
             if (tracking) { state.Text = "Tracking visible - synced " + DateTime.Now.ToString("HH:mm:ss"); tray.Text = "AP Tech Work Tracker - running"; }
         } catch { if (tracking) state.Text = "Not synced. Retrying in 30 seconds. No offline history is saved."; }
         finally { sending = false; if (!tracking) start.Enabled = true; }
+        if (followUp && tracking) await Send(false);
     }
     void SaveConfig() { Directory.CreateDirectory(Path.GetDirectoryName(config)); var bytes = Encoding.UTF8.GetBytes("https://www.aptechagency.com\n" + token.Text.Trim() + "\n" + (autoResume.Checked && consent.Checked ? "yes" : "no")); File.WriteAllBytes(config, ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser)); }
     void LoadConfig() { try { var parts = Encoding.UTF8.GetString(ProtectedData.Unprotect(File.ReadAllBytes(config), null, DataProtectionScope.CurrentUser)).Split('\n'); url.Text = "https://www.aptechagency.com"; token.Text = parts[1]; autoResume.Checked = consent.Checked = parts.Length > 2 && parts[2] == "yes"; } catch {} }
