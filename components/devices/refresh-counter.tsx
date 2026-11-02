@@ -1,4 +1,5 @@
 "use client";
+import { DateTimeInput } from "@/components/ui/date-time-input";
 
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
@@ -35,8 +36,8 @@ export function RefreshCounter({ deviceId, platform }: { deviceId: string; platf
         <span className="rounded-md bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">5–7 minute interval ≈ 8–12 refreshes/hour</span>
       </div>
       <div className="mt-5 flex flex-wrap items-end gap-3">
-        <label className="grid gap-1.5 text-xs text-muted-foreground">From<input type="time" value={from} onChange={(event) => setFrom(event.target.value)} className="h-10 rounded-lg border bg-background px-3 text-sm text-foreground" /></label>
-        <label className="grid gap-1.5 text-xs text-muted-foreground">To<input type="time" value={to} onChange={(event) => setTo(event.target.value)} className="h-10 rounded-lg border bg-background px-3 text-sm text-foreground" /></label>
+        <label className="grid gap-1.5 text-xs text-muted-foreground">From<DateTimeInput type="time" value={from} onChange={(event) => setFrom(event.target.value)} className="h-10 rounded-lg border bg-background px-3 text-sm text-foreground" /></label>
+        <label className="grid gap-1.5 text-xs text-muted-foreground">To<DateTimeInput type="time" value={to} onChange={(event) => setTo(event.target.value)} className="h-10 rounded-lg border bg-background px-3 text-sm text-foreground" /></label>
         <span className="pb-3 text-xs text-muted-foreground">{valid ? `${minutes} minutes selected` : "Choose an end time after the start time."}</span>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3" aria-live="polite">

@@ -3,6 +3,11 @@
   const names = { AP_TECH: 'AP Tech', PHOTOCOPY: 'Photocopy', KIDS_LEARNING: 'Kids Learning Products', TRAVEL: 'Travel · Hajj / Umrah / Overseas', RUQYAH: 'Ruqyah Center' };
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   window.mountBusinessOffice = async (root, request) => {
+    root.onclick = event => {
+      const input = event.target.closest('input');
+      if (!input || !['date','time','month','datetime-local'].includes(input.type) || input.disabled || input.readOnly) return;
+      try { input.showPicker?.(); } catch { /* Keep the native field on older runtimes. */ }
+    };
     let data, unit = '', view = '', salaryMode = false, from = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Dhaka',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), to = from, busy = false, operationId = crypto.randomUUID(), draft = {}, error = '', notice = '';
     const field = (label, name, type = 'text', required = true, value = draft[name] || '') => `<label class="office-field">${label}<input name="${name}" type="${type}" ${required ? 'required' : ''} value="${esc(value)}" ${type === 'number' ? 'min="0.01" step="0.01" max="999999999.99"' : 'maxlength="500"'}></label>`;
     const select = (label, name, options) => `<label class="office-field">${label}<select name="${name}">${options.map(([value,title]) => `<option value="${value}" ${draft[name] === value ? 'selected' : ''}>${title}</option>`).join('')}</select></label>`;

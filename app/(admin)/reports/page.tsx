@@ -1,3 +1,4 @@
+import { DateTimeInput } from "@/components/ui/date-time-input";
 import Link from "next/link";
 import { getDhakaMonthRange } from "@/lib/dhaka-date";
 import { prisma } from "@/lib/prisma";
@@ -144,7 +145,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </p>
       </div>
 
-      <form className="flex flex-wrap items-end gap-3" method="get"><label className="grid gap-1 text-sm">Report ending month<input type="month" name="month" defaultValue={selected} min="2000-01" max="2100-12" className="rounded-md border bg-background p-2" /></label><button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">View report</button><Link href="/dashboard" className="rounded-md border px-4 py-2 text-sm">Current month dashboard</Link></form>
+      <form className="flex flex-wrap items-end gap-3" method="get"><label className="grid gap-1 text-sm">Report ending month<DateTimeInput type="month" name="month" defaultValue={selected} min="2000-01" max="2100-12" className="rounded-md border bg-background p-2" /></label><button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">View report</button><Link href="/dashboard" className="rounded-md border px-4 py-2 text-sm">Current month dashboard</Link></form>
       {/* Monthly P&L bars */}
       <Card>
         <CardHeader className="pb-3">
