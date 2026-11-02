@@ -500,6 +500,7 @@ export type PartnerTermsInput = {
 };
 
 function parseTerms(terms: PartnerTermsInput) {
+  if (!["REFERRAL", "RESELLER"].includes(terms.mode) || !["ORIGINAL", "DISCOUNTED", "RECEIVED", "NET", "MANUAL"].includes(terms.commissionBasis)) return { error: "Choose a valid partner model and commission basis" };
   const commission = parseFloat(terms.commissionPercent);
   const discount = parseFloat(terms.clientDiscountPercent);
 

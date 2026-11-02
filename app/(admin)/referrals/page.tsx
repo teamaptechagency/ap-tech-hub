@@ -1,3 +1,4 @@
+import { ReferralArrangements } from "@/components/referral/referral-arrangements";
 import { ReferralAdminShell } from "@/components/referral/referral-admin-shell";
 import { prisma } from "@/lib/prisma";
 
@@ -96,7 +97,7 @@ export default async function AdminReferralsPage() {
         </p>
       </div>
 
-      <ReferralAdminShell
+      <><ReferralArrangements /><ReferralAdminShell
         applications={applications.map((application) => ({
           ...application,
           createdAt: application.createdAt.toISOString(),
@@ -117,7 +118,7 @@ export default async function AdminReferralsPage() {
           amount: withdrawal.amount.toString(),
           createdAt: withdrawal.createdAt.toISOString(),
         }))}
-      />
+      /></>
     </div>
   );
 }

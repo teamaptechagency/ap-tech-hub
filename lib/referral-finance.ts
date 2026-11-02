@@ -69,10 +69,9 @@ export async function createReferralCommissionForPayment(input: {
   if (!referral || referral.partner.mode !== "REFERRAL") return null;
 
   const basis = referral.partner.commissionBasis || "RECEIVED";
-  const basisAmount =
-    basis === "ORIGINAL" || basis === "DISCOUNTED"
-      ? Number(invoice.amount)
-      : input.paidAmount;
+  // Non-received bases need an agreed calculation; never award the full invoice again per instalment.
+  if (basis !== "RECEIVED") return null;
+  const basisAmount = Math.min(input.paidAmount, Number(invoice.amountPaid), Number(invoice.amount));
   const commissionPercent = Number(
     referral.commissionPercent ?? referral.partner.commissionPercent
   );
