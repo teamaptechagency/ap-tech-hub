@@ -25,6 +25,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessageCircle,
+  Monitor,
   Newspaper,
   Receipt,
   Rocket,
@@ -57,6 +58,12 @@ type AdminSidebarProps = {
 };
 
 export const adminNavItems: AdminNavItem[] = [
+  {
+    label: "Device Activity",
+    href: "/device-activity",
+    icon: Monitor,
+    section: "Overview",
+  },
   {
     label: "Dashboard",
     href: "/dashboard",

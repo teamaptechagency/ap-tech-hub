@@ -32,6 +32,12 @@ const PUBLIC_PATHS = [
 ];
 
 const PUBLIC_EXACT_PATHS = [
+  "/work-tracker",
+  "/downloads/work-tracker/APTechWorkTracker.exe",
+  "/downloads/work-tracker/APTechWorkTracker-Pilot.zip",
+  "/downloads/work-tracker/release.json",
+  // Device agents use their own revocable bearer credential, not login cookies.
+  "/api/device-agent",
   "/",
   // The file route performs its own session and per-file audience checks.
   // Let client/partner requests reach it instead of treating `/api/files` as

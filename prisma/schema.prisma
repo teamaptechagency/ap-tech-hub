@@ -2,6 +2,34 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model WorkDevice {
+  id          String   @id @default(cuid())
+  name        String
+  employee    String
+  pcName      String?
+  tokenHash   String   @unique
+  revoked     Boolean  @default(false)
+  lastSeenAt  DateTime?
+  status      String   @default("OFFLINE")
+  createdAt   DateTime @default(now())
+  events      WorkDeviceEvent[]
+}
+
+model WorkDeviceEvent {
+  id          String   @id
+  deviceId    String
+  device      WorkDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  source      String
+  type        String
+  platform    String
+  clicks      Int      @default(0)
+  keys        Int      @default(0)
+  idleSeconds Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([deviceId, createdAt])
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
