@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const view = new URL(request.url).searchParams.get("view") || "bootstrap";
     if (view === "bootstrap") {
       if (!access.admin && !access.device) return reply({ error: "Pair this PC with its Work Station credential first" }, 401);
-      return reply({ admin: access.admin, device: access.device ? { id: access.device.id, name: access.device.name, pcName: access.device.pcName } : null, employee: access.employee, shift: access.shift ? { id: access.shift.id, startedAt: access.shift.startedAt, scheduledEndAt: access.shift.scheduledEndAt, breakStartedAt: access.shift.breakStartedAt, breakSeconds: access.shift.breakSeconds, task: access.shift.task, handover: access.shift.handover } : null, permissions: access.permissions, serverNow: new Date().toISOString(), employees: access.device ? await prisma.deviceEmployee.findMany({ where: { status: "ACTIVE" }, select: { code: true, name: true, shiftLabel: true }, orderBy: { name: "asc" }, take: 500 }) : [] });
+      return reply({ officeProfile: access.officeProfile, admin: access.admin, device: access.device ? { id: access.device.id, name: access.device.name, pcName: access.device.pcName } : null, employee: access.employee, shift: access.shift ? { id: access.shift.id, startedAt: access.shift.startedAt, scheduledEndAt: access.shift.scheduledEndAt, breakStartedAt: access.shift.breakStartedAt, breakSeconds: access.shift.breakSeconds, task: access.shift.task, handover: access.shift.handover } : null, permissions: access.permissions, serverNow: new Date().toISOString(), employees: access.device ? await prisma.deviceEmployee.findMany({ where: { status: "ACTIVE" }, select: { code: true, name: true, shiftLabel: true }, orderBy: { name: "asc" }, take: 500 }) : [] });
     }
     if (!access.admin && !access.employee) return reply({ error: "Log in for attendance or use your administrator website login" }, 401);
     if (view === "jobs") {
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       const metadata = new Map(entries.map((entry) => [entry.key.slice("workstation.job.".length), parseSetting(entry.value)]));
       const own = [...metadata].filter(([, meta]) => meta.employeeId === access.employee?.id).map(([id]) => id);
       const jobs = await prisma.job.findMany({ where: availableJobWhere(access.admin ? {} : { id: { in: own } }), select: { id: true, title: true, description: true, externalSource: true, externalName: true, clientValue: true, clientCurrency: true, status: true, publish: true, createdAt: true, client: { select: { companyName: true, contactName: true } } }, orderBy: { createdAt: "desc" }, take: 200 });
-      return reply({ jobs: jobs.map((job) => ({ ...job, entry: metadata.get(job.id) || {} })), clients: await prisma.client.findMany({ where: { status: "ACTIVE" }, select: { id: true, companyName: true, contactName: true }, orderBy: { companyName: "asc" }, take: 500 }) });
+      return reply({ jobs: jobs.map((job) => ({ ...job, clientValue: null, entry: metadata.get(job.id) || {} })), clients: await prisma.client.findMany({ where: { status: "ACTIVE" }, select: { id: true, companyName: true, contactName: true }, orderBy: { companyName: "asc" }, take: 500 }) });
     }
     if (view === "blogs") {
       if (!access.admin && !access.permissions.blog) return reply({ error: "Blog access is disabled" }, 403);
@@ -65,6 +65,7 @@ export async function POST(request: Request) {
       if (!access.admin && !access.permissions.projects) return reply({ error: "Project entry access is disabled" }, 403);
       const parsed = jobInput.safeParse(body.data); if (!parsed.success) return reply({ error: "Check project title, client, source, amount and currency" }, 400);
       const data = parsed.data;
+      if (Number(data.amount) !== 0) return reply({ error: "Project money is recorded by Accounts in Business Office. Enter scope here without a value." }, 403);
       if (data.clientId && !await prisma.client.findFirst({ where: { id: data.clientId, status: "ACTIVE" }, select: { id: true } })) return reply({ error: "Client is missing or on hold" }, 400);
       const actor = access.admin?.id || access.employee!.id;
       const requestKey = `workstation.operation.${actor}.${data.operationId}`;

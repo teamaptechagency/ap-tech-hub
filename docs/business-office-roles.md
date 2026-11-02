@@ -1,0 +1,19 @@
+# Business Office and employee roles
+
+Hierarchy: CEO/Admin manages configuration and employee access. Manager supervises operational work in assigned business units. Sales, Accounts, Operations and Front Desk receive different desktop menus and home screens. These are physical-office employee roles, separate from website User authentication roles. Manager does not become a website administrator and cannot grant roles.
+
+Admin configuration: Work Station > Staff & attendance > Edit employee > Office role and Assigned businesses. Available units: AP Tech, Photocopy, Kids Learning Products, Travel (Hajj/Umrah/overseas services) and Ruqyah Center. Existing employees default to Sales/AP Tech until explicitly configured. Existing app permission switches remain additional limits. API checks run on every request, including open attendance sessions.
+
+Only a signed-in Accounts employee can access the new business cashbooks and salary records. CEO/admin configures accounts but does not automatically receive this new ledger permission. Manager, Sales, Operations and Front Desk cannot fetch money records, even by changing browser requests. The existing website administrator finance features retain their existing authorization; this change does not rewrite the established website User role model.
+
+Sales: website chat, own blog drafts and project scope entry. Operations: work orders and stock movements. Front Desk: visitor bookings and Ruqyah appointment serials, contact and schedule only. Manager: operational records/statuses and stock across assigned units. No diagnosis, medical history or passport documents are collected in these registers. Travel is an enquiry/booking tracker, not visa issuance, immigration decision-making or a ticketing integration.
+
+Accounts: dated money received/spent, business, category, BDT/USD/SAR, reference and note. Salary payments record employee, salary month, amount actually paid, date, payment method and reference. Non-cash salary payments require a reference. Salary entries are expenses; no bank transfer, payroll accrual, tax calculation or automatic existing-wallet deduction occurs. Corrections void entries while preserving an audit reason. Original entries and all mutations retain actor identity; retries reuse a unique operation ID.
+
+AP Tech's existing saved earnings and expenses are available read-only to Accounts in a separate Existing Hub finance tab. BDT equivalents are labeled. They are not merged into the new office cashbook, to prevent double counting. Existing project scopes in the workstation hide monetary amounts; new project pricing is handled by Accounts cashbook references. No old finance entries are silently migrated.
+
+Photocopy/Kids inventory supports item/SKU, in/out quantity, date and reason. These are movement records, not a complete perpetual stock valuation system. Opening balances, manufacturing BOMs, automatic costing, sales invoices, vendor/customer balances and bank reconciliation are not implemented in this initial office module. Cash totals represent loaded transactions (up to 500), not profit or a certified accounting statement; narrow date ranges when truncated. CSV export protects cells against spreadsheet formulas.
+
+Ruqyah/front-desk serials are sequential per business/date under a serializable transaction. Work/booking statuses are Waiting, In progress, Done or Cancelled, with a required progress/cancellation reason. Front Desk has no cashbook access. Accounts uses opaque appointment/order references without receiving patient scheduling details.
+
+Storage uses namespaced Postgres Setting records with date/business prefixes. No migration or new desktop installer is needed. Exit and reopen the existing app to load the interface. Set employee roles before rollout; changing only the displayed role never bypasses server checks.

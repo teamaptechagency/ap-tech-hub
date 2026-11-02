@@ -57,6 +57,7 @@ type AdminSidebarProps = {
 };
 
 export const adminNavItems: AdminNavItem[] = [
+  { label: "Business Office", href: "/business-office", icon: Briefcase, section: "Overview" },
   {
     label: "Work Station",
     href: "/work-station",

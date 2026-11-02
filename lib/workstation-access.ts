@@ -1,3 +1,4 @@
+import { readOfficeProfile, rolePermissions } from "@/lib/office-roles";
 import { recordedEmployeeShift } from "@/lib/employee-roster";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -24,7 +25,11 @@ export async function workstationAccess(request: Request) {
   const employee = shift && shift.deviceId === bound?.id && !shift.endedAt && shift.employee.status === "ACTIVE" ? shift.employee : null;
   const setting = employee ? await prisma.setting.findUnique({ where: { key: `workstation.permissions.${employee.id}` } }) : null;
   const permissions = appPermissions.safeParse(parseSetting(setting?.value));
-  return { admin, device: bound, employee, shift: employee ? shift : null, permissions: permissions.success ? permissions.data : defaultAppPermissions };
+  const profileRow = employee ? await prisma.setting.findUnique({ where: { key: `workstation.profile.${employee.id}` } }) : null;
+  const officeProfile = readOfficeProfile(profileRow?.value);
+  const caps = rolePermissions(officeProfile.role);
+  const configured = permissions.success ? permissions.data : defaultAppPermissions;
+  return { officeProfile, admin, device: bound, employee, shift: employee ? shift : null, permissions: { blog: caps.blog && configured.blog, projects: caps.projects && configured.projects, chat: caps.chat && configured.chat } };
 }
 export function sameOriginWrite(request: Request) {
   const origin = request.headers.get("origin");
