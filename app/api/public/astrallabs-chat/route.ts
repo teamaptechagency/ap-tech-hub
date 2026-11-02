@@ -146,6 +146,7 @@ export async function POST(request: Request) {
         sender: "GUEST",
       },
     });
+    await prisma.landingChatLead.update({ where: { id: leadId }, data: { status: "OPEN", updatedAt: new Date() } });
 
     const existingLead = await prisma.lead.findFirst({
       where: {

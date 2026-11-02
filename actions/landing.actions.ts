@@ -554,6 +554,8 @@ export async function sendLandingChatMessage(
     },
   });
 
+  await prisma.landingChatLead.update({ where: { id: cleanLeadId }, data: { status: "OPEN", updatedAt: new Date() } });
+
   await addWebsiteLeadActivity({
     email: lead.email,
     subject: `Live chat: ${lead.subject}`,

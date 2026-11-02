@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -101,6 +102,9 @@ export default async function AdminLayout({
       icon: "profile",
     },
   ];
+
+  // Appearance only: authorization above still runs for every embedded admin screen.
+  if ((await cookies()).get("ap_workstation_embed")?.value === "1") return <main className="min-h-dvh bg-background p-5">{children}</main>;
 
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh md:min-h-0 md:flex-row md:overflow-hidden">

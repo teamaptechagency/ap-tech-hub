@@ -10,7 +10,7 @@ import { deviceServiceFailure } from "@/lib/device-response";
 export const runtime = "nodejs";
 const sessionFields = { pcName: z.string().min(1).max(80), sessionToken: z.string().regex(/^[a-f0-9]{64}$/) };
 const inputSchema = z.discriminatedUnion("action", [
-  employeeInput.extend({ action: z.literal("register"), pcName: sessionFields.pcName }).strict(),
+  employeeInput.omit({ code: true }).extend({ code: employeeInput.shape.code.optional(), action: z.literal("register"), pcName: sessionFields.pcName }).strict(),
   z.object({ action: z.literal("login"), pcName: sessionFields.pcName, code: z.string().trim().toLowerCase().min(3).max(40), password: z.string().min(1).max(100) }).strict(),
   z.object({ ...sessionFields, action: z.enum(["status", "break", "resume", "logout"]), earlyLeaveReason: z.string().trim().max(500).optional() }).strict(),
   z.object({ ...sessionFields, action: z.literal("checklist"), taskId: z.string().min(1), done: z.boolean().optional(), status: z.enum(["PENDING", "COMPLETED", "HOLD", "CANCELLED"]).optional(), reason: z.string().trim().max(1000).optional(), proofUrl: z.union([z.literal(""), z.string().url().refine((value) => /^https?:\/\//.test(value))]).optional() }).strict(),
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       if (attempts >= 20) return reply({ error: "Too many login attempts on this PC. Retry in 15 minutes." }, 429);
       await prisma.workDeviceEvent.create({ data: { id: randomUUID(), deviceId: device.id, source: "SYSTEM", type: "ATTENDANCE_AUTH", platform: "Windows" } });
       if (data.action === "register") {
-        await prisma.deviceEmployee.create({ data: { code: data.code, name: data.name, passwordHash: await bcrypt.hash(data.password, 12), status: "PENDING" } });
+        await prisma.deviceEmployee.create({ data: { code: data.code || "emp-" + randomBytes(4).toString("hex"), name: data.name, passwordHash: await bcrypt.hash(data.password, 12), status: "PENDING" } });
         return reply({ message: "Account requested. Your administrator must approve it before attendance login." });
       }
       const employee = await prisma.deviceEmployee.findUnique({ where: { code: data.code } });

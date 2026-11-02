@@ -4,12 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { deviceAdminAllowed } from "@/lib/device-access";
 import { employeeInput, scheduleInput, breakSeconds, shiftSeconds, dhakaDay, shiftStart, attendanceTotals } from "@/lib/device-attendance";
 import { deviceServiceFailure } from "@/lib/device-response";
+import { appPermissions, defaultAppPermissions, parseSetting } from "@/lib/workstation-access";
 
 export const runtime = "nodejs";
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const inputSchema = z.discriminatedUnion("action", [
-  employeeInput.merge(scheduleInput).extend({ action: z.literal("create") }).strict(),
-  scheduleInput.extend({ action: z.literal("update"), id: z.string().min(1), name: z.string().trim().min(1).max(80), status: z.enum(["ACTIVE", "DISABLED"]), password: z.string().min(10).max(100).optional() }).strict(),
+  employeeInput.merge(scheduleInput).extend({ action: z.literal("create"), permissions: appPermissions.optional() }).strict(),
+  scheduleInput.extend({ action: z.literal("update"), id: z.string().min(1), name: z.string().trim().min(1).max(80), status: z.enum(["ACTIVE", "DISABLED"]), password: z.string().min(10).max(100).optional(), permissions: appPermissions.optional() }).strict(),
   z.object({ action: z.literal("endShift"), id: z.string().min(1) }).strict(),
   z.object({ action: z.literal("template"), id: z.string().optional(), title: z.string().trim().min(1).max(200), shiftLabel: z.literal("MORNING"), active: z.boolean(), primaryEmployeeId: z.string().nullable().optional(), fallbackEmployeeId: z.string().nullable().optional() }).strict(),
 ]);
@@ -44,7 +45,8 @@ export async function GET(request: Request) { return guard(async () => {
   const activity = await prisma.workDeviceEvent.groupBy({ by: ["shiftId", "type"], where: { shiftId: { in: shifts.map((shift) => shift.id) } }, _count: { _all: true }, _sum: { clicks: true, keys: true } });
   // Never expose attendance bearer hashes, even to the browser admin interface.
   const safe = (shift: typeof shifts[number]) => { const { sessionHash: _secret, ...data } = shift; void _secret; return { ...data, attendanceSeconds: shiftSeconds(shift), ...attendanceTotals(shift) }; };
-  return reply({ employees, shifts: shifts.map(safe), openShifts: openShifts.map(safe), activity, tasks, templates, limit: 2000 });
+  const permissionRows = await prisma.setting.findMany({ where: { key: { startsWith: "workstation.permissions." } } });
+  return reply({ employees: employees.map((employee) => ({ ...employee, permissions: { ...defaultAppPermissions, ...parseSetting(permissionRows.find((row) => row.key === `workstation.permissions.${employee.id}`)?.value) } })), shifts: shifts.map(safe), openShifts: openShifts.map(safe), activity, tasks, templates, limit: 2000 });
 }); }
 export async function POST(request: Request) { return guard(async () => {
   let body: unknown; try { body = await request.json(); } catch { return reply({ error: "Invalid JSON" }, 400); }
@@ -52,9 +54,11 @@ export async function POST(request: Request) { return guard(async () => {
   if (!result.success) return reply({ error: "Check ID (3–40 letters/numbers), name, password (10+), schedule and grace minutes" }, 400);
   const data = result.data;
   if (data.action === "create") {
-    await prisma.deviceEmployee.create({ data: { code: data.code, name: data.name, passwordHash: await bcrypt.hash(data.password, 12), status: "ACTIVE", expectedStart: shiftStart[data.shiftLabel], shiftLabel: data.shiftLabel, graceMinutes: data.graceMinutes } });
+    const employee = await prisma.deviceEmployee.create({ data: { code: data.code, name: data.name, passwordHash: await bcrypt.hash(data.password, 12), status: "ACTIVE", expectedStart: shiftStart[data.shiftLabel], shiftLabel: data.shiftLabel, graceMinutes: data.graceMinutes } });
+    if (data.permissions) await prisma.setting.upsert({ where: { key: `workstation.permissions.${employee.id}` }, create: { key: `workstation.permissions.${employee.id}`, value: JSON.stringify(data.permissions) }, update: { value: JSON.stringify(data.permissions) } });
   } else if (data.action === "update") {
     await prisma.deviceEmployee.update({ where: { id: data.id }, data: { name: data.name, status: data.status, expectedStart: shiftStart[data.shiftLabel], shiftLabel: data.shiftLabel, graceMinutes: data.graceMinutes, ...(data.password ? { passwordHash: await bcrypt.hash(data.password, 12) } : {}) } });
+    if (data.permissions) await prisma.setting.upsert({ where: { key: `workstation.permissions.${data.id}` }, create: { key: `workstation.permissions.${data.id}`, value: JSON.stringify(data.permissions) }, update: { value: JSON.stringify(data.permissions) } });
   } else if (data.action === "template") {
     for (const [id, label] of [[data.primaryEmployeeId, "MORNING"], [data.fallbackEmployeeId, "EVENING"]] as const) {
       if (!id) continue;

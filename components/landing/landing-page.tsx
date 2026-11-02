@@ -1141,6 +1141,17 @@ function FloatingChat({
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open || !leadId) return;
+    let alive = true;
+    const timer = window.setInterval(() => {
+      void getLandingChatMessages(leadId).then((result) => {
+        if (alive && "messages" in result && Array.isArray(result.messages)) setMessages(result.messages);
+      }).catch(() => {});
+    }, 10000);
+    return () => { alive = false; window.clearInterval(timer); };
+  }, [open, leadId]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 

@@ -11,8 +11,8 @@ using System.Text;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
-public class WorkAgent : Form {
-    const string AppVersion = "0.4.0";
+public partial class WorkAgent : Form {
+    const string AppVersion = "0.5.0";
     [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint size; public uint time; }
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     readonly TextBox url = new TextBox(), token = new TextBox();
@@ -26,11 +26,18 @@ public class WorkAgent : Form {
     readonly string config = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "APTechWorkAgent", "settings.dat");
     bool tracking, sending, exitRequested;
     string pendingPayload, syncRequestId;
+    static System.Threading.EventWaitHandle reopenEvent;
+    Timer reopenTimer;
 
     [STAThread] public static void Main() {
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new WorkAgent());
+        bool first;
+        using (var mutex = new System.Threading.Mutex(true, "Local\\APTechWorkStation-" + Environment.UserName, out first)) {
+            reopenEvent = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset, "Local\\APTechWorkStationOpen-" + Environment.UserName);
+            if (!first) { reopenEvent.Set(); reopenEvent.Dispose(); return; }
+            try { Application.Run(new WorkAgent()); } finally { reopenEvent.Dispose(); mutex.ReleaseMutex(); }
+        }
     }
     public WorkAgent() {
         Text = "AP Tech Work Tracker " + AppVersion; ClientSize = new Size(560, 540); MinimumSize = new Size(576, 579);
@@ -43,13 +50,13 @@ public class WorkAgent : Form {
         AddLabel("First setup only: paste the pairing credential from your admin", 24, 160, 510, 22, 10); token.SetBounds(24, 185, 510, 28); token.UseSystemPasswordChar = true; Controls.Add(token);
         consent.Text = "I have read the notice and agree to start this work session."; consent.SetBounds(24, 227, 510, 40); Controls.Add(consent);
         AddLabel("Sends PC status and work-site interaction counts. Attendance saves\nyour submitted login and work notes. No background keystroke text,\nclipboard contents, screenshots or private messages are collected.", 24, 276, 510, 64, 9);
-        start.Text = "Start work session"; start.SetBounds(24, 349, 240, 34); start.ForeColor = Color.Black; start.BackColor = Color.White; start.Click += async (s,e) => { if (sending || !ValidateSettings()) return; try { SaveConfig(); } catch { MessageBox.Show("Could not save settings for this Windows user."); return; } tracking = true; url.Enabled = token.Enabled = false; start.Enabled = false; timer.Start(); await Send(false); }; Controls.Add(start);
+        start.Text = "Start work session"; start.SetBounds(24, 349, 240, 34); start.ForeColor = Color.Black; start.BackColor = Color.White; start.Click += async (s,e) => await StartTracking(); Controls.Add(start);
         pause.Text = "Pause tracking"; pause.SetBounds(280, 349, 254, 34); pause.ForeColor = Color.Black; pause.BackColor = Color.White; pause.Click += (s,e) => Pause(); Controls.Add(pause);
         state.SetBounds(24, 393, 510, 24); state.Text = "Paused. Nothing is being collected."; Controls.Add(state);
         var attendance = new Button(); attendance.Text = "Employee attendance / Login / Logout"; attendance.SetBounds(24, 433, 510, 32); attendance.ForeColor = Color.Black; attendance.BackColor = Color.White;
         attendance.Click += (s,e) => { if (!System.Text.RegularExpressions.Regex.IsMatch(token.Text.Trim(), "^[a-f0-9]{64}$")) { MessageBox.Show("Pair this PC with its device credential first."); return; } using (var form = new AttendanceForm(token.Text.Trim())) form.ShowDialog(this); }; Controls.Add(attendance);
         var update = new Button(); update.Text = "Check for software updates"; update.SetBounds(24, 483, 510, 32); update.ForeColor = Color.Black; update.BackColor = Color.White;
-        update.Click += async (s,e) => {
+        checkUpdates = async () => {
             update.Enabled = false;
             try {
                 var text = await client.GetStringAsync("https://www.aptechagency.com/downloads/work-tracker/release.json?check=" + DateTime.UtcNow.Ticks);
@@ -79,7 +86,7 @@ public class WorkAgent : Form {
                 exitRequested = true; Close();
             } catch (Exception ex) { if (!IsDisposed) MessageBox.Show("Update was not installed: " + ex.Message + "\nYou can retry or visit https://www.aptechagency.com/work-tracker"); }
             finally { if (!update.IsDisposed) { update.Enabled = true; update.Text = "Check for software updates"; } }
-        }; Controls.Add(update);
+        }; update.Click += async (s,e) => await checkUpdates(); Controls.Add(update);
         tray.Icon = SystemIcons.Application; tray.Text = "AP Tech Work Tracker - paused"; tray.Visible = true;
         var menu = new ContextMenuStrip(); menu.Items.Add("Open tracker", null, (s,e) => { Show(); WindowState = FormWindowState.Normal; Activate(); }); menu.Items.Add("Pause tracking", null, (s,e) => Pause()); menu.Items.Add("Exit", null, (s,e) => { exitRequested = true; Close(); }); tray.ContextMenuStrip = menu;
         tray.DoubleClick += (s,e) => { Show(); WindowState = FormWindowState.Normal; Activate(); };
@@ -91,10 +98,17 @@ public class WorkAgent : Form {
                 tray.ShowBalloonTip(4000, "AP Tech Work Tracker", tracking ? "Work tracking continues. Use the tray icon to open, pause or exit." : "Tracker is paused in the tray. Use its icon to open or exit.", ToolTipIcon.Info);
                 return;
             }
-            tracking = false; timer.Stop(); tray.Visible = false; tray.Dispose(); client.Dispose();
+            tracking = false; timer.Stop(); if (reopenTimer != null) reopenTimer.Dispose(); DisposeWorkspace(); tray.Visible = false; tray.Dispose(); client.Dispose();
         };
         LoadConfig();
-        Shown += (s,e) => { if (autoResume.Checked && consent.Checked) start.PerformClick(); };
+        ClientSize = new Size(1180, 800); MinimumSize = new Size(940, 640);
+        reopenTimer = new Timer { Interval = 500 }; reopenTimer.Tick += (s,e) => { if (reopenEvent != null && reopenEvent.WaitOne(0)) { Show(); WindowState = FormWindowState.Normal; Activate(); } }; reopenTimer.Start();
+        Shown += async (s,e) => { var interfaceTask = InitializeWorkspace(); if (autoResume.Checked && consent.Checked) await StartTracking(); await interfaceTask; };
+    }
+    async System.Threading.Tasks.Task StartTracking() {
+        if (sending || !ValidateSettings()) return;
+        try { SaveConfig(); } catch { MessageBox.Show("Could not save settings for this Windows user."); return; }
+        tracking = true; url.Enabled = token.Enabled = false; start.Enabled = false; timer.Start(); await Send(false);
     }
     static void VerifyInstaller(byte[] binary, string expected) {
         string actual; using (var sha = SHA256.Create()) actual = BitConverter.ToString(sha.ComputeHash(binary)).Replace("-", "");

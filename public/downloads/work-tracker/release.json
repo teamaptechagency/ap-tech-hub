@@ -1,10 +1,10 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publishedDate": "2026-11-02",
-  "exeSha256": "39ee47b5835891f8106c450994c33a8105cb8651a94a0d9609cacef9a23b71cf",
-  "installerSha256": "0dd99f623ed0ab1399cc83ceb851278fcf048b3edfe19fc021d0c1af119e2372",
-  "packageSha256": "19156c72836638bab7dd3e0634a81e009981c09ff36530cb1b83c71c2803839f",
-  "releaseNotes": "Work Station: employee attendance with three Dhaka shifts and eight-hour timer.\nMorning primary and evening fallback share one daily task; night has no checklist.\nHold/Cancel with reasons, actor history and unresolved backlog.\nEmployee daily/weekly/monthly/yearly records, shift logs, work links and CSV.\nRequires updated server storage and extension 0.2.0.",
+  "exeSha256": "8550eb1310b3310bc5c599ef81a8ae46a5d7f0c620d1c3791ab5dc519265db2b",
+  "installerSha256": "9dc40ccfddef8d23c977a0bc2c92d28cef2d313a365d06be7a1b06f9a3f97353",
+  "packageSha256": "37c13ed323faa83c65118847dfb36c8c2d0e71178d3000b5c4f92018c3dc5995",
+  "releaseNotes": "New Workspace desktop interface with separate PC and employee identities.\nChoose your name: employee ID is automatic. Attendance, daily tasks and shift timer remain independent of activity tracking.\nFiverr, Upwork, Freelancer, website/direct project and task entry with USD/BDT values.\nEmployee blog drafts and review submissions; admin job, programmer application, partner and blog management.\nWebsite visitor chat with replies, handover and tray alerts. Windows x64 and Microsoft WebView2 Runtime required.\nClose to tray, reopen from shortcut, and update from inside the app.",
   "extensionVersion": "0.2.1",
   "extensionSha256": "44694f1c8c55c062060ba46512d8f6b4bc166b4426e3b62c0e6e0496d161493c"
 }
