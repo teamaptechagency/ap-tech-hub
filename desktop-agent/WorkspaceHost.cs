@@ -77,6 +77,7 @@ public partial class WorkAgent {
                     else if (action == "attendance-token") { SaveAttendanceToken(message.ContainsKey("token") ? Convert.ToString(message["token"]) : null); PushWorkspaceState(); }
                     else if (action == "check-updates" && checkUpdates != null) await checkUpdates();
                     else if (action == "admin-login") { adminSignInPending = true; workspace.CoreWebView2.Navigate("https://www.aptechagency.com/login"); }
+                    else if (action == "chat-sound") { System.Media.SystemSounds.Asterisk.Play(); }
                     else if (action == "notify") {
                         tray.ShowBalloonTip(5000, "Work Station visitor chat", "A website customer message is waiting. Open Work Station to reply.", ToolTipIcon.Info);
                     }
@@ -112,6 +113,7 @@ public partial class WorkAgent {
                     var result = json.Deserialize<Dictionary<string, object>>(await response.Content.ReadAsStringAsync());
                     var latest = result.ContainsKey("latestGuestId") ? Convert.ToString(result["latestGuestId"]) : "";
                     if (!String.IsNullOrEmpty(latest) && latest != lastGuestAlert) {
+                        if (lastGuestAlert != null) System.Media.SystemSounds.Asterisk.Play();
                         lastGuestAlert = latest;
                         tray.ShowBalloonTip(5000, "Work Station visitor chat", "A website customer message is waiting. Open Work Station to reply.", ToolTipIcon.Info);
                     }

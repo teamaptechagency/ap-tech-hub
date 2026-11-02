@@ -621,6 +621,8 @@ export async function getLandingChatMessages(leadId: string) {
   });
 
   if (!lead) return { error: "Chat session was not found." };
+  const supportRows = await prisma.setting.findMany({ where: { key: { in: lead.messages.filter(message => message.sender === "ADMIN").map(message => `workstation.chatmessage.${message.id}`) } } });
+  const supportName = (id: string) => { try { return String(JSON.parse(supportRows.find(row => row.key === `workstation.chatmessage.${id}`)?.value || "{}").actorName || "AP Tech"); } catch { return "AP Tech"; } };
 
   return {
     lead: {
@@ -633,6 +635,7 @@ export async function getLandingChatMessages(leadId: string) {
       id: message.id,
       body: message.body,
       sender: message.sender,
+      supportName: supportName(message.id),
       createdAt: message.createdAt.toISOString(),
     })),
   };

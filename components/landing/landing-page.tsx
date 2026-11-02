@@ -1123,6 +1123,7 @@ type FloatingChatMessage = {
   id: string;
   body: string;
   sender: string;
+  supportName?: string;
   createdAt: string;
 };
 
@@ -1302,7 +1303,7 @@ function FloatingChat({
                       >
                         {!mine && (
                           <p className="mb-0.5 text-[10px] font-semibold text-[#6b7280]">
-                            Support
+                            Support - {message.supportName || "AP Tech"}
                           </p>
                         )}
                         {message.body}

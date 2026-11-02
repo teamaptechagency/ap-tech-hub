@@ -64,8 +64,6 @@ export default async function AdminDashboard() {
   const [
     totalEarningsAgg,
     totalExpensesAgg,
-    employeeBalanceAgg,
-    partnerBalanceAgg,
     activeProjects,
     completedProjects,
     specialOrdersCompleted,
@@ -94,15 +92,7 @@ export default async function AdminDashboard() {
       where: { createdAt: currentMonth },
       _sum: { amountBdt: true },
     }),
-    prisma.user.aggregate({
-      where: { role: "TEAM_MEMBER" },
-      _sum: { balance: true },
-    }),
-    prisma.user.aggregate({
-      where: { role: "BUSINESS_PARTNER" },
-      _sum: { balance: true },
-    }),
-    prisma.job.count({ where: availableJobWhere({ status: { in: ["PENDING", "IN_PROGRESS"] } }) }),
+    prisma.job.count({ where: availableJobWhere({ status: { in: ["PENDING", "IN_PROGRESS"] }, createdAt: currentMonth }) }),
     prisma.job.count({ where: availableJobWhere({ status: "COMPLETED", updatedAt: currentMonth }) }),
     prisma.specialOrder.count({ where: completedSoThisMonth }),
     prisma.specialOrder.aggregate({
@@ -110,13 +100,13 @@ export default async function AdminDashboard() {
       _sum: { profitBdt: true },
     }),
     prisma.invoice.count({
-      where: { status: { in: ["DUE", "PARTIALLY_PAID", "OVERDUE"] } },
+      where: { status: { in: ["DUE", "PARTIALLY_PAID", "OVERDUE"] }, createdAt: currentMonth },
     }),
-    prisma.invoice.count({ where: { status: "PAYMENT_SUBMITTED" } }),
-    prisma.withdrawRequest.count({ where: { status: "PENDING" } }),
-    prisma.application.count({ where: { status: "PENDING" } }),
+    prisma.invoice.count({ where: { status: "PAYMENT_SUBMITTED", createdAt: currentMonth } }),
+    prisma.withdrawRequest.count({ where: { status: "PENDING", createdAt: currentMonth } }),
+    prisma.application.count({ where: { status: "PENDING", createdAt: currentMonth } }),
     prisma.jobRequest.findMany({
-      where: { status: "PENDING" },
+      where: { status: "PENDING", createdAt: currentMonth },
       include: { client: { select: { companyName: true } } },
       orderBy: { createdAt: "asc" },
       take: 5,
@@ -135,7 +125,7 @@ export default async function AdminDashboard() {
       },
     }),
     prisma.user.findMany({
-      where: { accountStatus: "PENDING_APPROVAL" },
+      where: { accountStatus: "PENDING_APPROVAL", createdAt: currentMonth },
       orderBy: { createdAt: "asc" },
       include: {
         skills: { select: { name: true } },
@@ -190,8 +180,6 @@ export default async function AdminDashboard() {
     safeNumber(totalEarningsAgg._sum.amountBdt) + sumBdt(virtualJobEarnings);
   const totalExpenses = safeNumber(totalExpensesAgg._sum.amountBdt);
   const netEarnings = totalEarnings - totalExpenses;
-  const employeeDue = safeNumber(employeeBalanceAgg._sum.balance);
-  const partnerDue = safeNumber(partnerBalanceAgg._sum.balance);
   const specialOrderEarnings = safeNumber(specialOrderProfitAgg._sum.profitBdt);
   const visitorValue = (value: number) => visitorAnalytics.available ? value.toLocaleString() : "—";
   const needsAction =
@@ -220,9 +208,10 @@ export default async function AdminDashboard() {
               : "All caught up"}
           </p>
         </div>
-        <ClearCacheButton />
+        <div className="flex items-center gap-3"><Link href="/reports" className="rounded-md border px-3 py-2 text-sm font-medium">Previous months & reports →</Link><ClearCacheButton /></div>
       </div>
 
+      <p className="rounded-lg border bg-card px-4 py-3 text-sm text-muted-foreground">Showing {monthStart.toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka", month: "long", year: "numeric" })} · Bangladesh time. Previous periods and outstanding balances are available in <Link href="/reports" className="font-medium text-primary underline">Reports</Link>.</p>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="This month earnings"
@@ -243,19 +232,7 @@ export default async function AdminDashboard() {
           hint="Earnings minus expenses"
         />
         <StatCard
-          label="Employee due balance"
-          value={money(employeeDue)}
-          href="/accounts/employees"
-          hint="Current employee payable"
-        />
-        <StatCard
-          label="Partner due balance"
-          value={money(partnerDue)}
-          href="/accounts/partners"
-          hint="Current partner payable"
-        />
-        <StatCard
-          label="Active projects"
+          label="Active projects started this month"
           value={activeProjects}
           href="/jobs"
           hint={`${dueInvoices} invoices due`}

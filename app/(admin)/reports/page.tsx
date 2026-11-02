@@ -1,21 +1,29 @@
+import Link from "next/link";
+import { getDhakaMonthRange } from "@/lib/dhaka-date";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FinanceBoard } from "@/components/accounts/finance-board";
 import { getVirtualCompletedJobEarnings } from "@/lib/finance-summary";
 
-export default async function ReportsPage() {
-  const now = new Date();
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+  const query = await searchParams;
+  const current = getDhakaMonthRange().start;
+  const fallback = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka", year: "numeric", month: "2-digit" }).format(current);
+  const selected = /^\d{4}-(0[1-9]|1[0-2])$/.test(query.month || "") && Number(query.month!.slice(0, 4)) >= 2000 && Number(query.month!.slice(0, 4)) <= 2100 ? query.month! : fallback;
+  const selectedRange = getDhakaMonthRange(new Date(selected + "-15T12:00:00+06:00"));
+  const year = Number(selected.slice(0, 4)), month = Number(selected.slice(5, 7)) - 1;
 
   // Last 6 month windows
   const months: { label: string; start: Date; end: Date }[] = [];
   for (let i = 0; i < 6; i++) {
-    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+    const start = new Date(Date.UTC(year, month - i, 1, -6));
+    const end = new Date(Date.UTC(year, month - i + 1, 1, -6));
     months.push({
       label: start.toLocaleDateString("en-GB", {
         month: "short",
         year: "numeric",
+        timeZone: "Asia/Dhaka",
       }),
       start,
       end,
@@ -31,7 +39,7 @@ export default async function ReportsPage() {
     virtualJobEarnings,
   ] = await Promise.all([
     prisma.earning.findMany({
-      where: { createdAt: { gte: months[5].start } },
+      where: { createdAt: { gte: months[5].start, lt: selectedRange.end } },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -72,7 +80,7 @@ export default async function ReportsPage() {
           where: {
             bucket: "BALANCE",
             amount: { gt: 0 },
-            createdAt: { gte: months[0].start },
+            createdAt: { gte: months[0].start, lt: selectedRange.end },
           },
           select: { amount: true },
         },
@@ -103,7 +111,7 @@ export default async function ReportsPage() {
       by: ["status"],
       _count: true,
     }),
-    getVirtualCompletedJobEarnings(months[5].start),
+    getVirtualCompletedJobEarnings(months[5].start, selectedRange.end),
   ]);
 
   const reportEarnings = [...earnings, ...virtualJobEarnings].sort(
@@ -132,10 +140,11 @@ export default async function ReportsPage() {
       <div>
         <h1 className="text-2xl font-bold">Reports</h1>
         <p className="text-sm text-muted-foreground">
-          Last 6 months · all amounts in BDT
+          Six months ending in the selected month · Bangladesh time · all amounts in BDT
         </p>
       </div>
 
+      <form className="flex flex-wrap items-end gap-3" method="get"><label className="grid gap-1 text-sm">Report ending month<input type="month" name="month" defaultValue={selected} min="2000-01" max="2100-12" className="rounded-md border bg-background p-2" /></label><button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">View report</button><Link href="/dashboard" className="rounded-md border px-4 py-2 text-sm">Current month dashboard</Link></form>
       {/* Monthly P&L bars */}
       <Card>
         <CardHeader className="pb-3">

@@ -1,10 +1,10 @@
 {
-  "version": "0.5.1",
+  "version": "0.5.2",
   "publishedDate": "2026-11-02",
-  "exeSha256": "ae72a885067e8a64e4fb662954433751c4556db5251a837458cbc8f52e1883d7",
-  "installerSha256": "0a940dd82b822eb28409b3d0915ef046fa20e8070ce25d94412900b6256075ac",
-  "packageSha256": "bc2ec89a73c63633b09ef342afaf21a8e3cffdbf6af06481e6f3b48a8f1afa0a",
-  "releaseNotes": "AP Tech logo added to the desktop app, installer, taskbar and tray.\nRemoved the ten-minute automatic admin logout. Manual logout and normal server session expiry remain. Restarting the shared-PC app still requires a fresh admin website login.",
+  "exeSha256": "5e8dc8f6cf5f6a7950b81367c1356d070b3dbee87939891d5d0deae8094e93d8",
+  "installerSha256": "06f4c5f157b7aef735c5702ad1e42699eaf7af960c8b2f525970a1e926580031",
+  "packageSha256": "a0b6bcb1000fe9d3fe059147d71cc3bfa149520622cccd6c19dd858cc92fca0e",
+  "releaseNotes": "Improved Work Station spacing and visitor inbox. Automatic chat updates and message sound. Support names on customer replies. Referral partner administration is available in the app. Blog image upload and simple tags load from the updated website. AP Tech icons remain included.",
   "extensionVersion": "0.2.1",
   "extensionSha256": "44694f1c8c55c062060ba46512d8f6b4bc166b4426e3b62c0e6e0496d161493c"
 }

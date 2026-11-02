@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { put } from "@vercel/blob";
-import sharp from "sharp";
 import { prisma } from "@/lib/prisma";
 import { workstationAccess, sameOriginWrite } from "@/lib/workstation-access";
 
@@ -17,6 +16,8 @@ export async function POST(request: Request) {
     const file = form.get("file");
     if (!(file instanceof File) || !file.size || file.size > MAX) return reply({ error: "Choose an image smaller than 4 MB" }, 400);
     if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) return reply({ error: "Use a JPG, PNG, WebP or AVIF image" }, 400);
+    let sharp: typeof import("sharp").default;
+    try { sharp = (await import("sharp")).default; } catch { return reply({ error: "Image processing is temporarily unavailable. Please contact the administrator." }, 503); }
     let image: Buffer;
     try {
       const source = sharp(Buffer.from(await file.arrayBuffer()), { limitInputPixels: 40000000 });

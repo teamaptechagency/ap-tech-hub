@@ -32,7 +32,8 @@ export async function GET(request: Request) {
       const owner = await ownerFor(id);
       if (!access.admin && (owner.adminId || owner.employeeId && owner.employeeId !== access.employee!.id) && await ownerBusy(owner)) return reply({ error: "Another active worker owns this conversation" }, 409);
       const messages = await prisma.landingChatMessage.findMany({ where: { leadId: id }, orderBy: { createdAt: "desc" }, take: 200 });
-      return reply({ lead, owner, messages: messages.reverse() });
+      const audits = await prisma.setting.findMany({ where: { key: { in: messages.filter(message => message.sender === "ADMIN").map(message => `workstation.chatmessage.${message.id}`) } } });
+      return reply({ lead, owner, messages: messages.reverse().map(message => ({ ...message, supportName: String(parseSetting(audits.find(row => row.key === `workstation.chatmessage.${message.id}`)?.value).actorName || "AP Tech") })) });
     }
     const leads = await prisma.landingChatLead.findMany({ where: { status: "OPEN" }, orderBy: { updatedAt: "desc" }, take: 100, select: { id: true, name: true, subject: true, updatedAt: true, messages: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, body: true, sender: true, createdAt: true } } } });
     if (params.get("view") === "alerts") {

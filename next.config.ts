@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Sharp loads platform-specific native libraries dynamically in the upload function.
+  outputFileTracingIncludes: {
+    "/api/blog-image": ["node_modules/sharp/**/*", "node_modules/@img/sharp-linux-*/**/*", "node_modules/@img/sharp-libvips-linux-*/**/*"],
+  },
   async redirects() {
     return [
       { source: "/landing", destination: "/", permanent: true },

@@ -12,11 +12,11 @@ Copy-Item (Join-Path $dist 'APTechWorkTrackerSetup.exe') $public -Force
 Compress-Archive -Path "$package/*" -DestinationPath (Join-Path $public 'APTechWorkTracker-Pilot.zip') -Force
 $releasePath = Join-Path $public 'release.json'
 $release = Get-Content $releasePath -Raw | ConvertFrom-Json
-$release.version = '0.5.1'
+$release.version = '0.5.2'
 $release.publishedDate = '2026-11-02'
 $release.exeSha256 = (Get-FileHash (Join-Path $public 'APTechWorkTracker.exe') -Algorithm SHA256).Hash.ToLower()
 $release.installerSha256 = (Get-FileHash (Join-Path $public 'APTechWorkTrackerSetup.exe') -Algorithm SHA256).Hash.ToLower()
 $release.packageSha256 = (Get-FileHash (Join-Path $public 'APTechWorkTracker-Pilot.zip') -Algorithm SHA256).Hash.ToLower()
-$release.releaseNotes = "AP Tech logo added to the desktop app, installer, taskbar and tray.`nRemoved the ten-minute automatic admin logout. Manual logout and normal server session expiry remain. Restarting the shared-PC app still requires a fresh admin website login."
+$release.releaseNotes = "Improved Work Station spacing and visitor inbox. Automatic chat updates and message sound. Support names on customer replies. Referral partner administration is available in the app. Blog image upload and simple tags load from the updated website. AP Tech icons remain included."
 $release | ConvertTo-Json -Depth 5 | Set-Content $releasePath -Encoding utf8NoBOM
 Write-Output "Packaged desktop $($release.version)"
