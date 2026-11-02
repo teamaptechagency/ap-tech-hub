@@ -1,7 +1,7 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publishedDate": "2026-11-02",
-  "exeSha256": "e0a170bafe091fb78541ddf8c8941ca214cf16f69e2435ad267c7a9cc8b35f58",
-  "installerSha256": "a6a181a37835ab121a82f6d683aaae965899a3218e3d2b78f303d09554b11271",
-  "packageSha256": "d8ae384bf626005fac62231f45db868363a8a6bd8e1058b90eee4f1ff772ac72"
+  "exeSha256": "ce32582ec96a0ed2ddc0f8dff49acad24a0d8211368b31492e1d54dc7317c10c",
+  "installerSha256": "4861144b110fd8cb681bf4e34dd019d55729bf924df0f5b985e594b64a43e009",
+  "packageSha256": "5803da024cf4826bfaf5bd07103684fbab3e3c9d8700505664d8c03b6eff2550"
 }

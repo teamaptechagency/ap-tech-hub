@@ -1,4 +1,4 @@
-# AP Tech Work Tracker 0.3.0 setup
+# AP Tech Work Tracker 0.3.1 setup
 
 Run APTechWorkTrackerSetup.exe. The installer displays a monitoring notice, installs for the current Windows user, and offers a clearly labeled Windows sign-in startup option. A desktop and Start menu shortcut are created. No admin rights, hidden service or security bypass are used. Re-run Setup and select Uninstall to remove the app and saved credential after exiting the tracker.
 
@@ -8,7 +8,7 @@ Unsigned executables can trigger SmartScreen. Do not disable Windows protections
 
 # AP Tech visible work tracker
 
-Version 0.3.0 includes an unsigned per-user installer. Windows 10/11 with .NET Framework 4.5+ (normally present) is required. It does not install a service, conceal itself or generate marketplace activity.
+Version 0.3.1 includes an unsigned per-user installer. Windows 10/11 with .NET Framework 4.5+ (normally present) is required. It does not install a service, conceal itself or generate marketplace activity.
 
 ## Deploy the Hub first
 
@@ -20,9 +20,9 @@ Version 0.3.0 includes an unsigned per-user installer. Windows 10/11 with .NET F
 
 Build: `powershell -NoProfile -File desktop-agent/build.ps1`.
 
-Run `desktop-agent/dist/APTechWorkTrackerSetup.exe` on the employee's PC. No admin privileges or installation service are needed. The Hub HTTPS origin is automatic. Enter the device credential once. The PC's actual machine name appears at the top. The employee reads the notice, checks consent, and starts the session. Minimize normally; tray status and Pause remain available. Exit closes the app. Launches start paused unless the employee explicitly enabled remembered consent. Credentials are encrypted locally with Windows DPAPI for the current Windows user.
+Run `desktop-agent/dist/APTechWorkTrackerSetup.exe` on the employee's PC. No admin privileges or installation service are needed. The Hub HTTPS origin is automatic. Enter the device credential once. The PC's actual machine name appears at the top. The employee reads the notice, checks consent, and starts the session. Minimize normally; tray status and Pause remain available. The window close button hides the window in the visible system tray and keeps the session running. Right-click the tray icon for Open tracker, Pause tracking or Exit. Exit closes the app. Launches start paused unless the employee explicitly enabled remembered consent. Credentials are encrypted locally with Windows DPAPI for the current Windows user.
 
-It sends only machine name and current active/idle status every 30 seconds. Idle means no Windows input for five minutes. It does not read keyboard values, mouse clicks globally, window titles, app lists, clipboard, screenshots or messages. Closing/pausing stops collection immediately; Hub marks an unseen device offline after 90 seconds. There is no offline history spool.
+It sends only machine name and current active/idle status every 30 seconds. Idle means no Windows input for five minutes. It does not read keyboard values, mouse clicks globally, window titles, app lists, clipboard, screenshots or messages. Exiting/pausing stops collection immediately; Hub marks an unseen device offline after 90 seconds. There is no offline history spool.
 
 ## Chrome or Edge extension
 

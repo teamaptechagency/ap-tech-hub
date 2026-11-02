@@ -12,7 +12,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 public class WorkAgent : Form {
-    const string AppVersion = "0.3.0";
+    const string AppVersion = "0.3.1";
     [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint size; public uint time; }
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     readonly TextBox url = new TextBox(), token = new TextBox();
@@ -24,7 +24,7 @@ public class WorkAgent : Form {
     readonly HttpClient client = new HttpClient();
     readonly JavaScriptSerializer json = new JavaScriptSerializer();
     readonly string config = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "APTechWorkAgent", "settings.dat");
-    bool tracking, sending;
+    bool tracking, sending, exitRequested;
     string pendingPayload;
 
     [STAThread] public static void Main() {
@@ -61,11 +61,18 @@ public class WorkAgent : Form {
             finally { update.Enabled = true; }
         }; Controls.Add(update);
         tray.Icon = SystemIcons.Application; tray.Text = "AP Tech Work Tracker - paused"; tray.Visible = true;
-        var menu = new ContextMenuStrip(); menu.Items.Add("Open tracker", null, (s,e) => { Show(); WindowState = FormWindowState.Normal; Activate(); }); menu.Items.Add("Pause tracking", null, (s,e) => Pause()); menu.Items.Add("Exit", null, (s,e) => Close()); tray.ContextMenuStrip = menu;
+        var menu = new ContextMenuStrip(); menu.Items.Add("Open tracker", null, (s,e) => { Show(); WindowState = FormWindowState.Normal; Activate(); }); menu.Items.Add("Pause tracking", null, (s,e) => Pause()); menu.Items.Add("Exit", null, (s,e) => { exitRequested = true; Close(); }); tray.ContextMenuStrip = menu;
         tray.DoubleClick += (s,e) => { Show(); WindowState = FormWindowState.Normal; Activate(); };
         timer.Interval = 30000; timer.Tick += async (s,e) => { if (tracking) await Send(false); };
         client.Timeout = TimeSpan.FromSeconds(15);
-        FormClosing += (s,e) => { tracking = false; timer.Stop(); tray.Visible = false; tray.Dispose(); client.Dispose(); };
+        FormClosing += (s,e) => {
+            if (e.CloseReason == CloseReason.UserClosing && !exitRequested) {
+                e.Cancel = true; Hide();
+                tray.ShowBalloonTip(4000, "AP Tech Work Tracker", tracking ? "Work tracking continues. Use the tray icon to open, pause or exit." : "Tracker is paused in the tray. Use its icon to open or exit.", ToolTipIcon.Info);
+                return;
+            }
+            tracking = false; timer.Stop(); tray.Visible = false; tray.Dispose(); client.Dispose();
+        };
         LoadConfig();
         Shown += (s,e) => { if (autoResume.Checked && consent.Checked) start.PerformClick(); };
     }
