@@ -1,3 +1,4 @@
+import signing from "@/android/signing-public.json";
 import { NextResponse } from "next/server";
 
 /**
@@ -20,7 +21,7 @@ const PACKAGE_NAME =
   process.env.ANDROID_PACKAGE_NAME?.trim() || "com.aptechagency.hub";
 
 function readFingerprints() {
-  return (process.env.ANDROID_ASSETLINKS_SHA256 ?? "")
+  return ([process.env.ANDROID_ASSETLINKS_SHA256 || "", signing.sha256].join(","))
     .split(/[\n,]+/)
     .map((value) => value.trim().toUpperCase())
     // Accept the colon-separated form Play Console and keytool both print.

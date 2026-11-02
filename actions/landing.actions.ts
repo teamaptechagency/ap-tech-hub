@@ -650,6 +650,9 @@ export async function sendLandingChatAdminReply(leadId: string, body: string) {
     return { error: "Message is required." };
   }
 
+  const actor = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true, accountStatus: true } });
+  if (!actor || actor.accountStatus !== "ACTIVE" || !["SUPER_ADMIN", "ADMIN", "CEO"].includes(actor.role)) return { error: "Administrator access required" };
+  if (cleanBody.length > 5000) return { error: "Message is too long" };
   const db = prisma as LeadCapablePrisma;
 
   if (cleanLeadId.startsWith("fallback:")) {

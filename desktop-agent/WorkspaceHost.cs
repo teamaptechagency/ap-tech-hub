@@ -76,6 +76,7 @@ public partial class WorkAgent {
                     } else if (action == "pause-tracking") { Pause(); PushWorkspaceState(); }
                     else if (action == "attendance-token") { SaveAttendanceToken(message.ContainsKey("token") ? Convert.ToString(message["token"]) : null); PushWorkspaceState(); }
                     else if (action == "check-updates" && checkUpdates != null) await checkUpdates();
+                    else if (action == "partner-login") { workspace.CoreWebView2.Navigate("https://www.aptechagency.com/hub-app?surface=work"); }
                     else if (action == "admin-login") { adminSignInPending = true; workspace.CoreWebView2.Navigate("https://www.aptechagency.com/login"); }
                     else if (action == "chat-sound") { System.Media.SystemSounds.Asterisk.Play(); }
                     else if (action == "notify") {

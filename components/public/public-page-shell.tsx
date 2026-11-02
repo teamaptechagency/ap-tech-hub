@@ -32,7 +32,7 @@ const footerGroups = [
       ["Portfolio", "/portfolio"],
       ["Case Studies", "/portfolio"],
       ["Blog", "/blog"],
-      ["Android App", "/download"],
+      ["Download Apps", "/download"],
       ["Client Documents", "/client-documents"],
       ["Request a Project", "/contact"],
     ],

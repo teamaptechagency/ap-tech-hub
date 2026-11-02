@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- APK endpoint is a file download redirect, not a client-side page. */
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -22,7 +23,7 @@ import { homeFor } from "@/lib/roles";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Download the Android App | AP Tech Agency",
+  title: "Download Android & Windows Apps | AP Tech Agency",
   description:
     "Install the AP Tech Hub Android app to track your projects, message the team, view invoices and get delivery updates from your phone.",
   alternates: { canonical: "/download" },
@@ -54,7 +55,7 @@ const features = [
 const installSteps = [
   {
     title: "Download the APK",
-    text: "Tap the download button above. Your browser may warn that this file type can be harmful — that notice appears for every APK, not just ours.",
+    text: "Tap the download button above. Your browser may warn that this file type can be harmful — review the source and any security warning before installing.",
   },
   {
     title: "Allow the install",
@@ -83,6 +84,7 @@ export default async function DownloadPage() {
       topBar={landing.topBar}
       stats={stats}
     >
+      <section className="mx-auto max-w-[1140px] space-y-6 px-5 py-12"><h1 className="text-3xl font-bold">Download AP Tech apps</h1><p className="text-sm leading-7 text-muted-foreground">Use your existing website login. The mobile app shows options for your role; Windows Client and Work Station are separate applications.</p><div className="grid gap-5 md:grid-cols-3"><article className="space-y-4 rounded-xl border p-6"><h2 className="text-xl font-semibold">Android · Everyone</h2><p>Client projects/progress and chat, employee work requests, partner work and referral earnings. CEO gets overview, chat and job actions. No staff or payment administration in the app.</p><a href="/api/download/android" className="inline-flex rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground">Android download / release status</a><Link className="block text-primary underline" href="/hub-app">Open mobile interface</Link><p className="text-xs">Android Chrome / Trusted Web Activity. Online connection required. Notification delivery while closed is not guaranteed.</p></article><article className="space-y-4 rounded-xl border p-6"><h2 className="text-xl font-semibold">Windows · Work Station</h2><p>Employees, referral and business partners. Employees can pair an office PC for consented work tracking, attendance and tasks. Partners use website login for permitted work and conversations.</p><a href="/downloads/work-tracker/APTechWorkTrackerSetup.exe" className="inline-flex rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground">Download Work Station installer</a><Link href="/work-tracker" className="block text-primary underline">Setup, extension and update instructions</Link></article><article className="space-y-4 rounded-xl border p-6"><h2 className="text-xl font-semibold">Windows · Client</h2><p>Only customer/client accounts: jobs, progress, support chat and create a new work request. No employee tracking, keyboard counters or attendance.</p><a href="/downloads/client/APTechClientSetup.exe" className="inline-flex rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground">Download Client installer</a><p className="text-xs">Windows 10/11 x64 · .NET 4.6.2+ and Microsoft WebView2 Runtime. Desktop and Start Menu shortcuts. Close hides to tray; Exit is in the tray menu.</p></article></div><p className="text-sm text-muted-foreground">Windows installers are currently unsigned; Windows may show publisher warnings. Review the file and publisher information; security checks stay enabled. Android availability is shown by the release endpoint until a signed build is published.</p><Link href="/partners/payment-policy" className="text-primary underline">Referral commission and payout policy</Link></section>
       {/* Hero with the download action, on the dark brand gradient. */}
       <section className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] text-white">
         <div className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.30),transparent_65%)]" />

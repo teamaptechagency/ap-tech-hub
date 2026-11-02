@@ -1,10 +1,10 @@
 {
-  "version": "0.5.2",
+  "version": "0.5.3",
   "publishedDate": "2026-11-02",
-  "exeSha256": "5e8dc8f6cf5f6a7950b81367c1356d070b3dbee87939891d5d0deae8094e93d8",
-  "installerSha256": "06f4c5f157b7aef735c5702ad1e42699eaf7af960c8b2f525970a1e926580031",
-  "packageSha256": "a0b6bcb1000fe9d3fe059147d71cc3bfa149520622cccd6c19dd858cc92fca0e",
-  "releaseNotes": "Improved Work Station spacing and visitor inbox. Automatic chat updates and message sound. Support names on customer replies. Referral partner administration is available in the app. Blog image upload and simple tags load from the updated website. AP Tech icons remain included.",
+  "exeSha256": "d4f8ce7e8f2457f2df75b6103cfd7838604b64cc94038fbc6c2f3ed730a15333",
+  "installerSha256": "ef3793a5b55f2a3c3b2ddd17927e9e34542f00f07a99a879a89411d1c52fff55",
+  "packageSha256": "31fb541dab38d713923c24be9102ac3389a4109cadbd15af7c1a404e5d9b641e",
+  "releaseNotes": "Employee and partner website login opens the restricted role-based app workspace. Separate Windows Client installer is available on Download Apps. Android Hub supports role-based jobs, progress, requests, conversations and referral earnings. Existing attendance and consented monitoring remain unchanged.",
   "extensionVersion": "0.2.1",
   "extensionSha256": "44694f1c8c55c062060ba46512d8f6b4bc166b4426e3b62c0e6e0496d161493c"
 }
