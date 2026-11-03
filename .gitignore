@@ -60,3 +60,5 @@ android/app/release/
 # signing material must never be committed
 *.jks
 *.keystore
+
+/desktop-native/dist/
