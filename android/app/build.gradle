@@ -22,7 +22,7 @@ def hasReleaseSigning = ksPath && file(ksPath).exists() &&
 
 android {
     namespace 'com.aptechagency.hub'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId project.property('apApplicationId').toString()
