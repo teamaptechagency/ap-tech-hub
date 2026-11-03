@@ -37,9 +37,9 @@ export function LoginForm({
 }: {
   initialMessage?: string;
   nextPath?: string;
-  selectedAccount?: { name: string; email: string };
+  selectedAccount?: { name: string; email: string; role: string };
 }) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(selectedAccount?.email || "");
   const [password, setPassword] = useState("");
   const [deviceToken, setDeviceToken] = useState("");
   const [loginMode, setLoginMode] = useState<
@@ -424,7 +424,7 @@ export function LoginForm({
 
           <div className="space-y-2">
             <Label htmlFor="email">{selectedAccount ? "Administrator" : "Email"}</Label>
-            {selectedAccount ? <p className="rounded-md border p-3 font-medium">{selectedAccount.name}</p> : null}
+            {selectedAccount ? <p className="rounded-md border p-3 font-medium">{selectedAccount.name} · {selectedAccount.role === "SUPER_ADMIN" ? "Super Admin" : selectedAccount.role === "CEO" ? "CEO" : "Admin"}</p> : null}
             <Input
               hidden={Boolean(selectedAccount)}
               readOnly={Boolean(selectedAccount)}
