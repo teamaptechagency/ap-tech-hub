@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 import { LoginForm } from "@/components/auth/login-form";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ reason?: string; next?: string; message?: string }>;
+  searchParams?: Promise<{ reason?: string; next?: string; message?: string; workstationAdmin?: string }>;
 }) {
   const params = await searchParams;
+  const selectedAdmin = params?.workstationAdmin && params.workstationAdmin.length <= 100 ? await prisma.user.findFirst({ where: { id: params.workstationAdmin, accountStatus: "ACTIVE", role: { in: ["SUPER_ADMIN", "ADMIN", "CEO"] } }, select: { name: true, email: true } }) : null;
   const initialMessage =
     params?.message
       ? params.message
@@ -26,7 +28,7 @@ export default async function LoginPage({
           </p>
         </div>
 
-        <LoginForm initialMessage={initialMessage} nextPath={params?.next ?? ""} />
+        <LoginForm selectedAccount={selectedAdmin || undefined} initialMessage={initialMessage} nextPath={params?.next ?? ""} />
 
         <div className="mt-4 flex items-center justify-between text-sm">
           <Link

@@ -33,9 +33,11 @@ import {
 export function LoginForm({
   initialMessage = "",
   nextPath = "",
+  selectedAccount,
 }: {
   initialMessage?: string;
   nextPath?: string;
+  selectedAccount?: { name: string; email: string };
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,7 +69,7 @@ export function LoginForm({
 
   useEffect(() => {
     const savedToken = window.localStorage.getItem("aptech_login_device") ?? "";
-    setDeviceToken(savedToken);
+    const deviceTimer = setTimeout(() => setDeviceToken(savedToken), 0);
 
     let cancelled = false;
 
@@ -91,6 +93,7 @@ export function LoginForm({
 
     void detectPasskeySupport();
     return () => {
+      clearTimeout(deviceTimer);
       cancelled = true;
     };
   }, []);
@@ -420,8 +423,11 @@ export function LoginForm({
             </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{selectedAccount ? "Administrator" : "Email"}</Label>
+            {selectedAccount ? <p className="rounded-md border p-3 font-medium">{selectedAccount.name}</p> : null}
             <Input
+              hidden={Boolean(selectedAccount)}
+              readOnly={Boolean(selectedAccount)}
               id="email"
               type="email"
               value={email}

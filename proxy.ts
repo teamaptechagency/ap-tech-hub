@@ -72,8 +72,6 @@ const PUBLIC_EXACT_PATHS = [
   // Android app download page, plus the PWA manifest — Chrome reads the
   // manifest before any user has signed in.
   "/download",
-  "/downloads/client/APTechClientSetup.exe",
-  "/downloads/client/release.json",
   "/manifest.webmanifest",
   // Transparency pages. These are linked from the public nav and footer on
   // every page, so gating them behind login sent visitors and crawlers to a

@@ -12,11 +12,11 @@ Copy-Item (Join-Path $dist 'APTechWorkTrackerSetup.exe') $public -Force
 Compress-Archive -Path "$package/*" -DestinationPath (Join-Path $public 'APTechWorkTracker-Pilot.zip') -Force
 $releasePath = Join-Path $public 'release.json'
 $release = Get-Content $releasePath -Raw | ConvertFrom-Json
-$release.version = '0.5.3'
-$release.publishedDate = '2026-11-02'
+$release.version = '0.5.4'
+$release.publishedDate = '2026-11-03'
 $release.exeSha256 = (Get-FileHash (Join-Path $public 'APTechWorkTracker.exe') -Algorithm SHA256).Hash.ToLower()
 $release.installerSha256 = (Get-FileHash (Join-Path $public 'APTechWorkTrackerSetup.exe') -Algorithm SHA256).Hash.ToLower()
 $release.packageSha256 = (Get-FileHash (Join-Path $public 'APTechWorkTracker-Pilot.zip') -Algorithm SHA256).Hash.ToLower()
-$release.releaseNotes = "Employee and partner website login opens the restricted role-based app workspace. Separate Windows Client installer is available on Download Apps. Android Hub supports role-based jobs, progress, requests, conversations and referral earnings. Existing attendance and consented monitoring remain unchanged."
+$release.releaseNotes = "Select administrator by name on the attendance login screen; existing password and verification remain required. Clients, Referral and SO Partners share the web and Android portal. Separate Client Windows app removed."
 $release | ConvertTo-Json -Depth 5 | Set-Content $releasePath -Encoding utf8NoBOM
 Write-Output "Packaged desktop $($release.version)"

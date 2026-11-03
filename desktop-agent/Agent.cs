@@ -12,7 +12,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 public partial class WorkAgent : Form {
-    const string AppVersion = "0.5.3";
+    const string AppVersion = "0.5.4";
     [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint size; public uint time; }
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     readonly TextBox url = new TextBox(), token = new TextBox();

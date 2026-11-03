@@ -77,7 +77,7 @@ public partial class WorkAgent {
                     else if (action == "attendance-token") { SaveAttendanceToken(message.ContainsKey("token") ? Convert.ToString(message["token"]) : null); PushWorkspaceState(); }
                     else if (action == "check-updates" && checkUpdates != null) await checkUpdates();
                     else if (action == "partner-login") { workspace.CoreWebView2.Navigate("https://www.aptechagency.com/hub-app?surface=work"); }
-                    else if (action == "admin-login") { adminSignInPending = true; workspace.CoreWebView2.Navigate("https://www.aptechagency.com/login"); }
+                    else if (action == "admin-login") { string accountId = message.ContainsKey("accountId") ? Convert.ToString(message["accountId"]) : ""; if (String.IsNullOrEmpty(accountId) || accountId.Length > 100) return; adminSignInPending = true; workspace.CoreWebView2.Navigate("https://www.aptechagency.com/login?workstationAdmin=" + Uri.EscapeDataString(accountId)); }
                     else if (action == "chat-sound") { System.Media.SystemSounds.Asterisk.Play(); }
                     else if (action == "notify") {
                         tray.ShowBalloonTip(5000, "Work Station visitor chat", "A website customer message is waiting. Open Work Station to reply.", ToolTipIcon.Info);
