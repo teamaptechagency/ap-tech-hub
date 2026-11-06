@@ -1,3 +1,4 @@
+import { InvoiceBrand } from "@/components/invoices/invoice-brand";
 import { InvoiceShare } from "@/components/invoices/invoice-share";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -119,6 +120,7 @@ export default async function InvoiceViewPage({
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border bg-card p-5"><InvoiceBrand /></div>
       <InvoiceShare id={invoice.id} />
       <Link
         href="/invoices"

@@ -1,3 +1,4 @@
+import { InvoiceBrand } from "@/components/invoices/invoice-brand";
 import { InvoiceShare } from "@/components/invoices/invoice-share";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -167,6 +168,7 @@ export default async function ClientInvoiceViewPage({
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border bg-card p-5"><InvoiceBrand /></div>
       <InvoiceShare id={invoice.id} />
       {/* Back link */}
       <Link
