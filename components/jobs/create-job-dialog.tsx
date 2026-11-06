@@ -119,6 +119,7 @@ export function CreateJobDialog({
 
   // Pricing
   const [clientValue, setClientValue] = useState("");
+  const [customUsdRate, setCustomUsdRate] = useState("");
   const [clientCurrency, setClientCurrency] = useState<Currency>("USD");
   const [workerValue, setWorkerValue] = useState("");
 
@@ -148,7 +149,9 @@ export function CreateJobDialog({
     GBP: receivedGbpRate,
     BDT: 1,
   };
-  const safeRate =
+  const canCustomRate = clientCurrency === "USD" && !(clientMode === "EXTERNAL" && externalSource.toLowerCase() === "fiverr");
+  const customRate = canCustomRate && customUsdRate ? Number(customUsdRate) : null;
+  const safeRate = customRate && Number.isFinite(customRate) && customRate > 0 ? customRate :
     Number.isFinite(receivedRates[clientCurrency]) &&
     receivedRates[clientCurrency] > 0
       ? receivedRates[clientCurrency]
@@ -159,7 +162,7 @@ export function CreateJobDialog({
     members.length > 0
       ? members.map((member) => {
           const memberValue = Number(member.workerValue);
-          return Number.isFinite(memberValue) && memberValue > 0
+          return member.workerValue !== "" && Number.isFinite(memberValue) && memberValue >= 0
             ? memberValue
             : defaultWorkerValue;
         })
@@ -326,13 +329,13 @@ export function CreateJobDialog({
     }
 
     if (
-      !workerValue ||
-      !Number.isFinite(defaultWorkerValue) ||
-      defaultWorkerValue <= 0
+      workerValue && (!Number.isFinite(defaultWorkerValue) || defaultWorkerValue < 0)
     ) {
-      setError("Please enter how much the employee will receive.");
+      setError("Enter a valid optional employee payout.");
       return;
     }
+
+    if (canCustomRate && customUsdRate && (!Number.isFinite(Number(customUsdRate)) || Number(customUsdRate) <= 0 || Number(customUsdRate) > 100000)) { setError("Enter a valid USD to BDT rate"); return; }
 
     const invalidMemberValue = members.some((member) => {
       if (!member.workerValue) return false;
@@ -351,7 +354,7 @@ export function CreateJobDialog({
       return;
     }
 
-    if (!budgetHasProfit) {
+    if (totalEmployeePayout > 0 && !budgetHasProfit) {
       setError(
         `Minimum 20% company profit required. For this employee payout, client budget must be at least ${clientCurrency} ${minimumClientBudget.toLocaleString()}.`
       );
@@ -381,6 +384,7 @@ export function CreateJobDialog({
           clientMode === "INTERNAL" ? "" : cleanExternalCountry,
         clientValue,
         clientCurrency,
+        customUsdRate: canCustomRate ? customUsdRate : undefined,
         workerValue,
         startDate,
         billingDay,
@@ -745,7 +749,6 @@ export function CreateJobDialog({
                       setStartDate(event.target.value)
                     }
                     disabled={loading}
-                    required
                   />
                 </div>
 
@@ -903,9 +906,10 @@ export function CreateJobDialog({
               </Select>
             </div>
 
+            {canCustomRate && <div className="space-y-2 sm:col-span-2"><Label htmlFor="custom-usd-rate">Custom dollar rate (optional)</Label><Input id="custom-usd-rate" type="number" min="0.01" max="100000" step="0.01" value={customUsdRate} onChange={event=>setCustomUsdRate(event.target.value)} placeholder="1 USD = BDT; leave empty for Settings rate" disabled={loading}/><p className="text-xs text-muted-foreground">Used for this job budget and payout calculation. Fiverr uses the Settings rate.</p></div>}
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="worker-value">
-                Employee payout{" "}
+                Employee payout (optional){" "}
                 <span className="text-xs font-normal text-muted-foreground">
                   ({valueLabel}, BDT)
                 </span>
@@ -920,12 +924,11 @@ export function CreateJobDialog({
                 onChange={(event) =>
                   setWorkerValue(event.target.value)
                 }
-                placeholder="e.g. 8000"
+                placeholder="Leave empty to set later"
                 disabled={loading}
-                required
               />
               <p className="text-[10px] text-muted-foreground">
-                This is what employees see before applying. Assigned members
+                Leave empty if pay is handled through salary or will be decided later. Employee assignment is also optional. Assigned members
                 can still have a different payout below if needed. Total payout
                 must leave at least 20% company profit after {clientCurrency}{" "}
                 converts to BDT.

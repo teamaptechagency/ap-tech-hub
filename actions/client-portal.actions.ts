@@ -1,4 +1,5 @@
 "use server";
+import { loyaltyEnabled } from "@/lib/loyalty";
 
 import { availableJobWhere } from "@/lib/work-availability";
 
@@ -151,6 +152,7 @@ export async function requestPointExchange(
     return { error: "Please sign in as a client first" };
   }
 
+  if (!await loyaltyEnabled()) return { error: "Point system is currently disabled" };
   if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0) {
     return { error: "Enter a valid point amount" };
   }

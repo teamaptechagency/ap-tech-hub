@@ -1,3 +1,4 @@
+import { loyaltyEnabled } from "@/lib/loyalty";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
@@ -41,6 +42,7 @@ const invoiceStatusBadge: Record<string, string> = {
 };
 
 export default async function ClientWalletPage() {
+  const pointsEnabled = await loyaltyEnabled();
   const session = await auth();
   if (!session?.user?.clientId) notFound();
   const clientId = session.user.clientId;
@@ -100,7 +102,7 @@ export default async function ClientWalletPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Wallet & points</h1>
+        <h1 className="text-2xl font-bold">{pointsEnabled ? "Wallet & points" : "Wallet"}</h1>
         <p className="text-sm text-muted-foreground">
           Advance payments, dues, and loyalty rewards
         </p>
@@ -140,7 +142,7 @@ export default async function ClientWalletPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="border-amber-200 bg-amber-50">
+        {pointsEnabled && <Card className="border-amber-200 bg-amber-50">
           <CardContent className="pt-6">
             <p className="flex items-center gap-1 text-xs text-amber-700">
               Loyalty points <Star className="h-3 w-3" />
@@ -153,15 +155,15 @@ export default async function ClientWalletPage() {
               {pointsPerDollar} pts = $1
             </p>
           </CardContent>
-        </Card>
+        </Card>}
       </div>
 
-      <PointExchangeForm
+      {pointsEnabled && <PointExchangeForm
         points={points}
         pointsPerDollar={pointsPerDollar}
         minimumPoints={minimumPoints}
         hasPending={hasPending}
-      />
+      />}
 
       <Card>
         <CardHeader className="pb-2">

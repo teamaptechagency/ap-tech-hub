@@ -43,6 +43,7 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      { source: "/invoice/:path*", headers: [{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow"},{key:"Cache-Control",value:"private, no-store"}] },
       { source: "/downloads/work-tracker/:file*", headers: [{ key: "Cache-Control", value: "no-store" }, { key: "X-Content-Type-Options", value: "nosniff" }, { key: "X-Robots-Tag", value: "noindex" }] },
       ...["/login", "/register", "/forgot-password", "/reset-password"].map((source) => ({
         source, headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }],

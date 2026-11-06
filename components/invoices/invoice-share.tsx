@@ -1,0 +1,8 @@
+"use client";
+import { useState } from "react";
+import { invoiceShare } from "@/actions/invoice-share.actions";
+export function InvoiceShare({id}:{id:string}){
+ const [url,setUrl]=useState(""),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
+ async function run(revoke=false){setBusy(true);try{const result=await invoiceShare(id,revoke);if("error"in result){setMessage(result.error||"Failed");return;}if(revoke){setUrl("");setMessage("Share link disabled. A new link can be created later.");}else if(result.path){setUrl(window.location.origin+result.path);setMessage("");}}catch{setMessage("Could not update share link. Try again.");}finally{setBusy(false);}}
+ return <section className="space-y-3 rounded-lg border p-4 print:hidden"><p className="font-medium">Invoice share URL</p><p className="text-sm text-muted-foreground">Anyone with this link can view this invoice without an account.</p><button className="rounded border px-3 py-2" disabled={busy} onClick={()=>void run()}>Get share link</button>{url&&<><input className="w-full rounded border bg-background p-2" aria-label="Invoice share URL" readOnly value={url}/><button className="rounded border px-3 py-2" onClick={()=>void navigator.clipboard.writeText(url).then(()=>setMessage("Link copied"),()=>setMessage("Select the URL and copy it manually."))}>Copy URL</button><a className="ml-3 underline" href={url} target="_blank" rel="noreferrer">Open invoice</a></>}<button className="ml-3 rounded border px-3 py-2" disabled={busy} onClick={()=>void run(true)}>Disable share link</button>{message&&<p role="status">{message}</p>}</section>;
+}

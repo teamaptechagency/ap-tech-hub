@@ -1,4 +1,5 @@
 "use server";
+import { loyaltyEnabled } from "@/lib/loyalty";
 
 import { availableJobWhere } from "@/lib/work-availability";
 
@@ -143,7 +144,7 @@ async function applyPaidEffects(
   const sMap = new Map(settings.map((s) => [s.key, s.value]));
   const pointsPer = parseInt(sMap.get("loyalty.pointsPer") ?? "50");
   const perAmountUsd = parseInt(sMap.get("loyalty.perAmountUsd") ?? "10");
-  const points = Math.floor(toUsd / perAmountUsd) * pointsPer;
+  const points = await loyaltyEnabled() && perAmountUsd > 0 && pointsPer > 0 ? Math.floor(toUsd / perAmountUsd) * pointsPer : 0;
 
   // An external marketplace invoice has no Client row, so there is no wallet
   // ledger and no loyalty account to credit — only the earning below applies.

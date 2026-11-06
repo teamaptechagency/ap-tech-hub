@@ -1,3 +1,4 @@
+import { InvoiceShare } from "@/components/invoices/invoice-share";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { invoiceBuyerName } from "@/lib/job-invoice";
@@ -118,6 +119,7 @@ export default async function InvoiceViewPage({
 
   return (
     <div className="space-y-6">
+      <InvoiceShare id={invoice.id} />
       <Link
         href="/invoices"
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground print:hidden"

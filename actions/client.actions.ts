@@ -1,4 +1,5 @@
 "use server";
+import { loyaltyEnabled } from "@/lib/loyalty";
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -423,6 +424,7 @@ export async function deleteClient(id: string, verificationCode: string) {
 // from Settings), both ledgers + audit
 // ============================================
 export async function approvePointExchange(requestId: string) {
+  if (!await loyaltyEnabled()) return { error: "Point system is currently disabled" };
   const session = await checkAdmin();
   if (!session) return { error: "You don't have permission for this action" };
 

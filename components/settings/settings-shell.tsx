@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Plus, Trash2, X } from "lucide-react";
 
@@ -265,6 +266,7 @@ export function SettingsShell({
   // ============================================
   // LOYALTY
   // ============================================
+  const [loyaltyOn, setLoyaltyOn] = useState(settings["loyalty.enabled"] === "true");
   const [pointsPer, setPointsPer] = useState(
     settings["loyalty.pointsPer"] ?? "50"
   );
@@ -615,7 +617,10 @@ export function SettingsShell({
     try {
       const result = await updateSettings([
         {
-          key: "loyalty.pointsPer",
+          key: "loyalty.enabled",
+          value: String(loyaltyOn),
+        },
+        { key: "loyalty.pointsPer",
           value: pointsPer,
         },
         {
@@ -1656,6 +1661,7 @@ export function SettingsShell({
               Loyalty points
             </CardTitle>
 
+            <label className="mb-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={loyaltyOn} disabled={busy} onChange={event => setLoyaltyOn(event.target.checked)} />Enable point system</label>
             <p className="text-xs text-muted-foreground">
               Clients earn points on paid invoices. Point
               exchange requires team approval.
@@ -1936,7 +1942,7 @@ export function SettingsShell({
               <SelectContent>
                 <SelectItem value="REQUIRED">Required</SelectItem>
                 <SelectItem value="OPTIONAL">Optional</SelectItem>
-                <SelectItem value="OFF">Off (don't ask)</SelectItem>
+                <SelectItem value="OFF">Off (don&apos;t ask)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -2076,7 +2082,7 @@ export function SettingsShell({
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
-            <a
+            <Link
               href="/settings/blacklist"
               className="block rounded-lg border p-4 transition-colors hover:border-primary hover:bg-primary/5"
             >
@@ -2085,7 +2091,7 @@ export function SettingsShell({
                 See blocked IP addresses, unlock users, and review Need Help
                 form submissions.
               </p>
-            </a>
+            </Link>
           </CardContent>
         </Card>
       )}

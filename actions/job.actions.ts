@@ -93,6 +93,7 @@ const createJobSchema = z.object({
   // Client-side pricing
   clientValue: z.string().optional(),
   clientCurrency: z.enum(["USD", "EUR", "GBP", "BDT"]),
+  customUsdRate: z.string().optional(),
   workerValue: z.string().optional(),
 
   // Type-specific
@@ -102,13 +103,13 @@ const createJobSchema = z.object({
   weeklyHourLimit: z.string().optional(),
 
   // Skills + assignment
-  skillIds: z.array(z.string()),
+  skillIds: z.array(z.string()).default([]),
   members: z.array(
     z.object({
       userId: z.string(),
-      workerValue: z.string(),
+      workerValue: z.string().optional(),
     })
-  ),
+  ).default([]),
 });
 
 export type CreateJobInput = z.infer<typeof createJobSchema>;
@@ -212,21 +213,26 @@ export async function createJob(formData: CreateJobInput) {
     return { error: "Enter the client budget" };
   }
 
-  if (!workerValue || isNaN(workerValue) || workerValue <= 0) {
-    return { error: "Enter how much the employee will receive for this job" };
+  if (workerValue !== null && (!Number.isFinite(workerValue) || workerValue < 0)) {
+    return { error: "Enter a valid optional employee payout" };
   }
+
+  if (data.members.some(member => member.workerValue && (!Number.isFinite(Number(member.workerValue)) || Number(member.workerValue) < 0))) return { error: "Enter a valid optional member payout" };
 
   const workerCosts =
     data.members.length > 0
       ? data.members.map((member) => {
-          const memberValue = parseFloat(member.workerValue);
-          return Number.isFinite(memberValue) && memberValue > 0
+          const memberValue = parseFloat(member.workerValue || "");
+          return Number.isFinite(memberValue) && memberValue >= 0
             ? memberValue
-            : workerValue;
+            : (workerValue || 0);
         })
-      : [workerValue];
+      : [workerValue || 0];
   const totalWorkerCost = workerCosts.reduce((sum, value) => sum + value, 0);
-  const clientValueBdt = await getClientValueBdt(clientValue, data.clientCurrency);
+  const rateInput = data.customUsdRate?.trim();
+  const customRate = rateInput ? Number(rateInput) : null;
+  if (customRate !== null && (data.clientCurrency !== "USD" || !Number.isFinite(customRate) || customRate <= 0 || customRate > 100000)) return { error: "Enter a valid custom USD to BDT rate" };
+  const clientValueBdt = customRate ? clientValue * customRate : await getClientValueBdt(clientValue, data.clientCurrency);
   const maxWorkerCost = Math.floor(clientValueBdt * 0.8 * 100) / 100;
 
   if (totalWorkerCost > maxWorkerCost) {
@@ -259,7 +265,9 @@ export async function createJob(formData: CreateJobInput) {
           .replace(/\b\w/g, (character) => character.toUpperCase())
       : "Other");
 
-  const job = await prisma.job.create({
+  if (customRate && (data.externalSource?.toLowerCase() === "fiverr" || selectedClient?.marketplace === "FIVERR")) return { error: "Fiverr uses the Settings dollar rate" };
+  const job = await prisma.$transaction(async tx => {
+  const created = await tx.job.create({
     data: {
       title: data.title,
       description: data.description || null,
@@ -310,7 +318,7 @@ export async function createJob(formData: CreateJobInput) {
       members: {
         create: data.members.map((m) => ({
           userId: m.userId,
-          workerValue: parseFloat(m.workerValue) || workerValue,
+          workerValue: m.workerValue ? Number(m.workerValue) : (workerValue || 0),
           workerCurrency: "BDT",
         })),
       },
@@ -318,6 +326,10 @@ export async function createJob(formData: CreateJobInput) {
         create: {},
       },
     },
+  });
+
+  if (customRate) await tx.setting.create({data:{key:`job.usdRate.${created.id}`,value:String(customRate)}});
+  return created;
   });
 
   // Monthly → Week 1 ready with template tasks
@@ -340,7 +352,7 @@ export async function createJob(formData: CreateJobInput) {
         notify({
           userId,
           title: "New job assigned",
-          body: `${data.title} has been assigned to you. Payout: BDT ${workerValue.toLocaleString()}.`,
+          body: `${data.title} has been assigned to you. Payout: BDT ${workerValue === null ? "to be agreed" : workerValue.toLocaleString()}.`,
           href: `/e/jobs/${job.id}`,
         })
       )
@@ -360,7 +372,7 @@ export async function createJob(formData: CreateJobInput) {
         notify({
           userId: user.id,
           title: "New matching job",
-          body: `${data.title} matches your skills. Payout: BDT ${workerValue.toLocaleString()}.`,
+          body: `${data.title} matches your skills. Payout: BDT ${workerValue === null ? "to be agreed" : workerValue.toLocaleString()}.`,
           href: "/e/find-work",
         })
       )
@@ -502,7 +514,9 @@ export async function updateJobPricing(
 
   const memberCount = Math.max(job.members.length, 1);
   const totalWorkerCost = workerValue * memberCount;
-  const clientValueBdt = await getClientValueBdt(clientValue, "USD");
+  const customRateSetting = await prisma.setting.findUnique({where:{key:`job.usdRate.${id}`}});
+  const savedRate = Number(customRateSetting?.value);
+  const clientValueBdt = savedRate > 0 && Number.isFinite(savedRate) ? clientValue * savedRate : await getClientValueBdt(clientValue, "USD");
   const maxWorkerCost = Math.floor(clientValueBdt * 0.8 * 100) / 100;
 
   if (totalWorkerCost > maxWorkerCost) {

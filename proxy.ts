@@ -23,6 +23,7 @@ const PUBLIC_PATHS = [
   // Trailing slash on purpose: "/blog" alone would also match the admin-only
   // "/blog-manager" route.
   "/blog/",
+  "/invoice/",
   // Android app plumbing. Chrome fetches the asset links file unauthenticated
   // to verify the Trusted Web Activity, and the APK download has to work for
   // visitors who have not signed up yet.
