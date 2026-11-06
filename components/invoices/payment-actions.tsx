@@ -272,7 +272,7 @@ export function PaymentActions({
                 }}
               >
                 <BadgeCheck className="mr-2 h-4 w-4" />
-                Approve
+                Confirm payment
               </Button>
               <Button
                 size="sm"
@@ -345,7 +345,7 @@ export function PaymentActions({
               Cancel invoice
             </Button>
             <p className="text-[10px] text-muted-foreground">
-              "Record payment" is for money received outside the portal —
+              Record payment is for money received outside the portal —
               same effects as approving: loyalty points, earnings, audit log.
             </p>
           </CardContent>
@@ -356,7 +356,7 @@ export function PaymentActions({
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve payment</DialogTitle>
+            <DialogTitle>Confirm received payment</DialogTitle>
             <DialogDescription>
               Enter the amount you verified receiving — partial payments
               supported
@@ -389,7 +389,7 @@ export function PaymentActions({
               <p className="text-center text-sm text-red-500">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Approving..." : "Approve payment"}
+              {busy ? "Approving..." : "Confirm payment"}
             </Button>
           </form>
         </DialogContent>

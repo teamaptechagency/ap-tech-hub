@@ -36,6 +36,7 @@ const PUBLIC_EXACT_PATHS = [
   "/work-tracker",
   "/hub-app",
   "/api/portal-app",
+  "/api/invoice-proof",
   "/downloads/work-tracker/APTechWorkTracker.exe",
   "/downloads/work-tracker/APTechWorkTrackerSetup.exe",
   "/downloads/work-tracker/APTechWorkTracker-Pilot.zip",
