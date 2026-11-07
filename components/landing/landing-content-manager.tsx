@@ -665,7 +665,6 @@ export function LandingContentManager({
         <EditorList title="Ad manager">
           {(
             [
-              ["popup", "Popup ad"],
               ["top", "Top ad"],
               ["left", "Left side ad"],
               ["right", "Right side ad"],

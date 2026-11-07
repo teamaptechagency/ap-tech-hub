@@ -327,7 +327,7 @@ export async function submitLandingContact(formData: FormData) {
   const startDate = clean(formData.get("startDate"));
   const existingWebsite = clean(formData.get("existingWebsite"));
   const communication = clean(formData.get("communication"));
-  const subject = service ? `Project request: ${service}` : clean(formData.get("subject"));
+  const subject = service ? `Project request: ${service}` : clean(formData.get("subject")) || "Website inquiry";
   const message = clean(formData.get("message"));
   const privacy = clean(formData.get("privacy"));
   const website = clean(formData.get("website"));
@@ -337,7 +337,7 @@ export async function submitLandingContact(formData: FormData) {
     return { error: "Submission could not be accepted." };
   }
 
-  if (!name || !email || !phone || !country || !service || !message) {
+  if (!name || !email || !message) {
     return { error: "Please fill in all required fields." };
   }
 
@@ -345,8 +345,8 @@ export async function submitLandingContact(formData: FormData) {
     return { error: "Please enter a valid email address." };
   }
 
-  if (message.length < 20) {
-    return { error: "Please describe the project in at least 20 characters." };
+  if (message.length < 10 || message.length > 4000) {
+    return { error: "Please enter a message between 10 and 4,000 characters." };
   }
 
   if (privacy !== "yes") {
@@ -405,9 +405,9 @@ export async function submitLandingContact(formData: FormData) {
 
   const details = [
     company ? `Company: ${company}` : null,
-    `Phone/WhatsApp: ${phone}`,
-    `Country: ${country}`,
-    `Required service: ${service}`,
+    phone ? `Phone/WhatsApp: ${phone}` : null,
+    country ? `Country: ${country}` : null,
+    service ? `Requested service: ${service}` : null,
     budget ? `Estimated budget: ${budget}` : null,
     startDate ? `Expected start date: ${startDate}` : null,
     existingWebsite ? `Existing website: ${existingWebsite}` : null,
@@ -687,7 +687,7 @@ export async function sendLandingChatAdminReply(leadId: string, body: string) {
 
 export async function recordLandingVisit(path = "/") {
   if (!isPublicContentPath(path)) return { count: 0, recorded: false };
-  const key = "landing.visitor.count";
+  const key = "landing.public.visit.count";
   const headerList = await headers();
   const country = normalizeCountry(
     firstHeader(headerList, [
@@ -727,17 +727,29 @@ export async function recordLandingVisit(path = "/") {
   }
 
   try {
-    await prisma.$transaction([
-      prisma.landingVisitorEvent.create({
+    await prisma.$transaction(async (tx) => {
+      // Group page views from the same browser and network into a visit.
+      const fingerprint = ipHash && userAgent ? ipHash + ":" + userAgent : null;
+      let recent = null;
+      if (fingerprint) {
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${fingerprint}, 0))::text`;
+        recent = await tx.landingVisitorEvent.findFirst({
+          where: { ipHash, userAgent, createdAt: { gte: new Date(Date.now() - 30 * 60 * 1000) } },
+          select: { id: true },
+        });
+      }
+      await tx.landingVisitorEvent.create({
         data: { id: randomUUID(), path: cleanPath, country, city, region, ipHash, userAgent },
-      }),
-      prisma.$executeRaw`
+      });
+      if (!recent) {
+        await tx.$executeRaw`
         INSERT INTO "Setting" ("key", "value") VALUES (${key}, '1')
         ON CONFLICT ("key") DO UPDATE SET "value" = (
           CASE WHEN "Setting"."value" ~ '^[0-9]+$' THEN "Setting"."value"::bigint ELSE 0 END + 1
         )::text
-      `,
-    ]);
+        `;
+      }
+    });
     return { count: 0, recorded: true };
   } catch (error) {
     console.error("Could not record public page visit", error);
@@ -749,14 +761,13 @@ export async function getLandingVisitorStats() {
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
   const { start: startOfDay, end: endOfDay } = getDhakaDayRange();
 
-  const [setting, dbTotal, todayVisits, recentEvents] = await Promise.all([
+  const [setting, todayVisits, recentEvents] = await Promise.all([
     prisma.setting
       .findUnique({
-        where: { key: "landing.visitor.count" },
+        where: { key: "landing.public.visit.count" },
         select: { value: true },
       })
       .catch(() => null),
-    prisma.landingVisitorEvent.count().catch(() => 0),
     prisma.landingVisitorEvent
       .count({ where: { createdAt: { gte: startOfDay, lt: endOfDay } } })
       .catch(() => 0),
@@ -775,7 +786,7 @@ export async function getLandingVisitorStats() {
   ).size;
 
   return {
-    totalVisitors: Math.max(settingTotal, dbTotal),
+    totalVisitors: 2000 + (Number.isFinite(settingTotal) ? settingTotal : 0),
     todayVisits,
     activeVisitors: uniqueActive,
     activeJobs: 0,

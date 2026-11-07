@@ -4,51 +4,7 @@ import { PublicHeaderBar } from "@/components/public/public-header-bar";
 import type { TrustStats } from "@/components/public/public-top-bar";
 import type { LandingPageData } from "@/lib/landing-data";
 
-const footerGroups = [
-  {
-    title: "Company",
-    links: [
-      ["About Us", "/about"],
-      ["Company Information", "/company"],
-      ["Our Process", "/services#process"],
-      ["Team", "/team"],
-      ["Contact", "/contact"],
-    ],
-  },
-  {
-    title: "Services",
-    links: [
-      ["WordPress Development", "/services"],
-      ["UI/UX Design", "/services"],
-      ["Custom Software", "/services"],
-      ["eCommerce Development", "/services"],
-      ["React Development", "/services"],
-      ["Maintenance and Support", "/services"],
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      ["Portfolio", "/portfolio"],
-      ["Case Studies", "/portfolio"],
-      ["Blog", "/blog"],
-      ["Download Apps", "/download"],
-      ["Client Documents", "/client-documents"],
-      ["Request a Project", "/contact"],
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      ["Privacy Policy", "/privacy-policy"],
-      ["Terms and Conditions", "/terms-and-conditions"],
-      ["Refund Policy", "/refund-policy"],
-      ["Payment Policy", "/payment-policy"],
-      ["Partner Payment Policy", "/partners/payment-policy"],
-      ["Compliance", "/compliance"],
-    ],
-  },
-];
+import { PUBLIC_FOOTER_GROUPS } from "@/lib/public-nav";
 
 export function PublicPageShell({
   children,
@@ -83,8 +39,8 @@ export function PublicPageShell({
               international clients through documented remote delivery.
             </p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {footerGroups.map((group) => (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {PUBLIC_FOOTER_GROUPS.map((group) => (
               <div key={group.title}>
                 <p className="text-sm font-bold">{group.title}</p>
                 <div className="mt-3 space-y-2">

@@ -1,3 +1,4 @@
+import { PUBLIC_SERVICES } from "@/lib/public-services";
 import { LandingPage } from "@/components/landing/landing-page";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getLandingPageData } from "@/lib/landing-data";
@@ -33,7 +34,7 @@ export default async function ServicesPage() {
       <JsonLd
         data={[
           ...publicPageJsonLd(data, { name: "Services", path: "/services" }),
-          servicesPageJsonLd(data),
+          servicesPageJsonLd({ ...data, services: PUBLIC_SERVICES }),
         ]}
       />
       <LandingPage

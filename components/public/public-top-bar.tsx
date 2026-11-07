@@ -68,12 +68,7 @@ export function PublicTopBar({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <StatPill icon="👁" label="Total visitors" value={stats?.totalVisitors} />
-          <StatPill icon="☀" label="Today visits" value={stats?.todayVisits} />
-          <StatPill icon="●" label="Active visitors" value={stats?.activeVisitors} />
-          <StatPill icon="⚙" label="Active jobs" value={stats?.activeJobs} />
-          <StatPill icon="✓" label="Completed jobs" value={stats?.completedJobs} />
-          <StatPill icon="×" label="Cancelled jobs" value={stats?.cancelledJobs} muted />
+          <StatPill icon="👁" label="Total visits" value={stats?.totalVisitors} />
         </div>
       </div>
       <style jsx>{`

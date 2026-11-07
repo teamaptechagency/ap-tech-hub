@@ -5,9 +5,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Globe2,
-  HeadphonesIcon,
   Menu,
   MessageCircle,
   Send,
@@ -52,7 +50,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PublicDesktopNav } from "@/components/public/public-desktop-nav";
-import { PUBLIC_NAV_LINKS } from "@/lib/public-nav";
+import { PUBLIC_SERVICES } from "@/lib/public-services";
+import { PUBLIC_FOOTER_GROUPS, PUBLIC_NAV_LINKS } from "@/lib/public-nav";
 import type {
   LandingPageData,
   LandingAdData,
@@ -71,19 +70,6 @@ type ModalState =
   | { type: "terms" }
   | null;
 
-const categoryEmojiMap: Record<string, string> = {
-  all: "⭐",
-  "web-development": "💻",
-  "ui-ux-design": "🎨",
-  wordpress: "🧩",
-  "digital-marketing": "📣",
-  "lead-generation": "✉️",
-  seo: "📈",
-  "creative-design": "🎨",
-  "office-support": "📋",
-  accounting: "🧾",
-  "3d-architecture": "📐",
-};
 
 /** Testimonials per page on the About wall — a 3 x 3 grid on desktop. */
 const REVIEWS_PER_PAGE = 9;
@@ -437,100 +423,8 @@ const processSteps: { number: string; title: string; description: string }[] = [
  * that sits inside each one is stated on the stage itself — which is the part
  * a buyer is actually reassured by.
  */
-const workingProcessSteps = [
-  {
-    step: "01",
-    title: "Discuss",
-    text: "Your goals, features and target users talked through, then scope and deadline agreed in writing.",
-    check: "Nothing starts until you have said yes to the plan.",
-  },
-  {
-    step: "02",
-    title: "Research",
-    text: "Your business, your competitors and your users studied, so the direction is chosen for a reason.",
-    check: "You see the direction before any design work begins.",
-  },
-  {
-    step: "03",
-    title: "Design",
-    text: "Two different landing page concepts to choose from, then the rest of the desktop pages in the style you picked.",
-    check: "You choose the direction, and revisions are finished before anything moves on.",
-  },
-  {
-    step: "04",
-    title: "Responsive",
-    text: "Tablet and mobile designed only once the desktop version has your approval.",
-    check: "You review the responsive version and we finish the last changes.",
-  },
-  {
-    step: "05",
-    title: "Build",
-    text: "The approved design developed in WordPress, Elementor, React or custom code, then checked for speed, forms, links and behaviour on real devices.",
-    check: "Tested before launch, not after you find something.",
-  },
-  {
-    step: "06",
-    title: "Deliver",
-    text: "Every file and access handed over, and we stay on for minor updates and guidance afterwards.",
-    check: "Yours to keep, with 60 days of free fixes.",
-  },
-];
 
-const internationalFeatures = [
-  "Remote project meetings",
-  "Written project proposals",
-  "Digital agreements",
-  "Milestone-based delivery",
-  "International invoices",
-  "Project progress updates",
-  "Secure file sharing",
-  "Post-delivery support",
-];
 
-const footerGroups = [
-  {
-    title: "Company",
-    links: [
-      ["About Us", "/about"],
-      ["Company Information", "/company"],
-      ["Our Process", "/services#process"],
-      ["Team", "/team"],
-      ["Contact", "/contact"],
-    ],
-  },
-  {
-    title: "Services",
-    links: [
-      ["WordPress Development", "/services"],
-      ["UI/UX Design", "/services"],
-      ["Custom Software", "/services"],
-      ["eCommerce Development", "/services"],
-      ["React Development", "/services"],
-      ["Maintenance and Support", "/services"],
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      ["Portfolio", "/portfolio"],
-      ["Case Studies", "/portfolio"],
-      ["Blog", "/blog"],
-      ["Client Documents", "/client-documents"],
-      ["Request a Project", "/contact"],
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      ["Privacy Policy", "/privacy-policy"],
-      ["Terms and Conditions", "/terms-and-conditions"],
-      ["Refund Policy", "/refund-policy"],
-      ["Payment Policy", "/payment-policy"],
-      ["Partner Payment Policy", "/partners/payment-policy"],
-      ["Compliance", "/compliance"],
-    ],
-  },
-];
 
 function PageHeader({ page }: { page: Exclude<LandingPageKey, "home"> }) {
   const content = pageHeaderContent[page];
@@ -579,46 +473,6 @@ function SectionLabel({
         </h2>
       </div>
       {action}
-    </div>
-  );
-}
-
-function CategoryRail({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  const move = (direction: number) => {
-    const node = ref.current;
-    if (!node) return;
-    node.scrollBy({
-      left: direction * Math.min(node.clientWidth, 320),
-      behavior: "smooth",
-    });
-  };
-
-  return (
-    <div className="relative mb-7 px-9 sm:px-0">
-      <button
-        type="button"
-        onClick={() => move(-1)}
-        className="absolute left-0 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-[#e8e3dc] bg-white text-[#101623] shadow-md transition hover:border-[#c6613f] hover:text-[#c6613f] sm:-left-4"
-        aria-label="Previous categories"
-      >
-        <ChevronLeft size={17} />
-      </button>
-      <div
-        ref={ref}
-        className="flex gap-3 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {children}
-      </div>
-      <button
-        type="button"
-        onClick={() => move(1)}
-        className="absolute right-0 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-[#e8e3dc] bg-white text-[#101623] shadow-md transition hover:border-[#c6613f] hover:text-[#c6613f] sm:-right-4"
-        aria-label="Next categories"
-      >
-        <ChevronRight size={17} />
-      </button>
     </div>
   );
 }
@@ -1276,7 +1130,7 @@ function FloatingChat({
               {languageNote && (
                 <p className="flex items-start gap-1.5 text-[11px] leading-4 text-[#6b7280]">
                   <Globe2 size={13} className="mt-0.5 shrink-0 text-[#c6613f]" />
-                  Write in whatever language you're comfortable with - no need for English.
+                  Write in whatever language you&apos;re comfortable with - no need for English.
                 </p>
               )}
               <button
@@ -1570,113 +1424,6 @@ function SideAds({
   );
 }
 
-/**
- * The ad's call to action on its own.
- *
- * AdButton makes the whole card one link, which suits a small side or top
- * slot. In the popup it left the visible button decorative and the entire
- * dialog clickable, so a stray click anywhere navigated the visitor away.
- */
-function AdCta({ ad, className }: { ad: LandingAdData; className?: string }) {
-  const goToSection = useSectionNav();
-  // An ad with a destination but no label still needs to be clickable.
-  const label =
-    ad.buttonLabel?.trim() || (ad.buttonUrl?.trim() ? "Learn more" : "");
-  if (!label) return null;
-
-  if (ad.buttonUrl?.startsWith("#")) {
-    return (
-      <button
-        type="button"
-        onClick={() => goToSection(ad.buttonUrl || "#contact")}
-        className={className}
-      >
-        {label}
-      </button>
-    );
-  }
-
-  return (
-    <a
-      href={ad.buttonUrl || "#contact"}
-      target={ad.buttonUrl?.startsWith("http") ? "_blank" : undefined}
-      rel="noreferrer"
-      className={className}
-    >
-      {label}
-    </a>
-  );
-}
-
-function PopupAd({ ad }: { ad: LandingAdData }) {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isVisibleAd(ad)) return;
-    const key = `ap-tech-popup-ad-${ad.title}`;
-    if (window.sessionStorage.getItem(key)) return;
-    const timer = window.setTimeout(() => {
-      setOpen(true);
-      window.sessionStorage.setItem(key, "1");
-    }, 1800);
-    return () => window.clearTimeout(timer);
-  }, [ad]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
-  if (!open || !isVisibleAd(ad)) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
-      onClick={() => setOpen(false)}
-    >
-      {/* One card, not a card inside a card: the close button sits over the
-          corner instead of taking a row of its own, and the image runs to the
-          edges. */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={ad.title?.trim() || "Offer"}
-        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white text-left text-[#101623] shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          aria-label="Close"
-          className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-[#6b7385] backdrop-blur transition hover:bg-[#f1ede8] hover:text-[#101623]"
-        >
-          <X size={16} />
-        </button>
-
-        {ad.imageUrl && (
-          <img src={ad.imageUrl} alt="" className="h-44 w-full object-cover" />
-        )}
-
-        <div className="p-6">
-          {/* Clear of the close button when there is no image above it. */}
-          <p className="pr-6 text-xl font-black leading-snug">{ad.title}</p>
-          {ad.body && (
-            <p className="mt-2.5 text-sm leading-6 text-[#5b6376]">{ad.body}</p>
-          )}
-          <AdCta
-            ad={ad}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-[#c6613f] px-5 py-3 text-sm font-black text-white transition hover:bg-[#ad5233]"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export type LandingBlogTeaser = {
   id: string;
   slug: string;
@@ -1694,15 +1441,16 @@ export function LandingPage({
   publicLogoUrl,
   page = "home",
   latestPosts = [],
+  contactService = "",
 }: {
   data: LandingPageData;
   portalHref?: string | null;
   publicLogoUrl?: string | null;
   page?: LandingPageKey;
   latestPosts?: LandingBlogTeaser[];
+  contactService?: string;
 }) {
   const [heroIndex, setHeroIndex] = useState(0);
-  const [activeCategory, setActiveCategory] = useState("all");
   const [modal, setModal] = useState<ModalState>(null);
   const [contactPending, startContactTransition] = useTransition();
   const [trustStats, setTrustStats] = useState<TrustStats | null>(null);
@@ -1747,11 +1495,6 @@ export function LandingPage({
   }, [pathname]);
 
 
-  const filteredServices = useMemo(() => {
-    const visibleServices = data.services.filter((service) => !service.hidden);
-    if (activeCategory === "all") return visibleServices;
-    return visibleServices.filter((service) => service.categorySlug === activeCategory);
-  }, [activeCategory, data.services]);
 
   const visibleProjects = useMemo(
     () => data.projects.filter((project) => !project.hidden),
@@ -2105,387 +1848,28 @@ export function LandingPage({
       </section>
       )}
 
-      {page === "home" && (
-        <section className="bg-[#101623] py-8">
+
+
+
+
+      {(page === "home" || page === "services") && (
+        <section id="services" className="scroll-mt-24 bg-[#faf8f5] py-12 md:py-16">
           <div className="mx-auto max-w-[1140px] px-4">
-            <div className="grid gap-4 rounded-[18px] border border-[#c6613f]/30 bg-[linear-gradient(120deg,#1c2438_0%,#241a15_100%)] p-6 sm:grid-cols-3 sm:p-7">
-              <div className="flex items-center gap-4">
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#c6613f]/15 text-[#f5a83c]">
-                  <Clock size={22} />
-                </div>
-                <div>
-                  <p className="font-extrabold text-white">24 Hour Delivery</p>
-                  <p className="mt-0.5 text-sm text-[#cbd2df]">
-                    A working site live within a day — the offer at the top of
-                    this page.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 sm:border-l sm:border-white/10 sm:pl-6">
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#c6613f]/15 text-[#f5a83c]">
-                  <HeadphonesIcon size={22} />
-                </div>
-                <div>
-                  <p className="font-extrabold text-white">24/7 Support</p>
-                  <p className="mt-0.5 text-sm text-[#cbd2df]">
-                    Real people, ready around the clock for urgent fixes and questions.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 sm:border-l sm:border-white/10 sm:pl-6">
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#c6613f]/15 text-[#f5a83c]">
-                  <ShieldCheck size={22} />
-                </div>
-                <div>
-                  <p className="font-extrabold text-white">60 Days Free Support</p>
-                  <p className="mt-0.5 text-sm text-[#cbd2df]">
-                    Free bug fixes and tweaks for 60 days after delivery, on us.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-[11px] text-[#6b7280]">
-              <Clock size={12} />
-              *Terms & conditions apply
-            </p>
-          </div>
-        </section>
-      )}
-
-      {page === "home" && (
-        <section className="border-b border-[#e8e3dc] bg-[#faf8f5] py-10">
-          <div className="mx-auto mb-8 max-w-[1140px] px-4">
-            <SectionLabel
-              eyebrow="Transparent Delivery"
-              title="A Professional and Transparent Working Process"
-            />
-            <p className="-mt-3 max-w-2xl text-sm leading-6 text-[#6b7280]">
-              You approve every stage before the next one starts, and revisions
-              are part of the price, not an extra.
-            </p>
-
-            <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {workingProcessSteps.map((stage) => (
-                <li
-                  key={stage.step}
-                  className="flex flex-col rounded-[14px] border border-[#e8e3dc] bg-white p-4"
-                >
-                  <span className="text-xs font-black tracking-[0.14em] text-[#c6613f]">
-                    {stage.step}
-                  </span>
-                  <h3 className="mt-1.5 text-base font-extrabold text-[#101623]">
-                    {stage.title}
-                  </h3>
-                  <p className="mt-1.5 text-sm leading-6 text-[#6b7280]">
-                    {stage.text}
-                  </p>
-                  <p className="mt-auto flex items-start gap-1.5 pt-3 text-[12px] font-bold leading-5 text-[#101623]">
-                    <ShieldCheck
-                      size={13}
-                      className="mt-0.5 shrink-0 text-[#c6613f]"
-                    />
-                    {stage.check}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          </div>
-          <div className="mx-auto mb-8 max-w-[1140px] px-4">
-            <div className="rounded-[18px] border border-[#e8e3dc] bg-white p-6 md:p-8">
-              <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr] lg:items-start">
-                <div>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#c6613f]">
-                    International Clients
-                  </p>
-                  <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#101623] md:text-3xl">
-                    Working with Clients Worldwide
-                  </h2>
-                  <p className="mt-3 text-sm leading-7 text-[#6b7280]">
-                    AP Tech Agency is operated from Bangladesh and works
-                    remotely with businesses, agencies, entrepreneurs, and
-                    organizations from different countries. Projects are managed
-                    through online meetings, written agreements, invoices,
-                    milestones, and secure digital communication.
-                  </p>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {internationalFeatures.map((feature) => (
-                    <div
-                      key={feature}
-                      className="rounded-[10px] bg-[#faf8f5] px-3 py-2 text-sm font-semibold text-[#3a4152]"
-                    >
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mx-auto max-w-[1140px] px-4">
-            <div className="grid gap-6 rounded-[18px] border border-[#e8e3dc] bg-white p-6 shadow-[0_18px_45px_rgba(16,22,35,.06)] md:grid-cols-[1fr_auto] md:items-center md:p-8">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#c6613f]">
-                  Referral & Business Partner Program
-                </p>
-                <h2 className="mt-2 max-w-2xl text-2xl font-extrabold tracking-tight text-[#101623] md:text-3xl">
-                  Bring clients to AP Tech and earn from approved projects.
-                </h2>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-[#6b7280]">
-                  Freelancers, agencies, consultants and resellers can apply to
-                  become AP Tech partners. Your referred client can receive a
-                  discount, and you can earn commission after the project and
-                  payment are approved.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#3a4152]">
-                  <span className="rounded-full bg-[#faf8f5] px-3 py-1.5">
-                    Client discount
-                  </span>
-                  <span className="rounded-full bg-[#faf8f5] px-3 py-1.5">
-                    Partner commission
-                  </span>
-                  <span className="rounded-full bg-[#faf8f5] px-3 py-1.5">
-                    Reseller option
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-3 md:min-w-[220px]">
-                <button
-                  type="button"
-                  onClick={() => setPartnerApplyOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#c6613f] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#a94e30]"
-                >
-                  Become a Partner <ArrowRight size={16} />
-                </button>
-                <Link
-                  href="/partners"
-                  className="inline-flex items-center justify-center rounded-[10px] border border-[#e8e3dc] px-6 py-3 text-sm font-bold text-[#101623] transition hover:border-[#101623]"
-                >
-                  View partner details
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {page === "home" && (
-        <section className="py-[72px]">
-          <div className="mx-auto max-w-[1140px] px-4">
-            <SectionLabel
-              eyebrow="What We Do"
-              title="Popular services"
-              action={
-                <Link
-                  href="/services"
-                  className="hidden text-sm font-bold text-[#c6613f] md:inline"
-                >
-                  View all services →
-                </Link>
-              }
-            />
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-              {data.services
-                .filter((service) => !service.hidden)
-                .slice(0, 4)
-                .map((service) => (
-                  <button
-                    type="button"
-                    key={service.id}
-                    onClick={() => setModal({ type: "service", item: service })}
-                    className="group flex h-[206px] flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.12)] sm:h-[236px]"
-                  >
-                    {service.thumbnailUrl || service.imageUrl ? (
-                      <img
-                        src={service.thumbnailUrl || service.imageUrl || ""}
-                        alt={service.title}
-                        className="h-[92px] w-full object-cover sm:h-[118px]"
-                      />
-                    ) : (
-                      <div
-                        className="grid h-[92px] place-items-center text-3xl sm:h-[118px] sm:text-4xl"
-                        style={{ backgroundColor: service.accent || "#2e3b55" }}
-                      >
-                        <span className="drop-shadow-sm">
-                          {service.emoji || categoryEmojiMap[service.categorySlug] || "⭐"}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex flex-1 flex-col p-3 sm:p-4">
-                      <h3 className="line-clamp-2 min-h-10 text-[13px] font-extrabold leading-5 text-[#101623] sm:min-h-12 sm:text-[15px] sm:leading-6">
-                        {service.title}
-                      </h3>
-                      <div className="mt-auto flex items-end justify-between gap-2 pt-3 sm:gap-3 sm:pt-4">
-                        <span className="text-xs font-bold text-[#f59e0b] sm:text-sm">
-                          ★ {ratingStars(service.rating).label}
-                        </span>
-                        {service.priceRange && (
-                          <span className="text-right text-[11px] text-[#64748b] sm:text-xs">
-                            {service.priceRange.replace("Start from ", "From ")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-            </div>
-            <Link
-              href="/services"
-              className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
-            >
-              View all services →
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {page === "services" && (
-      <section id="services" className="scroll-mt-24 py-[72px]">
-        <div className="mx-auto max-w-[1140px] px-4">
-          {/* The banner above already reads "What We Do / Popular Services", so
-              only the action is kept here rather than the heading again. */}
-          <div className="mb-6 flex justify-end">
-            <button
-              type="button"
-              onClick={() => goToSection("#contact")}
-              className="hidden text-sm font-bold text-[#c6613f] md:inline"
-            >
-              Start a project →
-            </button>
-          </div>
-          <div className="-mt-2 mb-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {data.categories.filter((category) => category.slug !== "all").slice(0, 6).map((category) => (
-              <button
-                key={category.slug}
-                type="button"
-                onClick={() => setActiveCategory(category.slug)}
-                className={`flex h-[102px] flex-col items-center justify-center gap-3 rounded-[14px] border bg-white text-center text-sm font-extrabold shadow-[0_14px_30px_rgba(16,22,35,.06)] transition hover:-translate-y-1 hover:border-[#c6613f] ${
-                  activeCategory === category.slug
-                    ? "border-[#c6613f] text-[#c6613f]"
-                    : "border-[#e8e3dc] text-[#101623]"
-                }`}
-              >
-                <span className="text-2xl">
-                  {categoryEmojiMap[category.slug] ?? "⭐"}
-                </span>
-                {category.name}
-              </button>
-            ))}
-          </div>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {data.categories.map((category) => (
-              <button
-                key={category.slug}
-                type="button"
-                onClick={() => setActiveCategory(category.slug)}
-                className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
-                  activeCategory === category.slug
-                    ? "border-[#c6613f] bg-[#c6613f] text-white"
-                    : "border-[#e8e3dc] bg-white text-[#6b7280]"
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredServices.map((service) => (
-              <button
-                type="button"
-                key={service.id}
-                onClick={() => setModal({ type: "service", item: service })}
-                className="group flex h-[206px] flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.12)] sm:h-[236px]"
-              >
-                {service.thumbnailUrl || service.imageUrl ? (
-                  <img
-                    src={service.thumbnailUrl || service.imageUrl || ""}
-                    alt={service.title}
-                    className="h-[92px] w-full object-cover sm:h-[118px]"
-                  />
-                ) : (
-                  <div
-                    className="grid h-[92px] place-items-center text-3xl sm:h-[118px] sm:text-4xl"
-                    style={{ backgroundColor: service.accent || "#2e3b55" }}
-                  >
-                    <span className="drop-shadow-sm">
-                      {service.emoji || categoryEmojiMap[service.categorySlug] || "⭐"}
-                    </span>
-                  </div>
-                )}
-                <div className="flex flex-1 flex-col p-3 sm:p-4">
-                  <h3 className="line-clamp-2 min-h-10 text-[13px] font-extrabold leading-5 text-[#101623] sm:min-h-12 sm:text-[15px] sm:leading-6">{service.title}</h3>
-                  <div className="mt-auto flex items-end justify-between gap-2 pt-3 sm:gap-3 sm:pt-4">
-                    <span className="text-xs font-bold text-[#f59e0b] sm:text-sm">
-                      ★ {ratingStars(service.rating).label}
-                    </span>
-                    {service.priceRange && (
-                      <span className="text-right text-[11px] text-[#64748b] sm:text-xs">
-                        {service.priceRange.replace("Start from ", "From ").replace("From ", "From ")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-      )}
-
-      {page === "home" && (
-        <section className="border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
-          <div className="mx-auto max-w-[1140px] px-4">
-            <SectionLabel
-              eyebrow="Our Work"
-              title="Recent Projects"
-              action={
-                <Link
-                  href="/portfolio"
-                  className="hidden text-sm font-bold text-[#c6613f] md:inline"
-                >
-                  View all projects →
-                </Link>
-              }
-            />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {visibleProjects.slice(0, 3).map((project, index) => (
-                <button
-                  key={project.id}
-                  type="button"
-                  onClick={() => setModal({ type: "project", item: project })}
-                  className="flex h-[224px] flex-col overflow-hidden rounded-[14px] border border-[#e8e3dc] bg-white text-left transition hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
-                >
-                  {project.thumbnailUrl || project.imageUrl ? (
-                    <img
-                      src={project.thumbnailUrl || project.imageUrl || ""}
-                      alt={project.title}
-                      className="h-[130px] w-full object-cover"
-                    />
-                  ) : (
-                    <div className="grid h-[130px] place-items-center bg-[linear-gradient(135deg,#1b2334,#3d4c6b)] text-4xl">
-                      {["📊", "🛍️", "✈️", "🎓", "🏥", "🏠"][index % 6]}
-                    </div>
-                  )}
-                  <div className="flex flex-1 flex-col p-4">
-                    <h3 className="line-clamp-2 font-extrabold text-[#101623]">
-                      {project.title}
-                    </h3>
-                    <p className="mt-1 text-xs text-[#6b7280]">
-                      {[project.service, project.category].filter(Boolean).join(" / ") ||
-                        "Project"}
-                    </p>
-                  </div>
-                </button>
+            {page === "home" && <SectionLabel eyebrow="What We Do" title="Our Services" />}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {PUBLIC_SERVICES.map((service) => (
+                <article key={service.id} className="rounded-2xl border border-[#e8e3dc] bg-white p-6">
+                  <h2 className="text-lg font-bold text-[#101623]">{service.title}</h2>
+                  <p className="mt-2 text-sm leading-6 text-[#5b6376]">{service.description}</p>
+                  <Link href={`/contact?service=${encodeURIComponent(service.title)}`} className="mt-4 inline-block text-sm font-semibold text-[#a5472e]">Ask about this service <span aria-hidden>→</span></Link>
+                </article>
               ))}
             </div>
-            <Link
-              href="/portfolio"
-              className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
-            >
-              View all projects →
-            </Link>
           </div>
         </section>
       )}
+
+
 
       {page === "portfolio" && (
       <section id="portfolio" className="scroll-mt-24 border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
@@ -2576,54 +1960,7 @@ export function LandingPage({
       </section>
       )}
 
-      {page === "home" && (
-        <section className="py-[72px]">
-          <div className="mx-auto max-w-[1140px] px-4">
-            <SectionLabel
-              eyebrow="Our Team"
-              title="Meet Our Experts"
-              action={
-                <Link
-                  href="/team"
-                  className="hidden text-sm font-bold text-[#c6613f] md:inline"
-                >
-                  Meet the full team →
-                </Link>
-              }
-            />
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {visibleTeam.slice(0, 4).map((member) => (
-                <button
-                  key={member.id}
-                  type="button"
-                  onClick={() => setModal({ type: "team", item: member })}
-                  className="flex h-[214px] flex-col items-center justify-center rounded-[14px] border border-[#e8e3dc] bg-white p-4 text-center transition hover:-translate-y-1 hover:border-[#c6613f] hover:shadow-[0_14px_30px_rgba(16,22,35,.10)]"
-                >
-                  <div className="mx-auto mb-3 grid h-[72px] w-[72px] place-items-center rounded-full bg-[#1b2334] text-xl font-extrabold text-white">
-                    {member.name
-                      .split(" ")
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join("")}
-                  </div>
-                  <h3 className="line-clamp-2 min-h-10 font-extrabold leading-5 text-[#101623]">
-                    {member.name}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 min-h-8 text-xs font-bold leading-4 text-[#c6613f]">
-                    {member.role}
-                  </p>
-                </button>
-              ))}
-            </div>
-            <Link
-              href="/team"
-              className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
-            >
-              Meet the full team →
-            </Link>
-          </div>
-        </section>
-      )}
+
 
       {page === "team" && (
       <section id="team" className="scroll-mt-24 py-[72px]">
@@ -2742,50 +2079,7 @@ export function LandingPage({
         </section>
       )}
 
-      {page === "home" && (
-        <section className="border-y border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
-          <div className="mx-auto max-w-[1140px] px-4">
-            <SectionLabel
-              eyebrow="How We Work"
-              title="Our Working Process"
-              action={
-                <Link
-                  href="/services#process"
-                  className="hidden text-sm font-bold text-[#c6613f] md:inline"
-                >
-                  See our full process →
-                </Link>
-              }
-            />
-            <p className="-mt-4 max-w-2xl text-sm leading-7 text-[#6b7280]">
-              For a single service, our related specialist works with you
-              directly. For a full A2Z website design and development
-              project, a complete team takes it from brief to launch.
-            </p>
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {processSteps.slice(0, 4).map((step) => (
-                <div
-                  key={step.title}
-                  className="rounded-[14px] border border-[#e8e3dc] bg-white p-4"
-                >
-                  <span className="text-xs font-extrabold text-[#c6613f]">
-                    {step.number}
-                  </span>
-                  <h3 className="mt-1 text-sm font-extrabold leading-5 text-[#101623]">
-                    {step.title}
-                  </h3>
-                </div>
-              ))}
-            </div>
-            <Link
-              href="/services#process"
-              className="mt-6 inline-flex text-sm font-bold text-[#c6613f] md:hidden"
-            >
-              See our full process →
-            </Link>
-          </div>
-        </section>
-      )}
+
 
       {page === "services" && (
         <section id="process" className="scroll-mt-24 py-[72px]">
@@ -2841,39 +2135,7 @@ export function LandingPage({
         </section>
       )}
 
-      {page === "home" && (
-        <section className="py-[72px]">
-          <div className="mx-auto grid max-w-[1140px] items-center gap-10 px-4 lg:grid-cols-[1.1fr_.9fr]">
-            <div>
-              <SectionLabel eyebrow={data.about.eyebrow} title={data.about.title} />
-              <p className="max-w-2xl text-[15px] leading-7 text-[#6b7280]">
-                {data.about.description}
-              </p>
-              <Link
-                href="/about"
-                className="mt-5 inline-flex text-sm font-bold text-[#c6613f]"
-              >
-                Learn more about us →
-              </Link>
-            </div>
-            <div className="rounded-[18px] bg-[linear-gradient(120deg,#14231c,#1f3a2c)] p-8 text-[#cfe0d6]">
-              <b className="mb-3 block text-lg font-extrabold text-white">
-                One portal for every project
-              </b>
-              <p className="text-sm leading-7">
-                Clients track progress, chat with the team, join meetings and pay
-                invoices from AP Tech Hub. Our own client portal keeps work clear.
-              </p>
-              <Link
-                href={portalHref ?? "/register"}
-                className="mt-5 inline-flex rounded-[10px] bg-[#c6613f] px-5 py-3 text-sm font-bold text-white"
-              >
-                {portalHref ? "Go Portal" : "Sign up"}
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
+
 
       {page === "about" && (
       <section id="about" className="scroll-mt-24 py-[72px]">
@@ -3078,35 +2340,24 @@ export function LandingPage({
             >
               <div className="grid gap-4 md:grid-cols-2">
                 <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
-                <input name="name" required placeholder="Full name" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <input name="company" placeholder="Company name" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <input name="email" required type="email" placeholder="Email address" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <input name="phone" required placeholder="Phone or WhatsApp" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <input name="country" required placeholder="Country" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <select name="service" required className="rounded-[9px] border border-[#e8e3dc] bg-white px-4 py-3 text-sm outline-none focus:border-[#c6613f]">
-                  <option value="">Required service</option>
-                  <option>WordPress Development</option>
-                  <option>WooCommerce Development</option>
-                  <option>UI/UX Design</option>
-                  <option>Website Redesign</option>
-                  <option>Custom Software</option>
-                  <option>React or Next.js Development</option>
-                  <option>PHP or Laravel Development</option>
-                  <option>Website Maintenance</option>
-                  <option>Technical Consulting</option>
-                  <option>Other</option>
-                </select>
-                <input name="budget" placeholder="Estimated budget" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <input name="startDate" type="date" placeholder="Expected start date" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <input name="existingWebsite" placeholder="Existing website" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f]" />
-                <select name="communication" className="rounded-[9px] border border-[#e8e3dc] bg-white px-4 py-3 text-sm outline-none focus:border-[#c6613f]">
-                  <option>Email</option>
-                  <option>WhatsApp</option>
-                  <option>Google Meet</option>
-                  <option>Client portal</option>
-                </select>
-                <input name="file" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f] md:col-span-2" />
-                <textarea name="message" required placeholder="Project description..." rows={5} className="rounded-[9px] border border-[#e8e3dc] px-4 py-3 text-sm outline-none focus:border-[#c6613f] md:col-span-2" />
+                <label className="grid gap-1.5 text-sm font-medium">Name
+                  <input name="name" required autoComplete="name" className="rounded-lg border border-[#e8e3dc] px-3 py-2.5" />
+                </label>
+                <label className="grid gap-1.5 text-sm font-medium">Email
+                  <input name="email" required type="email" autoComplete="email" className="rounded-lg border border-[#e8e3dc] px-3 py-2.5" />
+                </label>
+                <label className="grid gap-1.5 text-sm font-medium">Phone or WhatsApp (optional)
+                  <input name="phone" type="tel" autoComplete="tel" className="rounded-lg border border-[#e8e3dc] px-3 py-2.5" />
+                </label>
+                <label className="grid gap-1.5 text-sm font-medium">Service (optional)
+                  <select name="service" defaultValue={contactService} className="rounded-lg border border-[#e8e3dc] bg-white px-3 py-2.5">
+                    <option value="">Choose a service</option>
+                    {PUBLIC_SERVICES.map(({title}) => <option key={title}>{title}</option>)}
+                  </select>
+                </label>
+                <label className="grid gap-1.5 text-sm font-medium md:col-span-2">Message
+                  <textarea name="message" required minLength={10} maxLength={4000} rows={4} placeholder="How can we help?" className="rounded-lg border border-[#e8e3dc] px-3 py-2.5" />
+                </label>
                 <label className="flex gap-2 text-xs leading-6 text-[#6b7280] md:col-span-2">
                   <input name="privacy" value="yes" type="checkbox" required className="mt-1 h-4 w-4" />
                   <span>I agree that AP Tech Agency may use this information to respond to my project request according to the privacy policy.</span>
@@ -3281,11 +2532,6 @@ export function LandingPage({
       )}
 
       <footer className="bg-[#101623] text-white">
-        <div className="px-4 py-20 text-center">
-          <p className="text-6xl font-extrabold italic text-[#f5a83c] md:text-8xl">
-            {data.footer.thanksText}
-          </p>
-        </div>
         <div className="border-t border-white/10 px-4 py-12">
           <div className="mx-auto grid max-w-[1140px] gap-10 lg:grid-cols-[1.05fr_2fr]">
             <div>
@@ -3296,7 +2542,7 @@ export function LandingPage({
               </p>
             </div>
             <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
-              {footerGroups.map((group) => (
+              {PUBLIC_FOOTER_GROUPS.map((group) => (
                 <div key={group.title}>
                   <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-white">
                     {group.title}
@@ -3345,7 +2591,6 @@ export function LandingPage({
         }
       />
       <SideAds left={data.ads.left} right={data.ads.right} />
-      <PopupAd ad={data.ads.popup} />
       <CookieNotice
         onOpenPrivacy={() => setModal({ type: "privacy" })}
         onOpenTerms={() => setModal({ type: "terms" })}

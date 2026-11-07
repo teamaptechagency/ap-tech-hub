@@ -1,3 +1,4 @@
+import { PUBLIC_SERVICES } from "@/lib/public-services";
 import { LandingPage } from "@/components/landing/landing-page";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getLandingPageData } from "@/lib/landing-data";
@@ -21,7 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function ContactPage() {
+export default async function ContactPage({searchParams}: {searchParams: Promise<{service?: string}>}) {
+  const {service} = await searchParams;
+  const contactService = PUBLIC_SERVICES.find(({title}) => title === service)?.title;
   const [data, session, branding] = await Promise.all([
     getLandingPageData(),
     auth(),
@@ -36,6 +39,7 @@ export default async function ContactPage() {
         portalHref={session?.user ? homeFor(session.user.role) : null}
         publicLogoUrl={branding.publicLogoUrl}
         page="contact"
+        contactService={contactService}
       />
     </>
   );

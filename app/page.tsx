@@ -1,3 +1,4 @@
+import { PUBLIC_SERVICES } from "@/lib/public-services";
 import { LandingPage } from "@/components/landing/landing-page";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getLandingPageData } from "@/lib/landing-data";
@@ -31,7 +32,7 @@ export default async function RootPage() {
     <>
       <JsonLd
         data={[
-          organizationJsonLd(data, { detailed: true }),
+          organizationJsonLd({ ...data, services: PUBLIC_SERVICES }, { detailed: true }),
           websiteJsonLd(data),
         ]}
       />
