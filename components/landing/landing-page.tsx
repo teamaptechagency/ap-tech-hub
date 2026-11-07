@@ -6,7 +6,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe2,
-  Menu,
+  LayoutTemplate,
+  Megaphone,
+  Monitor,
+  Palette,
+  Video,
   MessageCircle,
   Send,
   ShieldCheck,
@@ -14,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   type FormEvent,
   type ReactNode,
@@ -39,7 +43,6 @@ import { BlogImpressionTracker } from "@/components/blog/blog-impression-tracker
 import {
   formatCountdown,
   getDefaultCountdownEnd,
-  PublicTopBar,
   type TrustStats,
 } from "@/components/public/public-top-bar";
 import {
@@ -49,9 +52,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PublicDesktopNav } from "@/components/public/public-desktop-nav";
+import { PublicHeaderBar } from "@/components/public/public-header-bar";
 import { PUBLIC_SERVICES } from "@/lib/public-services";
-import { PUBLIC_FOOTER_GROUPS, PUBLIC_NAV_LINKS } from "@/lib/public-nav";
+import { PUBLIC_FOOTER_GROUPS } from "@/lib/public-nav";
 import type {
   LandingPageData,
   LandingAdData,
@@ -72,6 +75,8 @@ type ModalState =
 
 
 /** Testimonials per page on the About wall — a 3 x 3 grid on desktop. */
+const serviceIcons = [Monitor, LayoutTemplate, Palette, Video, Megaphone];
+
 const REVIEWS_PER_PAGE = 9;
 
 /** Projects per page on the portfolio — the same 3 x 3 grid. */
@@ -429,7 +434,7 @@ const processSteps: { number: string; title: string; description: string }[] = [
 function PageHeader({ page }: { page: Exclude<LandingPageKey, "home"> }) {
   const content = pageHeaderContent[page];
   return (
-    <section className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">
+    <section className="public-hero relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">
       <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
       <div className="relative z-10 mx-auto max-w-[1140px] px-4">
         <nav className="mb-3 flex items-center gap-2 text-xs text-[#9aa3b3]">
@@ -463,7 +468,7 @@ function SectionLabel({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-7 flex items-end justify-between gap-4">
+    <div className="public-section-heading mb-7 flex items-end justify-between gap-4">
       <div>
         <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#c6613f]">
           {eyebrow}
@@ -1455,10 +1460,8 @@ export function LandingPage({
   const [contactPending, startContactTransition] = useTransition();
   const [contactFeedback, setContactFeedback] = useState<{ error: boolean; message: string } | null>(null);
   const [trustStats, setTrustStats] = useState<TrustStats | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [partnerApplyOpen, setPartnerApplyOpen] = useState(false);
   const goToSection = useSectionNav();
-  const pathname = usePathname();
 
   const activeHero = data.heroSlides[heroIndex] ?? data.heroSlides[0];
 
@@ -1491,9 +1494,6 @@ export function LandingPage({
     };
   }, [page]);
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
 
 
 
@@ -1575,159 +1575,34 @@ export function LandingPage({
   };
 
   return (
-    <main className="min-h-screen w-full overflow-x-hidden bg-white font-sans text-[#2a3040]">
-      <header className="sticky top-0 z-40 border-b border-[#e8e3dc] bg-white">
-        <PublicTopBar
-          topBar={data.topBar}
-          stats={trustStats}
-        />
-        <div className="mx-auto flex h-16 max-w-[1140px] items-center justify-between gap-5 px-4">
-          <Link
-            href="/"
-            className="flex shrink-0 items-center gap-2 whitespace-nowrap text-left text-xl font-extrabold leading-none text-[#101623]"
-          >
-            {publicLogoUrl?.trim() ? (
-              <img
-                src={publicLogoUrl}
-                alt=""
-                className="h-9 w-9 rounded-md object-contain"
-              />
-            ) : null}
-            <span>
-              AP Tech <span className="text-[#c6613f]">Agency</span>
-            </span>
-          </Link>
-          <PublicDesktopNav />
-          <div className="hidden shrink-0 items-center gap-3 lg:flex">
-            {portalHref ? (
-              <Link
-                href={portalHref}
-                className="whitespace-nowrap rounded-[10px] bg-[#c6613f] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#a94e30]"
-              >
-                Go Portal
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="inline-flex whitespace-nowrap rounded-[10px] border border-[#e8e3dc] px-4 py-2.5 text-sm font-bold text-[#101623] transition hover:border-[#101623]"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/register"
-                  className="whitespace-nowrap rounded-[10px] bg-[#c6613f] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#a94e30]"
-                >
-                  Sign up
-                </Link>
-              </>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#e8e3dc] text-[#101623] transition hover:border-[#101623] lg:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-        </div>
-        <TopAd ad={data.ads.top} countdownEndsAt={data.topBar.countdownEndsAt} />
-      </header>
-
-      <div
-        className={`fixed inset-0 z-50 transition-opacity lg:hidden ${
-          mobileMenuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-        }`}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div
-          className="absolute inset-0 bg-black/40"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-        <div
-          className={`absolute right-0 top-0 flex h-full w-[82%] max-w-[340px] flex-col bg-white shadow-2xl transition-transform duration-300 ${
-            mobileMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <div className="flex items-center justify-between border-b border-[#e8e3dc] px-5 py-4">
-            <span className="text-lg font-extrabold text-[#101623]">
-              AP Tech <span className="text-[#c6613f]">Agency</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(false)}
-              aria-label="Close menu"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e8e3dc] text-[#101623] transition hover:border-[#101623]"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4 text-[15px] font-semibold text-[#3a4152]">
-            {PUBLIC_NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`rounded-[10px] px-3 py-2.5 transition hover:bg-[#faf8f5] ${
-                  pathname === link.href ? "bg-[#faf8f5] text-[#101623]" : ""
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex flex-col gap-3 border-t border-[#e8e3dc] px-5 py-4">
-            {portalHref ? (
-              <Link
-                href={portalHref}
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-[10px] bg-[#c6613f] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[#a94e30]"
-              >
-                Go Portal
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-[10px] border border-[#e8e3dc] px-5 py-2.5 text-center text-sm font-bold text-[#101623] transition hover:border-[#101623]"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-[10px] bg-[#c6613f] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[#a94e30]"
-                >
-                  Sign up
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+    <main className="public-site min-h-screen w-full overflow-x-clip bg-white font-sans text-[#2a3040]">
+      <PublicHeaderBar
+        portalHref={portalHref}
+        publicLogoUrl={publicLogoUrl}
+        topBar={data.topBar}
+        stats={trustStats}
+        belowNavigation={<TopAd ad={data.ads.top} countdownEndsAt={data.topBar.countdownEndsAt} />}
+      />
 
       {page !== "home" && <PageHeader page={page} />}
 
       {page === "home" && (
       <section
         id="home"
-        className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] pt-16 text-white md:pt-20"
+        className="public-hero public-home-hero relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] pt-16 text-white md:pt-20"
       >
         <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
-        <div className="relative z-10 mx-auto grid min-h-[520px] max-w-[1140px] items-center gap-10 px-4 pb-20 md:min-h-[560px] md:grid-cols-[1.15fr_1fr]">
+        <div className="public-home-hero-inner relative z-10 mx-auto grid min-h-[520px] max-w-[1140px] items-center gap-10 px-4 pb-20 md:min-h-[560px] md:grid-cols-[1.15fr_1fr]">
           <div className="max-w-2xl">
             {activeHero?.badge && (
               <p className="mb-4 min-h-4 text-xs font-extrabold uppercase tracking-[0.18em] text-[#f5a83c]">
                 {activeHero.badge}
               </p>
             )}
-            <h1 className="min-h-[132px] text-4xl font-extrabold leading-[1.08] tracking-tight md:min-h-[176px] md:text-[54px] lg:min-h-[124px]">
+            <h1 className="text-4xl font-extrabold leading-[1.06] tracking-tight md:text-[54px]">
               <HighlightTitle title={activeHero?.title ?? ""} />
             </h1>
-            <p className="mt-5 min-h-[84px] max-w-xl text-base leading-7 text-[#cbd2df]">
+            <p className="mt-5 max-w-xl text-base leading-7 text-[#cbd2df]">
               {activeHero?.description}
             </p>
             <div className="mt-7 flex min-h-[48px] flex-wrap gap-3">
@@ -1754,7 +1629,7 @@ export function LandingPage({
             </div>
           </div>
           {activeHero?.imageUrl ? (
-            <div className="hidden h-[330px] overflow-hidden rounded-[18px] border border-white/10 bg-white/[.05] shadow-2xl lg:h-[360px] md:block">
+            <div className="public-hero-media h-[220px] overflow-hidden rounded-[18px] border border-white/10 bg-white/[.05] shadow-2xl sm:h-[310px] lg:h-[360px]">
               <img
                 src={activeHero.imageUrl}
                 alt={activeHero.title}
@@ -1859,17 +1734,19 @@ export function LandingPage({
 
 
       {(page === "home" || page === "services") && (
-        <section id="services" className="scroll-mt-24 bg-[#faf8f5] py-12 md:py-16">
+        <section id="services" className="public-services scroll-mt-24 bg-[#faf8f5] py-12 md:py-16">
           <div className="mx-auto max-w-[1140px] px-4">
             {page === "home" && <SectionLabel eyebrow="What We Do" title="Our Services" />}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {PUBLIC_SERVICES.map((service) => (
-                <article key={service.id} className="rounded-2xl border border-[#e8e3dc] bg-white p-6">
+              {PUBLIC_SERVICES.map((service, index) => {
+                const Icon = serviceIcons[index];
+                return <article key={service.id} className="public-service-card rounded-2xl border border-[#e8e3dc] bg-white p-6">
+                  <div className="public-service-marker"><span><Icon size={20} aria-hidden /></span><span aria-hidden>{String(index + 1).padStart(2, "0")}</span></div>
                   <h2 className="text-lg font-bold text-[#101623]">{service.title}</h2>
                   <p className="mt-2 text-sm leading-6 text-[#5b6376]">{service.description}</p>
                   <Link href={`/contact?service=${encodeURIComponent(service.title)}`} className="mt-4 inline-block text-sm font-semibold text-[#a5472e]">Ask about this service <span aria-hidden>→</span></Link>
-                </article>
-              ))}
+                </article>;
+              })}
             </div>
           </div>
         </section>
@@ -2318,7 +2195,7 @@ export function LandingPage({
       )}
 
       {page === "contact" && (
-      <section id="contact" className="scroll-mt-24 border-t border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
+      <section id="contact" className="public-contact scroll-mt-24 border-t border-[#e8e3dc] bg-[#faf8f5] py-[72px]">
         <div className="mx-auto max-w-[1140px] px-4">
           <div className="grid gap-10 lg:grid-cols-[1fr_1.4fr]">
             <div>
@@ -2340,7 +2217,7 @@ export function LandingPage({
               )}
             </div>
             <form onSubmit={submitContact} aria-busy={contactPending}
-              className="rounded-3xl border border-[#e8e3dc] bg-white p-5 shadow-sm sm:p-8">
+              className="public-feature-card rounded-3xl border border-[#e8e3dc] bg-white p-5 sm:p-8">
               <div className="mb-6 flex items-start gap-4 border-b border-[#eee9e2] pb-5">
                 <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#f6e7df] text-[#a5472e]"><MessageCircle size={21} aria-hidden /></span>
                 <div>
@@ -2546,7 +2423,7 @@ export function LandingPage({
         </section>
       )}
 
-      <footer className="bg-[#101623] text-white">
+      <footer className="public-footer bg-[#101623] text-white">
         <div className="border-t border-white/10 px-4 py-12">
           <div className="mx-auto grid max-w-[1140px] gap-10 lg:grid-cols-[1.05fr_2fr]">
             <div>

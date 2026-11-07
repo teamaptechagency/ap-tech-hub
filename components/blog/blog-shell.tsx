@@ -26,7 +26,7 @@ export function BlogShell({
   stats,
 }: BlogShellProps) {
   return (
-    <main className="min-h-screen w-full overflow-x-hidden bg-white font-sans text-[#2a3040]">
+    <main className="public-site min-h-screen w-full overflow-x-clip bg-white font-sans text-[#2a3040]">
       <PublicHeaderBar
         portalHref={portalHref}
         publicLogoUrl={publicLogoUrl}
@@ -36,7 +36,7 @@ export function BlogShell({
 
       {children}
 
-      <footer className={compactFooter ? "border-t border-[#e8e3dc] bg-white" : "bg-[#101623] text-white"}>
+      <footer className={compactFooter ? "border-t border-[#e8e3dc] bg-white" : "public-footer bg-[#101623] text-white"}>
         <div className="mx-auto max-w-[1140px] px-4 py-4 text-sm"><Link href="/partners/payment-policy" className="underline">Referral Partner Payment &amp; Commission Policy</Link><Link href="/download" className="ml-5 underline">Download Apps</Link></div>
         {!compactFooter && (
         <div className="mx-auto grid max-w-[1140px] gap-8 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">

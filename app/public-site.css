@@ -1,0 +1,179 @@
+/* Shared presentation for the public Next.js shells. */
+.public-site {
+  --public-ink: #121f2e;
+  --public-accent: #a5472e;
+  --public-muted: #5a6474;
+  --public-line: #e9e2d9;
+  --public-paper: #fbf9f6;
+}
+
+.public-site .public-header {
+  background: #fffdfa;
+  border-color: var(--public-line);
+  box-shadow: 0 2px 12px #1724330a;
+}
+
+.public-header-row {
+  min-height: 4.5rem;
+}
+
+.public-desktop-nav {
+  gap: clamp(.125rem, .65vw, .7rem);
+}
+
+.public-desktop-nav a {
+  border-radius: .65rem;
+  padding: .55rem .65rem;
+}
+
+.public-desktop-nav a[aria-current="page"],
+.public-desktop-nav a:hover {
+  background: #f5ece5;
+  color: #843823;
+}
+
+.public-site a:focus-visible,
+.public-site button:focus-visible,
+.public-site summary:focus-visible {
+  outline: 2px solid #c66b4c;
+  outline-offset: 4px;
+}
+
+.public-site .public-hero {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 83% 22%, #9658434a, transparent 52%),
+    linear-gradient(125deg, #121f2e, #1c2c40 62%, #312536);
+}
+
+.public-hero::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background-image: linear-gradient(#ffffff0a 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff0a 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(90deg, transparent 10%, #000 100%);
+}
+
+.public-hero h1 {
+  font-size: clamp(2.25rem, 5vw, 4.25rem);
+  line-height: 1.05;
+  letter-spacing: -.045em;
+  text-wrap: balance;
+}
+
+.public-home-hero-inner {
+  min-height: min(530px, 70svh);
+}
+
+.public-site .public-hero-media {
+  border-radius: 1.5rem;
+  border-color: #ffffff35;
+  box-shadow: 0 22px 65px #070f1a66;
+}
+
+.public-site .public-light-hero {
+  background: linear-gradient(115deg, #f7ece2, #fffdfa 74%);
+  border-bottom: 1px solid var(--public-line);
+}
+
+.public-site .public-section-heading h2 {
+  color: var(--public-ink);
+  font-size: clamp(1.7rem, 3.3vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -.035em;
+}
+
+.public-site .public-services {
+  background: var(--public-paper);
+}
+
+.public-service-card {
+  display: flex;
+  min-height: 13rem;
+  flex-direction: column;
+  align-items: flex-start;
+  border-color: var(--public-line);
+  transition: border-color .18s, box-shadow .18s;
+}
+
+.public-service-card:hover,
+.public-service-card:focus-within {
+  border-color: #d8a28c;
+  box-shadow: 0 10px 28px #1724330c;
+}
+
+.public-service-card h2 {
+  color: var(--public-ink);
+}
+
+.public-service-card p {
+  flex: 1;
+  color: var(--public-muted);
+}
+
+.public-service-marker {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  color: #84614f;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.public-service-marker span:first-child {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: .75rem;
+  background: #f7e9df;
+  color: var(--public-accent);
+}
+
+.public-site .public-footer {
+  background: #121f2e;
+  border-top: 1px solid #3b4a5a;
+}
+
+@media (max-width: 767px) {
+  .public-header-row { min-height: 3.75rem; }
+  .public-home-hero-inner { min-height: 0; padding-bottom: 3.5rem; }
+  .public-site .public-home-hero { padding-top: 2.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-site *, .public-site *::before, .public-site *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+.public-feature-card {
+  border-color: var(--public-line);
+  box-shadow: 0 6px 22px #17243308;
+  transition: border-color .18s, box-shadow .18s;
+}
+
+.public-feature-card:hover,
+.public-feature-card:focus-within {
+  border-color: #d8a28c;
+  box-shadow: 0 12px 32px #17243310;
+}
+
+.public-blog-search {
+  padding: .75rem;
+  background: var(--public-paper);
+  border: 1px solid var(--public-line);
+  border-radius: 1rem;
+}
+
+.public-site .public-contact {
+  background: radial-gradient(ellipse at 8% 12%, #f5e6d8, transparent 52%), var(--public-paper);
+}

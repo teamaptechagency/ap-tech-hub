@@ -3,7 +3,7 @@
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { PublicDesktopNav } from "@/components/public/public-desktop-nav";
 import { PublicTopBar, type TrustStats } from "@/components/public/public-top-bar";
@@ -21,23 +21,33 @@ export function PublicHeaderBar({
   publicLogoUrl,
   topBar,
   stats,
+  belowNavigation,
 }: {
   portalHref?: string | null;
   publicLogoUrl?: string | null;
   topBar: LandingPageData["topBar"];
   stats: TrustStats | null;
+  belowNavigation?: ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileMenuOpen]);
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-[#e8e3dc] bg-white">
+      <header className="public-header sticky top-0 z-40 border-b border-[#e8e3dc] bg-white">
         <PublicTopBar topBar={topBar} stats={stats} />
-        <div className="mx-auto flex h-16 max-w-[1140px] items-center justify-between gap-5 px-4">
+        <div className="public-header-row mx-auto flex h-16 max-w-[1140px] items-center justify-between gap-5 px-4">
           <Link
             href="/"
-            className="flex items-center gap-2 text-left text-xl font-extrabold leading-none text-[#101623]"
+            className="flex shrink-0 items-center gap-2 whitespace-nowrap text-left text-xl font-extrabold leading-none text-[#101623]"
           >
             {publicLogoUrl?.trim() ? (
               <img
@@ -51,7 +61,7 @@ export function PublicHeaderBar({
             </span>
           </Link>
           <PublicDesktopNav />
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="public-header-actions hidden shrink-0 items-center gap-3 lg:flex">
             {portalHref ? (
               <Link
                 href={portalHref}
@@ -80,14 +90,16 @@ export function PublicHeaderBar({
             type="button"
             onClick={() => setMobileMenuOpen(true)}
             aria-label="Open menu"
+            aria-expanded={mobileMenuOpen}
             className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#e8e3dc] text-[#101623] transition hover:border-[#101623] lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
         </div>
+        {belowNavigation}
       </header>
 
-      <div
+      {mobileMenuOpen && <div
         className={`fixed inset-0 z-50 transition-opacity lg:hidden ${
           mobileMenuOpen
             ? "pointer-events-auto opacity-100"
@@ -95,6 +107,7 @@ export function PublicHeaderBar({
         }`}
         role="dialog"
         aria-modal="true"
+        aria-label="Site navigation"
       >
         <div
           className="absolute inset-0 bg-black/40"
@@ -161,7 +174,7 @@ export function PublicHeaderBar({
             )}
           </div>
         </div>
-      </div>
+      </div>}
     </>
   );
 }

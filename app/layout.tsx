@@ -5,6 +5,7 @@ import { CookieConsent } from "@/components/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
 import { getBrandingSettings } from "@/lib/branding";
 import "./globals.css";
+import "./public-site.css";
 
 export const dynamic = "force-dynamic";
 

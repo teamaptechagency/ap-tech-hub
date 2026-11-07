@@ -82,7 +82,7 @@ export default async function PartnersPage() {
         data={publicPageJsonLd(data, { name: TITLE, path: "/partners" })}
       />
 
-      <section className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">
+      <section className="public-hero relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">
         <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
         <div className="relative z-10 mx-auto max-w-[1140px] px-4">
           <nav
@@ -148,7 +148,7 @@ export default async function PartnersPage() {
                 </ul>
               </div>
 
-              <div className="rounded-2xl border border-[#e8e3dc] bg-[#faf8f5] p-5">
+              <div className="public-feature-card rounded-2xl border border-[#e8e3dc] bg-[#faf8f5] p-6">
                 <h3 className="font-extrabold text-[#101623]">
                   Discounts and commission
                 </h3>
@@ -165,7 +165,7 @@ export default async function PartnersPage() {
                 </p>
               </div>
 
-              <Link href="/partners/payment-policy" className="block rounded-2xl border border-[#e8e3dc] p-5 font-semibold text-[#c6613f]">Read all partner payment, commission and custom profit terms →</Link>
+              <Link href="/partners/payment-policy" className="public-feature-card block rounded-2xl border border-[#e8e3dc] p-6 font-semibold text-[#c6613f]">Read all partner payment, commission and custom profit terms →</Link>
               <div className="rounded-2xl border border-[#e8e3dc] p-5">
                 <h3 className="font-extrabold text-[#101623]">
                   What each side does

@@ -149,7 +149,7 @@ export default async function BlogIndexPage({
         path="/blog"
       />
 
-      <section className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">
+      <section className="public-hero relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">
         <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
         <div className="relative z-10 mx-auto max-w-[1140px] px-4">
           <nav
@@ -180,7 +180,7 @@ export default async function BlogIndexPage({
             action="/blog"
             method="get"
             role="search"
-            className="mb-6 flex flex-wrap gap-3"
+            className="public-blog-search mb-6 flex flex-wrap gap-3"
           >
             {category ? (
               <input type="hidden" name="category" value={category} />
@@ -191,7 +191,7 @@ export default async function BlogIndexPage({
               defaultValue={search}
               placeholder="Search articles..."
               aria-label="Search articles"
-              className="min-w-[220px] flex-1 rounded-[10px] border border-[#e8e3dc] px-4 py-2.5 text-sm outline-none focus:border-[#c6613f]"
+              className="min-w-0 flex-[1_1_12rem] rounded-[10px] border border-[#e8e3dc] px-4 py-2.5 text-sm outline-none focus:border-[#c6613f]"
             />
             <button
               type="submit"
@@ -256,7 +256,7 @@ export default async function BlogIndexPage({
               {posts.map((post) => (
                 <article
                   key={post.id}
-                  className="flex flex-col overflow-hidden rounded-2xl border border-[#e8e3dc] bg-white transition hover:border-[#c6613f]"
+                  className="public-feature-card flex flex-col overflow-hidden rounded-2xl border border-[#e8e3dc] bg-white"
                 >
                   <Link href={`/blog/${post.slug}`} className="block">
                     {post.coverImageUrl ? (

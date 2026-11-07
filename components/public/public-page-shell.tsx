@@ -20,7 +20,7 @@ export function PublicPageShell({
   stats: TrustStats | null;
 }) {
   return (
-    <main className="min-h-screen bg-[#faf8f5] text-[#101623]">
+    <main className="public-site min-h-screen bg-[#faf8f5] text-[#101623]">
       <PublicHeaderBar
         portalHref={portalHref}
         publicLogoUrl={publicLogoUrl}
@@ -30,7 +30,7 @@ export function PublicPageShell({
 
       {children}
 
-      <footer className="bg-[#101623] text-white">
+      <footer className="public-footer bg-[#101623] text-white">
         <div className="mx-auto grid max-w-[1140px] gap-8 px-4 py-12 md:grid-cols-[1.2fr_2fr]">
           <div>
             <p className="text-lg font-extrabold">AP Tech Agency</p>
@@ -69,7 +69,7 @@ export function PublicHero({
   description: string;
 }) {
   return (
-    <section className="bg-white">
+    <section className="public-light-hero bg-white">
       <div className="mx-auto max-w-[1140px] px-4 py-16">
         <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#c6613f]">
           {eyebrow}
