@@ -458,6 +458,18 @@ function PageHeader({ page }: { page: Exclude<LandingPageKey, "home"> }) {
   );
 }
 
+function DirectClientWork() {
+  return (
+    <aside className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border border-[#e8e3dc] bg-white px-5 py-4" aria-label="Direct client work">
+      <strong className="text-3xl font-extrabold tracking-tight text-[#a5472e]">50+</strong>
+      <div>
+        <p className="font-bold text-[#101623]">Direct client projects</p>
+        <p className="text-sm text-[#5b6376]">Work delivered outside freelance marketplaces.</p>
+      </div>
+    </aside>
+  );
+}
+
 function SectionLabel({
   eyebrow,
   title,
@@ -1921,6 +1933,7 @@ export function LandingPage({
                 </Link>
               }
             />
+            <DirectClientWork />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {visibleReviews.slice(0, 3).map((review) => (
                 <button
@@ -2067,11 +2080,9 @@ export function LandingPage({
           <SectionLabel eyebrow="Testimonials" title="What Our Clients Say" />
           <p className="-mt-4 mb-7 flex items-center gap-1.5 text-xs text-[#6b7280]">
             <ShieldCheck size={14} className="shrink-0 text-[#c6613f]" />
-            Real feedback our clients have left about the team on Fiverr,
-            Upwork and other marketplaces, plus direct projects — collected
-            in one place so it reflects what people actually say working
-            with us.
+            Read feedback from clients who have worked with our team.
           </p>
+          <DirectClientWork />
           <div
             id="testimonial-grid"
             className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
