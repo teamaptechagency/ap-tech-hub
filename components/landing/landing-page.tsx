@@ -1453,6 +1453,7 @@ export function LandingPage({
   const [heroIndex, setHeroIndex] = useState(0);
   const [modal, setModal] = useState<ModalState>(null);
   const [contactPending, startContactTransition] = useTransition();
+  const [contactFeedback, setContactFeedback] = useState<{ error: boolean; message: string } | null>(null);
   const [trustStats, setTrustStats] = useState<TrustStats | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [partnerApplyOpen, setPartnerApplyOpen] = useState(false);
@@ -1549,14 +1550,19 @@ export function LandingPage({
     const form = event.currentTarget;
     const formData = new FormData(form);
 
+    setContactFeedback(null);
     startContactTransition(async () => {
-      const result = await submitLandingContact(formData);
-      if (result.error) {
-        toast.error(result.error);
-        return;
+      try {
+        const result = await submitLandingContact(formData);
+        if (result.error) {
+          setContactFeedback({ error: true, message: result.error });
+          return;
+        }
+        form.reset();
+        setContactFeedback({ error: false, message: "Message sent. Our team will reply on WhatsApp." });
+      } catch {
+        setContactFeedback({ error: true, message: "We couldn’t send your message. Please try again." });
       }
-      form.reset();
-      toast.success("Message sent. We will get back to you soon.");
     });
   };
 
@@ -2333,42 +2339,51 @@ export function LandingPage({
                 </div>
               )}
             </div>
-            <form
-              onSubmit={submitContact}
-              encType="multipart/form-data"
-              className="rounded-2xl border border-[#e8e3dc] bg-white p-6"
-            >
-              <div className="grid gap-4 md:grid-cols-2">
+            <form onSubmit={submitContact} aria-busy={contactPending}
+              className="rounded-3xl border border-[#e8e3dc] bg-white p-5 shadow-sm sm:p-8">
+              <div className="mb-6 flex items-start gap-4 border-b border-[#eee9e2] pb-5">
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#f6e7df] text-[#a5472e]"><MessageCircle size={21} aria-hidden /></span>
+                <div>
+                  <h2 className="text-xl font-extrabold text-[#101623]">Send us a message</h2>
+                  <p className="mt-1 text-sm text-[#5b6376]">Tell us what you need. We’ll reply on WhatsApp.</p>
+                </div>
+              </div>
+              <fieldset disabled={contactPending} className="grid gap-5 sm:grid-cols-2">
                 <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
-                <label className="grid gap-1.5 text-sm font-medium">Name
-                  <input name="name" required autoComplete="name" className="rounded-lg border border-[#e8e3dc] px-3 py-2.5" />
+                <label className="grid content-start gap-2 text-sm font-semibold">Name
+                  <input name="name" required autoComplete="name" placeholder="Your name" className="w-full rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-4 py-3 text-base text-[#101623] outline-none transition focus:border-[#a5472e] focus:ring-2 focus:ring-[#a5472e]/20" />
                 </label>
-                <label className="grid gap-1.5 text-sm font-medium">Email
-                  <input name="email" required type="email" autoComplete="email" className="rounded-lg border border-[#e8e3dc] px-3 py-2.5" />
+                <label className="grid content-start gap-2 text-sm font-semibold">WhatsApp number
+                  <input name="phone" required type="tel" autoComplete="tel" maxLength={32} aria-describedby="contact-phone-hint" placeholder="+880 1XXXXXXXXX" className="w-full rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-4 py-3 text-base text-[#101623] outline-none transition focus:border-[#a5472e] focus:ring-2 focus:ring-[#a5472e]/20" />
+                  <span id="contact-phone-hint" className="text-xs font-normal text-[#5b6376]">Include your country code for an international number.</span>
                 </label>
-                <label className="grid gap-1.5 text-sm font-medium">Phone or WhatsApp (optional)
-                  <input name="phone" type="tel" autoComplete="tel" className="rounded-lg border border-[#e8e3dc] px-3 py-2.5" />
+                <label className="grid content-start gap-2 text-sm font-semibold">
+                  <span>Email <span className="font-normal text-[#5b6376]">(optional)</span></span>
+                  <input name="email" type="email" autoComplete="email" placeholder="you@example.com" className="w-full rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-4 py-3 text-base text-[#101623] outline-none transition focus:border-[#a5472e] focus:ring-2 focus:ring-[#a5472e]/20" />
                 </label>
-                <label className="grid gap-1.5 text-sm font-medium">Service (optional)
-                  <select name="service" defaultValue={contactService} className="rounded-lg border border-[#e8e3dc] bg-white px-3 py-2.5">
+                <label className="grid content-start gap-2 text-sm font-semibold">
+                  <span>Service <span className="font-normal text-[#5b6376]">(optional)</span></span>
+                  <select name="service" defaultValue={contactService} className="w-full rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-4 py-3 text-base text-[#101623] outline-none transition focus:border-[#a5472e] focus:ring-2 focus:ring-[#a5472e]/20">
                     <option value="">Choose a service</option>
-                    {PUBLIC_SERVICES.map(({title}) => <option key={title}>{title}</option>)}
+                    {PUBLIC_SERVICES.map(({ title }) => <option key={title}>{title}</option>)}
                   </select>
                 </label>
-                <label className="grid gap-1.5 text-sm font-medium md:col-span-2">Message
-                  <textarea name="message" required minLength={10} maxLength={4000} rows={4} placeholder="How can we help?" className="rounded-lg border border-[#e8e3dc] px-3 py-2.5" />
+                <label className="grid gap-2 text-sm font-semibold sm:col-span-2">Message
+                  <textarea name="message" required minLength={10} maxLength={4000} rows={4} placeholder="What would you like help with?" className="w-full rounded-xl border border-[#ddd8d0] bg-[#faf8f5] px-4 py-3 text-base text-[#101623] outline-none transition focus:border-[#a5472e] focus:ring-2 focus:ring-[#a5472e]/20" />
                 </label>
-                <label className="flex gap-2 text-xs leading-6 text-[#6b7280] md:col-span-2">
-                  <input name="privacy" value="yes" type="checkbox" required className="mt-1 h-4 w-4" />
-                  <span>I agree that AP Tech Agency may use this information to respond to my project request according to the privacy policy.</span>
+                <label className="flex items-start gap-3 text-sm leading-5 text-[#5b6376] sm:col-span-2">
+                  <input name="privacy" value="yes" type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-[#a5472e]" />
+                  <span>I agree that AP Tech Agency may use my details to reply to this inquiry.</span>
                 </label>
-              </div>
-              <button
-                type="submit"
-                disabled={contactPending}
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-[#c6613f] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#a94e30] disabled:opacity-60"
-              >
-                Send Message <Send size={16} />
+              </fieldset>
+              {contactFeedback && (
+                <p role={contactFeedback.error ? "alert" : "status"} className={contactFeedback.error ? "mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-800" : "mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900"}>
+                  {contactFeedback.message}
+                </p>
+              )}
+              <button type="submit" disabled={contactPending}
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#a5472e] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-[#873724] disabled:opacity-60">
+                {contactPending ? "Sending…" : "Send message"} <Send size={16} aria-hidden />
               </button>
             </form>
           </div>

@@ -233,12 +233,14 @@ async function ensureWebsiteLeadCollection() {
 async function createWebsiteLead({
   name,
   email,
+  phone,
   subject,
   message,
   tag,
 }: {
   name: string;
   email: string;
+  phone?: string;
   subject: string;
   message: string;
   tag: "contact-form" | "live-chat";
@@ -251,7 +253,8 @@ async function createWebsiteLead({
     data: {
       collectionId,
       name,
-      email,
+      email: email || null,
+      phone,
       source: "WEBSITE",
       status: "NEW",
       tags: tag,
@@ -320,7 +323,7 @@ export async function submitLandingContact(formData: FormData) {
   const name = clean(formData.get("name"));
   const email = clean(formData.get("email"));
   const company = clean(formData.get("company"));
-  const phone = clean(formData.get("phone"));
+  const phone = clean(formData.get("phone")).replace(/[\s().-]/g, "");
   const country = clean(formData.get("country"));
   const service = clean(formData.get("service"));
   const budget = clean(formData.get("budget"));
@@ -337,11 +340,15 @@ export async function submitLandingContact(formData: FormData) {
     return { error: "Submission could not be accepted." };
   }
 
-  if (!name || !email || !message) {
-    return { error: "Please fill in all required fields." };
+  if (!name || !message) {
+    return { error: "Enter your name and message." };
   }
 
-  if (!isEmail(email)) {
+  if (!/^\+?[0-9]{7,15}$/.test(phone)) {
+    return { error: "Enter a valid WhatsApp number, preferably with the country code." };
+  }
+
+  if (email && !isEmail(email)) {
     return { error: "Please enter a valid email address." };
   }
 
@@ -431,6 +438,7 @@ export async function submitLandingContact(formData: FormData) {
   await createWebsiteLead({
     name,
     email,
+    phone,
     subject,
     message: fullMessage,
     tag: "contact-form",
@@ -438,7 +446,7 @@ export async function submitLandingContact(formData: FormData) {
 
   await notifyAdmins({
     title: "New project request",
-    body: `${name} (${email}) requested ${service}. Country: ${country}.`,
+    body: `${name} sent a website inquiry. WhatsApp: ${phone}.`,
     href: "/leads",
   });
 
