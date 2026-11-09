@@ -142,7 +142,7 @@ export async function saveBlogPost(input: BlogPostInput) {
   let topics;
   try { topics = blogTopics(input.primaryKeyword, input.secondaryKeywords); } catch (error) { return { error: error instanceof Error ? error.message : "Invalid tags" }; }
   if (!blogImageUrl.safeParse(input.coverImageUrl || "").success) return { error: "Use an HTTPS cover image link" };
-  if (input.coverImageUrl && !input.coverImageAlt?.trim()) return { error: "Describe the cover image before saving" };
+
   const status: BlogStatusValue = input.status ?? "DRAFT";
   const slug = await uniqueSlug(input.slug?.trim() || title, input.id);
   const excerpt = input.excerpt?.trim() || buildBlogExcerpt(content, 180);
@@ -184,7 +184,7 @@ export async function saveBlogPost(input: BlogPostInput) {
     excerpt,
     content,
     coverImageUrl: optional(input.coverImageUrl),
-    coverImageAlt: optional(input.coverImageAlt),
+    coverImageAlt: optional(input.coverImageAlt) || (input.coverImageUrl ? input.title.trim().slice(0,300) : null),
     categoryId: optional(input.categoryId),
     tags: topics.tags,
     status,

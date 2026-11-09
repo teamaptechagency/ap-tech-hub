@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       const data = parsed.data;
       let topics;
       try { topics = data.primaryKeyword !== undefined || data.secondaryKeywords !== undefined ? blogTopics(data.primaryKeyword, data.secondaryKeywords) : {}; } catch (error) { return reply({ error: error instanceof Error ? error.message : "Invalid tags" }, 400); }
-      if (data.coverImageUrl && !data.coverImageAlt) return reply({ error: "Describe the cover image before saving" }, 400);
+
       const operationKey = `workstation.blog-operation.${access.admin?.id || access.employee!.id}.${data.operationId}`;
       const previous = !data.id ? await prisma.setting.findUnique({ where: { key: operationKey } }) : null;
       const id = data.id || previous?.value || randomUUID();
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       if (!access.admin && existing && (parseSetting(owner?.value).employeeId !== access.employee!.id || existing.status !== "DRAFT")) return reply({ error: "Employees can edit their own drafts only. Published articles require admin review." }, 403);
       if (data.categoryId && !await prisma.blogCategory.findUnique({ where: { id: data.categoryId }, select: { id: true } })) return reply({ error: "Category no longer exists" }, 400);
       await prisma.$transaction(async (tx) => {
-        const values = { ...topics, ...(data.coverImageUrl !== undefined ? { coverImageUrl: data.coverImageUrl || null } : {}), ...(data.coverImageAlt !== undefined ? { coverImageAlt: data.coverImageAlt || null } : {}), title: data.title, content: data.content, excerpt: data.excerpt || buildBlogExcerpt(data.content, 180), categoryId: data.categoryId || null, metaDescription: data.metaDescription || null, readingMinutes: estimateReadingMinutes(data.content) };
+        const values = { ...topics, ...(data.coverImageUrl !== undefined ? { coverImageUrl: data.coverImageUrl || null } : {}), ...(data.coverImageAlt !== undefined || data.coverImageUrl ? { coverImageAlt: data.coverImageAlt || (data.coverImageUrl ? data.title.slice(0,300) : null) } : {}), title: data.title, content: data.content, excerpt: data.excerpt || buildBlogExcerpt(data.content, 180), categoryId: data.categoryId || null, metaDescription: data.metaDescription || null, readingMinutes: estimateReadingMinutes(data.content) };
         if (existing) await tx.blogPost.update({ where: { id, ...(!access.admin ? { status: "DRAFT" as const } : {}) }, data: values });
         else await tx.blogPost.create({ data: { id, ...values, slug: (slugifyBlogTitle(data.title) || "post").slice(0, 160) + "-" + randomBytes(4).toString("hex"), status: "DRAFT", authorName: access.employee?.name || access.admin?.name } });
         const value = JSON.stringify({ ...parseSetting(owner?.value), employeeId: parseSetting(owner?.value).employeeId || access.employee?.id || null, reviewRequested: data.submitReview, updatedAt: new Date().toISOString() });
