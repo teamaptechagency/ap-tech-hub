@@ -498,6 +498,13 @@ export function BlogManager({
         <Field label="Summary (optional)" value={editor.excerpt} onChange={value => update("excerpt", value)} textarea rows={2} hint="Shown on the blog list and in the search description. Leave blank to generate from your article." />
         <div className="grid gap-2"><span className="text-sm font-medium">Content</span><RichTextEditor value={editor.content} onChange={value => update("content", value)} placeholder="Write your article here…" /><BlogImageButton onBusyChange={imageBusy} onInsert={markdown => setEditor(current => current ? { ...current, content: current.content + markdown } : current)} /></div>
         <ImageField onBusyChange={imageBusy} label="Thumbnail (optional)" value={editor.coverImageUrl} onChange={value => update("coverImageUrl", value)} hint="Upload an image or use an HTTPS image link. Up to 4 MB." />
+        <label className="grid gap-1.5 text-sm">
+          <span className="font-medium">Category (optional)</span>
+          <select value={editor.categoryId} onChange={event => update("categoryId", event.target.value)} className="rounded-md border bg-background p-2">
+            <option value="">No category</option>
+            {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+          </select>
+        </label>
         <Field label="Primary tag (optional)" value={editor.primaryKeyword} onChange={value => update("primaryKeyword", value)} placeholder="e.g. Web development" hint="One main topic, up to 80 characters." />
         <Field label="Extra keywords (optional)" value={editor.secondaryKeywords} onChange={value => update("secondaryKeywords", value)} placeholder="e.g. WordPress, SEO, Website design" hint="Comma separated. Maximum four; duplicate tags are ignored." />
         <p className="text-xs text-muted-foreground">Author: {editor.authorName || authors.find(author => author.id === editor.authorId)?.name || "AP Tech Agency"} · {editor.status} · Read time {estimateReadingMinutes(editor.content)} min</p>
