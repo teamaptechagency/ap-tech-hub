@@ -66,6 +66,7 @@ export default async function AdminDashboard() {
     totalExpensesAgg,
     activeProjects,
     completedProjects,
+    cancelledProjects,
     specialOrdersCompleted,
     specialOrderProfitAgg,
     dueInvoices,
@@ -94,6 +95,7 @@ export default async function AdminDashboard() {
     }),
     prisma.job.count({ where: availableJobWhere({ status: { in: ["PENDING", "IN_PROGRESS"] }, createdAt: currentMonth }) }),
     prisma.job.count({ where: availableJobWhere({ status: "COMPLETED", updatedAt: currentMonth }) }),
+    prisma.job.count({ where: availableJobWhere({ status: "CANCELLED", updatedAt: currentMonth }) }),
     prisma.specialOrder.count({ where: completedSoThisMonth }),
     prisma.specialOrder.aggregate({
       where: completedSoThisMonth,
@@ -242,6 +244,12 @@ export default async function AdminDashboard() {
           value={completedProjects}
           href="/jobs"
           hint="Completed projects updated this month"
+        />
+        <StatCard
+          label="Cancelled projects this month"
+          value={cancelledProjects}
+          href="/jobs?status=CANCELLED"
+          hint="Cancelled projects updated this month"
         />
         <StatCard
           label="This month SO earnings"

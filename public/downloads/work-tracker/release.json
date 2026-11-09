@@ -1,10 +1,10 @@
 {
-  "version": "0.5.4",
-  "publishedDate": "2026-11-03",
-  "exeSha256": "f901ba344f4e89452fca6f23ee13f51f0e4cf56c16cfa82a0664fdbd2cde6655",
-  "installerSha256": "4943819bb9613da5f72d52396eea479874a487fee4617537f100e202bbe43e80",
-  "packageSha256": "4ff40aa02631b231a65b590b85c243c649e9ff01d177ba39af2576b5ca05a1a0",
-  "releaseNotes": "Select administrator by name on the attendance login screen; existing password and verification remain required. Clients, Referral and SO Partners share the web and Android portal. Separate Client Windows app removed.",
+  "version": "0.5.5",
+  "publishedDate": "2026-11-09",
+  "exeSha256": "20d7977248c7fcc703598122e6ff2b2df88ff84e4a7ac9c9838974ceb8233efb",
+  "installerSha256": "5329f6e3bbfcc700d5e7ed5c011f9742f460688112d50a036a660e906f9299ed",
+  "packageSha256": "9d81e150e89ce42d449eb16ace0a347c7b3ff4f5564742e91756c6b80bcdc57e",
+  "releaseNotes": "Eight-hour attendance display, 12-hour activity confirmation, Super Admin support, message deletion requests and simplified blog fields.",
   "extensionVersion": "0.2.1",
   "extensionSha256": "44694f1c8c55c062060ba46512d8f6b4bc166b4426e3b62c0e6e0496d161493c"
 }

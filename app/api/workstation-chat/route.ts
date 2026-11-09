@@ -6,7 +6,7 @@ import { deviceServiceFailure } from "@/lib/device-response";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store, private" } });
-const input = z.object({ action: z.enum(["claim", "release", "resolve", "send"]), leadId: z.string().min(1).max(100), messageId: z.string().uuid().optional(), body: z.string().trim().max(5000).optional() }).strict();
+const input = z.object({ action: z.enum(["claim", "release", "resolve", "send", "request-delete"]), leadId: z.string().min(1).max(100), messageId: z.string().uuid().optional(), body: z.string().trim().max(5000).optional() }).strict();
 async function ownerFor(leadId: string) { return parseSetting((await prisma.setting.findUnique({ where: { key: `workstation.chat.${leadId}` } }))?.value); }
 async function ownerIsPresent(employeeId: unknown) {
   if (typeof employeeId !== "string") return false;
@@ -67,6 +67,14 @@ export async function POST(request: Request) {
     const previousOwner = await ownerFor(lead.id);
     if (!access.admin && (previousOwner.adminId || previousOwner.employeeId && previousOwner.employeeId !== access.employee!.id) && await ownerBusy(previousOwner)) return reply({ error: "Conversation belongs to another active worker" }, 409);
     const actorId = access.admin?.id || access.employee!.id;
+    if (data.action === "request-delete") {
+      if (!data.messageId) return reply({error:"Select a message"},400);
+      const message=await prisma.landingChatMessage.findFirst({where:{id:data.messageId,leadId:lead.id},select:{id:true}});
+      if(!message)return reply({error:"Message not found"},404);
+      const key=`message.delete.${message.id}.${actorId}`;
+      await prisma.setting.upsert({where:{key},create:{key,value:JSON.stringify({messageId:message.id,kind:"VISITOR",requestedBy:actorId,requestedAt:new Date().toISOString(),status:"PENDING"})},update:{}});
+      return reply({success:true});
+    }
     if (data.action === "send") {
       if (!data.body || !data.messageId) return reply({ error: "Message and client message ID are required" }, 400);
       const existing = await prisma.landingChatMessage.findUnique({ where: { id: data.messageId } });

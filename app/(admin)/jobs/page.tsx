@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { JobsBoard } from "@/components/jobs/jobs-board";
 import { ADMIN_ROLES, WORKER_ROLES } from "@/lib/roles";
 
-export default async function JobsPage() {
+export default async function JobsPage({searchParams}: {searchParams: Promise<{status?: string}>}) {
+  const { status } = await searchParams;
+  const initialFilter = status === "CANCELLED" ? "CANCELLED" : "ALL";
   const [jobs, clients, teamMembers, skills, receivedUsdRate, receivedEurRate, receivedGbpRate] = await Promise.all([
     prisma.job.findMany({
       where: availableJobWhere({}),
@@ -116,6 +118,8 @@ export default async function JobsPage() {
 
   return (
     <JobsBoard
+      key={initialFilter}
+      initialFilter={initialFilter}
       jobs={rows}
       clients={clients.map((c) => ({
         id: c.id,

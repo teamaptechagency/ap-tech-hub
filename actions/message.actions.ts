@@ -303,6 +303,7 @@ export async function getFloatingConversations() {
           { isDirect: true, participants: { some: { userId: myId } } },
         ],
       }
+    : session.user.role === "TEAM_MEMBER" ? { isDirect: true, AND: [{participants: {some: {userId: myId}}}, {participants: {some: {user: {role: "SUPER_ADMIN", accountStatus: "ACTIVE"}}}}] }
     : session.user.clientId
       ? {
           OR: [
@@ -462,7 +463,7 @@ export async function getFloatingConversations() {
 
   rows.sort((a, b) => Number(b.unread) - Number(a.unread));
 
-  const landingChats = isAdmin ? await getFloatingLandingChats() : [];
+  const landingChats = isAdmin || session.user.role === "TEAM_MEMBER" ? await getFloatingLandingChats() : [];
   const mergedRows = [...landingChats, ...rows]
     .sort((a, b) => {
       const unreadDiff = Number(b.unread) - Number(a.unread);
@@ -572,6 +573,12 @@ async function canAccessConversation(
   );
   const isSuperAdmin = session.user.role === "SUPER_ADMIN";
   const partnerScope = await getPartnerScope(session.user);
+
+  if (session.user.role === "TEAM_MEMBER") {
+    if (!conversation.isDirect || !conversation.participants.some(p => p.userId === userId)) return null;
+    const support = await prisma.conversationParticipant.findFirst({where:{conversationId, user:{role:"SUPER_ADMIN",accountStatus:"ACTIVE"}}});
+    if (!support) return null;
+  }
 
   // Direct conversation access. Only super admin gets a blanket
   // bypass here (oversight of every employee<->client direct chat) —
@@ -1194,6 +1201,9 @@ export async function getOrCreateDirect(
     };
   }
 
+  if (session.user.role === "TEAM_MEMBER" && otherUser.role !== "SUPER_ADMIN") return {error:"Workers can message Super Admin support only"};
+  if (otherUser.role === "TEAM_MEMBER" && session.user.role !== "SUPER_ADMIN") return {error:"Only Super Admin can start a worker support conversation"};
+
   const currentIsClient = Boolean(session.user.clientId);
   const otherIsClient = Boolean(otherUser.clientId);
   const currentIsTeamMember = session.user.role === "TEAM_MEMBER";
@@ -1477,4 +1487,23 @@ export async function getPinnedMessages(
       }
     ),
   };
+}
+
+export async function requestMessageDeletion(messageId: string) {
+  const session = await auth();
+  if (!session?.user) return {error:"Sign in required"};
+  const user = await prisma.user.findFirst({where:{id:session.user.id,accountStatus:"ACTIVE"},select:{role:true}});
+  if (!user) return {error:"Active account required"};
+  const message=await prisma.message.findUnique({where:{id:messageId},select:{conversationId:true}});
+  let kind="MESSAGE";
+  if(message){if(!await canAccessConversation(message.conversationId))return {error:"Message access denied"};}
+  else {
+    if(![...ADMIN_ROLES,"TEAM_MEMBER"].includes(user.role))return {error:"Message access denied"};
+    if(!await prisma.landingChatMessage.findUnique({where:{id:messageId},select:{id:true}}))return {error:"Message not found"};
+    kind="VISITOR";
+  }
+  const key='message.delete.'+messageId+'.'+session.user.id;
+  await prisma.setting.upsert({where:{key},create:{key,value:JSON.stringify({messageId,kind,requestedBy:session.user.id,requestedAt:new Date().toISOString(),status:"PENDING"})},update:{}});
+  revalidatePath("/messages");
+  return {success:true};
 }

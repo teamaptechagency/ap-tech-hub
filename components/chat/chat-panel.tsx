@@ -1,4 +1,5 @@
 "use client";
+import { DeleteMessageRequest } from "@/components/chat/delete-message-request";
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -264,7 +265,7 @@ export function ChatPanel({
 
                 {msg.body && (
                   <p className="whitespace-pre-wrap break-words text-sm">
-                    {msg.body}
+                    {msg.body}<DeleteMessageRequest id={msg.id} />
                   </p>
                 )}
 

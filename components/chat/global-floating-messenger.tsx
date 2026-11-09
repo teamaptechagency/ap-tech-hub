@@ -1,4 +1,5 @@
 "use client";
+import { DeleteMessageRequest } from "@/components/chat/delete-message-request";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -326,7 +327,7 @@ function LandingChatPanel({ chat }: { chat: FloatingConversationRow }) {
                 <p className="mb-1 text-[10px] font-semibold opacity-70">
                   {mine ? "Admin" : chat.avatarName}
                 </p>
-                {message.body}
+                {message.body}<DeleteMessageRequest id={message.id} />
               </div>
             );
           })

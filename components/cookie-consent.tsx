@@ -3,27 +3,17 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import { isPublicContentPath } from "@/lib/public-site";
 import { Button } from "@/components/ui/button";
 
 const HUB_CONSENT_KEY = "ap-tech-hub-cookie-consent-v1";
-// The public marketing site shows its own notice; this banner is only for the
-// private work portal, so it stays off every public route.
-const PUBLIC_PATHS = new Set([
-  "/",
-  "/landing",
-  "/services",
-  "/portfolio",
-  "/team",
-  "/about",
-  "/contact",
-  "/blog",
-]);
 
 export function CookieConsent() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const isPublicPortal =
-    PUBLIC_PATHS.has(pathname) || pathname.startsWith("/blog/");
+    isPublicContentPath(pathname) || pathname === "/landing" ||
+    pathname === "/partners/apply" || pathname.startsWith("/invoice/");
 
   useEffect(() => {
     if (isPublicPortal) {
@@ -34,7 +24,7 @@ export function CookieConsent() {
     setVisible(localStorage.getItem(HUB_CONSENT_KEY) !== "accepted");
   }, [isPublicPortal]);
 
-  if (!visible) return null;
+  if (isPublicPortal || !visible) return null;
 
   return (
     <div className="fixed inset-x-3 bottom-3 z-50 rounded-lg border bg-card p-3 text-card-foreground shadow-lg sm:left-auto sm:max-w-md print:hidden">

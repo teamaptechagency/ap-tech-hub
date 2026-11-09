@@ -11,21 +11,8 @@ export default async function EmployeeMessagesPage() {
 
   const conversations = await prisma.conversation.findMany({
     where: availableConversationWhere({
-      OR: [
-        { job: { members: { some: { userId: myId } } } },
-        { specialOrderPartner: { partnerId: myId } },
-        {
-          isDirect: true,
-          participants: { some: { userId: myId } },
-          NOT: {
-            participants: {
-              some: {
-                user: { clientId: { not: null } },
-              },
-            },
-          },
-        },
-      ],
+      isDirect: true,
+      AND: [{ participants: { some: { userId: myId } } }, { participants: { some: { user: { role: "SUPER_ADMIN", accountStatus: "ACTIVE" } } } }],
     }),
     orderBy: { updatedAt: "desc" },
     include: {
@@ -77,7 +64,7 @@ export default async function EmployeeMessagesPage() {
 
   // Workers can start directs with admins
   const people = await prisma.user.findMany({
-    where: { role: { in: ["SUPER_ADMIN", "ADMIN", "CEO"] } },
+    where: { role: "SUPER_ADMIN", accountStatus: "ACTIVE" },
     orderBy: { name: "asc" },
     select: { id: true, name: true, role: true },
   });

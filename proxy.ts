@@ -49,6 +49,7 @@ const PUBLIC_EXACT_PATHS = [
   "/api/business-office",
   "/api/blog-image",
   "/api/workstation-chat",
+  "/api/workstation-support",
   "/workstation-app",
   "/",
   // The file route performs its own session and per-file audience checks.

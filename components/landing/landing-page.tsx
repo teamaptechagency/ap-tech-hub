@@ -69,8 +69,6 @@ type ModalState =
   | { type: "project"; item: LandingProjectData }
   | { type: "team"; item: LandingTeamMemberData }
   | { type: "review"; item: LandingReviewData }
-  | { type: "privacy" }
-  | { type: "terms" }
   | null;
 
 
@@ -515,11 +513,9 @@ function HighlightTitle({ title }: { title: string }) {
 
 function LandingModal({
   modal,
-  data,
   onClose,
 }: {
   modal: ModalState;
-  data: LandingPageData;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<"personal" | "jobs">("personal");
@@ -955,16 +951,6 @@ function LandingModal({
     );
   }
 
-  if (modal.type === "privacy") {
-    title = "Privacy Policy";
-    body = <p className="leading-7 text-slate-600">{data.footer.privacyPolicy}</p>;
-  }
-
-  if (modal.type === "terms") {
-    title = "Terms & Conditions";
-    body = <p className="leading-7 text-slate-600">{data.footer.terms}</p>;
-  }
-
   return (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm"
@@ -1213,57 +1199,6 @@ function FloatingChat({
   );
 }
 
-function CookieNotice({
-  onOpenPrivacy,
-  onOpenTerms,
-}: {
-  onOpenPrivacy: () => void;
-  onOpenTerms: () => void;
-}) {
-  const [visible, setVisible] = useState(false);
-  const publicConsentKey = "ap-tech-public-cookie-consent-v1";
-
-  useEffect(() => {
-    setVisible(localStorage.getItem(publicConsentKey) !== "accepted");
-  }, []);
-
-  if (!visible) return null;
-
-  return (
-    <div className="fixed bottom-5 left-1/2 z-40 w-[calc(100vw-2rem)] max-w-[760px] -translate-x-1/2 rounded-2xl border border-[#e8e3dc] bg-white p-4 text-[#101623] shadow-2xl md:bottom-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-sm font-extrabold">Cookies & privacy</p>
-          <p className="mt-1 text-xs leading-5 text-[#6b7280]">
-            AP Tech Agency uses essential public-site cookies for visitor
-            preferences, live chat, lead forms and service inquiry experience.
-            Hub login/session cookies are handled separately inside the private
-            portal.
-          </p>
-          <div className="mt-2 flex gap-3 text-xs font-bold text-[#c6613f]">
-            <button type="button" onClick={onOpenPrivacy}>
-              Privacy Policy
-            </button>
-            <button type="button" onClick={onOpenTerms}>
-              Terms
-            </button>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            localStorage.setItem(publicConsentKey, "accepted");
-            setVisible(false);
-          }}
-          className="shrink-0 rounded-[10px] bg-[#c6613f] px-5 py-3 text-sm font-extrabold text-white transition hover:bg-[#a94e30]"
-        >
-          Accept
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // TrustStats/PublicTopBar moved to components/public/public-top-bar.tsx so
 // every public shell (landing, blog, static pages) renders the exact same
 // strip instead of drifting copies.
@@ -1374,70 +1309,6 @@ function TopAd({
         />
       </div>
     </div>
-  );
-}
-
-function SideAds({
-  left,
-  right,
-}: {
-  left: LandingAdData;
-  right: LandingAdData;
-}) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const ads = [left, right].filter(isVisibleAd);
-  if (!ads.length) return null;
-
-  return (
-    <>
-      <div className="pointer-events-none fixed inset-y-0 left-3 z-30 hidden items-center xl:flex">
-        <AdButton
-          ad={left}
-          className="pointer-events-auto w-36 rounded-2xl border border-[#e8e3dc] bg-white p-3 text-left text-sm text-[#101623] shadow-2xl transition hover:-translate-y-1"
-        />
-      </div>
-      <div className="pointer-events-none fixed inset-y-0 right-3 z-30 hidden items-center xl:flex">
-        <AdButton
-          ad={right}
-          className="pointer-events-auto w-36 rounded-2xl border border-[#e8e3dc] bg-white p-3 text-left text-sm text-[#101623] shadow-2xl transition hover:-translate-y-1"
-        />
-      </div>
-      <button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        className="fixed bottom-24 left-5 z-40 grid h-12 w-12 place-items-center rounded-full bg-[#101623] text-xl text-[#f5a83c] shadow-2xl xl:hidden"
-        aria-label="Open offer ads"
-      >
-        %
-      </button>
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-4"
-          onClick={() => setMobileOpen(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-3xl bg-white p-4 text-[#101623] shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <p className="font-black">Current offers</p>
-              <button type="button" onClick={() => setMobileOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="grid gap-3">
-              {ads.map((ad, index) => (
-                <AdButton
-                  key={`${ad.title}-${index}`}
-                  ad={ad}
-                  className="rounded-2xl border border-[#e8e3dc] p-4 text-left"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
   );
 }
 
@@ -2493,11 +2364,6 @@ export function LandingPage({
           data.contact.languageNoteEnabled ? data.contact.languageNote : null
         }
       />
-      <SideAds left={data.ads.left} right={data.ads.right} />
-      <CookieNotice
-        onOpenPrivacy={() => setModal({ type: "privacy" })}
-        onOpenTerms={() => setModal({ type: "terms" })}
-      />
       <Dialog open={partnerApplyOpen} onOpenChange={setPartnerApplyOpen}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
@@ -2513,7 +2379,7 @@ export function LandingPage({
           <PartnerApplicationForm />
         </DialogContent>
       </Dialog>
-      <LandingModal modal={modal} data={data} onClose={() => setModal(null)} />
+      <LandingModal modal={modal} onClose={() => setModal(null)} />
     </main>
   );
 }

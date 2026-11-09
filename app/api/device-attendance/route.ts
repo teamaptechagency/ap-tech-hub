@@ -1,3 +1,4 @@
+import { checkAttendancePresence } from "@/lib/attendance-presence";
 import { effectiveEmployeeShift, recordedEmployeeShift } from "@/lib/employee-roster";
 import { randomBytes, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
@@ -13,7 +14,7 @@ const sessionFields = { pcName: z.string().min(1).max(80), sessionToken: z.strin
 const inputSchema = z.discriminatedUnion("action", [
   employeeInput.omit({ code: true }).extend({ code: employeeInput.shape.code.optional(), action: z.literal("register"), pcName: sessionFields.pcName }).strict(),
   z.object({ action: z.literal("login"), pcName: sessionFields.pcName, code: z.string().trim().toLowerCase().min(3).max(40), password: z.string().min(1).max(100) }).strict(),
-  z.object({ ...sessionFields, action: z.enum(["status", "break", "resume", "logout"]), earlyLeaveReason: z.string().trim().max(500).optional() }).strict(),
+  z.object({ ...sessionFields, action: z.enum(["status", "break", "resume", "logout", "confirm-active"]), earlyLeaveReason: z.string().trim().max(500).optional() }).strict(),
   z.object({ ...sessionFields, action: z.literal("checklist"), taskId: z.string().min(1), done: z.boolean().optional(), status: z.enum(["PENDING", "COMPLETED", "HOLD", "CANCELLED"]).optional(), reason: z.string().trim().max(1000).optional(), proofUrl: z.union([z.literal(""), z.string().url().refine((value) => /^https?:\/\//.test(value))]).optional() }).strict(),
   z.object({ ...sessionFields, action: z.literal("task"), task: z.string().trim().max(1000), handover: z.string().trim().max(2000) }).strict(),
 ]);
@@ -64,6 +65,9 @@ export async function POST(request: Request) {
     const foundShift = await prisma.deviceShift.findUnique({ where: { sessionHash: tokenHash(data.sessionToken) }, include: { employee: { select: { name: true, code: true, status: true, shiftLabel: true } } } });
     const shift = foundShift ? await recordedEmployeeShift(foundShift) : null;
     if (!shift || shift.deviceId !== device.id || shift.employee.status !== "ACTIVE") return reply({ error: "Attendance login expired or disabled. Log in again." }, 401);
+    const presence = await checkAttendancePresence(shift, data.action === "confirm-active");
+    if (presence.expired) return reply({ error: "Attendance ended because the activity check expired. Log in again.", code: "PRESENCE_TIMEOUT" }, 401);
+    if (data.action === "confirm-active") return reply({ presence });
     if (shift.endedAt && data.action !== "status" && data.action !== "logout") return reply({ error: "Shift has ended. Log in for attendance again." }, 409);
     if (data.action === "status" || shift.endedAt) return reply({ shift, employee: shift.employee, dailyTasks: await dailyTasks(shift.employeeId, shift.employee.shiftLabel, shift.scheduledStartAt, !shift.endedAt) });
     const now = new Date();

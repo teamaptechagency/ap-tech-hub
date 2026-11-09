@@ -64,7 +64,7 @@ public class AttendanceForm : Form {
         double seconds = Math.Max(0, (now - Stamp(activeShift["startedAt"])).TotalSeconds - Convert.ToInt32(activeShift["breakSeconds"]));
         if (activeShift["breakStartedAt"] != null) seconds = Math.Max(0, seconds - (now - Stamp(activeShift["breakStartedAt"])).TotalSeconds);
         double remaining = Math.Max(Math.Max(0, 28800 - seconds), (Stamp(activeShift["scheduledEndAt"]) - now).TotalSeconds);
-        timerLabel.Text = "Attendance (breaks excluded): " + Duration(seconds) + "   Remaining: " + Duration(remaining) + "\nExtra beyond 8h: " + Duration(seconds - 28800) + " | Shift end: " + Stamp(activeShift["scheduledEndAt"]).AddHours(6).ToString("dd MMM HH:mm") + " Dhaka";
+        timerLabel.Text = "Attendance (breaks excluded): " + Duration(Math.Min(28800, seconds)) + "   Remaining: " + Duration(remaining) + "\nExtra beyond 8h: " + Duration(seconds - 28800) + " | Shift end: " + Stamp(activeShift["scheduledEndAt"]).AddHours(6).ToString("dd MMM HH:mm") + " Dhaka";
     }
     string AskEarlyReason() {
         using (var dialog = new Form()) {

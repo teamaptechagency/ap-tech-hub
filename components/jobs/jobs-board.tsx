@@ -42,6 +42,7 @@ const FILTERS = [
   { key: "HOURLY", label: "Hourly" },
   { key: "OPEN", label: "Open" },
   { key: "EXTERNAL", label: "External" },
+  { key: "CANCELLED", label: "Cancelled" },
 ];
 
 const typeBadge: Record<string, string> = {
@@ -74,6 +75,7 @@ const currencySymbol: Record<string, string> = {
 
 export function JobsBoard({
   jobs,
+  initialFilter = "ALL",
   clients,
   teamMembers,
   skills,
@@ -82,6 +84,7 @@ export function JobsBoard({
   receivedGbpRate,
 }: {
   jobs: JobRow[];
+  initialFilter?: "ALL" | "CANCELLED";
   clients: ClientOption[];
   teamMembers: Option[];
   skills: Option[];
@@ -90,12 +93,12 @@ export function JobsBoard({
   receivedGbpRate: number;
 }) {
   const router = useRouter();
-  const [filter, setFilter] = useState("ALL");
+  const [filter, setFilter] = useState<string>(initialFilter);
   const [createOpen, setCreateOpen] = useState(false);
 
   const filtered = jobs.filter((job) => {
     if (filter === "ALL") return true;
-    if (filter === "OPEN") return job.status === "OPEN";
+    if (filter === "OPEN" || filter === "CANCELLED") return job.status === filter;
     if (filter === "EXTERNAL") return job.isExternal;
     return job.type === filter;
   });
@@ -103,8 +106,8 @@ export function JobsBoard({
   const countFor = (key: string) =>
     key === "ALL"
       ? jobs.length
-      : key === "OPEN"
-        ? jobs.filter((j) => j.status === "OPEN").length
+      : key === "OPEN" || key === "CANCELLED"
+        ? jobs.filter((j) => j.status === key).length
         : key === "EXTERNAL"
           ? jobs.filter((j) => j.isExternal).length
           : jobs.filter((j) => j.type === key).length;
@@ -136,6 +139,7 @@ export function JobsBoard({
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
+            aria-pressed={filter === f.key}
             className={`rounded-full px-3 py-1 text-sm transition-colors ${
               filter === f.key
                 ? "bg-primary/10 font-medium text-primary"

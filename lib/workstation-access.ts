@@ -1,3 +1,4 @@
+import { checkAttendancePresence } from "@/lib/attendance-presence";
 import { readOfficeProfile, rolePermissions } from "@/lib/office-roles";
 import { recordedEmployeeShift } from "@/lib/employee-roster";
 import { z } from "zod";
@@ -22,14 +23,15 @@ export async function workstationAccess(request: Request) {
   const token = request.headers.get("x-attendance-token") || "";
   const foundShift = bound && /^[a-f0-9]{64}$/.test(token) ? await prisma.deviceShift.findUnique({ where: { sessionHash: tokenHash(token) }, include: { employee: { select: { id: true, code: true, name: true, shiftLabel: true, status: true } } } }) : null;
   const shift = foundShift ? await recordedEmployeeShift(foundShift) : null;
-  const employee = shift && shift.deviceId === bound?.id && !shift.endedAt && shift.employee.status === "ACTIVE" ? shift.employee : null;
+  const presence = shift ? await checkAttendancePresence(shift) : null;
+  const employee = !presence?.expired && shift && shift.deviceId === bound?.id && !shift.endedAt && shift.employee.status === "ACTIVE" ? shift.employee : null;
   const setting = employee ? await prisma.setting.findUnique({ where: { key: `workstation.permissions.${employee.id}` } }) : null;
   const permissions = appPermissions.safeParse(parseSetting(setting?.value));
   const profileRow = employee ? await prisma.setting.findUnique({ where: { key: `workstation.profile.${employee.id}` } }) : null;
   const officeProfile = readOfficeProfile(profileRow?.value);
   const caps = rolePermissions(officeProfile.role);
   const configured = permissions.success ? permissions.data : defaultAppPermissions;
-  return { officeProfile, admin, device: bound, employee, shift: employee ? shift : null, permissions: { blog: caps.blog && configured.blog, projects: caps.projects && configured.projects, chat: caps.chat && configured.chat } };
+  return { presence, officeProfile, admin, device: bound, employee, shift: employee ? shift : null, permissions: { blog: caps.blog && configured.blog, projects: caps.projects && configured.projects, chat: caps.chat && configured.chat } };
 }
 export function sameOriginWrite(request: Request) {
   const origin = request.headers.get("origin");
