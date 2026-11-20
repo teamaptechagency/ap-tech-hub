@@ -50,7 +50,7 @@ export default async function ClientDashboard() {
     "$";
 
   return (
-    <div className="space-y-6">
+    <div className="hub-dashboard space-y-6">
       <div>
         <h1 className="text-2xl font-bold">
           Welcome, {session.user.name?.split(" ")[0]} 👋

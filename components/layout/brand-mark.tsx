@@ -6,6 +6,7 @@ type BrandMarkProps = {
   href: string;
   branding?: BrandingSettings;
   suffix?: string;
+  tone?: "default" | "inverse";
 };
 
 function SplitBrandText({ value }: { value: string }) {
@@ -24,9 +25,10 @@ function SplitBrandText({ value }: { value: string }) {
   );
 }
 
-export function BrandMark({ href, branding, suffix }: BrandMarkProps) {
+export function BrandMark({ href, branding, suffix, tone = "default" }: BrandMarkProps) {
   const siteName = branding?.siteName?.trim() || "AP Tech Hub";
-  const logoUrl = branding?.logoUrl?.trim();
+  const configuredLogo = branding?.logoUrl?.trim() || "/brand/mark.png";
+  const logoUrl = tone === "inverse" && configuredLogo === "/brand/mark.png" ? "/brand/mark-dark.png" : configuredLogo;
   const label = suffix ? `${siteName} ${suffix}` : siteName;
 
   return (

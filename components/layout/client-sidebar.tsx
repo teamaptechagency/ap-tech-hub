@@ -105,11 +105,12 @@ export function ClientSidebar({
     user.companyName.trim() || "Client account";
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
+    <aside data-hub-sidebar className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center border-b px-6">
-        <BrandMark href="/c/dashboard" branding={branding} />
+        <BrandMark href="/c/dashboard" branding={branding}  tone="inverse" />
       </div>
+      <p className="hub-sidebar-label">Client workspace</p>
 
       {/* Navigation */}
       <nav

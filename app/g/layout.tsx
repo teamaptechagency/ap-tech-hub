@@ -1,3 +1,4 @@
+import { WorkspaceTopbar } from "@/components/layout/workspace-topbar";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
@@ -44,7 +45,7 @@ export default async function GrowthLayout({
   const branding = await getBrandingSettings();
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="hub-shell flex min-h-screen flex-col md:flex-row">
       <MobileNav
         items={growthMobileNavItems}
         userName={userName}
@@ -58,8 +59,9 @@ export default async function GrowthLayout({
         branding={branding}
       />
 
-      <main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-4 pb-8 md:p-8">
-        <div className="mx-auto w-full max-w-[1200px]">{children}</div>
+      <main data-hub-main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-4 pb-8 md:p-8">
+        <WorkspaceTopbar role={session.user.role} name={userName} />
+        <div className="hub-content mx-auto w-full max-w-[1200px]">{children}<footer className="hub-footer"><span>AP Tech Hub</span><span>Bangladesh time · Your work. One place.</span></footer></div>
       </main>
     </div>
   );

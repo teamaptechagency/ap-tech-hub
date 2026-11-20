@@ -62,3 +62,6 @@ android/app/release/
 *.keystore
 
 /desktop-native/dist/
+
+# Supplied visual reference and temporary design review tools
+/.ui-reference/

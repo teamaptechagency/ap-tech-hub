@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { LoginForm } from "@/components/auth/login-form";
 import { getBrandingSettings } from "@/lib/branding";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 export default async function LoginPage({
   searchParams,
@@ -23,10 +24,10 @@ export default async function LoginPage({
       : "";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <img src={branding.hubLogoUrl || "/brand/mark.png"} alt="AP Tech Agency" width={64} height={64} className="mx-auto mb-4 h-16 w-16 object-contain" />
+    <AuthShell administration={administration} branding={branding}>
+      <div className="auth-login-form">
+        <div className="auth-form-intro">
+          <p className="auth-section-kicker">{administration ? "YOUR ADMINISTRATION WORKSPACE" : "WELCOME TO YOUR WORKSPACE"}</p>
           <h1 className="text-2xl font-bold">
             {administration ? (
               <>AP Tech <span className="text-primary">Administration</span></>
@@ -34,13 +35,13 @@ export default async function LoginPage({
               <>AP Tech <span className="text-primary">Hub</span></>
             )}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="auth-form-tagline">
             {clientPortal ? "Your work. One place." : administration ? "Sign in to your administration panel" : "Sign in to your portal"}
           </p>
         </div>
 
         {selectedAdmin ? <Link className="mb-4 block text-sm text-primary" href="/workstation-app">← Choose another employee / admin profile</Link> : null}
-        <LoginForm selectedAccount={selectedAdmin || undefined} initialMessage={initialMessage} nextPath={params?.next ?? ""} />
+        <div className="auth-form-card"><LoginForm selectedAccount={selectedAdmin || undefined} initialMessage={initialMessage} nextPath={params?.next ?? ""} /></div>
 
         <div className="mt-4 flex items-center justify-between text-sm">
           <Link
@@ -54,6 +55,6 @@ export default async function LoginPage({
           </Link>
         </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

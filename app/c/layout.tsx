@@ -1,3 +1,4 @@
+import { WorkspaceTopbar } from "@/components/layout/workspace-topbar";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
@@ -129,7 +130,7 @@ export default async function ClientLayout({
   ];
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="hub-shell flex min-h-screen flex-col md:flex-row">
       {/* Mobile top navigation and drawer */}
       <PortalMobileNav
         portal="client"
@@ -150,8 +151,9 @@ export default async function ClientLayout({
       />
 
       {/* Main content */}
-      <main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-4 pb-20 md:p-8 md:pb-8">
-        <div className="mx-auto w-full max-w-[1600px]">
+      <main data-hub-main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-4 pb-20 md:p-8 md:pb-8">
+        <WorkspaceTopbar role={session.user.role} name={userName} />
+        <div className="hub-content mx-auto w-full max-w-[1600px]">
           {session.impersonation && (
             <ImpersonationBanner
               adminName={session.impersonation.adminName}
@@ -162,6 +164,7 @@ export default async function ClientLayout({
           )}
           {termsGate}
           {children}
+          <footer className="hub-footer"><span>AP Tech Hub</span><span>Bangladesh time · Your work. One place.</span></footer>
         </div>
       </main>
 

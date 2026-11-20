@@ -67,9 +67,9 @@ export function ReferralSidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-60 shrink-0 flex-col border-r bg-background md:flex">
+    <aside data-hub-sidebar className="hidden w-60 shrink-0 flex-col border-r bg-background md:flex">
       <div className="flex h-16 items-center justify-between gap-2 border-b px-4">
-        <BrandMark href="/r/dashboard" branding={branding} suffix="Referral" />
+        <BrandMark href="/r/dashboard" branding={branding} suffix="Referral"  tone="inverse" />
         <NotificationBell />
       </div>
 

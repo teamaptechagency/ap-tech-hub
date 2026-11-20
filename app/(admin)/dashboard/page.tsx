@@ -198,7 +198,7 @@ export default async function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="hub-dashboard space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">

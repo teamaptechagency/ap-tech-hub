@@ -50,10 +50,11 @@ export function PartnerSidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
+    <aside data-hub-sidebar className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-background md:flex">
       <div className="flex h-16 shrink-0 items-center border-b px-6">
-        <BrandMark href="/p/dashboard" branding={branding} suffix="Partner" />
+        <BrandMark href="/p/dashboard" branding={branding} suffix="Partner"  tone="inverse" />
       </div>
+      <p className="hub-sidebar-label">Partner workspace</p>
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {partnerNavItems.map((item) => {

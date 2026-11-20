@@ -41,7 +41,7 @@ export default async function EmployeeDashboard() {
   const reserve = Number(me?.reserve ?? 0);
 
   return (
-    <div className="space-y-6">
+    <div className="hub-dashboard space-y-6">
       <div>
         <h1 className="text-2xl font-bold">
           Welcome, {me?.name?.split(" ")[0]} 👋

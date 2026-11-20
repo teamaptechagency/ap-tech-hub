@@ -1,3 +1,4 @@
+import { WorkspaceTopbar } from "@/components/layout/workspace-topbar";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -107,7 +108,7 @@ export default async function AdminLayout({
   if ((await cookies()).get("ap_workstation_embed")?.value === "1") return <main className="min-h-dvh bg-background p-5">{children}</main>;
 
   return (
-    <div className="flex min-h-dvh flex-col md:h-dvh md:min-h-0 md:flex-row md:overflow-hidden">
+    <div className="hub-shell flex min-h-dvh flex-col md:h-dvh md:min-h-0 md:flex-row md:overflow-hidden">
       {/* Mobile top navigation and drawer */}
       <PortalMobileNav
         portal="admin"
@@ -128,8 +129,9 @@ export default async function AdminLayout({
       />
 
       {/* Main content */}
-      <main className="min-h-0 min-w-0 flex-1 overflow-visible bg-muted/20 p-4 pb-20 md:h-full md:overflow-y-auto md:overscroll-y-contain md:p-8 md:pb-8">
-        <div className="mx-auto w-full max-w-[1600px]">
+      <main data-hub-main className="min-h-0 min-w-0 flex-1 overflow-visible bg-muted/20 p-4 pb-20 md:h-full md:overflow-y-auto md:overscroll-y-contain md:p-8 md:pb-8">
+        <WorkspaceTopbar role={session.user.role} name={userName} />
+        <div className="hub-content mx-auto w-full max-w-[1600px]">
           {session.impersonation && (
             <ImpersonationBanner
               adminName={session.impersonation.adminName}
@@ -139,6 +141,7 @@ export default async function AdminLayout({
             />
           )}
           {children}
+          <footer className="hub-footer"><span>AP Tech Hub</span><span>Bangladesh time · Your work. One place.</span></footer>
         </div>
       </main>
 

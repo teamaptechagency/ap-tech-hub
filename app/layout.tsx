@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { getBrandingSettings } from "@/lib/branding";
 import "./globals.css";
 import "./public-site.css";
+import "./hub-redesign.css";
 
 export const dynamic = "force-dynamic";
 

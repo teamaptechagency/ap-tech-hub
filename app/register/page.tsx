@@ -168,7 +168,7 @@ export default function RegisterPage() {
 
   if (done) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <div className="auth-auxiliary-body">
         <Card className="w-full max-w-md">
           <CardContent className="space-y-3 py-10 text-center">
             <p className="text-2xl">✅</p>
@@ -190,7 +190,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+    <div className="auth-auxiliary-body">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-center text-xl">
