@@ -2,6 +2,12 @@ export function openaiReady(env = process.env) {
   return env.AP_AI_ENABLED === 'true' && /^sk-/.test(env.OPENAI_API_KEY || '');
 }
 
+export function apteeHandoffText(text = '') {
+  return /[\u0980-\u09ff]|\b(ami|amar|amr|apni|kotha|sathe|bolte|chai|lagbe|manush|manusher)\b/i.test(text)
+    ? 'আপনার কথোপকথনটি এপি টেক টিমের কাছে পাঠানো হয়েছে। একজন টিম সদস্য এখানেই উত্তর দিতে পারবেন।'
+    : 'I have passed this conversation to the AP Tech team. A team member can reply here.';
+}
+
 export async function openaiReply({ messages, context = '', requestId }, { env = process.env, request = fetch } = {}) {
   if (!openaiReady(env)) throw Error('AI messaging is not configured.');
   if (!Array.isArray(messages) || !messages.length || messages.length > 20 || messages.at(-1).role !== 'user' || messages.some(m => !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || m.content.length > 4000)) throw Error('Invalid conversation.');

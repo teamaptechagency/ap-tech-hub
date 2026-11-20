@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { openaiReply, openaiReady } from './agency-openai.mjs';
+import { openaiReply, openaiReady, apteeHandoffText } from './agency-openai.mjs';
 const env = { AP_AI_ENABLED: 'true', OPENAI_API_KEY: 'sk-test-only' };
+test('Bengali and Banglish human handoffs also use Bengali script', () => {
+  assert.match(apteeHandoffText('ami human er sathe kotha bolte chai'), /আপনার/);
+  assert.match(apteeHandoffText('আমি মানুষের সঙ্গে কথা বলব'), /আপনার/);
+  assert.match(apteeHandoffText('Please connect me to a human'), /I have passed/);
+});
 test('only explicitly enabled server credentials enable AI', () => {
   assert.equal(openaiReady({ OPENAI_API_KEY: 'sk-test-only' }), false);
   assert.equal(openaiReady(env), true);
