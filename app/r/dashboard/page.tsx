@@ -33,7 +33,7 @@ export default async function ReferralDashboardPage() {
   }
 
   // A partner only ever sees their own referrals.
-  const [counts, landing, balance] = await Promise.all([
+  const [counts, landing, balance, recentReferrals] = await Promise.all([
     prisma.referral.groupBy({
       by: ["status"],
       where: { partnerId: partner.id },
@@ -41,6 +41,12 @@ export default async function ReferralDashboardPage() {
     }),
     getLandingPageData(),
     getReferralPartnerBalance(partner.id),
+    prisma.referral.findMany({
+      where: { partnerId: partner.id },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, leadName: true, status: true, commissionPercent: true, createdAt: true, client: { select: { companyName: true } } },
+    }),
   ]);
 
   const countFor = (status: string) =>
@@ -61,15 +67,17 @@ export default async function ReferralDashboardPage() {
   ];
 
   return (
-    <div className="hub-dashboard space-y-6"><p className="rounded-lg border p-4 text-sm text-muted-foreground">Summary balances are USD only. Other currencies remain in individual records; contact Partnership for an agreed conversion. Rates are project-specific, usually 10%–20%; direct-retention amounts must not be paid twice. <Link href="/partners/payment-policy" className="text-primary underline">Payment &amp; commission policy</Link></p>
+    <div className="hub-dashboard space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold">Welcome back, {session.user.name?.split(" ")[0] || "partner"}.</h1>
         <p className="text-sm text-muted-foreground">
-          Referrals you have brought to AP Tech.
+          Make meaningful introductions. Follow every next step.
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <p className="hub-referral-note">Summary balances are USD only. Other currencies remain in individual records; contact Partnership for an agreed conversion. Rates are project-specific, usually 10%–20%; direct-retention amounts must not be paid twice. <Link href="/partners/payment-policy" className="text-primary underline">Payment &amp; commission policy</Link></p>
+
+      <div className="hub-stat-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="p-4">
@@ -79,6 +87,11 @@ export default async function ReferralDashboardPage() {
           </Card>
         ))}
       </div>
+
+      <section className="hub-job-panel" aria-label="Recent referrals">
+        <div className="hub-panel-heading"><h2>Recent referrals</h2><Link href="/r/referrals">All referrals →</Link></div>
+        {recentReferrals.length ? <div className="hub-job-table-scroll"><table><thead><tr><th scope="col">Client</th><th scope="col">Status</th><th scope="col">Commission</th><th scope="col">Introduced</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead><tbody>{recentReferrals.map((referral) => <tr key={referral.id}><td><span className="hub-job-title">{referral.client?.companyName || referral.leadName || "New introduction"}</span></td><td><span className="hub-job-status">{referral.status.toLowerCase()}</span></td><td>{referral.commissionPercent === null ? "As agreed" : `${Number(referral.commissionPercent)}%`}</td><td className="text-muted-foreground">{referral.createdAt.toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka", day: "numeric", month: "short", year: "numeric" })}</td><td><Link className="hub-details-link" href="/r/referrals">Details</Link></td></tr>)}</tbody></table></div> : <div className="hub-empty"><p>Your introductions will appear here.</p><Link href="/r/submit">Introduce a client →</Link></div>}
+      </section>
 
       <Card>
         <CardContent className="space-y-3 p-5">

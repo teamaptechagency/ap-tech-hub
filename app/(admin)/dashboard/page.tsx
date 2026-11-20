@@ -1,3 +1,4 @@
+import { WorkspaceJobs } from "@/components/layout/workspace-jobs";
 import { getVisitorAnalytics } from "@/lib/visitor-analytics";
 import { activeJobWork, availableJobWhere, availableSpecialOrderWhere } from "@/lib/work-availability";
 import Link from "next/link";
@@ -122,6 +123,8 @@ export default async function AdminDashboard() {
         title: true,
         type: true,
         status: true,
+        deadline: true,
+        checkItems: { select: { done: true } },
         client: { select: { companyName: true } },
         externalName: true,
       },
@@ -198,7 +201,7 @@ export default async function AdminDashboard() {
   };
 
   return (
-    <div className="hub-dashboard space-y-6">
+    <div className="hub-dashboard hub-admin-dashboard space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">
@@ -214,7 +217,7 @@ export default async function AdminDashboard() {
       </div>
 
       <p className="rounded-lg border bg-card px-4 py-3 text-sm text-muted-foreground">Showing {monthStart.toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka", month: "long", year: "numeric" })} · Bangladesh time. Previous periods and outstanding balances are available in <Link href="/reports" className="font-medium text-primary underline">Reports</Link>.</p>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="hub-stat-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="This month earnings"
           value={money(totalEarnings)}
@@ -262,6 +265,7 @@ export default async function AdminDashboard() {
         <StatCard label="Page visits this month" value={visitorValue(visitorAnalytics.summary.monthVisits)} href="/visitors" hint="All public pages, including blog articles" />
       </div>
 
+      <WorkspaceJobs title="Jobs this month" jobs={recentJobs} basePath="/jobs" emptyHref="/jobs" emptyText="No jobs updated this month." />
       <div className="grid gap-4 lg:grid-cols-2">
         <CountryVisitorsCard
           title="Visitor countries - this month"
@@ -396,38 +400,7 @@ export default async function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Recent jobs</CardTitle>
-          </CardHeader>
-          <CardContent className="divide-y">
-            {recentJobs.map((job) => (
-              <Link
-                key={job.id}
-                href={`/jobs/${job.id}`}
-                className="flex items-center justify-between py-2.5 hover:bg-muted/40"
-              >
-                <div>
-                  <p className="text-sm font-medium">{job.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {job.client?.companyName ?? job.externalName ?? "Internal"}
-                  </p>
-                </div>
-                <div className="flex gap-1">
-                  <Badge
-                    variant="secondary"
-                    className={`text-[10px] ${typeBadge[job.type]}`}
-                  >
-                    {job.type.toLowerCase()}
-                  </Badge>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {job.status.toLowerCase()}
-                  </Badge>
-                </div>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   );
