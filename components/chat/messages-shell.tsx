@@ -76,12 +76,15 @@ export function MessagesShell({
   hideSpecialOrders?: boolean;
 }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<ConvoRow | null>(
+  const visibleConversations = hideSpecialOrders ? conversations.filter(c => !c.kind.startsWith("SPECIAL")) : conversations;
+  const [selectedConversation, setSelected] = useState<ConvoRow | null>(
     (initialOpenId &&
-      conversations.find((c) => c.id === initialOpenId)) ||
-      conversations[0] ||
+      visibleConversations.find((c) => c.id === initialOpenId)) ||
+      visibleConversations[0] ||
       null
   );
+  // Never keep an old selected thread open after its permission/scope changes.
+  const selected = visibleConversations.find(c => c.id === selectedConversation?.id) ?? visibleConversations[0] ?? null;
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [newOpen, setNewOpen] = useState(false);
@@ -110,7 +113,7 @@ export function MessagesShell({
     toast.success("Reminder sent");
   }
 
-  const filtered = conversations.filter((c) => {
+  const filtered = visibleConversations.filter((c) => {
     if (filter === "JOBS" && c.kind !== "JOB") return false;
     if (filter === "SPECIAL" && !c.kind.startsWith("SPECIAL")) return false;
     if (filter === "DIRECT" && c.kind !== "DIRECT") return false;
@@ -153,7 +156,7 @@ export function MessagesShell({
         <div>
           <h1 className="text-2xl font-bold">Messages</h1>
           <p className="text-sm text-muted-foreground">
-            {conversations.filter((c) => c.unread).length} unread
+            {visibleConversations.filter((c) => c.unread).length} unread
           </p>
         </div>
         {newConversationHref ? (
