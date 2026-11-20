@@ -11,6 +11,7 @@ export default async function LoginPage({
   const params = await searchParams;
   const hostname = (await headers()).get("host")?.split(":")[0].toLowerCase();
   const clientPortal = hostname === "portal.aptechagency.com";
+  const administration = hostname === "manage.aptechagency.com";
   const selectedAdmin = params?.workstationAdmin && params.workstationAdmin.length <= 100 ? await prisma.user.findFirst({ where: { id: params.workstationAdmin, accountStatus: "ACTIVE", role: { in: ["SUPER_ADMIN", "ADMIN", "CEO"] } }, select: { name: true, email: true, role: true } }) : null;
   const initialMessage =
     params?.message
@@ -26,12 +27,14 @@ export default async function LoginPage({
           <h1 className="text-2xl font-bold">
             {clientPortal ? (
               <>Client, Employee &amp; Referral Partner <span className="text-primary">Hub</span></>
+            ) : administration ? (
+              <>AP Tech <span className="text-primary">Administration</span></>
             ) : (
               <>AP Tech <span className="text-primary">Hub</span></>
             )}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {clientPortal ? "Sign in to your workspace" : "Sign in to your portal"}
+            {clientPortal ? "Sign in to your workspace" : administration ? "Sign in to your administration panel" : "Sign in to your portal"}
           </p>
         </div>
 
