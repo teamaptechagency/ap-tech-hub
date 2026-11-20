@@ -46,6 +46,6 @@ p = assets / 'site.css'
 if '.wordmark img{width:62px' not in p.read_text():
     p.write_text(p.read_text() + '\n.wordmark img{width:62px;height:42px;object-fit:contain;flex-shrink:0}.site-footer .wordmark img{width:56px;height:38px}\n')
 p = assets / 'support.js'
-s = p.read_text().replace("?'Barta AI':", "?'AP Tech AI':").replace('may be handled through Barta when enabled.', 'may be answered by AP Tech AI using OpenAI. Ask for a person at any time.').replace('Message the AP Tech team', 'AI project help or the AP Tech team').replace('Our team will reply here.', 'AP Tech AI or our team will reply here.')
+s = p.read_text().replace("?'Barta AI':", "?'Aptee':").replace('may be handled through Barta when enabled.', 'may be answered by Aptee using OpenAI. Ask for a person at any time.').replace('Message the AP Tech team', 'AI project help or the AP Tech team').replace('Our team will reply here.', 'Aptee or our team will reply here.')
 p.write_text(s)
 print('Public site adapter applied. Credentials remain in the private service environment.')
