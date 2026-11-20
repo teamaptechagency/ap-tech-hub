@@ -61,6 +61,7 @@ export function MessagesShell({
   initialOpenId,
   maskAsDisplaySender = false,
   newConversationHref,
+  hideSpecialOrders = false,
 }: {
   conversations: ConvoRow[];
   people?: Person[];
@@ -72,6 +73,7 @@ export function MessagesShell({
   // When set, "New message" links here (e.g. Find Expert) instead of
   // opening the plain people-picker dialog.
   newConversationHref?: string;
+  hideSpecialOrders?: boolean;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<ConvoRow | null>(
@@ -182,7 +184,7 @@ export function MessagesShell({
             </div>
 
             <div className="flex gap-1.5">
-              {FILTERS.map((f) => (
+              {FILTERS.filter(f => !hideSpecialOrders || f.key !== "SPECIAL").map((f) => (
                 <button
                   key={f.key}
                   onClick={() => setFilter(f.key)}

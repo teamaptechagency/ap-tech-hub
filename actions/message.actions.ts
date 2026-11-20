@@ -296,26 +296,25 @@ export async function getFloatingConversations() {
 
   const where: Prisma.ConversationWhereInput = isAdmin
     ? {
+        specialOrderClientId: null,
+        specialOrderPartnerId: null,
         OR: [
           { jobId: { not: null } },
-          { specialOrderClientId: { not: null } },
-          { specialOrderPartnerId: { not: null } },
           { isDirect: true, participants: { some: { userId: myId } } },
+          { isDirect: true, participants: { some: { user: { role: { in: ["CLIENT", "CLIENT_MANAGER"] } } } } },
         ],
       }
     : session.user.role === "TEAM_MEMBER" ? { isDirect: true, AND: [{participants: {some: {userId: myId}}}, {participants: {some: {user: {role: "SUPER_ADMIN", accountStatus: "ACTIVE"}}}}] }
     : session.user.clientId
       ? {
+          specialOrderClientId: null,
+          specialOrderPartnerId: null,
           OR: [
             {
               job: {
                 clientId: session.user.clientId,
                 publish: "PUBLISHED" as const,
-              },
-            },
-            {
-              specialOrderClient: {
-                clientId: session.user.clientId,
+                status: { in: ["OPEN", "PENDING", "IN_PROGRESS", "PAUSED"] },
               },
             },
             { isDirect: true, participants: { some: { userId: myId } } },
@@ -591,7 +590,11 @@ async function canAccessConversation(
         ) => participant.userId === userId
       );
 
-    if (!isParticipant && !isSuperAdmin) {
+    const clientSupport = isAdmin && Boolean(await prisma.conversationParticipant.findFirst({
+      where: { conversationId, user: { role: { in: ["CLIENT", "CLIENT_MANAGER"] } } },
+      select: { id: true },
+    }));
+    if (!isParticipant && !isSuperAdmin && !clientSupport) {
       return null;
     }
 

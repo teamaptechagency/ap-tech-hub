@@ -5,18 +5,19 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { MessagesShell } from "@/components/chat/messages-shell";
+import { ensurePublishedProjectConversations } from "@/lib/project-conversations";
 
 export default async function MessagesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const myId = session.user.id;
   const isSuperAdmin = session.user.role === "SUPER_ADMIN";
+  await ensurePublishedProjectConversations();
 
   const conversationOr: Prisma.ConversationWhereInput[] = [
     { jobId: { not: null } },
-    { specialOrderClientId: { not: null } },
-    { specialOrderPartnerId: { not: null } },
     { isDirect: true, participants: { some: { userId: myId } } },
+    { isDirect: true, participants: { some: { user: { role: { in: ["CLIENT", "CLIENT_MANAGER"] } } } } },
   ];
 
   // Only the super admin additionally sees every client<->team
@@ -40,7 +41,7 @@ export default async function MessagesPage() {
   // All conversations relevant to admins: job conversations +
   // directs I'm part of, plus the super-admin oversight above.
   const conversations = await prisma.conversation.findMany({
-    where: availableConversationWhere({ OR: conversationOr }),
+    where: availableConversationWhere({ specialOrderClientId: null, specialOrderPartnerId: null, OR: conversationOr }),
     orderBy: { updatedAt: "desc" },
     include: {
       job: {
@@ -116,7 +117,7 @@ export default async function MessagesPage() {
           ? [{ id: teamMember.user.id, name: teamMember.user.name }]
           : undefined;
       } else {
-        const other = c.participants.find((p) => p.userId !== myId);
+        const other = c.participants.find(p => ["CLIENT", "CLIENT_MANAGER"].includes(p.user.role)) ?? c.participants.find((p) => p.userId !== myId);
         name = other?.user.name ?? "Direct message";
         subtitle = "Direct message";
       }
@@ -149,6 +150,7 @@ export default async function MessagesPage() {
       conversations={rows}
       people={people}
       currentUserId={myId}
+      hideSpecialOrders
     /></div>
   );
 }

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { MessagesShell } from "@/components/chat/messages-shell";
 import { presenceColor } from "@/lib/presence";
+import { ensurePublishedProjectConversations } from "@/lib/project-conversations";
 
 export default async function ClientMessagesPage({
   searchParams,
@@ -15,19 +16,18 @@ export default async function ClientMessagesPage({
   const myId = session.user.id;
   const params = await searchParams;
   const openId = params?.open ?? null;
+  await ensurePublishedProjectConversations(session.user.clientId);
 
   const conversations = await prisma.conversation.findMany({
     where: availableConversationWhere({
+      specialOrderClientId: null,
+      specialOrderPartnerId: null,
       OR: [
         {
           job: {
             clientId: session.user.clientId,
             publish: "PUBLISHED",
-          },
-        },
-        {
-          specialOrderClient: {
-            clientId: session.user.clientId,
+            status: { in: ["OPEN", "PENDING", "IN_PROGRESS", "PAUSED"] },
           },
         },
         {
@@ -116,6 +116,7 @@ export default async function ClientMessagesPage({
       currentUserId={myId}
       initialOpenId={openId}
       maskAsDisplaySender
+      hideSpecialOrders
     />
   );
 }
