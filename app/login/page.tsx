@@ -25,16 +25,14 @@ export default async function LoginPage({
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold">
-            {clientPortal ? (
-              <>Client, Employee &amp; Referral Partner <span className="text-primary">Hub</span></>
-            ) : administration ? (
+            {administration ? (
               <>AP Tech <span className="text-primary">Administration</span></>
             ) : (
               <>AP Tech <span className="text-primary">Hub</span></>
             )}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {clientPortal ? "Sign in to your workspace" : administration ? "Sign in to your administration panel" : "Sign in to your portal"}
+            {clientPortal ? "Your work. One place." : administration ? "Sign in to your administration panel" : "Sign in to your portal"}
           </p>
         </div>
 
