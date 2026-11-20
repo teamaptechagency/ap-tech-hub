@@ -57,13 +57,6 @@ type AdminSidebarProps = {
 };
 
 export const adminNavItems: AdminNavItem[] = [
-  { label: "Business Office", href: "/business-office", icon: Briefcase, section: "Overview" },
-  {
-    label: "Work Station",
-    href: "/work-station",
-    icon: Monitor,
-    section: "Overview",
-  },
   {
     label: "Dashboard",
     href: "/dashboard",
@@ -95,34 +88,10 @@ export const adminNavItems: AdminNavItem[] = [
     section: "Sales & clients",
   },
   {
-    label: "Partners",
-    href: "/accounts/partners",
-    icon: Handshake,
-    section: "Sales & clients",
-  },
-  {
     label: "Jobs",
     href: "/jobs",
     icon: Briefcase,
     section: "Delivery",
-  },
-  {
-    label: "Special orders",
-    href: "/special-orders",
-    icon: ShoppingBag,
-    section: "Delivery",
-  },
-  {
-    label: "Meetings",
-    href: "/meetings",
-    icon: Video,
-    section: "Delivery",
-  },
-  {
-    label: "Public Portal",
-    href: "/landing-manager",
-    icon: GalleryHorizontalEnd,
-    section: "Content",
   },
   {
     label: "Blog",

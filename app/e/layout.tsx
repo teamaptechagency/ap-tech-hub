@@ -13,10 +13,6 @@ import { EmployeeSidebar } from "@/components/layout/employee-sidebar";
 import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
 import { PresenceHeartbeat } from "@/components/layout/presence-heartbeat";
-import {
-  BottomNav,
-  type BottomNavItem,
-} from "@/components/layout/bottom-nav";
 import { TermsGate } from "@/components/terms-gate";
 import { ImpersonationBanner } from "@/components/auth/impersonation-banner";
 import { EmployeeViewBanner } from "@/components/auth/employee-view-banner";
@@ -79,38 +75,6 @@ export default async function EmployeeLayout({
     getBrandingSettings(),
   ]);
 
-  const bottomItems: BottomNavItem[] = [
-    {
-      label: "Dashboard",
-      href: "/e/dashboard",
-      icon: "dashboard",
-    },
-    {
-      label: "My jobs",
-      href: "/e/jobs",
-      icon: "jobs",
-    },
-    {
-      label: "Messages",
-      href: "/e/messages",
-      icon: "messages",
-    },
-    {
-      label: "My hours",
-      href: "/e/hours",
-      icon: "hours",
-    },
-    {
-      label: "Report",
-      href: "/e/feedback",
-      icon: "feedback",
-    },
-    {
-      label: "Profile",
-      href: "/e/profile",
-      icon: "profile",
-    },
-  ];
 
   return (
     <div className="hub-shell flex min-h-screen flex-col md:flex-row">
@@ -162,7 +126,7 @@ export default async function EmployeeLayout({
       />
 
       {/* Mobile bottom navigation */}
-      <BottomNav items={bottomItems} />
+
     </div>
   );
 }

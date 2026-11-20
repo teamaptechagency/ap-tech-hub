@@ -11,10 +11,6 @@ import { getBrandingSettings } from "@/lib/branding";
 import { ClientSidebar } from "@/components/layout/client-sidebar";
 import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
-import {
-  BottomNav,
-  type BottomNavItem,
-} from "@/components/layout/bottom-nav";
 import { TermsGate } from "@/components/terms-gate";
 import { ImpersonationBanner } from "@/components/auth/impersonation-banner";
 
@@ -91,43 +87,6 @@ export default async function ClientLayout({
     getBrandingSettings(),
   ]);
 
-  const bottomItems: BottomNavItem[] = [
-    {
-      label: "Dashboard",
-      href: "/c/dashboard",
-      icon: "dashboard",
-    },
-    {
-      label: "My jobs",
-      href: "/c/jobs",
-      icon: "jobs",
-    },
-    {
-      label: "Messages",
-      href: "/c/messages",
-      icon: "messages",
-    },
-    {
-      label: "Invoices",
-      href: "/c/invoices",
-      icon: "invoices",
-    },
-    {
-      label: "Special",
-      href: "/c/special-orders",
-      icon: "special",
-    },
-    {
-      label: "Report",
-      href: "/c/feedback",
-      icon: "feedback",
-    },
-    {
-      label: "Profile",
-      href: "/c/profile",
-      icon: "profile",
-    },
-  ];
 
   return (
     <div className="hub-shell flex min-h-screen flex-col md:flex-row">
@@ -174,7 +133,7 @@ export default async function ClientLayout({
       />
 
       {/* Mobile bottom navigation */}
-      <BottomNav items={bottomItems} />
+
     </div>
   );
 }

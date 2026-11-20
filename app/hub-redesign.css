@@ -105,3 +105,6 @@ html[data-hub-appearance=dark] .hub-shell{--foreground:#e9efea;--muted-foregroun
 @media(max-width:1200px){.hub-content{padding:30px 27px}.hub-workspace-topbar{padding-inline:27px}}
 @media(max-width:760px){.hub-content{padding:27px 22px 90px}.hub-workspace-topbar{min-height:68px;padding:14px 22px}.hub-content h1{font-size:28px;letter-spacing:-1px}.hub-breadcrumb{font-size:12px}.hub-panel-heading{padding:17px 18px}.hub-shell td,.hub-shell th{padding-inline:18px}.hub-content .text-sm{font-size:14px}}
 @media(max-width:480px){.hub-content{padding:25px 18px 90px}.hub-content h1{font-size:26px}.hub-workspace-topbar{padding-inline:18px}.hub-list-toolbar{flex-wrap:wrap;padding:16px 18px}.hub-list-search{width:100%;max-width:none;flex-basis:100%}.hub-list-toolbar select{width:100%}.auth-form-card form>div:first-child>div.grid button{font-size:12px}.hub-panel-heading h2{font-size:14px}}
+
+/* The reference uses one menu drawer, without a second bottom navigation. */
+@media(max-width:760px){.hub-content{padding-bottom:35px}.hub-shell [data-hub-main]{padding-bottom:0!important}}

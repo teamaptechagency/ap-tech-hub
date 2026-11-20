@@ -73,19 +73,9 @@ export const clientNavItems: ClientNavItem[] = [
     icon: Receipt,
   },
   {
-    label: "Special orders",
-    href: "/c/special-orders",
-    icon: ShoppingBag,
-  },
-  {
-    label: "Wallet & points",
+    label: "Wallet",
     href: "/c/wallet",
     icon: Wallet,
-  },
-  {
-    label: "Meetings",
-    href: "/c/meetings",
-    icon: Video,
   },
   {
     label: "Profile",

@@ -17,10 +17,6 @@ import { getBrandingSettings } from "@/lib/branding";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messenger";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
-import {
-  BottomNav,
-  type BottomNavItem,
-} from "@/components/layout/bottom-nav";
 import { ImpersonationBanner } from "@/components/auth/impersonation-banner";
 
 type AdminLayoutProps = {
@@ -71,38 +67,6 @@ export default async function AdminLayout({
     .replaceAll("_", " ")
     .toLowerCase();
 
-  const bottomItems: BottomNavItem[] = [
-    {
-      label: "Dashboard",
-      href: "/dashboard",
-      icon: "dashboard",
-    },
-    {
-      label: "Chat",
-      href: "/messages",
-      icon: "messages",
-    },
-    {
-      label: "Jobs",
-      href: "/jobs",
-      icon: "jobs",
-    },
-    {
-      label: "Special",
-      href: "/special-orders",
-      icon: "special",
-    },
-    {
-      label: "Report",
-      href: "/feedback",
-      icon: "feedback",
-    },
-    {
-      label: "Profile",
-      href: "/profile",
-      icon: "profile",
-    },
-  ];
 
   // Appearance only: authorization above still runs for every embedded admin screen.
   if ((await cookies()).get("ap_workstation_embed")?.value === "1") return <main className="min-h-dvh bg-background p-5">{children}</main>;
@@ -151,7 +115,7 @@ export default async function AdminLayout({
       />
 
       {/* Mobile bottom navigation */}
-      <BottomNav items={bottomItems} />
+
     </div>
   );
 }

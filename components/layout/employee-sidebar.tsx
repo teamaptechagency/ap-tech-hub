@@ -95,11 +95,6 @@ export const employeeNavItems: EmployeeNavItem[] = [
     icon: Clock,
   },
   {
-    label: "Meetings",
-    href: "/e/meetings",
-    icon: Video,
-  },
-  {
     label: "Profile",
     href: "/e/profile",
     icon: User,
