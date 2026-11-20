@@ -1,5 +1,7 @@
 "use client";
 
+import { AiMessagingSettings } from "@/components/settings/ai-messaging-settings";
+
 import { type FormEvent, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -135,6 +137,7 @@ const permissionResources = [
 ];
 
 type SettingsSection =
+  | "ai"
   | "branding"
   | "finance"
   | "skills"
@@ -150,6 +153,7 @@ const settingsSections: {
   label: string;
   description: string;
 }[] = [
+  { key: "ai", label: "AI Integration", description: "Website project messaging and handoff" },
   {
     key: "branding",
     label: "Branding",
@@ -1157,6 +1161,8 @@ export function SettingsShell({
           );
         })}
       </div>
+
+      {activeSection === "ai" && <AiMessagingSettings />}
 
       {activeSection === "branding" && (
       <Card>
