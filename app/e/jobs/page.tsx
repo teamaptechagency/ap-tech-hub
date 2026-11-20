@@ -4,22 +4,8 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Briefcase, Clock, Compass } from "lucide-react";
 
-const typeBadge: Record<string, string> = {
-  MONTHLY: "bg-blue-100 text-blue-700",
-  FIXED: "bg-violet-100 text-violet-700",
-  HOURLY: "bg-teal-100 text-teal-700",
-};
-
-const statusBadge: Record<string, string> = {
-  PENDING: "bg-slate-100 text-slate-600",
-  IN_PROGRESS: "bg-blue-100 text-blue-700",
-  PAUSED: "bg-orange-100 text-orange-600",
-  COMPLETED: "bg-green-100 text-green-700",
-  CANCELLED: "bg-red-100 text-red-600",
-};
+import { Briefcase, Clock, Compass } from "lucide-react";
 
 type MyJobsPageProps = {
   searchParams?: Promise<{ view?: string }>;
@@ -135,67 +121,7 @@ export default async function MyJobsPage({ searchParams }: MyJobsPageProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {jobs.map((job) => (
-            <Link
-              key={job.id}
-              href={`/e/jobs/${job.id}`}
-              className="block h-full"
-            >
-              <Card className="h-full min-h-36 transition-colors hover:border-primary/50 hover:bg-muted/30">
-                <CardContent className="flex h-full flex-col justify-between gap-5 p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-base font-semibold">
-                          {job.title}
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Updated{" "}
-                          {job.updatedAt.toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </p>
-                      </div>
-                      <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs ${typeBadge[job.type]}`}
-                      >
-                        {job.type === "FIXED"
-                          ? "Fixed"
-                          : job.type.charAt(0) + job.type.slice(1).toLowerCase()}
-                      </Badge>
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs ${statusBadge[job.status]}`}
-                      >
-                        {job.status.replace("_", " ").toLowerCase()}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="rounded-md border bg-background/60 p-3">
-                    <p className="text-[11px] uppercase text-muted-foreground">
-                      My payment
-                    </p>
-                    <p className="mt-1 text-lg font-bold leading-none">
-                      BDT {job.workerValue.toLocaleString()}
-                      <span className="ml-1 text-xs font-medium text-muted-foreground">
-                        {job.type === "MONTHLY" && "/month"}
-                        {job.type === "HOURLY" && "/hour"}
-                      </span>
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <section className="hub-job-panel" aria-label="My assigned jobs"><div className="hub-job-table-scroll"><table><thead><tr><th scope="col">Job</th><th scope="col">Status</th><th scope="col">My payment</th><th scope="col">Last updated</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead><tbody>{jobs.map(job => <tr key={job.id}><td><Link className="hub-job-title" href={`/e/jobs/${job.id}`}>{job.title}</Link><small>{job.type === "FIXED" ? "Fixed price" : job.type.toLowerCase()}</small></td><td><span className={`hub-job-status hub-job-status-${job.status.toLowerCase()}`}>{job.status.replaceAll("_", " ").toLowerCase()}</span></td><td>BDT {job.workerValue.toLocaleString()}{job.type === "MONTHLY" ? "/month" : job.type === "HOURLY" ? "/hour" : ""}</td><td>{job.updatedAt.toLocaleDateString("en-GB",{timeZone:"Asia/Dhaka",day:"numeric",month:"short",year:"numeric"})}</td><td><Link className="hub-details-link" href={`/e/jobs/${job.id}`}>View job</Link></td></tr>)}</tbody></table></div></section>
       )}
     </div>
   );

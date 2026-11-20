@@ -5,26 +5,11 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-import { Badge } from "@/components/ui/badge";
+
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+
 
 import { Briefcase, Plus } from "lucide-react";
-
-const typeBadge: Record<string, string> = {
-  MONTHLY: "bg-blue-100 text-blue-700",
-  FIXED: "bg-violet-100 text-violet-700",
-  HOURLY: "bg-teal-100 text-teal-700",
-};
-
-const statusBadge: Record<string, string> = {
-  PENDING: "bg-slate-100 text-slate-600",
-  OPEN: "bg-amber-100 text-amber-700",
-  IN_PROGRESS: "bg-blue-100 text-blue-700",
-  PAUSED: "bg-orange-100 text-orange-600",
-  COMPLETED: "bg-green-100 text-green-700",
-  CANCELLED: "bg-red-100 text-red-600",
-};
 
 function formatJobType(type: string) {
   if (type === "FIXED") {
@@ -199,55 +184,7 @@ export default async function ClientJobsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
-          {rows.map((job) => (
-            <Link
-              key={job.id}
-              href={`/c/jobs/${job.id}`}
-              className="block"
-            >
-              <Card className="transition-colors hover:border-primary/40">
-                <CardContent className="space-y-3 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-medium">
-                      {job.title}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2">
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs ${
-                          typeBadge[job.type] ?? ""
-                        }`}
-                      >
-                        {formatJobType(job.type)}
-                      </Badge>
-
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs ${
-                          statusBadge[job.status] ??
-                          ""
-                        }`}
-                      >
-                        {formatStatus(job.status)}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <Progress
-                    value={job.percent}
-                    className="h-1.5"
-                  />
-
-                  <p className="text-xs text-muted-foreground">
-                    {job.progressLabel}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <section className="hub-job-panel" aria-label="My jobs"><div className="hub-job-table-scroll"><table><thead><tr><th scope="col">Job</th><th scope="col">Status</th><th scope="col">Progress</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead><tbody>{rows.map(job => <tr key={job.id}><td><Link className="hub-job-title" href={`/c/jobs/${job.id}`}>{job.title}</Link><small>{formatJobType(job.type)}</small></td><td><span className={`hub-job-status hub-job-status-${job.status.toLowerCase()}`}>{formatStatus(job.status)}</span></td><td><div className="hub-progress"><span>{job.progressLabel}</span><div role="progressbar" aria-label={job.title+" progress"} aria-valuemin={0} aria-valuemax={100} aria-valuenow={job.percent}><i style={{width:job.percent+"%"}} /></div></div></td><td><Link className="hub-details-link" href={`/c/jobs/${job.id}`}>View job</Link></td></tr>)}</tbody></table></div></section>
       )}
     </div>
   );
