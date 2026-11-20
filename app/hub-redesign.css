@@ -60,3 +60,4 @@ body:has(.hub-shell) [data-slot=dialog-content],body:has(.hub-shell) [data-slot=
 @media(min-width:1101px){.hub-stat-grid [data-slot=card-content]{flex-direction:row;justify-content:flex-start;align-items:center;height:auto;gap:12px}.hub-stat-grid [data-slot=card-content]>p:first-child{flex-shrink:0}}
 @media(min-width:1600px){.auth-brand-panel{gap:24px}}
 @media(max-width:400px){.auth-form-card form>div:first-child>div.grid button{font-size:10px}}
+.hub-job-panel .sr-only{left:0;top:0}
