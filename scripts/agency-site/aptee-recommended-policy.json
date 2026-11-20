@@ -1,11 +1,34 @@
 {
   "name": "Aptee",
   "prices": [
-    { "service": "Website Development", "currency": "USD", "minimum": 500, "maxDiscountPercent": 10, "scope": "Up to 5 informational WordPress pages, responsive layout, contact form and basic on-page setup, using client-provided content. Two revision rounds. Excludes ecommerce, custom applications, paid licenses, hosting and domain. Delivery date must be confirmed by the team." },
-    { "service": "UI/UX Design", "currency": "USD", "minimum": 200, "maxDiscountPercent": 10, "scope": "Up to 3 website screen designs in Figma, desktop and mobile layouts, using an agreed brief. Two revision rounds. Excludes development, branding strategy and complex application flows. Team confirms delivery date." },
-    { "service": "Graphics Design", "currency": "USD", "minimum": 75, "maxDiscountPercent": 10, "scope": "One simple logo or up to 3 social media designs from an agreed brief, two revision rounds. No trademark clearance, stock licensing or unlimited revisions. Team confirms exact deliverables and delivery date." },
-    { "service": "Promotional Video", "currency": "USD", "minimum": 200, "maxDiscountPercent": 10, "scope": "One promotional video up to 30 seconds using client-provided assets, simple edits, captions and one revision round. Excludes filming, paid stock, voice talent, complex animation and licensing. Team confirms delivery date." },
-    { "service": "Digital Marketing", "currency": "USD", "minimum": 200, "maxDiscountPercent": 10, "scope": "Initial setup and a 30-day plan for one agreed advertising platform or basic channel audit. Advertising spend is separate. No guaranteed leads, sales or rankings. Ongoing management, creative production and campaign spend require a separate confirmed scope." }
+    {
+      "service": "UI/UX Design",
+      "currency": "USD",
+      "minimum": 200,
+      "maxDiscountPercent": 10,
+      "scope": "Up to 3 website screen designs in Figma, desktop and mobile layouts, using an agreed brief. Two revision rounds. Excludes development, branding strategy and complex application flows. Team confirms delivery date."
+    },
+    {
+      "service": "Website Development",
+      "currency": "USD",
+      "minimum": 500,
+      "maxDiscountPercent": 10,
+      "scope": "Up to 5 informational WordPress pages, responsive layout, contact form and basic on-page setup, using client-provided content. Two revision rounds. Excludes ecommerce, custom applications, paid licenses, hosting and domain. Delivery date must be confirmed by the team."
+    },
+    {
+      "service": "Web App Development",
+      "currency": "USD",
+      "minimum": 0,
+      "maxDiscountPercent": 10,
+      "scope": "Project scope and pricing require team confirmation."
+    },
+    {
+      "service": "Mobile App Development",
+      "currency": "USD",
+      "minimum": 0,
+      "maxDiscountPercent": 10,
+      "scope": "Project scope and pricing require team confirmation."
+    }
   ],
   "alertMobile": "",
   "alertEmail": "",

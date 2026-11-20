@@ -1,7 +1,7 @@
 export type ApteePriceRule = { service: string; currency: "USD" | "BDT"; minimum: number; maxDiscountPercent: number; scope: string };
 export type ApteePolicy = { name: "Aptee"; prices: ApteePriceRule[]; alertMobile: string; alertEmail: string; senderEmail: string; leadQueries: string; leadRegion: string; leadMode: "DRAFT_ONLY"; orderMode: "REVIEW_REQUIRED" };
 export const defaultApteePolicy: ApteePolicy = {
-  name: "Aptee", prices: ["Website Development", "UI/UX Design", "Graphics Design", "Promotional Video", "Digital Marketing"].map(service => ({service,currency:"USD",minimum:0,maxDiscountPercent:10,scope:""})),
+  name: "Aptee", prices: ["UI/UX Design", "Website Development", "Web App Development", "Mobile App Development"].map(service => ({service,currency:"USD",minimum:0,maxDiscountPercent:10,scope:""})),
   alertMobile: "", alertEmail: "", senderEmail: "", leadQueries: "", leadRegion: "", leadMode: "DRAFT_ONLY", orderMode: "REVIEW_REQUIRED",
 };
 export function validateApteePolicy(input: unknown): ApteePolicy {
