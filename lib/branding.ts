@@ -10,10 +10,10 @@ export type BrandingSettings = {
 
 const defaultBranding: BrandingSettings = {
   siteName: "AP Tech Hub",
-  logoUrl: "",
-  hubLogoUrl: "",
-  publicLogoUrl: "",
-  faviconUrl: "",
+  logoUrl: "/brand/mark.png",
+  hubLogoUrl: "/brand/mark.png",
+  publicLogoUrl: "/brand/mark.png",
+  faviconUrl: "/app-icons/icon-192.png",
 };
 
 export async function getBrandingSettings(): Promise<BrandingSettings> {

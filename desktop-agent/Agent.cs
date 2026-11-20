@@ -12,7 +12,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 public partial class WorkAgent : Form {
-    const string AppVersion = "0.5.5";
+    const string AppVersion = "0.5.6";
     [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint size; public uint time; }
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     readonly TextBox url = new TextBox(), token = new TextBox();
@@ -45,7 +45,7 @@ public partial class WorkAgent : Form {
         BackColor = Color.FromArgb(16, 22, 32); ForeColor = Color.White; Font = new Font("Segoe UI", 10);
         AddLabel("AP TECH  /  WORK TRACKER", 24, 20, 510, 26, 15);
         AddLabel("PC: " + Environment.MachineName, 24, 57, 510, 24, 10);
-        url.Text = "https://www.aptechagency.com";
+        url.Text = "https://portal.aptechagency.com";
         AddLabel("Connected to AP Tech Hub automatically", 24, 95, 510, 22, 10);
         autoResume.Text = "Remember consent and start tracking when this app opens"; autoResume.SetBounds(24, 121, 510, 30); Controls.Add(autoResume);
         AddLabel("First setup only: paste the pairing credential from your admin", 24, 160, 510, 22, 10); token.SetBounds(24, 185, 510, 28); token.UseSystemPasswordChar = true; Controls.Add(token);
@@ -60,7 +60,7 @@ public partial class WorkAgent : Form {
         checkUpdates = async () => {
             update.Enabled = false;
             try {
-                var text = await client.GetStringAsync("https://www.aptechagency.com/downloads/work-tracker/release.json?check=" + DateTime.UtcNow.Ticks);
+                var text = await client.GetStringAsync("https://portal.aptechagency.com/downloads/work-tracker/release.json?check=" + DateTime.UtcNow.Ticks);
                 var release = json.Deserialize<Dictionary<string, object>>(text);
                 Version latest; if (!release.ContainsKey("version") || !Version.TryParse(Convert.ToString(release["version"]), out latest)) throw new Exception();
                 if (latest <= new Version(AppVersion)) { MessageBox.Show("You have the current version: " + AppVersion); return; }
@@ -73,7 +73,7 @@ public partial class WorkAgent : Form {
                 byte[] binary;
                 using (var downloader = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })) {
                     downloader.Timeout = TimeSpan.FromMinutes(2); downloader.MaxResponseContentBufferSize = 16 * 1024 * 1024;
-                    using (var response = await downloader.GetAsync("https://www.aptechagency.com/downloads/work-tracker/APTechWorkTrackerSetup.exe?version=" + latest)) {
+                    using (var response = await downloader.GetAsync("https://portal.aptechagency.com/downloads/work-tracker/APTechWorkTrackerSetup.exe?version=" + latest)) {
                         response.EnsureSuccessStatusCode(); binary = await response.Content.ReadAsByteArrayAsync();
                     }
                 }
@@ -85,7 +85,7 @@ public partial class WorkAgent : Form {
                 // Keep the installer visible: the employee reviews its notice and clicks Install.
                 Process.Start(new ProcessStartInfo(installer) { UseShellExecute = true });
                 exitRequested = true; Close();
-            } catch (Exception ex) { if (!IsDisposed) MessageBox.Show("Update was not installed: " + ex.Message + "\nYou can retry or visit https://www.aptechagency.com/work-tracker"); }
+            } catch (Exception ex) { if (!IsDisposed) MessageBox.Show("Update was not installed: " + ex.Message + "\nYou can retry or visit https://portal.aptechagency.com/work-tracker"); }
             finally { if (!update.IsDisposed) { update.Enabled = true; update.Text = "Check for software updates"; } }
         }; update.Click += async (s,e) => await checkUpdates(); Controls.Add(update);
         tray.Icon = Icon; tray.Text = "AP Tech Work Tracker - paused"; tray.Visible = true;
@@ -162,6 +162,6 @@ public partial class WorkAgent : Form {
         finally { sending = false; if (!tracking) start.Enabled = true; }
         if (followUp && tracking) await Send(false);
     }
-    void SaveConfig() { Directory.CreateDirectory(Path.GetDirectoryName(config)); var bytes = Encoding.UTF8.GetBytes("https://www.aptechagency.com\n" + token.Text.Trim() + "\n" + (autoResume.Checked && consent.Checked ? "yes" : "no")); File.WriteAllBytes(config, ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser)); }
-    void LoadConfig() { try { var parts = Encoding.UTF8.GetString(ProtectedData.Unprotect(File.ReadAllBytes(config), null, DataProtectionScope.CurrentUser)).Split('\n'); url.Text = "https://www.aptechagency.com"; token.Text = parts[1]; autoResume.Checked = consent.Checked = parts.Length > 2 && parts[2] == "yes"; } catch {} }
+    void SaveConfig() { Directory.CreateDirectory(Path.GetDirectoryName(config)); var bytes = Encoding.UTF8.GetBytes("https://portal.aptechagency.com\n" + token.Text.Trim() + "\n" + (autoResume.Checked && consent.Checked ? "yes" : "no")); File.WriteAllBytes(config, ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser)); }
+    void LoadConfig() { try { var parts = Encoding.UTF8.GetString(ProtectedData.Unprotect(File.ReadAllBytes(config), null, DataProtectionScope.CurrentUser)).Split('\n'); url.Text = "https://portal.aptechagency.com"; token.Text = parts[1]; autoResume.Checked = consent.Checked = parts.Length > 2 && parts[2] == "yes"; } catch {} }
 }

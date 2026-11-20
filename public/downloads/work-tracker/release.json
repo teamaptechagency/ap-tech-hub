@@ -1,10 +1,10 @@
 {
-  "version": "0.5.5",
-  "publishedDate": "2026-11-09",
-  "exeSha256": "20d7977248c7fcc703598122e6ff2b2df88ff84e4a7ac9c9838974ceb8233efb",
-  "installerSha256": "5329f6e3bbfcc700d5e7ed5c011f9742f460688112d50a036a660e906f9299ed",
-  "packageSha256": "9d81e150e89ce42d449eb16ace0a347c7b3ff4f5564742e91756c6b80bcdc57e",
-  "releaseNotes": "Eight-hour attendance display, 12-hour activity confirmation, Super Admin support, message deletion requests and simplified blog fields.",
+  "version": "0.5.6",
+  "publishedDate": "2026-11-21",
+  "exeSha256": "aaa077b8297b534025aa9306d66170e5662af051c2adf1e2b320a1d68f1156c2",
+  "installerSha256": "e8e18035b13a49392d5266214fc6c80a892937b4a17fecdeaf78291dbc79ef40",
+  "packageSha256": "b815ef72b7afa0e9f7c59c9858ee42e58cba88e933cb71fbd9a25805adc68880",
+  "releaseNotes": "Official AP Tech Agency logo and Windows icon; connect and update through portal.aptechagency.com.",
   "extensionVersion": "0.2.1",
   "extensionSha256": "44694f1c8c55c062060ba46512d8f6b4bc166b4426e3b62c0e6e0496d161493c"
 }

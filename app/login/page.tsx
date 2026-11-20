@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { LoginForm } from "@/components/auth/login-form";
+import { getBrandingSettings } from "@/lib/branding";
 
 export default async function LoginPage({
   searchParams,
@@ -9,6 +10,7 @@ export default async function LoginPage({
   searchParams?: Promise<{ reason?: string; next?: string; message?: string; workstationAdmin?: string }>;
 }) {
   const params = await searchParams;
+  const branding = await getBrandingSettings();
   const hostname = (await headers()).get("host")?.split(":")[0].toLowerCase();
   const clientPortal = hostname === "portal.aptechagency.com";
   const administration = hostname === "manage.aptechagency.com";
@@ -24,6 +26,7 @@ export default async function LoginPage({
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
+          <img src={branding.hubLogoUrl || "/brand/mark.png"} alt="AP Tech Agency" width={64} height={64} className="mx-auto mb-4 h-16 w-16 object-contain" />
           <h1 className="text-2xl font-bold">
             {administration ? (
               <>AP Tech <span className="text-primary">Administration</span></>

@@ -1,4 +1,6 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 import { getBrandingSettings } from "@/lib/branding";
 
@@ -16,6 +18,19 @@ export async function renderBrandIcon(size: { width: number; height: number }) {
 
   if (href) {
     try {
+      if (href.startsWith("/") && !href.startsWith("//")) {
+        const root = path.resolve(process.cwd(), "public");
+        const file = path.resolve(root, "." + href.split("?")[0]);
+        if (file.startsWith(root + path.sep)) {
+          const bytes = await readFile(file);
+          return new Response(new Uint8Array(bytes), {
+            headers: {
+              "content-type": file.endsWith(".svg") ? "image/svg+xml" : file.endsWith(".ico") ? "image/x-icon" : file.endsWith(".jpg") || file.endsWith(".jpeg") ? "image/jpeg" : "image/png",
+              "cache-control": "public, max-age=3600, s-maxage=3600",
+            },
+          });
+        }
+      }
       const response = await fetch(href, { cache: "no-store" });
       const contentType = response.headers.get("content-type") ?? "";
 
