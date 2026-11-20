@@ -88,6 +88,8 @@ export default async function JobsPage({searchParams}: {searchParams: Promise<{s
       progressPercent = Math.min(100, Math.round(seconds / 3600));
     }
 
+    if (job.status === "COMPLETED") progressPercent = 100;
+
     return {
       id: job.id,
       title: job.title,
