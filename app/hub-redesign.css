@@ -61,3 +61,47 @@ body:has(.hub-shell) [data-slot=dialog-content],body:has(.hub-shell) [data-slot=
 @media(min-width:1600px){.auth-brand-panel{gap:24px}}
 @media(max-width:400px){.auth-form-card form>div:first-child>div.grid button{font-size:10px}}
 .hub-job-panel .sr-only{left:0;top:0}
+
+/* Reference parity: shared controls and rhythm. Invoice/settings retain their markup and flows. */
+.hub-shell{font-size:16px;--foreground:#172820;--muted-foreground:#64736b;--border:#e2e8e3;--background:#f6f8f6}
+.hub-shell [data-hub-sidebar] nav a{font-size:14px;gap:12px;min-height:42px;padding:9px 12px}
+.hub-shell [data-hub-sidebar] nav p{font-size:11px;letter-spacing:1.25px}
+.hub-sidebar-label{font-size:12px;letter-spacing:1.1px}
+.hub-shell [data-hub-sidebar]>div:last-child{padding:16px 15px 10px}
+.hub-shell [data-hub-sidebar]>div:last-child button{font-size:14px}
+.hub-workspace-topbar{min-height:78px;padding:16px 36px}
+.hub-breadcrumb{font-size:14px;gap:13px}.hub-topbar-account{font-size:12px}
+.hub-content{max-width:1540px!important;padding:34px 36px 44px}
+.hub-content h1{font-size:32px;line-height:1.18;letter-spacing:-1.2px;font-weight:620}
+.hub-content h2{font-size:16px;font-weight:600}
+.hub-content :is(p.text-sm,.text-sm){font-size:14px;line-height:1.6}
+.hub-content .text-xs{font-size:12px;line-height:1.6}
+.hub-shell [data-slot=card]{border-radius:6px}
+.hub-shell [data-slot=card-title]{font-size:16px;font-weight:600}
+.hub-shell [data-slot=card-content]{font-size:14px}
+.hub-shell [data-slot=card-description]{font-size:13px}
+.hub-shell :is(button[data-slot=button],a[data-slot=button]){font-size:14px;min-height:42px;padding:10px 16px;font-weight:550;border-radius:5px}
+.hub-shell :is(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:14px;border-radius:5px;min-height:42px;color:var(--foreground);border-color:var(--input)}
+.hub-shell input[type=checkbox]{accent-color:var(--primary)}
+.hub-shell :is(input,select,textarea):focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.hub-shell table{font-size:14px}.hub-shell th{font-size:12px;font-weight:600;padding:13px 22px;letter-spacing:.5px}.hub-shell td{padding:17px 22px}
+.hub-shell [data-slot=badge],.hub-job-status{font-size:12px;border-radius:4px}
+.hub-job-panel{border-radius:6px;position:relative}.hub-panel-heading{padding:20px 22px}.hub-panel-heading h2{font-size:16px}.hub-panel-heading>a{font-size:14px}
+.hub-job-panel td small{font-size:12px}.hub-details-link{font-size:13px;padding:7px 11px}.hub-progress{font-size:12px;min-width:95px}
+.hub-progress>span{white-space:nowrap}.hub-job-status-cancelled{background:#fbefec;color:#a34a41;border-color:#f0e0da}
+.hub-job-status-open{background:#faf3e8;color:#93652a;border-color:#eee3cf}
+.hub-list-toolbar{display:flex;justify-content:space-between;gap:15px;padding:18px 22px;border-bottom:1px solid var(--border)}
+.hub-list-search{position:relative;display:flex;align-items:center;flex:1;max-width:360px}.hub-list-search>svg{position:absolute;left:12px;color:var(--muted-foreground);pointer-events:none}.hub-list-search input{width:100%;border:1px solid var(--border);background:var(--card);padding:10px 12px 10px 38px}
+.hub-list-toolbar select{border:1px solid var(--border);background:var(--card);padding:9px 34px 9px 12px;min-width:165px;text-transform:capitalize}
+.hub-table-footer{margin:0;padding:13px 22px;border-top:1px solid var(--border);font-size:12px;color:var(--muted-foreground)}
+.hub-applications-link{display:block;font-size:12px;color:var(--primary);margin-top:8px;white-space:nowrap}
+.hub-password-field{position:relative}.hub-password-field input{padding-right:48px}.hub-password-field>button{position:absolute;right:5px;top:5px;display:grid;place-items:center;width:38px;height:38px;border:0;background:transparent;color:var(--muted-foreground);border-radius:4px}.hub-password-field>button:hover{background:var(--muted)}
+.auth-form-card label{font-size:13px}.auth-form-card form>div:first-child>div.grid button{font-size:13px;min-height:42px}.auth-form-card input{height:49px;font-size:14px}.auth-form-card form>button[type=submit]{min-height:49px;font-size:14px}.auth-form-tagline{font-size:15px}.auth-form-intro h1{font-size:36px!important}
+body:has(.hub-shell) [role=dialog]{border-radius:8px;border-color:var(--border);background:var(--card);color:var(--foreground);box-shadow:0 30px 100px #071b2333}
+body:has(.hub-shell) [role=dialog] :is(input,select,textarea){font-size:14px;min-height:42px;border-radius:5px}
+body:has(.hub-shell) [role=dialog] label{font-size:13px;line-height:1.6}
+body:has(.hub-shell) [role=dialog] [data-slot=button]{font-size:14px;min-height:42px}
+html[data-hub-appearance=dark] .hub-shell{--foreground:#e9efea;--muted-foreground:#a8b8af;--border:#34483c;--background:#14231f}
+@media(max-width:1200px){.hub-content{padding:30px 27px}.hub-workspace-topbar{padding-inline:27px}}
+@media(max-width:760px){.hub-content{padding:27px 22px 90px}.hub-workspace-topbar{min-height:68px;padding:14px 22px}.hub-content h1{font-size:28px;letter-spacing:-1px}.hub-breadcrumb{font-size:12px}.hub-panel-heading{padding:17px 18px}.hub-shell td,.hub-shell th{padding-inline:18px}.hub-content .text-sm{font-size:14px}}
+@media(max-width:480px){.hub-content{padding:25px 18px 90px}.hub-content h1{font-size:26px}.hub-workspace-topbar{padding-inline:18px}.hub-list-toolbar{flex-wrap:wrap;padding:16px 18px}.hub-list-search{width:100%;max-width:none;flex-basis:100%}.hub-list-toolbar select{width:100%}.auth-form-card form>div:first-child>div.grid button{font-size:12px}.hub-panel-heading h2{font-size:14px}}

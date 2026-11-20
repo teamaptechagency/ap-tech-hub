@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import { CreateJobDialog } from "@/components/jobs/create-job-dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Plus, Briefcase } from "lucide-react";
+
+
+
+import { Plus, Search } from "lucide-react";
 
 type JobRow = {
   id: string;
@@ -44,12 +44,6 @@ const FILTERS = [
   { key: "EXTERNAL", label: "External" },
   { key: "CANCELLED", label: "Cancelled" },
 ];
-
-const typeBadge: Record<string, string> = {
-  MONTHLY: "bg-blue-100 text-blue-700",
-  FIXED: "bg-violet-100 text-violet-700",
-  HOURLY: "bg-teal-100 text-teal-700",
-};
 
 const typeLabel: Record<string, string> = {
   MONTHLY: "Monthly",
@@ -92,11 +86,14 @@ export function JobsBoard({
   receivedEurRate: number;
   receivedGbpRate: number;
 }) {
-  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("ALL");
   const [filter, setFilter] = useState<string>(initialFilter);
   const [createOpen, setCreateOpen] = useState(false);
 
   const filtered = jobs.filter((job) => {
+    if (search.trim() && !`${job.title} ${job.clientName} ${job.members.map(m => m.name).join(" ")}`.toLowerCase().includes(search.trim().toLowerCase())) return false;
+    if (status !== "ALL" && job.status !== status) return false;
     if (filter === "ALL") return true;
     if (filter === "OPEN" || filter === "CANCELLED") return job.status === filter;
     if (filter === "EXTERNAL") return job.isExternal;
@@ -118,7 +115,7 @@ export function JobsBoard({
   const openCount = jobs.filter((j) => j.status === "OPEN").length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 hub-jobs-board">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -153,163 +150,22 @@ export function JobsBoard({
         ))}
       </div>
 
-      {/* Cards */}
-      {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Briefcase className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              {jobs.length === 0
-                ? 'No jobs yet — click "New job" to create the first one'
-                : "No jobs match this filter"}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {filtered.map((job) => (
-            <Card
-              key={job.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => router.push(`/jobs/${job.id}`)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  router.push(`/jobs/${job.id}`);
-                }
-              }}
-              className={
-                `cursor-pointer transition-colors hover:border-primary/60 hover:bg-muted/30 ${
-                  job.status === "OPEN" ? "border-2 border-amber-300" : ""
-                }`
-              }
-            >
-              <CardContent className="space-y-3 p-4">
-                {/* Title row */}
-                <div className="flex items-start justify-between gap-2">
-                  <Link
-                    href={`/jobs/${job.id}`}
-                    className="font-medium hover:underline"
-                  >
-                    {job.title}
-                  </Link>
-                  <div className="flex shrink-0 gap-1">
-                    <Badge
-                      variant="secondary"
-                      className={`text-xs ${typeBadge[job.type]}`}
-                    >
-                      {typeLabel[job.type]}
-                    </Badge>
-                    <Badge
-                      variant="secondary"
-                      className={`text-xs ${statusBadge[job.status]}`}
-                    >
-                      {job.status === "OPEN"
-                        ? "Open"
-                        : job.status.replace("_", " ").toLowerCase()}
-                    </Badge>
-                  </div>
-                </div>
-
-                <p className="text-xs text-muted-foreground">
-                  {job.clientName}
-                  {job.isExternal && " · external"}
-                </p>
-
-                {/* Progress */}
-                {job.status !== "OPEN" && (
-                  <>
-                    <Progress value={job.progressPercent} className="h-1.5" />
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{job.progressLabel}</span>
-                      <span>
-                        {job.clientValue !== null && (
-                          <>
-                            Client {currencySymbol[job.clientCurrency]}
-                            {job.clientValue}
-                            {job.type === "MONTHLY" && "/mo"}
-                            {job.type === "HOURLY" && "/hr"}
-                          </>
-                        )}
-                        {job.members.length > 0 && (
-                          <span className="text-muted-foreground/70">
-                            {" · Worker ৳"}
-                            {job.members
-                              .reduce((s, m) => s + m.workerValue, 0)
-                              .toLocaleString()}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  </>
-                )}
-
-                {/* Open job extras */}
-                {job.status === "OPEN" && (
-                  <>
-                    <p className="text-xs text-muted-foreground">
-                      No one assigned — open for applications from
-                      matching-skill members
-                      {job.skills.length > 0 &&
-                        ` · skills: ${job.skills.join(", ")}`}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        variant="secondary"
-                        className="bg-amber-100 text-xs text-amber-700"
-                      >
-                        {job.pendingApplications} applicant
-                        {job.pendingApplications !== 1 && "s"}
-                      </Badge>
-                      {job.workerValue !== null && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-green-100 text-xs text-green-700"
-                        >
-                          Employee BDT {job.workerValue.toLocaleString()}
-                          {job.type === "MONTHLY" && "/mo"}
-                          {job.type === "HOURLY" && "/hr"}
-                        </Badge>
-                      )}
-                      <Link
-                        href={`/jobs/${job.id}/applications`}
-                        onClick={(event) => event.stopPropagation()}
-                        className="text-xs font-medium text-primary hover:underline"
-                      >
-                        Review applications →
-                      </Link>
-                    </div>
-                  </>
-                )}
-
-                {/* Assigned members */}
-                {job.members.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    {job.members.map((m) => (
-                      <div
-                        key={m.name}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-semibold"
-                        title={m.name}
-                      >
-                        {m.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .slice(0, 2)
-                          .join("")}
-                      </div>
-                    ))}
-                    <span className="text-xs text-muted-foreground">
-                      {job.members.map((m) => m.name.split(" ")[0]).join(", ")}{" "}
-                      assigned
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+      <section className="hub-job-panel" aria-label="Jobs">
+        <div className="hub-list-toolbar">
+          <label className="hub-list-search"><Search size={18} aria-hidden="true" /><span className="sr-only">Search jobs or clients</span><input type="search" placeholder="Search jobs or clients" value={search} onChange={e => setSearch(e.target.value)} /></label>
+          <select aria-label="Filter jobs by status" value={status} onChange={e => setStatus(e.target.value)}><option value="ALL">All statuses</option>{Object.keys(statusBadge).map(value => <option key={value} value={value}>{value.replaceAll("_", " ").toLowerCase()}</option>)}</select>
         </div>
-      )}
+        <div className="hub-job-table-scroll"><table><thead><tr><th scope="col">Job</th><th scope="col">Status</th><th scope="col">Progress</th><th scope="col">Project value</th><th scope="col">Team</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead><tbody>{filtered.map(job => <tr key={job.id}>
+          <td><Link className="hub-job-title" href={`/jobs/${job.id}`}>{job.title}</Link><small>{job.clientName}{job.isExternal && " · external"} · {typeLabel[job.type]}</small>{job.skills.length > 0 && <small>{job.skills.join(", ")}</small>}</td>
+          <td><span className={`hub-job-status hub-job-status-${job.status.toLowerCase()}`}>{job.status.replaceAll("_", " ").toLowerCase()}</span>{job.status === "OPEN" && <small>{job.pendingApplications} applicants</small>}</td>
+          <td><div className="hub-progress"><span>{job.progressLabel}</span><div role="progressbar" aria-label={`${job.title} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={job.progressPercent}><i style={{width:job.progressPercent+"%"}} /></div></div></td>
+          <td>{job.clientValue === null ? "Not set" : (currencySymbol[job.clientCurrency] || job.clientCurrency)+job.clientValue.toLocaleString()+(job.type === "MONTHLY" ? "/mo" : job.type === "HOURLY" ? "/hr" : "")}{job.members.length > 0 && <small>Worker ৳{job.members.reduce((sum,m) => sum+m.workerValue,0).toLocaleString()}</small>}</td>
+          <td>{job.members.length ? job.members.map(m => m.name).join(", ") : "Unassigned"}</td>
+          <td><Link className="hub-details-link" href={`/jobs/${job.id}`}>View job</Link>{job.status === "OPEN" && <Link className="hub-applications-link" href={`/jobs/${job.id}/applications`}>Review applications</Link>}</td>
+        </tr>)}</tbody></table></div>
+        {filtered.length === 0 && <p className="hub-empty" role="status">{jobs.length ? "No jobs match these filters. Try another search or status." : "No jobs yet. Create your first job to get started."}</p>}
+        <p className="hub-table-footer">{filtered.length} of {jobs.length} jobs</p>
+      </section>
 
       {createOpen && (
         <CreateJobDialog

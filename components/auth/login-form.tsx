@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
-import { Fingerprint } from "lucide-react";
+import { Fingerprint, Eye, EyeOff } from "lucide-react";
 import {
   getLoginOptions,
   login,
@@ -41,6 +41,7 @@ export function LoginForm({
 }) {
   const [email, setEmail] = useState(selectedAccount?.email || "");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [deviceToken, setDeviceToken] = useState("");
   const [loginMode, setLoginMode] = useState<
     "password" | "authenticator" | "email" | "whatsapp" | "mobile"
@@ -389,7 +390,7 @@ export function LoginForm({
                   [
                     { value: "password", label: "Password" },
                     { value: "email", label: "Email OTP" },
-                    { value: "mobile", label: "Login via mobile" },
+                    { value: "mobile", label: "Mobile approval" },
                     ...(passwordlessMethods.includes("WHATSAPP")
                       ? [{ value: "whatsapp", label: "WhatsApp OTP" }]
                       : []),
@@ -423,7 +424,7 @@ export function LoginForm({
             </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">{selectedAccount ? "Administrator" : "Email"}</Label>
+            <Label htmlFor="email">{selectedAccount ? "Administrator" : loginMode === "mobile" ? "Account email" : "Email"}</Label>
             {selectedAccount ? <p className="rounded-md border p-3 font-medium">{selectedAccount.name} · {selectedAccount.role === "SUPER_ADMIN" ? "Super Admin" : selectedAccount.role === "CEO" ? "CEO" : "Admin"}</p> : null}
             <Input
               hidden={Boolean(selectedAccount)}
@@ -447,9 +448,9 @@ export function LoginForm({
             {loginMode === "mobile" ? (
               <div className="space-y-2 rounded-md border bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground">
-                  Ei email e logged-in mobile e ekta notification jabe. Sekhane
-                  Access die fingerprint diye confirm korle, ei browser e
-                  automatically login hoye jabe.
+                  Enter the email of your account already signed in on your mobile.
+                  Approve the request on that device to sign in here. This option
+                  does not use a phone number.
                 </p>
                 {mobileStatus === "pending" && (
                   <p className="text-sm font-medium">
@@ -508,13 +509,14 @@ export function LoginForm({
             ) : (
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
+                <div className="hub-password-field"><Input
                   id="password"
-                  type="password"
+                  autoComplete="current-password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                />
+                /><button type="button" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
               </div>
             )}
 
