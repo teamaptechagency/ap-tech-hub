@@ -7,7 +7,21 @@ const brand = path.join(root, "public", "brand");
 const background = "#101623";
 await mkdir(brand, { recursive: true });
 for (const name of ["wordmark-light", "wordmark-dark", "mark-light", "mark-dark", "mark"]) {
-  await sharp(path.join(brand, "source", `${name}.png`)).trim().resize({ height: name.startsWith("wordmark") ? 256 : 512 }).png().toFile(path.join(brand, `${name}.png`));
+  let image = sharp(path.join(brand, "source", `${name}.png`));
+  const alphaStats = await image.stats();
+  if (name === "mark") {
+    const {data, info} = await sharp(path.join(brand,"source","mark-dark.png")).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+    const colors = new Map();
+    const source = await sharp(path.join(brand,"source","mark.png")).removeAlpha().raw().toBuffer();
+    for(let i=0;i<source.length;i+=3){ if(source[i]>245&&source[i+1]>245&&source[i+2]>245)continue; const key=[source[i],source[i+1],source[i+2]].join(',');colors.set(key,(colors.get(key)||0)+1); }
+    const green=[...colors].sort((a,b)=>b[1]-a[1])[0][0].split(',').map(Number);
+    for(let i=0;i<data.length;i+=4){data[i]=green[0];data[i+1]=green[1];data[i+2]=green[2];}
+    image=sharp(data,{raw:{width:info.width,height:info.height,channels:4}});
+  } else if (alphaStats.channels[3]?.min === 255 && name.endsWith("-light")) {
+    const mask=await sharp(path.join(brand,"source",`${name.replace("-light","-dark")}.png`)).extractChannel("alpha").png().toBuffer();
+    image=sharp(path.join(brand,"source",`${name}.png`)).removeAlpha().joinChannel(mask);
+  }
+  await image.trim().resize({ height: name.startsWith("wordmark") ? 256 : 512 }).png().toFile(path.join(brand, `${name}.png`));
 }
 const mark = await readFile(path.join(brand, "mark-dark.png"));
 async function icon(size, inset = 0.16, transparent = false) {
