@@ -3,6 +3,8 @@ from pathlib import Path
 import argparse
 import shutil
 import time
+import subprocess
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--service', default='/opt/aptech-agency')
@@ -50,3 +52,4 @@ s = p.read_text().replace("?'Barta AI':", "?'Aptee':").replace("AP Tech AI", "Ap
 s = s.replace('<strong>AP Tech Agency</strong><small>Let’s talk about your project.</small>', '<strong>Aptee · AP Tech Agency</strong><small>AI project assistant · team handoff available.</small>')
 p.write_text(s)
 print('Public site adapter applied. Credentials remain in the private service environment.')
+subprocess.run([sys.executable, str(Path(__file__).with_name('resume-ai.py')), '--service', str(base), '--assets', str(assets)], check=True)
