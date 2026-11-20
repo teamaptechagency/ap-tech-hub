@@ -37,6 +37,8 @@ if "from './agency-openai.mjs'" not in s:
     s = s.replace('Barta reply unavailable. Check credentials, balance and instructions.', 'AI reply unavailable. Check provider credentials and billing.')
 if 'const lastText=' not in s:
     s = s.replace('function scheduleAi(cid,id){const c=configuration();', "function scheduleAi(cid,id){const lastText=one('SELECT text FROM messages WHERE id=?',id)?.text||'';if(conv(cid)?.mode==='ai'&&/\\b(human|real person|talk to (?:a )?person|speak to (?:a )?person)\\b|মানুষ|কর্মীর সাথে|টিমের সাথে/i.test(lastText)){message(cid,{text:'I have passed this conversation to the AP Tech team. A team member can reply here.',requestKey:random()},'ai');updateMode({id:cid,mode:'human',status:'open'});return;}const c=configuration();")
+s = s.replace('import {openaiReply,openaiReady}', 'import {openaiReply,openaiReady,apteeHandoffText}')
+s = s.replace("text:'I have passed this conversation to the AP Tech team. A team member can reply here.',requestKey:random()", 'text:apteeHandoffText(lastText),requestKey:random()')
 p.write_text(s)
 p = base / 'agency-server.mjs'
 p.write_text(p.read_text().replace('chat=createAgencyChat({directory:data})', "chat=createAgencyChat({directory:data,publicContext:()=>agency.page('/')})"))
