@@ -9,6 +9,7 @@ import {
   sendTypingStatus,
 } from "@/actions/message.actions";
 import { getPusherClient } from "@/lib/pusher-client";
+import { startMessagePolling } from "@/lib/message-polling";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -105,6 +106,17 @@ export function ChatPanel({
 
   useEffect(() => {
     const pusher = getPusherClient();
+    if (!pusher) {
+      let seen: Set<string> | null = null;
+      return startMessagePolling(async (active) => {
+        const result = await getMessages(conversationId);
+        if (!active() || !("messages" in result) || !result.messages) return;
+        if (seen && playIncomingSound && result.messages.some((message) => !seen!.has(message.id) && message.sender.id !== currentUserId)) void playWaterDropMessageSound();
+        seen = new Set(result.messages.map((message) => message.id));
+        setMessages(result.messages);
+        await markSeen(conversationId);
+      });
+    }
     const channel = pusher.subscribe(`conversation-${conversationId}`);
 
     channel.bind("new-message", (msg: ChatMessage) => {

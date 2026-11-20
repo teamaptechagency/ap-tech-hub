@@ -7,7 +7,8 @@ import { MessageSquare, X } from "lucide-react";
 
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { Button } from "@/components/ui/button";
-import type { FloatingConversationRow } from "@/actions/message.actions";
+import { getFloatingConversations, type FloatingConversationRow } from "@/actions/message.actions";
+import { startMessagePolling } from "@/lib/message-polling";
 import { getPusherClient } from "@/lib/pusher-client";
 import { playWaterDropMessageSound } from "@/lib/message-sound";
 import {
@@ -75,6 +76,7 @@ export function GlobalFloatingMessenger({
     if (hiddenOnMessagesPage || liveConversations.length === 0) return;
 
     const pusher = getPusherClient();
+    if (!pusher) return;
     const subscribedChannels = liveConversations
       .filter((conversation) => conversation.kind !== "landing-chat")
       .map((conversation) => {
@@ -104,6 +106,12 @@ export function GlobalFloatingMessenger({
     if (hiddenOnMessagesPage) return;
 
     const pusher = getPusherClient();
+    if (!pusher) {
+      return startMessagePolling(async (active) => {
+        const rows = await getFloatingConversations();
+        if (active()) setLiveConversations(rows.conversations);
+      });
+    }
     const channel = pusher.subscribe("landing-chats-global");
     channel.bind("new-chat", (chat: FloatingConversationRow) => {
       setLiveConversations((prev) =>
@@ -274,6 +282,12 @@ function LandingChatPanel({ chat }: { chat: FloatingConversationRow }) {
     if (chat.id.startsWith("fallback:")) return;
 
     const pusher = getPusherClient();
+    if (!pusher) {
+      return startMessagePolling(async (active) => {
+        const result = await getLandingChatMessages(chat.id);
+        if (active() && "messages" in result && Array.isArray(result.messages)) setMessages(result.messages);
+      });
+    }
     const channel = pusher.subscribe(`landing-chat-${bareId}`);
     channel.bind("new-message", (message: LandingChatMessage) => {
       setMessages((prev) =>

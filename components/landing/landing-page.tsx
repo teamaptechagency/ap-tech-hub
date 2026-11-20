@@ -38,6 +38,7 @@ import {
   submitLandingContact,
 } from "@/actions/landing.actions";
 import { getPusherClient } from "@/lib/pusher-client";
+import { startMessagePolling } from "@/lib/message-polling";
 import { PartnerApplicationForm } from "@/components/referral/partner-application-form";
 import { BlogImpressionTracker } from "@/components/blog/blog-impression-tracker";
 import {
@@ -1049,6 +1050,13 @@ function FloatingChat({
     });
 
     const pusher = getPusherClient();
+    if (!pusher) {
+      const stop = startMessagePolling(async (active) => {
+        const result = await getLandingChatMessages(leadId);
+        if (active() && "messages" in result && Array.isArray(result.messages)) setMessages(result.messages);
+      });
+      return () => { alive = false; stop(); };
+    }
     const channel = pusher.subscribe(`landing-chat-${leadId}`);
     channel.bind("new-message", (message: FloatingChatMessage) => {
       setMessages((prev) =>

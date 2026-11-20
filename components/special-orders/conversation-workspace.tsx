@@ -272,6 +272,7 @@ export function ConversationWorkspace({
   // break duration updates this view instantly, no refresh needed.
   useEffect(() => {
     const pusher = getPusherClient();
+    if (!pusher) return;
     const channel = pusher.subscribe(`special-order-script-${orderId}`);
 
     channel.bind(
