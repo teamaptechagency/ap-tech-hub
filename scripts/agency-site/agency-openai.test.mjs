@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { openaiReply, openaiReady, apteeHandoffText } from './agency-openai.mjs';
 const env = { AP_AI_ENABLED: 'true', OPENAI_API_KEY: 'sk-test-only' };
 test('Bengali and Banglish human handoffs also use Bengali script', () => {
-  assert.match(apteeHandoffText('ami human er sathe kotha bolte chai'), /কথোপকথনে/g);
-  assert.match(apteeHandoffText('আমি মানুষের সঙ্গে কথা বলব'), /আপনার/);
+  assert.match(apteeHandoffText('ami human er sathe kotha bolte chai'), /আলাদা কোনো বিজ্ঞপ্তি পাঠানো হয়নি/);
+  assert.match(apteeHandoffText('আমি মানুষের সঙ্গে কথা বলব'), /আলাদা কোনো বিজ্ঞপ্তি পাঠানো হয়নি/);
   assert.match(apteeHandoffText('Please connect me to a human'), /No separate notification/);
 });
 test('only explicitly enabled server credentials enable AI', () => {
