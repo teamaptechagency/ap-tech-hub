@@ -1,4 +1,5 @@
 import { MessageDeletionReview } from "@/components/chat/message-deletion-review";
+import { UnifiedMessages } from "@/components/chat/unified-messages";
 import { availableConversationWhere } from "@/lib/work-availability";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -146,11 +147,11 @@ export default async function MessagesPage() {
   const deletionRows = await prisma.setting.findMany({where:{key:{startsWith:"message.delete."}},take:200});
   const deletionRequests = deletionRows.flatMap(row=>{try{const value=JSON.parse(row.value);return value.status==="PENDING"?[{key:row.key,messageId:String(value.messageId),requestedAt:String(value.requestedAt)}]:[];}catch{return [];}});
   return (
-    <div className="space-y-5"><MessageDeletionReview requests={deletionRequests} /><MessagesShell
+    <UnifiedMessages><div className="space-y-5"><MessageDeletionReview requests={deletionRequests} /><MessagesShell
       conversations={rows}
       people={people}
       currentUserId={myId}
       hideSpecialOrders
-    /></div>
+    /></div></UnifiedMessages>
   );
 }
