@@ -104,7 +104,7 @@ export default async function ClientWalletPage() {
       <div>
         <h1 className="text-2xl font-bold">{pointsEnabled ? "Wallet & points" : "Wallet"}</h1>
         <p className="text-sm text-muted-foreground">
-          Advance payments, dues, and loyalty rewards
+          {pointsEnabled ? "Advance payments, dues, and loyalty rewards" : "Advance payments and dues"}
         </p>
       </div>
 
@@ -265,7 +265,7 @@ export default async function ClientWalletPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        {pointsEnabled && <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Points history</CardTitle>
           </CardHeader>
@@ -307,7 +307,7 @@ export default async function ClientWalletPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </Card>}
       </div>
     </div>
   );

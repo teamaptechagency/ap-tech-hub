@@ -45,7 +45,12 @@ function setup() {
   const writes = [];
   const changes = [];
   const template = { id: 'morning-blog', title: 'Daily blog', shiftLabel: 'MORNING', active: true, primaryEmployeeId: 'emp-1', fallbackEmployeeId: 'emp-2' };
+  const presenceSettings = new Map();
   const prisma = {
+    setting: {
+      findUnique: async ({ where }) => presenceSettings.has(where.key) ? { value: presenceSettings.get(where.key) } : null,
+      upsert: async ({ where, create, update }) => { presenceSettings.set(where.key, presenceSettings.has(where.key) ? update.value : create.value); return {}; },
+    },
     workDevice: { updateMany: async ({ data }) => { writes.push(data); return { count: 1 }; } },
     workDeviceEvent: { count: async () => 0, create: async () => ({}) },
     deviceEmployee: { findUnique: async () => employee, create: async () => ({}) },
