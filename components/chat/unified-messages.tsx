@@ -2,6 +2,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { WebsiteMail } from "@/components/chat/website-mail";
 type Conversation={id:string;name:string;email:string;mode:string;status:string;updated:string};
 type Message={id:string;actor:string;text:string;created:string};
 async function chat(input: Record<string,unknown>){
@@ -26,8 +27,8 @@ export function UnifiedMessages({children}:{children:ReactNode}){
   },[id,tab]);
   async function action(input:Record<string,unknown>){setBusy(true);try{await chat(input);const data=await chat({op:"read",id});setMessages(data.messages);setSelected(data.conversation);setError("");return true;}catch(e){setError(e instanceof Error?e.message:"Action failed");return false;}finally{setBusy(false);}}
   return <div className="space-y-4">
-    <div className="flex gap-2"><Button variant={tab==="website"?"default":"outline"} onClick={()=>setTab("website")}>Website live chat · Aptee</Button><Button variant={tab==="hub"?"default":"outline"} onClick={()=>setTab("hub")}>Project & team messages</Button></div>
-    {tab==="hub"?children:<>
+    <div className="flex flex-wrap gap-2"><Button variant={tab==="website"?"default":"outline"} onClick={()=>setTab("website")}>Website live chat · Aptee</Button><Button variant={tab==="hub"?"default":"outline"} onClick={()=>setTab("hub")}>Project & team messages</Button><Button variant={tab==="mail"?"default":"outline"} onClick={()=>setTab("mail")}>Mail</Button></div>
+    {tab==="mail"?<WebsiteMail/>:tab==="hub"?children:<>
       <div><h1 className="text-2xl font-bold">Website live chat</h1><p className="text-sm text-muted-foreground">Visitor and Aptee conversations · Updates automatically every 3 seconds</p></div>
       {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
