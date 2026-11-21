@@ -82,6 +82,7 @@ export async function POST(request: Request) {
       if (!access.admin && !access.permissions.blog) return reply({ error: "Blog access is disabled" }, 403);
       const parsed = blogInput.safeParse(body.data); if (!parsed.success) return reply({ error: "Check blog title, content, excerpt and description" }, 400);
       const data = parsed.data;
+      if (data.coverImageUrl && !data.coverImageAlt?.trim()) return reply({ error: "Describe the cover image before saving" }, 400);
       let topics;
       try { topics = data.primaryKeyword !== undefined || data.secondaryKeywords !== undefined ? blogTopics(data.primaryKeyword, data.secondaryKeywords) : {}; } catch (error) { return reply({ error: error instanceof Error ? error.message : "Invalid tags" }, 400); }
 
