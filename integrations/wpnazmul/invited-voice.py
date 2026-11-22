@@ -1,6 +1,6 @@
 """Authorize voice only after the existing encrypted, expiring lead invite validates."""
 from pathlib import Path
-import shutil,time
+import shutil,time,sys
 root=Path('/srv/wpnazmul-staging/backend')
 def save(p,s):
     shutil.copy2(p,'/root/'+p.name+'.before-invited-voice-'+str(int(time.time())))
@@ -39,3 +39,9 @@ if "'voice_authorized'=>" not in s:
     assert old in s
     save(p,s.replace(old,"return ['voice_authorized'=>request()->session()->get('invited_voice_conversation') === $c->public_id,'conversation_id'=>$c->public_id,",1))
 print('Invited voice uses validated session-scoped access; history verification stays unchanged')
+if len(sys.argv)>1:
+    p=Path(sys.argv[1])/'components/voice-assistant.jsx'
+    s=p.read_text()
+    s=s.replace(' : verified ? { voice_text: true }', ' : (verified || chat?.voice_authorized === true) ? { voice_text: true }')
+    s=s.replace('{!verified ? <>','{!(verified || (!restoreOnly && chat?.voice_authorized === true)) ? <>')
+    p.write_text(s)
