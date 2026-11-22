@@ -4,9 +4,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 final class HubInboxController {
+    public function syncMail(Request $request) {
+        abort_unless((int)$request->user()->id===(int)config('acquisition.owner_user_id'),403);
+        return \App\Workspace\LeadReplyInbox::sync();
+    }
     public function notifications() {
         $events=[];
-        foreach(DB::table('contact_messages')->where('status','unread')->latest('id')->limit(30)->get(['id','name','created_at']) as $row){
+        foreach(DB::table('contact_messages')->where('status','unread')->where('service','<>','Lead outreach')->latest('id')->limit(30)->get(['id','name','created_at']) as $row){
             $events[]=['key'=>'enquiry:'.$row->id,'title'=>'New website enquiry','body'=>$row->name,'href'=>'/wpnazmul/messages?tab=enquiries','createdAt'=>\Carbon\Carbon::parse($row->created_at)->toIso8601String()];
         }
         $latest=DB::table('acq_public_messages')->where('actor_kind','guest')->selectRaw('MAX(id) as id')->groupBy('conversation_id');
@@ -17,10 +21,12 @@ final class HubInboxController {
         foreach(DB::table('client_project_messages as m')->joinSub($latest,'latest',fn($join)=>$join->on('m.id','=','latest.id'))->join('client_projects as p','p.id','=','m.project_id')->latest('m.id')->limit(30)->get(['m.id','m.created_at','p.public_id','p.title']) as $row){
             $events[]=['key'=>'project-chat:'.$row->id,'title'=>'New project message','body'=>$row->title,'href'=>'/wpnazmul/orders/'.$row->public_id,'createdAt'=>\Carbon\Carbon::parse($row->created_at)->toIso8601String()];
         }
+        \App\Workspace\LeadReplyInbox::schema();
+        foreach(DB::table('hub_lead_mail_messages as m')->join('contact_messages as c','c.id','=','m.contact_id')->where('m.direction','incoming')->latest('m.id')->limit(30)->get(['m.id','m.contact_id','m.created_at','c.name']) as $row){$events[]=['key'=>'mail:'.$row->id,'title'=>'New lead email reply','body'=>$row->name,'href'=>'/wpnazmul/messages?tab=enquiries&thread='.$row->contact_id,'createdAt'=>\Carbon\Carbon::parse($row->created_at)->toIso8601String()];}
         return ['notifications'=>$events];
     }
     public function index(Request $request) {
-        $query=DB::table('contact_messages')->orderByDesc('id');
+        $query=DB::table('contact_messages')->orderByDesc('updated_at')->orderByDesc('id');
         if($request->filled('before_id'))$query->where('id','<',(int)$request->query('before_id'));
         $rows=$query->limit(31)->get();$items=$rows->take(30)->values();
         return ['threads'=>$items,'has_more'=>$rows->count()>30,'next_cursor'=>$items->last()?->id];
@@ -28,7 +34,8 @@ final class HubInboxController {
     public function show(int $id) {
         $row=DB::table('contact_messages')->where('id',$id)->first();abort_unless($row,404);
         $row->body=$row->message;
-        return ['thread'=>$row,'replies'=>[]];
+        \App\Workspace\LeadReplyInbox::schema();
+        return ['thread'=>$row,'replies'=>[],'is_lead'=>DB::table('hub_lead_mail_threads')->where('contact_id',$id)->exists(),'messages'=>\App\Workspace\LeadReplyInbox::messages($id)];
     }
     public function references(int $id) {
         abort_unless(DB::table('contact_messages')->where('id',$id)->exists(),404);
