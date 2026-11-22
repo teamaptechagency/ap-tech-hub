@@ -240,7 +240,7 @@ function ConnectionForm({kind}){
      <input name={name} type={type} defaultValue={saved[name]??(name==='username'?hint:'')} placeholder={hint} required/>}
    </label>)}
    <label className="field">{kind==='mail'?'Mailbox password':'OneCodeSoft API key'}<input type="password" name="secret" autoComplete="off" maxLength={512} placeholder={saved.has_secret?'********':undefined}/></label>
-   <p className="small muted">Saved settings are encrypted. Sending is pending activation.</p>
+   <p className="small muted">{kind==='mail'?'Credentials stay encrypted on the server. Sending and incoming replies use this mailbox.':'Saved settings are encrypted. SMS sending requires provider activation.'}</p>
    {notice&&<p role="status">{notice}</p>}
    <div className="flex"><button className="btn btn-dark btn-sm" disabled={busy}>{kind==='mail'?'Save mail settings':'Save SMS settings'}</button>
    {saved.has_secret&&<button className="btn btn-outline btn-sm" value="clear" disabled={busy}>Remove credential</button>}</div>

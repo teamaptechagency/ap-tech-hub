@@ -106,9 +106,9 @@ export function LeadWorkspace() {
     if(busy)return;setBusy(true);setError('');setNotice('Preparing a personalised draft for '+lead.name+'…');setReviewError('');
     try{
       if(!['discovered','ready'].includes(lead.status)){const thread=await api('/'+lead.id+'/mail-thread','POST',{});window.location.assign('/wpnazmul/messages?tab=enquiries&thread='+thread.thread_id);return;}
-      if(lead.status==='discovered'){await api('/'+lead.id+'/save','POST',{});setLeads(items=>items.map(item=>item.id===lead.id?{...item,status:'ready'}:item));}
+      if(lead.status==='discovered'){await api('/'+lead.id+'/save','POST',{});canReview=true;setLeads(items=>items.map(item=>item.id===lead.id?{...item,status:'ready'}:item));}
       const draft=await api('/'+lead.id+'/generate-draft','POST',{tone:draftTone});setSelected({...lead,...draft,status:'ready'});
-    }catch(problem){setSelected({...lead,status:'ready'});setReviewError(problem.message+' You can edit and review the draft manually.');}finally{setBusy(false);}
+    }catch(problem){if(canReview){setSelected({...lead,status:'ready'});setReviewError(problem.message+' You can edit and review the draft manually.');}else setError(problem.message);}finally{setBusy(false);setNotice('');}
   }
   function whatsappDraft(form){
     const phone=selected?.crm?.phone?.replace(/[^0-9]/g,'');if(!phone)return;
@@ -228,7 +228,7 @@ export function LeadWorkspace() {
           <button type="button" className="btn btn-outline lead-action-icon" aria-label={lead.status==='discovered'?'Save lead: '+lead.name:'Lead saved'} title={lead.status==='discovered'?'Save lead':'Saved'} data-tooltip={lead.status==='discovered'?'Save':'Saved'} disabled={busy||lead.status!=='discovered'} onClick={()=>void save(lead)}>{lead.status==='discovered'?<BookmarkPlus size={17}/>:<Check size={17}/>}</button>
           <button type="button" className="btn btn-outline lead-action-icon" aria-label={'Email '+lead.name} title="Personalised email" data-tooltip="Email" disabled={busy||lead.status==='sending'} onClick={()=>void openEmail(lead)}><Mail size={17}/></button>
           <button type="button" className="btn btn-outline lead-action-icon" aria-label={'Research public contacts: '+lead.name} title="AI contact research" data-tooltip="Find contacts" disabled={busy} onClick={()=>void contactResearch(lead)}><Sparkles size={17}/></button>
-          <button type="button" className="btn btn-outline lead-action-icon lead-action-remove" aria-label={'Remove lead: '+lead.name} title="Remove lead" data-tooltip="Remove" disabled={busy||lead.status==='sending'} onClick={()=>setRemoveTarget(lead)}><Trash2 size={17}/></button>
+          <button type="button" className="btn btn-outline lead-action-icon lead-action-remove" aria-label={'Remove lead: '+lead.name} title="Remove lead" data-tooltip="Remove" disabled={busy||lead.status==='sending'} onClick={()=>{setError('');setRemoveTarget(lead);}}><Trash2 size={17}/></button>
         </div>
       </li>)}</ul>
       </div>
@@ -258,6 +258,6 @@ export function LeadWorkspace() {
       </form>
     </div></>}
     </dialog>
-    <dialog ref={removeDialog} className="lead-email-dialog lead-remove-dialog" aria-labelledby="remove-lead-title" onCancel={event=>{if(busy)event.preventDefault();}} onClose={()=>setRemoveTarget(null)}>{removeTarget&&<><div className="panel-head"><h2 id="remove-lead-title">Remove {removeTarget.name}?</h2></div><div className="panel-body stack"><p>This removes the lead from active lists. Email and conversation history will be kept.</p><div className="flex"><button type="button" className="btn btn-outline" disabled={busy} onClick={()=>setRemoveTarget(null)}>Keep lead</button><button type="button" className="btn btn-dark" disabled={busy} onClick={()=>void removeLead(removeTarget)}>{busy?'Removing…':'Remove lead'}</button></div></div></>}</dialog>
+    <dialog ref={removeDialog} className="lead-email-dialog lead-remove-dialog" aria-labelledby="remove-lead-title" onCancel={event=>{if(busy)event.preventDefault();}} onClose={()=>setRemoveTarget(null)}>{removeTarget&&<><div className="panel-head"><h2 id="remove-lead-title">Remove {removeTarget.name}?</h2></div><div className="panel-body stack">{error&&<p role="alert">{error}</p>}<p>This removes the lead from active lists. Email and conversation history will be kept.</p><div className="flex"><button type="button" className="btn btn-outline" disabled={busy} onClick={()=>setRemoveTarget(null)}>Keep lead</button><button type="button" className="btn btn-dark" disabled={busy} onClick={()=>void removeLead(removeTarget)}>{busy?'Removing…':'Remove lead'}</button></div></div></>}</dialog>
   </div>;
 }
