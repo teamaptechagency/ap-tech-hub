@@ -1,0 +1,16 @@
+[Unit]
+Description=WP Nazmul read-only mailbox reply import
+After=network-online.target wpnazmul-laravel.service
+[Service]
+Type=oneshot
+User=as_459e306cd60901be
+Group=as_459e306cd60901be
+WorkingDirectory=/srv/wpnazmul-staging/backend
+Environment=LD_LIBRARY_PATH=/srv/wpnazmul-staging/php-ext/extracted/usr/lib/x86_64-linux-gnu
+ExecStart=/usr/bin/php8.5 -d extension=/srv/wpnazmul-staging/php-ext/extracted/usr/lib/php/20250925/dom.so -d extension=/srv/wpnazmul-staging/php-ext/extracted/usr/lib/php/20250925/mbstring.so /srv/wpnazmul-staging/backend/hub-sync-mail.php
+TimeoutStartSec=50
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/wpnazmul-staging/backend/storage /srv/wpnazmul-staging/backend/bootstrap/cache
