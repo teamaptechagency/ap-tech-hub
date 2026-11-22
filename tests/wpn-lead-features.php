@@ -24,6 +24,9 @@ try{
  LeadReplyInbox::outgoing($lead,'Fixture subject','Fixture body','accepted');LeadReplyInbox::outgoing($lead,'Fixture subject','Fixture body','accepted');
  $thread=LeadReplyInbox::ensureThread($lead);check(DB::table('hub_lead_mail_messages')->where('contact_id',$thread)->count()===1,'outgoing lead history is idempotent');
  check(DB::table('contact_messages')->where('id',$thread)->value('name')==='QA startup fixture','mail thread keeps lead name and email');
+ DB::table('hub_lead_mail_messages')->insert(['contact_id'=>$thread,'fingerprint'=>hash('sha256','qa-reply:'.$id),'direction'=>'incoming','subject'=>'Fixture reply','body'=>'A reply for this business only.','status'=>'received','created_at'=>now()]);
+ $view=$app->make(App\Http\Controllers\HubInboxController::class)->show($thread);
+ check($view['is_lead']&&count($view['messages'])===2&&$view['messages'][1]->direction==='incoming','incoming reply and sent mail share the named inbox thread');
  $controller->archive($request,$id);check(DB::table('hub_lead_mail_messages')->where('contact_id',$thread)->exists(),'archive preserves mail history');
  if(AdminAiSettings::keyFor('openai')){
   $seen=false;Http::fake(['api.openai.com/*'=>function($r)use(&$seen){$seen=str_contains($r['input'],'Publicly launched a training business')&&str_contains($r['input'],'United Kingdom');return Http::response(['output'=>[['type'=>'message','content'=>[['type'=>'output_text','text'=>json_encode(['subject'=>'Hello [[COMPANY]]','body'=>'Hi [[COMPANY]], a useful website for your new training business.'])]]]]],200);}]);
