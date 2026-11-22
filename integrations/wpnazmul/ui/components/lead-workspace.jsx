@@ -82,12 +82,12 @@ export function LeadWorkspace() {
     finally { setBusy(false); }
   }
 
-  async function removeSaved(lead) {
-    if (busy || !window.confirm('Remove '+lead.name+' from Saved leads?')) return;
+  async function removeLead(lead) {
+    if (busy || !window.confirm('Remove '+lead.name+' from active leads? Email and conversation history will be kept.')) return;
     setBusy(true);setError('');setNotice('');
     try {
       const result=await api('/'+lead.id+'/archive','POST',{});
-      setLeads(result.leads);setDetailId(null);setNotice(lead.name+' removed from Saved leads.');
+      setLeads(result.leads);setDetailId(null);setNotice(lead.name+' removed from active leads. History has been kept.');
     } catch(problem){setError(problem.message);}
     finally{setBusy(false);}
   }
@@ -201,7 +201,7 @@ export function LeadWorkspace() {
         <div className="lead-row-copy"><strong>{lead.name}</strong><p className="lead-row-contact">{[lead.crm?.contact_name,lead.crm?.role].filter(Boolean).join(" · ") || lead.email}</p>{(lead.crm?.country||lead.crm?.industry)&&<p className="lead-row-meta">{[lead.crm?.country,lead.crm?.industry].filter(Boolean).join(" · ")}</p>}{tab==="Discover"&&<><p className="lead-row-reason">{lead.reason}</p>{lead.crm?.service&&<span className="lead-service-tag">{lead.crm.service}</span>}</>}{tab==="Follow-ups"&&<p>{lead.crm.follow_up_date} · {lead.crm.follow_up_task}</p>}</div><div className={"lead-row-actions"+(tab==="Saved leads"?" lead-icon-actions":"")}><button type="button" className={tab==="Saved leads"?"btn btn-outline lead-action-icon":"link-btn"} aria-label={lead.status==="discovered"?"View details":"View saved lead"} data-tooltip={tab==="Saved leads"?"View saved lead":undefined} aria-pressed={detailId===lead.id} onClick={()=>setDetailId(lead.id)}>{tab==="Saved leads"?<Eye size={17} aria-hidden="true"/>:lead.status==="discovered"?"View details":"View saved lead"}</button>
         {lead.status==='discovered'?<button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={()=>void save(lead)}>＋ Save lead</button>:
         lead.status==='ready'?<div className="stack">{tab==='Discover'&&<span className="lead-saved-label">✓ Saved</span>}<button className={tab==="Saved leads"?"btn btn-outline lead-action-icon":"btn btn-outline btn-sm"} aria-label="Review email" data-tooltip={tab==="Saved leads"?"Review email":undefined} disabled={busy} onClick={()=>{setReviewError('');setSelected(lead);}}>{tab==="Saved leads"?<Mail size={17} aria-hidden="true"/>:"Review email"}</button></div>:
-          <span>{({accepted:'Mail sent',sending:'Sending',failed:'Mail sending failed',unconfirmed:'Delivery unconfirmed'})[lead.status]}</span>}{tab==='Saved leads'&&<button type="button" className="btn btn-outline lead-action-icon lead-action-remove" aria-label="Remove from saved" data-tooltip="Remove from saved" disabled={busy} onClick={()=>void removeSaved(lead)}><Archive size={17} aria-hidden="true"/></button>}</div>
+          <span>{({accepted:'Mail sent',sending:'Sending',failed:'Mail sending failed',unconfirmed:'Delivery unconfirmed'})[lead.status]}</span>}<button type="button" className="btn btn-outline btn-sm lead-action-remove" aria-label={"Remove lead: "+lead.name} disabled={busy||lead.status==="sending"} onClick={()=>void removeLead(lead)}><Archive size={16} aria-hidden="true"/> Remove lead</button></div>
       </li>)}</ul>
       </div>
       {shown.length>0&&<div className="panel-body lead-pagination"><span>Showing {current*6+1}–{Math.min((current+1)*6,shown.length)} of {shown.length}</span><div><button type="button" className="btn btn-outline btn-sm" disabled={!current} onClick={()=>setPage(current-1)}>Previous</button> <span>{current+1} / {pages}</span> <button type="button" className="btn btn-outline btn-sm" disabled={current+1>=pages} onClick={()=>setPage(current+1)}>Next</button></div></div>}
@@ -231,4 +231,5 @@ export function LeadWorkspace() {
     </dialog>
   </div>;
 }
+
 
