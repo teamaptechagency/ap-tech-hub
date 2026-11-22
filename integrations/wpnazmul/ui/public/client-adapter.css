@@ -1,0 +1,22 @@
+/* Client-only adapters for the owner's shared utilities and native forms. */
+.client-sign-in .panel,.client-form-panel{max-width:640px;}
+.client-project-picker{max-width:400px;margin-bottom:1rem;}
+.client-error{color:#8b2424;background:#fff1ef;padding:.75rem;border-radius:.5rem;}
+.client-pre{white-space:pre-wrap;overflow-wrap:anywhere;}
+.ws-content .row-progress .progress{margin-top:5px;}
+.ws-content .message-bubble strong,.ws-content .message-bubble time{font-size:.75rem;}
+.ws-content .message-bubble time{display:block;margin-top:.25rem;}
+.ws-content .compose-toolbar{flex-wrap:wrap;}
+.ws-content .invoice-total{margin-top:1rem;}
+@media(max-width:640px){.ws-toolbar>.btn{min-height:36px;padding:.35rem .5rem;}.ws-toolbar .avatar{display:none;}}
+.ws-content [aria-label="Private project files"] form label{display:grid;min-width:0;gap:.4rem;}
+.ws-content [aria-label="Private project files"] input[type=file]{display:block;width:100%;max-width:100%;min-width:0;}
+
+.client-panel-actions{display:flex;flex-wrap:wrap;gap:.55rem;}
+.client-panel-form{margin-block:1rem;justify-items:start;}
+.client-panel-form label.field{width:100%;}
+.client-quote-changes{margin-top:.8rem;}
+.client-quote-changes summary{cursor:pointer;font-weight:650;}
+.client-file-grid{list-style:none;padding:0;margin-block:1rem;}
+.client-file-grid .file-card{min-width:0;overflow-wrap:anywhere;}
+.client-decision{padding:0;}

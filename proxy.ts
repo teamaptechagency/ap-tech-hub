@@ -13,6 +13,8 @@ import {
 
 // Routes anyone can visit without logging in
 const PUBLIC_PATHS = [
+  // The integration handler performs fresh owner/Super Admin authorization.
+  "/api/wp-admin/",
   "/login",
   "/register",
   "/forgot-password",

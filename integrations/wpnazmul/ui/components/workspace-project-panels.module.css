@@ -1,0 +1,26 @@
+.panel h3 { margin-block: 0 .75rem; }
+.cards { display: grid; list-style: none; gap: .75rem; padding: 0; }
+.cards > li { border-radius: .75rem; border: 1px solid #dce8df; background: #f5faf6; padding: .9rem; }
+.cards li p { margin-block: .35rem 0; }
+.heading, .file { display: flex; gap: .75rem; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.badge { border-radius: 5rem; padding: .15rem .7rem; background: #e1f2e6; color: #2b5a3c; text-transform: capitalize; }
+.copy { white-space: pre-wrap; }
+.panel form .check { display: flex; align-items: center; }
+.panel .check input { flex: 0 0 auto; min-height: 0; width: auto; margin: 0; }
+
+.assistantBrief { padding: .75rem 1rem; overflow-wrap: anywhere; }
+.assistantBrief summary { cursor: pointer; }
+.assistantBrief fieldset { min-width: 0; border: 1px solid #8f9e93; margin-top: .75rem; border-radius: .5rem; }
+.messageChoices { max-height: 12rem; overflow: auto; }
+
+.compactProgress { display: grid; gap: .45rem; margin-block: 1.1rem; color: #4d6556; font-size: .85rem; }
+.compactProgress progress { width: 100%; accent-color: #42865b; }
+
+.fileGrid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));list-style:none;padding:0;gap:1rem;}
+.fileCard {display:grid;gap:.7rem;padding:1rem;border-radius:12px;border:1px solid #d8e5dc;background:#fff;overflow-wrap:anywhere;}
+.fileCard p {margin:0;color:#486152;font-size:.875rem;}
+.fileIcon, .profileIdentity svg {padding:8px;box-sizing:content-box;border-radius:8px;background:#e4f2e9;color:#2c6943;}
+.settingsGrid {display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:start;gap:1rem;}
+.settingsGrid section {margin:0;}
+.profileIdentity {display:flex;align-items:center;gap:.65rem;margin-block:.75rem;font-weight:650;}
+@media(max-width:760px) {.settingsGrid{grid-template-columns:1fr;}}

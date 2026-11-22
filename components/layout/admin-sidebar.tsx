@@ -12,6 +12,7 @@ import { GlobalSearch } from "@/components/layout/global-search";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { UserAvatar } from "@/components/layout/user-avatar";
+import { SiteSwitcher } from "@/components/layout/site-switcher";
 import type { BrandingSettings } from "@/lib/branding";
 
 import {
@@ -48,6 +49,7 @@ export type AdminNavItem = {
 };
 
 type AdminSidebarProps = {
+  canAccessWp?: boolean;
   user: {
     name: string;
     role: string;
@@ -156,11 +158,26 @@ function formatRole(role: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function AdminSidebar({ user, branding }: AdminSidebarProps) {
+export const wpNavItems: AdminNavItem[] = [
+  {label:"Dashboard",href:"/wpnazmul/overview",icon:LayoutDashboard,section:"WP Nazmul"},
+  {label:"Jobs",href:"/wpnazmul/orders",icon:Briefcase},
+  {label:"Clients",href:"/wpnazmul/clients",icon:Users},
+  {label:"Leads",href:"/wpnazmul/leads",icon:ContactRound},
+  {label:"Messages & Mailing",href:"/wpnazmul/messages?tab=enquiries",icon:MessageCircle},
+  {label:"Public live chat",href:"/wpnazmul/messages?tab=live",icon:MessageCircle},
+  {label:"Personal Assistant",href:"/wpnazmul/messages?tab=pa",icon:UserCircle},
+  {label:"Files",href:"/wpnazmul/files",icon:GalleryHorizontalEnd},
+  {label:"Invoices",href:"/wpnazmul/invoices",icon:Receipt},
+  {label:"Services",href:"/wpnazmul/services",icon:ShoppingBag},
+  {label:"Website settings",href:"/wpnazmul/settings",icon:Settings},
+  {label:"Integrations",href:"/wpnazmul/integrations",icon:Monitor},
+];
+export function AdminSidebar({ user, branding, canAccessWp=false }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [switching, setSwitching] = useState(false);
-  const exactActiveItem = adminNavItems.find((item) => item.href === pathname);
+  const navItems=canAccessWp&&pathname.startsWith('/wpnazmul')?wpNavItems:adminNavItems;
+  const exactActiveItem = navItems.find((item) => item.href.split('?')[0] === pathname);
 
   const userName = user.name.trim() || "Admin User";
   const formattedRole = formatRole(user.role);
@@ -185,6 +202,7 @@ export function AdminSidebar({ user, branding }: AdminSidebarProps) {
         <BrandMark href="/dashboard" branding={branding}  tone="inverse" />
       </div>
       <p className="hub-sidebar-label">Administration</p>
+      {canAccessWp&&<SiteSwitcher/>}
 
       {/* Global search */}
       <div className="border-b p-3">
@@ -196,7 +214,7 @@ export function AdminSidebar({ user, branding }: AdminSidebarProps) {
         aria-label="Admin navigation"
         className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-y-contain p-3"
       >
-        {adminNavItems.map((item, index) => {
+        {navItems.map((item, index) => {
           const Icon = item.icon;
 
           const isActive =
@@ -204,7 +222,7 @@ export function AdminSidebar({ user, branding }: AdminSidebarProps) {
             (!exactActiveItem && pathname.startsWith(`${item.href}/`));
 
           const showSectionHeader =
-            item.section && item.section !== adminNavItems[index - 1]?.section;
+            item.section && item.section !== navItems[index - 1]?.section;
 
           return (
             <Fragment key={item.href}>

@@ -1,4 +1,5 @@
 import { WorkspaceTopbar } from "@/components/layout/workspace-topbar";
+import { wpNazmulAccess } from "@/lib/wpnazmul-access";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -62,6 +63,7 @@ export default async function AdminLayout({
     }),
   ]);
   const userImageUrl = currentUser?.photoUrl || currentUser?.image || null;
+  const canAccessWp=!!await wpNazmulAccess();
 
   const userRole = role
     .replaceAll("_", " ")
@@ -75,6 +77,7 @@ export default async function AdminLayout({
     <div className="hub-shell flex min-h-dvh flex-col md:h-dvh md:min-h-0 md:flex-row md:overflow-hidden">
       {/* Mobile top navigation and drawer */}
       <PortalMobileNav
+        canAccessWp={canAccessWp}
         portal="admin"
         userName={userName}
         userSub={userRole}
@@ -84,6 +87,7 @@ export default async function AdminLayout({
 
       {/* Desktop sidebar */}
       <AdminSidebar
+        canAccessWp={canAccessWp}
         user={{
           name: userName,
           role,
