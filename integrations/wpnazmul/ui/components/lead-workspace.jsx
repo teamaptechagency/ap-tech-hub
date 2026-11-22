@@ -104,6 +104,7 @@ export function LeadWorkspace() {
   }
   async function openEmail(lead){
     if(busy)return;setBusy(true);setError('');setNotice('Preparing a personalised draft for '+lead.name+'…');setReviewError('');
+    let canReview=lead.status==='ready';
     try{
       if(!['discovered','ready'].includes(lead.status)){const thread=await api('/'+lead.id+'/mail-thread','POST',{});window.location.assign('/wpnazmul/messages?tab=enquiries&thread='+thread.thread_id);return;}
       if(lead.status==='discovered'){await api('/'+lead.id+'/save','POST',{});canReview=true;setLeads(items=>items.map(item=>item.id===lead.id?{...item,status:'ready'}:item));}
