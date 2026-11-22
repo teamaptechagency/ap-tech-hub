@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WebsiteMail } from "@/components/chat/website-mail";
+import { useSearchParams } from "next/navigation";
 type Conversation={id:string;name:string;email:string;mode:string;status:string;updated:string};
 type Message={id:string;actor:string;text:string;created:string};
 async function chat(input: Record<string,unknown>){
@@ -10,9 +11,10 @@ async function chat(input: Record<string,unknown>){
   const data=await response.json();if(!response.ok)throw Error(data.error||"Unable to load website chat");return data;
 }
 export function UnifiedMessages({children}:{children:ReactNode}){
-  const [tab,setTab]=useState("website");
+  const search=useSearchParams();
+  const [tab,setTab]=useState(search.get('tab')==='hub'?'hub':'website');
   const [conversations,setConversations]=useState<Conversation[]>([]);
-  const [id,setId]=useState("");const [messages,setMessages]=useState<Message[]>([]);
+  const [id,setId]=useState(search.get('conversation')||'');const [messages,setMessages]=useState<Message[]>([]);
   const [selected,setSelected]=useState<Conversation|null>(null);
   const [error,setError]=useState("");const [text,setText]=useState("");const [busy,setBusy]=useState(false);
   useEffect(()=>{

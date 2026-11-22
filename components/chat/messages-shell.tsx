@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter,useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { getOrCreateDirect } from "@/actions/message.actions";
 import { sendEmployeeReminder } from "@/actions/presence.actions";
@@ -76,9 +76,10 @@ export function MessagesShell({
   hideSpecialOrders?: boolean;
 }) {
   const router = useRouter();
+  const requestedOpen=useSearchParams().get('open');
   const visibleConversations = hideSpecialOrders ? conversations.filter(c => !c.kind.startsWith("SPECIAL")) : conversations;
   const [selectedConversation, setSelected] = useState<ConvoRow | null>(
-    (initialOpenId &&
+    (requestedOpen && visibleConversations.find(c=>c.id===requestedOpen)) || (initialOpenId &&
       visibleConversations.find((c) => c.id === initialOpenId)) ||
       visibleConversations[0] ||
       null

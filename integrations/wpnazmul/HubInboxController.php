@@ -4,6 +4,21 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 final class HubInboxController {
+    public function notifications() {
+        $events=[];
+        foreach(DB::table('contact_messages')->where('status','unread')->latest('id')->limit(30)->get(['id','name','created_at']) as $row){
+            $events[]=['key'=>'enquiry:'.$row->id,'title'=>'New website enquiry','body'=>$row->name,'href'=>'/wpnazmul/messages?tab=enquiries','createdAt'=>\Carbon\Carbon::parse($row->created_at)->toIso8601String()];
+        }
+        $latest=DB::table('acq_public_messages')->where('actor_kind','guest')->selectRaw('MAX(id) as id')->groupBy('conversation_id');
+        foreach(DB::table('acq_public_messages as m')->joinSub($latest,'latest',fn($join)=>$join->on('m.id','=','latest.id'))->join('acq_public_conversations as c','c.id','=','m.conversation_id')->join('acq_guest_identities as g','g.id','=','c.guest_identity_id')->latest('m.id')->limit(30)->get(['m.id','m.created_at','c.public_id','g.first_name']) as $row){
+            $events[]=['key'=>'public-chat:'.$row->id,'title'=>'New visitor message','body'=>$row->first_name,'href'=>'/wpnazmul/messages?tab=live&chat='.$row->public_id,'createdAt'=>\Carbon\Carbon::parse($row->created_at)->toIso8601String()];
+        }
+        $latest=DB::table('client_project_messages')->whereNotNull('client_id')->selectRaw('MAX(id) as id')->groupBy('project_id');
+        foreach(DB::table('client_project_messages as m')->joinSub($latest,'latest',fn($join)=>$join->on('m.id','=','latest.id'))->join('client_projects as p','p.id','=','m.project_id')->latest('m.id')->limit(30)->get(['m.id','m.created_at','p.public_id','p.title']) as $row){
+            $events[]=['key'=>'project-chat:'.$row->id,'title'=>'New project message','body'=>$row->title,'href'=>'/wpnazmul/orders/'.$row->public_id,'createdAt'=>\Carbon\Carbon::parse($row->created_at)->toIso8601String()];
+        }
+        return ['notifications'=>$events];
+    }
     public function index(Request $request) {
         $query=DB::table('contact_messages')->orderByDesc('id');
         if($request->filled('before_id'))$query->where('id','<',(int)$request->query('before_id'));

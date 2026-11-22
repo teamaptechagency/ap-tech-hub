@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { workspace } from '../lib/workspace-client';
+import { useSearchParams } from 'next/navigation';
 
 const api = (path = '', method, body, key) => workspace('admin', '/public-chat' + path, method, body, key);
 
 export function PublicChatInbox() {
   const [threads, setThreads] = useState(null);
-  const [selected, setSelected] = useState('');
+  const search=useSearchParams();
+  const [selected, setSelected] = useState(search.get('chat')||'');
   const [chat, setChat] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
