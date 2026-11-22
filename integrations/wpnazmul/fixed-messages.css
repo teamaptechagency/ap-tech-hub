@@ -1,0 +1,39 @@
+/* Keep the workspace fixed; scroll only lists and message history. */
+body:has(.wp-message-screen) .hub-shell{height:100dvh;min-height:0;overflow:hidden}
+body:has(.wp-message-screen) [data-hub-main]{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden!important;padding:0!important}
+body:has(.wp-message-screen) .hub-workspace-topbar{flex-shrink:0}
+body:has(.wp-message-screen) .hub-content{flex:1;min-height:0;max-width:none!important;padding:0!important;display:flex;flex-direction:column;overflow:hidden}
+body:has(.wp-message-screen) .hub-footer{display:none}
+.wp-message-screen{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:0!important;border-radius:0!important}
+.wp-message-screen .admin-inbox-tabs{flex-shrink:0;margin:0!important;padding:10px 20px!important;gap:8px;border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+.wp-message-screen .admin-inbox-tabs a{padding:9px 13px;font-size:12px;border-radius:9px}
+.wp-message-screen .inbox-compact-toolbar{flex-shrink:0;margin:0!important;min-height:48px;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.wp-message-screen .inbox-sync-status{margin:0!important;font-size:11px;min-width:0;color:var(--muted);line-height:1.4}
+.wp-message-screen .inbox-layout{flex:1;min-height:0!important;height:auto!important;max-height:none!important;margin:0!important;border-radius:0!important;border-inline:0;display:grid;grid-template-columns:minmax(220px,30%) minmax(0,1fr);overflow:hidden}
+.wp-message-screen .conversation-list{min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.wp-message-screen .inbox-search{flex-shrink:0;padding:14px}
+.wp-message-screen .conversation-items{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.wp-message-screen .conversation-panel{min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.wp-message-screen .conversation-head{flex-shrink:0;min-height:70px;padding:14px 18px;gap:12px}
+.wp-message-screen .conversation-meta{display:flex;align-items:center;gap:12px;margin-left:auto}
+.wp-message-screen .message-scroll{flex:1;min-height:0;max-height:none!important;overflow-y:auto;overscroll-behavior:contain;padding:20px;scrollbar-width:thin;overflow-wrap:anywhere}
+.wp-message-screen .message-bubble{max-width:90%;padding:12px 15px;border-radius:14px;line-height:1.65}
+.wp-message-screen .message-bubble .text-pre{font-size:13px;line-height:1.75;overflow-wrap:anywhere}
+.wp-message-screen .message-compose{flex-shrink:0;margin:0;padding:12px 18px!important;border-top:1px solid var(--line);background:var(--white);display:flex;flex-direction:column;gap:9px}
+.wp-message-screen .message-compose textarea{min-height:54px!important;height:62px!important;max-height:120px;resize:vertical;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;background:var(--bg);color:var(--ink)}
+.wp-message-screen .compose-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:36px;margin:0}
+.wp-message-screen .compose-toolbar small{font-size:10px;overflow-wrap:anywhere;min-width:0}
+.wp-message-screen .compose-toolbar button{flex-shrink:0}
+.wp-message-screen .thread-options{position:relative;font-size:13px}
+.wp-message-screen .thread-options>summary{list-style:none;display:grid;place-items:center;width:36px;height:36px;border:1px solid var(--line);border-radius:9px;font-size:22px;cursor:pointer}
+.wp-message-screen .thread-options>summary::-webkit-details-marker{display:none}
+.wp-message-screen .thread-options-popover{position:absolute;right:0;top:44px;z-index:20;width:min(290px,70vw);padding:16px;background:var(--white);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 35px #0003;max-height:50dvh;overflow:auto}
+.wp-message-screen .thread-options .field{margin:0;gap:7px}.wp-message-screen .thread-options select{width:100%}
+.wp-message-screen .quoted-mail{margin-top:10px;font-size:11px;color:var(--muted)}.wp-message-screen .quoted-mail summary{cursor:pointer}.wp-message-screen .quoted-mail p{padding-top:10px}
+.wp-message-screen .public-live-inbox{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.wp-message-screen .live-chat-picker{padding:12px 20px;border-bottom:1px solid var(--line);flex-shrink:0}
+.wp-message-screen .live-chat-picker select{min-height:42px;width:100%;border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:9px;padding:9px 12px}
+.wp-message-screen .live-chat-empty{flex:1;display:grid;place-content:center;text-align:center;gap:10px;padding:25px;color:var(--muted)}
+.wp-message-screen .live-chat-empty strong{color:var(--ink);font-size:17px}
+.wp-message-screen .public-live-inbox>p[role=alert]{padding:10px 20px;flex-shrink:0}
+@media(max-width:760px){.wp-message-screen .admin-inbox-tabs{padding:8px 10px!important}.wp-message-screen .inbox-layout{grid-template-columns:1fr}.wp-message-screen .inbox-layout:not(.thread-open)>.conversation-panel{display:none}.wp-message-screen .inbox-layout.thread-open>.conversation-list{display:none}.wp-message-screen .conversation-head{padding:11px 12px}.wp-message-screen .message-scroll{padding:14px}.wp-message-screen .message-compose{padding:10px 12px!important}body:has(.wp-message-screen) .hub-content{padding-bottom:56px!important}}
