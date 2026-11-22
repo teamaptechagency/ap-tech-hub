@@ -155,7 +155,7 @@ function Settings({profile,refresh,user}){
     {error&&<p className="admin-error" role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
     <button className="btn btn-dark btn-sm" disabled={busy}>Save public settings</button>
    </form></div></section>
-   <div className="stack"><AiSettings mode="switch"/><section className="panel"><div className="panel-head"><h2>Public site settings</h2><Icon name="globe"/></div><div className="panel-body">
+   <div className="stack"><section className="panel"><div className="panel-head"><h2>Public site settings</h2><Icon name="globe"/></div><div className="panel-body">
     <p>These fields are shown on the portfolio and in search metadata.</p><Link href="https://wpnazmul.com/" className="btn btn-outline btn-sm">Preview the portfolio</Link>
    </div></section><section className="panel"><div className="panel-head"><h2>Administrator account</h2></div><div className="panel-body"><p>{user.name}</p><p>{user.email}</p></div></section></div>
   </div>

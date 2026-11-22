@@ -274,6 +274,7 @@ export function Integrations({publishedProfile}){
  }
  return <><Title title="Integration" copy="Manage connections for your workspace."/>
  <div className="stack">
+  <AiSettings mode="switch"/>
   <AiSettings mode="key" keyProvider="openai"/>
   <AiSettings mode="key" keyProvider="gemini"/>
   <AiSettings profile={publishedProfile}/>
