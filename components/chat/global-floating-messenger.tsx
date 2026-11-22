@@ -44,6 +44,7 @@ export function GlobalFloatingMessenger({
   }, [conversations]);
 
   const hiddenOnMessagesPage =
+    pathname.startsWith("/wpnazmul") ||
     pathname === "/messages" ||
     pathname.endsWith("/messages") ||
     pathname.includes("/messages/");

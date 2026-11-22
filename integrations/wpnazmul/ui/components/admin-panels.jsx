@@ -39,7 +39,7 @@ function InboxThread({id,onUpdate,onBack}){
   const body=String(new FormData(form).get('body')).trim();
   if(!body)return;
   void act(async()=>{
-   const route=mail?.enabled?'/email':'/simulate-reply';
+   const route=mail?.enabled?'/email':'/save-draft';
    if(key.current?.body!==body||key.current?.route!==route)key.current={body,route,key:crypto.randomUUID()};
    let result;
    try{result=await adminApi(endpoint+route,'POST',{body},key.current.key);}
@@ -51,7 +51,7 @@ function InboxThread({id,onUpdate,onBack}){
     return;
    }
    key.current=null;form.reset();
-   setThread(await adminApi(endpoint));await onUpdate();setNotice('Simulated reply saved. No email was sent.');
+   setThread(await adminApi(endpoint));await onUpdate();setNotice('Draft saved. No email was sent.');
   });
  }
  if(!thread)return <p className="panel-body" role={error?'alert':'status'}>{error||'Loading enquiry…'}</p>;
@@ -68,21 +68,21 @@ function InboxThread({id,onUpdate,onBack}){
    <section aria-label="Enquiry reference files"><h3>Reference files</h3>
     {referenceError?<p role="alert">References could not be loaded.</p>:references.length?<ul className="admin-simple-list">{references.map(item=><li className="between" key={item.id}>
      <span>{item.name} · {item.bytes.toLocaleString('en')} bytes</span><a className="btn btn-outline btn-sm" download aria-label={'Download '+item.name}
-      href={'/api/v1/admin'+endpoint+'/references/'+recordId(item)+'/download'}>Download</a>
+      href={'/api/wp-admin/workspace'+endpoint+'/references/'+recordId(item)+'/download'}>Download</a>
     </li>)}</ul>:<p>No reference files attached.</p>}
    </section>
   </div>
   <div className="message-scroll admin-enquiry-log" role="log" aria-label="Enquiry conversation" tabIndex={0}>
    <div className="message-group"><div className="message-bubble"><strong>{entry.name}</strong><p className="text-pre">{entry.body}</p><time dateTime={formatDate(entry.created_at)}>{formatDate(entry.created_at)}</time></div></div>
-   {thread.replies.map(item=><div className="message-group mine" key={item.id}><div className="message-bubble"><strong>Simulated reply</strong><p className="text-pre">{item.body}</p>
+   {thread.replies.map(item=><div className="message-group mine" key={item.id}><div className="message-bubble"><strong>Draft</strong><p className="text-pre">{item.body}</p>
     <time dateTime={formatDate(item.created_at)}>{formatDate(item.created_at)}</time></div></div>)}
-   {mail?.replies.map(item=><div className="message-group mine" key={'email-'+item.id}><div className="message-bubble"><strong>Email · {item.status==='accepted'?'Accepted by mail server':'Delivery unconfirmed'}</strong><p className="text-pre">{item.body}</p>
+   {mail?.replies.map(item=><div className="message-group mine" key={'email-'+item.id}><div className="message-bubble"><strong>Email · {item.status==='draft'?'Draft':item.status==='accepted'?'Accepted by mail server':'Delivery unconfirmed'}</strong><p className="text-pre">{item.body}</p>
     <time dateTime={formatDate(item.created_at)}>{formatDate(item.created_at)}</time></div></div>)}
   </div>
   <form className="message-compose" onSubmit={reply}><label className="sr-only" htmlFor="admin-reply">Reply</label>
-   <textarea id="admin-reply" name="body" maxLength={4000} required placeholder={mail?.enabled?'Write an email reply…':'Write a local simulated reply…'}/>
+   <textarea id="admin-reply" name="body" maxLength={4000} required placeholder={mail?.enabled?'Write an email reply…':'Write an email draft…'}/>
    {error&&<p className="admin-error" role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
-   <div className="compose-toolbar"><small>{mail?.enabled?mail.sender+' → '+mail.recipient:'Email unavailable · Simulation only'}</small><button className="btn btn-dark btn-sm" disabled={busy}>{mail?.enabled?'Send email':'Save simulated reply'} <Icon name="send"/></button></div>
+   <div className="compose-toolbar"><small>{mail?.enabled?mail.sender+' → '+mail.recipient:'Email unavailable · Save a draft'}</small><button className="btn btn-dark btn-sm" disabled={busy}>{mail?.enabled?'Send email':'Save draft'} <Icon name="send"/></button></div>
   </form>
  </>;
 }
@@ -109,7 +109,7 @@ export function AdminInbox(){
  }
  const filtered=rows.filter(item=>[item.name,item.service].some(value=>value?.toLowerCase().includes(search.trim().toLowerCase())));
  const current=selected||filtered[0]?.id;
- return <><div className="ws-title"><div><h1>Good communication. Better projects.</h1><p>Read and organise public enquiries.</p></div><span className="pill pill-green"><Icon name="chat"/>Local replies</span></div>
+ return <><div className="ws-title"><div><h1>Good communication. Better projects.</h1><p>Read and organise public enquiries.</p></div><span className="pill pill-green"><Icon name="chat"/>Enquiries & email</span></div>
   {error&&<p className="admin-error" role="alert">{error}</p>}
   <section className={'inbox-layout'+(current&&mobile?' thread-open':'')} aria-label="Enquiry inbox">
    <aside className="conversation-list"><div className="inbox-search"><div className="search-field"><Icon name="search"/><input type="search"

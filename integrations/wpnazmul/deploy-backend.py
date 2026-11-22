@@ -4,11 +4,16 @@ source=Path(__file__).parent
 backend=Path('/srv/wpnazmul-staging/backend')
 backup=Path('/root/aptech-wpn-integration-'+str(int(time.time())))
 backup.mkdir(mode=0o700)
-for p in [backend/'bootstrap/app.php',backend/'.env',Path('/etc/aptech-hub/common.env')]:
+for p in [backend/'bootstrap/app.php',backend/'routes/web.php',backend/'.env',Path('/etc/aptech-hub/common.env')]:
     shutil.copy2(p,backup/(p.name+('-hub' if str(p).startswith('/etc/') else '')))
 for name in ['HubApiAccess.php','HubCsrf.php']:
     shutil.copyfile(source/name,backend/'app/Http/Middleware'/name)
     os.chmod(backend/'app/Http/Middleware'/name,0o644)
+shutil.copyfile(source/'HubInboxController.php',backend/'app/Http/Controllers/HubInboxController.php')
+shutil.copyfile(source/'hub-inbox.php',backend/'routes/hub-inbox.php')
+for p in [backend/'app/Http/Controllers/HubInboxController.php',backend/'routes/hub-inbox.php']: os.chmod(p,0o644)
+p=backend/'routes/web.php'
+if "require __DIR__.'/hub-inbox.php';" not in p.read_text(): p.write_text(p.read_text()+"\nrequire __DIR__.'/hub-inbox.php';\n")
 shutil.copyfile(source/'hub-integration.php',backend/'config/hub-integration.php')
 os.chmod(backend/'config/hub-integration.php',0o644)
 p=backend/'bootstrap/app.php';s=p.read_text()

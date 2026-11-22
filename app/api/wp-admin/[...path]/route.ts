@@ -16,7 +16,8 @@ async function proxy(request:Request,context:{params:Promise<{path:string[]}>}){
   if(!process.env.WPN_HUB_TOKEN)return NextResponse.json({error:{message:"WP Nazmul connection is not configured."}},{status:503});
   try{
     const incoming=new URL(request.url);
-    const target=new URL((area==="workspace"?'/api/v1/admin/':'/api/')+suffix,'http://127.0.0.1:18027');target.search=incoming.search;
+    const inbox=area==='workspace'&&/^inbox(?:\/\d+(?:\/references|\/save-draft)?)?$/.test(suffix);
+    const target=new URL(inbox?'/api/admin/hub-'+suffix.replace('/save-draft','/draft'):(area==="workspace"?'/api/v1/admin/':'/api/')+suffix,'http://127.0.0.1:18027');target.search=incoming.search;
     const headers=new Headers({Accept:'application/json',Authorization:`Bearer ${process.env.WPN_HUB_TOKEN}`,'X-AP-Tech-Hub':'1'});
     for(const key of ['content-type','idempotency-key']){const value=request.headers.get(key);if(value)headers.set(key,value);}
     const body=['GET','HEAD'].includes(request.method)?undefined:await request.arrayBuffer();if(body&&body.byteLength>12*1024*1024)return NextResponse.json({error:{message:"Upload too large"}},{status:413});

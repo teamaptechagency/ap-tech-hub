@@ -254,7 +254,7 @@ function ConnectionForm({kind}){
 }
 
 function Integrations({publishedProfile}){
- const live=process.env.NEXT_PUBLIC_WPN_PUBLIC_ONLY==='1';
+ const live=true;
  const [sms,setSms]=useState(null),[error,setError]=useState('');
  const [acquisition,setAcquisition]=useState(null),[acquisitionError,setAcquisitionError]=useState('');
  const [busy,setBusy]=useState(false),[review,setReview]=useState(null);

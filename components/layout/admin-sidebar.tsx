@@ -206,7 +206,7 @@ export function AdminSidebar({ user, branding, canAccessWp=false }: AdminSidebar
 
       {/* Global search */}
       <div className="border-b p-3">
-        <GlobalSearch />
+        {!pathname.startsWith('/wpnazmul')&&<GlobalSearch />}
       </div>
 
       {/* Navigation */}
