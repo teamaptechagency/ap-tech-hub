@@ -27,6 +27,8 @@ export async function getMyNotifications() {
   }));
   const internal=await getFloatingConversations();
   const root=homeFor(user.role).replace(/\/dashboard$/,'');
+  const seenThreads=internal.conversations.filter(c=>!c.unread).map(c=>`${root}/messages?tab=hub&open=${encodeURIComponent(c.id)}`);
+  if(seenThreads.length)await prisma.notification.updateMany({where:{userId:user.id,id:{startsWith:'feed-ap-thread-'},href:{in:seenThreads},readAt:null},data:{readAt:new Date()}});
   const threads=internal.conversations.filter(c=>c.unread&&c.lastAt).map(c=>({key:c.id+':'+c.lastAt,title:'New message',body:c.name+(c.lastBody?' · '+c.lastBody.slice(0,160):''),href:`${root}/messages?tab=hub&open=${encodeURIComponent(c.id)}`,createdAt:c.lastAt!}));
   sources.push({source:'ap-thread',events:threads});
   const records=sources.flatMap(s=>s.events.map(e=>({id:feedNotificationId(user.id,s.source,e.key),userId:user.id,title:e.title.slice(0,180),body:e.body.slice(0,240),href:e.href,createdAt:new Date(e.createdAt)})));
