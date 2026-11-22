@@ -1,0 +1,33 @@
+/* Public assistant: compact, readable controls on desktop and mobile. */
+.preview-assistant{width:400px;max-width:calc(100vw - 24px);height:min(620px,calc(100dvh - 108px));border-radius:22px;box-shadow:0 20px 70px #13271e30}
+.preview-assistant .widget-header{padding:20px;gap:12px;background:#192a22;color:#f4faf6}
+.preview-assistant .widget-header p{color:#bdd0c2;font-size:12px;margin-top:4px}
+.preview-assistant .widget-header .icon-btn{color:#e1eee5;border-color:#53665a;border-radius:11px}
+.preview-assistant .widget-tabs{display:flex;padding:6px 12px;gap:8px;background:#f5f8f5;border-bottom:1px solid #dce6de}
+.preview-assistant .widget-tabs button{flex:1;min-height:42px;border:0;border-radius:10px;color:#52685b;background:transparent;font-size:13px;font-weight:600;justify-content:center}
+.preview-assistant .widget-tabs button.active{background:#dff3e6;color:#214b32;box-shadow:inset 0 0 0 1px #b9dec5}
+.preview-assistant .widget-body{flex:1;min-height:70px;overflow-y:auto;padding:18px 20px;background:#fff;scrollbar-width:thin}
+.preview-assistant:has(.voice-controls) .widget-body{flex:0 1 auto;max-height:220px;min-height:58px}
+.preview-assistant:has(.voice-controls){height:auto;max-height:calc(100dvh - 108px)}
+.preview-assistant .voice-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;margin:0 16px;padding:18px;background:#f2f7f3;border:1px solid #d7e5db;border-radius:16px;color:#233b2b;font-size:13px;flex-shrink:0}
+.preview-assistant .voice-call-clock{font-size:15px;font-weight:650;display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.preview-assistant .voice-call-clock:before{content:'';width:8px;height:8px;border-radius:50%;background:#288856;box-shadow:0 0 0 4px #d9eddf}
+.preview-assistant .voice-controls .btn{min-height:42px;padding:10px 14px;border-radius:10px;border:1px solid #c9d9ce;background:#fff;color:#294734;font-size:12px;line-height:1.4;white-space:normal}
+.preview-assistant .voice-controls .voice-end-call{color:#a0353d;background:#fff0f1;border-color:#efc9cd}
+.preview-assistant .voice-controls .voice-microphone,.preview-assistant .voice-controls .voice-start-call{background:#244f36;border-color:#244f36;color:#fff;font-weight:600}
+.preview-assistant .voice-controls .voice-microphone[aria-pressed=true]{background:#a0353d;border-color:#a0353d}
+.preview-assistant .voice-language{display:grid;gap:6px;color:#536b5c;font-size:12px}
+.preview-assistant .voice-language select{width:100%;min-height:42px;padding:8px 30px 8px 10px;border:1px solid #c9d9ce;border-radius:10px;background:#fff;color:#233b2b;font-size:13px}
+.preview-assistant .voice-read-replies{grid-column:1/-1;display:flex;align-items:center;gap:9px;padding-top:12px;border-top:1px solid #d7e5db}
+.preview-assistant .voice-read-replies input{accent-color:#286d45;width:17px;height:17px;margin:0}
+.preview-assistant .voice-controls form{grid-column:1/-1;display:grid;gap:10px}
+.preview-assistant .voice-controls form label{display:grid;gap:7px}
+.preview-assistant .voice-controls input[name=code]{width:100%;min-height:44px;border:1px solid #b8cfc0;border-radius:10px;background:#fff;padding:10px 14px;font-size:20px;letter-spacing:6px;color:#233b2b}
+.preview-assistant .widget-footer{padding:13px 22px!important;margin:0!important;background:#fff;color:#597261!important;font-size:11px!important;line-height:1.6;text-align:left!important}
+.preview-assistant .widget-form{padding:14px 16px!important;border-top:1px solid #e0e8e2;background:#fff;align-items:center;gap:10px!important}
+.preview-assistant .widget-form input{min-height:46px;border-radius:12px!important;background:#f8faf8;font-size:13px!important;padding:11px 13px!important}
+.preview-assistant .widget-form button{width:44px!important;height:44px!important;min-width:44px;border-radius:12px!important;background:#28563a!important;color:#fff}
+.preview-assistant button:disabled{opacity:.5}
+.preview-assistant :is(button,input,select):focus-visible{outline:2px solid #348657;outline-offset:3px}
+.preview-assistant .widget-body [role=alert]{padding:12px;background:#fff0f1;color:#9c303a;border:1px solid #efc9cd;border-radius:10px;font-size:12px}
+@media(max-width:480px){.preview-assistant{inset:auto 12px 84px 12px;width:auto;max-width:none}.preview-assistant .widget-header{padding:17px}.preview-assistant .voice-controls{gap:12px;margin:0 12px;padding:15px}.preview-assistant .voice-call-clock{font-size:14px}}
