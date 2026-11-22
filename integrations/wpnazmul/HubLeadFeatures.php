@@ -11,7 +11,7 @@ trait HubLeadFeatures {
     }
     private function candidateAgeMatches(array $candidate,string $age,array $sources): bool {
         if($age==='any')return true;
-        if(!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$candidate['launch_date']??'')||!isset($sources[self::sourceKey($candidate['launch_source']??'')]))return false;
+        if(!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$candidate['launch_date']??'')||!str_starts_with($candidate['launch_source']??'','https://')||!isset($sources[self::sourceKey($candidate['launch_source']??'')]))return false;
         try{$date=CarbonImmutable::createFromFormat('!Y-m-d',$candidate['launch_date']);if($date->format('Y-m-d')!==$candidate['launch_date'])return false;}catch(\Throwable){return false;}
         [$min,$max]=match($age){'0-1'=>[CarbonImmutable::now()->subMonth()->startOfDay(),CarbonImmutable::now()->endOfDay()],'1-3'=>[CarbonImmutable::now()->subMonths(3)->startOfDay(),CarbonImmutable::now()->subMonth()->endOfDay()],default=>[CarbonImmutable::now()->subMonths(6)->startOfDay(),CarbonImmutable::now()->subMonths(3)->endOfDay()]};
         return $date->betweenIncluded($min,$max);
@@ -20,8 +20,8 @@ trait HubLeadFeatures {
         $meta=[];
         foreach(['country','industry'] as $key)if(is_string($candidate[$key]??null))$meta[$key]=mb_substr($candidate[$key],0,100);
         $phone=preg_replace('/[\s().-]/','',(string)($candidate['phone']??''));
-        if(preg_match('/^\+[1-9]\d{6,14}$/D',$phone)&&isset($sources[self::sourceKey($candidate['phone_source']??'')])){$meta['phone']=$phone;$meta['phone_source']=$candidate['phone_source'];}
-        if(preg_match('/^\d{4}-\d{2}-\d{2}$/D',$candidate['launch_date']??'')&&isset($sources[self::sourceKey($candidate['launch_source']??'')])){$meta['launch_date']=$candidate['launch_date'];$meta['launch_source']=$candidate['launch_source'];}
+        if(preg_match('/^\+[1-9]\d{6,14}$/D',$phone)&&str_starts_with($candidate['phone_source']??'','https://')&&isset($sources[self::sourceKey($candidate['phone_source']??'')])){$meta['phone']=$phone;$meta['phone_source']=$candidate['phone_source'];}
+        if(preg_match('/^\d{4}-\d{2}-\d{2}$/D',$candidate['launch_date']??'')&&str_starts_with($candidate['launch_source']??'','https://')&&isset($sources[self::sourceKey($candidate['launch_source']??'')])){$meta['launch_date']=$candidate['launch_date'];$meta['launch_source']=$candidate['launch_source'];}
         $meta['social_urls']=array_values(array_slice(array_filter((array)($candidate['social_urls']??[]),fn($url)=>is_string($url)&&str_starts_with($url,'https://')&&isset($sources[self::sourceKey($url)])),0,5));
         return $meta;
     }

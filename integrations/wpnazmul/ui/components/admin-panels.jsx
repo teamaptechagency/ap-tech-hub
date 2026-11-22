@@ -6,6 +6,7 @@ import { ClientActivity, ClientMessages } from './client-panels';
 import { workspace, WorkspaceError, recordId } from '../lib/workspace-client';
 import { InvoiceIssuance } from './invoice-issuance';
 import { adminLegacy } from './admin-cms';
+import { useSearchParams } from 'next/navigation';
 
 export const adminApi=(path,method,data,key)=>workspace('admin',path,method,data,key);
 const formatDate=value=>typeof value==='string'?value.slice(0,10):'';
@@ -26,7 +27,11 @@ function InboxThread({id,onUpdate,onBack}){
   adminApi(endpoint).then(data=>{if(active)setThread(data);}).catch(problem=>{if(active)setError(problem.message);});
   adminApi(endpoint+'/references').then(data=>{if(active)setReferences(data.references);}).catch(()=>{if(active)setReferenceError(true);});
   adminApi(endpoint+'/email').then(data=>{if(active)setMail(data);}).catch(()=>{});
-  return()=>{active=false;};
+  const timer=setInterval(()=>{
+   adminApi(endpoint).then(data=>{if(active)setThread(data);}).catch(()=>{});
+   adminApi(endpoint+'/email').then(data=>{if(active)setMail(data);}).catch(()=>{});
+  },5000);
+  return()=>{active=false;clearInterval(timer);};
  },[endpoint]);
  async function act(run){
   if(pending.current)return;
@@ -73,10 +78,10 @@ function InboxThread({id,onUpdate,onBack}){
    </section>
   </div>
   <div className="message-scroll admin-enquiry-log" role="log" aria-label="Enquiry conversation" tabIndex={0}>
-   <div className="message-group"><div className="message-bubble"><strong>{entry.name}</strong><p className="text-pre">{entry.body}</p><time dateTime={formatDate(entry.created_at)}>{formatDate(entry.created_at)}</time></div></div>
+   {!thread.is_lead&&<div className="message-group"><div className="message-bubble"><strong>{entry.name}</strong><p className="text-pre">{entry.body}</p><time dateTime={formatDate(entry.created_at)}>{formatDate(entry.created_at)}</time></div></div>}
    {thread.replies.map(item=><div className="message-group mine" key={item.id}><div className="message-bubble"><strong>Draft</strong><p className="text-pre">{item.body}</p>
     <time dateTime={formatDate(item.created_at)}>{formatDate(item.created_at)}</time></div></div>)}
-   {mail?.replies.map(item=><div className="message-group mine" key={'email-'+item.id}><div className="message-bubble"><strong>Email · {item.status==='draft'?'Draft':item.status==='accepted'?'Accepted by mail server':'Delivery unconfirmed'}</strong><p className="text-pre">{item.body}</p>
+   {[...(thread.messages??[]).map(item=>({...item,key:'lead-'+item.id})),...(mail?.replies??[]).map(item=>({...item,key:'email-'+item.id,direction:'outgoing'}))].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).map(item=><div className={'message-group'+(item.direction==='incoming'?'':' mine')} key={item.key}><div className="message-bubble"><strong>{item.direction==='incoming'?entry.name:'You'} · {item.status==='received'?'Email reply':item.status==='draft'?'Draft':item.status==='accepted'?'Sent':'Delivery unconfirmed'}</strong>{item.subject&&<p><strong>{item.subject}</strong></p>}<p className="text-pre">{item.body}</p>
     <time dateTime={formatDate(item.created_at)}>{formatDate(item.created_at)}</time></div></div>)}
   </div>
   <form className="message-compose" onSubmit={reply}><label className="sr-only" htmlFor="admin-reply">Reply</label>
@@ -88,9 +93,18 @@ function InboxThread({id,onUpdate,onBack}){
 }
 
 export function AdminInbox(){
- const [rows,setRows]=useState([]),[cursor,setCursor]=useState(null),[selected,setSelected]=useState(null),[mobile,setMobile]=useState(false);
+ const params=useSearchParams();
+ const [rows,setRows]=useState([]),[cursor,setCursor]=useState(null),[selected,setSelected]=useState(/^\d+$/.test(params.get('thread')||'')?Number(params.get('thread')):null),[mobile,setMobile]=useState(Boolean(params.get('thread')));
  const [search,setSearch]=useState(''),[load,setLoad]=useState(true),[error,setError]=useState('');
+ const [syncStatus,setSyncStatus]=useState('Replies sync automatically while this inbox is open.'),[syncing,setSyncing]=useState(false);
+ const syncLock=useRef(false);
  const loading=useRef(false);
+ async function syncMail(){
+  if(syncLock.current)return;syncLock.current=true;setSyncing(true);
+  try{const data=await adminApi('/inbox/sync-mail','POST',{});setSyncStatus(data.error||data.message||'Mailbox synced.');await refresh();}
+  catch(problem){setSyncStatus(problem.message);}finally{syncLock.current=false;setSyncing(false);}
+ }
+ useEffect(()=>{void syncMail();const timer=setInterval(()=>{if(!document.hidden)void syncMail();},45000);return()=>clearInterval(timer);},[]);
  useEffect(()=>{
   let active=true;
   adminApi('/inbox').then(data=>{if(active){setRows(data.threads);setCursor(data.has_more?data.next_cursor:null);}}).catch(problem=>{if(active)setError(problem.message);}).finally(()=>{if(active)setLoad(false);});
@@ -107,20 +121,20 @@ export function AdminInbox(){
    setRows(current=>[...new Map([...current,...data.threads].map(item=>[item.id,item])).values()]);setCursor(data.has_more?data.next_cursor:null);
   }catch(problem){setError(problem.message);}finally{loading.current=false;}
  }
- const filtered=rows.filter(item=>[item.name,item.service].some(value=>value?.toLowerCase().includes(search.trim().toLowerCase())));
+ const filtered=rows.filter(item=>[item.name,item.email,item.service].some(value=>value?.toLowerCase().includes(search.trim().toLowerCase())));
  const current=selected||filtered[0]?.id;
- return <><div className="ws-title"><div><h1>Good communication. Better projects.</h1><p>Read and organise public enquiries.</p></div><span className="pill pill-green"><Icon name="chat"/>Enquiries & email</span></div>
+ return <><div className="ws-title"><div><h1>Inbox</h1><p>Website enquiries and lead email replies, in one place.</p></div><button type="button" className="btn btn-outline btn-sm" disabled={syncing} onClick={()=>void syncMail()}>{syncing?'Syncing…':'Sync email replies'}</button></div><p role="status" className="inbox-sync-status">{syncStatus}</p>
   {error&&<p className="admin-error" role="alert">{error}</p>}
   <section className={'inbox-layout'+(current&&mobile?' thread-open':'')} aria-label="Enquiry inbox">
    <aside className="conversation-list"><div className="inbox-search"><div className="search-field"><Icon name="search"/><input type="search"
     aria-label="Search enquiries" placeholder="Search enquiries…" value={search} onChange={event=>{setSearch(event.target.value);setSelected(null);}}/></div></div>
     <div className="conversation-items">{filtered.map(item=><button type="button" key={item.id} className={'conversation-item '+(current===item.id?'active':'')}
      onClick={()=>{setSelected(item.id);setMobile(true);}} aria-pressed={current===item.id}><Avatar initial={item.name.slice(0,1)}/><div className="conversation-info"><strong>{item.name}</strong>
-      <p>{item.service||'Enquiry'}</p><small>{item.status}</small></div></button>)}
-    {!filtered.length&&<p className="empty-state">{load?'Loading enquiries…':'No matching enquiries.'}</p>}
+      <p>{item.email}</p><small>{item.service||'Enquiry'} · {item.status}</small></div></button>)}
+    {!filtered.length&&<p className="empty-state">{load?'Loading conversations…':search?'No matching conversations.':'No conversations yet. New enquiries and lead replies will appear here.'}</p>}
     {cursor!==null&&<button className="btn btn-outline btn-sm" type="button" onClick={()=>void older()}>Load older enquiries</button>}</div>
    </aside>
-   <div className="conversation-panel">{current?<InboxThread key={current} id={current} onUpdate={refresh} onBack={()=>setMobile(false)}/>:<p className="empty-state">Select an enquiry to view it.</p>}</div>
+   <div className="conversation-panel">{current?<InboxThread key={current} id={current} onUpdate={refresh} onBack={()=>setMobile(false)}/>:<div className="empty-state"><Icon name="chat" size={28}/><h3>Your conversations, together</h3><p>Select a name to read the conversation and reply.</p></div>}</div>
   </section>
  </>;
 }

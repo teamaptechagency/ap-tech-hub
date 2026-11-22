@@ -472,3 +472,28 @@ html[data-hub-appearance=dark] .wpnazmul-surface :is(.panel-head .link-btn,.atte
 .wpnazmul-surface .hub-client-project-counts{display:flex;justify-content:space-between;gap:12px;padding:15px 0;margin-bottom:16px;border-block:1px solid var(--line);font-size:11px;color:var(--muted)}
 .wpnazmul-surface .hub-client-project-counts strong{font-size:16px;color:var(--ink);margin-right:4px}
 @media(max-width:600px){.wpnazmul-surface .hub-clients-heading{align-items:flex-start;flex-direction:column}.wpnazmul-surface .hub-clients-panel-head{padding:18px;align-items:flex-start}.wpnazmul-surface .hub-clients-panel-head .flex{align-items:flex-start}.wpnazmul-surface .hub-clients-panel-head p{max-width:200px}.wpnazmul-surface .hub-clients-filters{padding:18px;gap:16px}.wpnazmul-surface .hub-clients-filters>.field,.wpnazmul-surface .hub-clients-filters>.field:first-child{flex-basis:100%}.wpnazmul-surface .hub-clients-grid{padding:18px}.wpnazmul-surface .hub-clients-footer{padding:15px 18px}.wpnazmul-surface .hub-clients-count{font-size:10px;padding:5px 8px}}
+
+/* Lead actions and inbox: legible in either appearance, without nested filter scrolling. */
+.wpnazmul-surface .lead-filter-panel{max-height:none;overflow:visible;position:static}
+.wpnazmul-surface .lead-row-actions.lead-icon-actions{display:flex;flex-flow:row wrap;gap:8px;align-content:start;max-width:210px}
+.wpnazmul-surface .lead-icon-actions .lead-action-icon{width:36px;height:36px;min-height:36px;display:inline-grid;place-items:center;padding:0;color:var(--ink);background:var(--white);border-color:var(--line)}
+.wpnazmul-surface .lead-icon-actions .lead-action-icon:disabled{opacity:.45;cursor:not-allowed}
+.wpnazmul-surface .lead-row-reason{font-size:13px;line-height:1.7;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.wpnazmul-surface .lead-remove-dialog{max-width:460px}
+.wpnazmul-surface .lead-mail-recipient{padding:14px 16px;border:1px solid var(--line);border-radius:8px;background:var(--green-soft);font-size:13px;line-height:1.8;overflow-wrap:anywhere}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.lead-row-contact,.lead-row-meta,.lead-row-reason,.lead-filter-intro p,.lead-results-eyebrow,.lead-source,.lead-filter-label small,.lead-filter-panel small,.lead-saved-label,.lead-tabs button,.lead-filter-panel summary){color:var(--muted)}
+html[data-hub-appearance=dark] .wpnazmul-surface .lead-tabs button[aria-pressed=true]{color:var(--green);border-color:var(--green)}
+html[data-hub-appearance=dark] .wpnazmul-surface .lead-action-remove:hover{background:#4b2d2a;color:#ffd6cd}
+.wpnazmul-surface .admin-inbox-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px;padding:0 0 14px;border-bottom:1px solid var(--line)}
+.wpnazmul-surface .admin-inbox-tabs a{display:inline-flex;align-items:center;min-height:38px;padding:8px 15px;border:1px solid transparent;border-radius:40px;font-size:13px;color:var(--muted)}
+.wpnazmul-surface .admin-inbox-tabs a[aria-current=page]{color:var(--ink);background:var(--green-soft);border-color:var(--line);font-weight:600}
+.wpnazmul-surface .inbox-layout{display:grid;grid-template-columns:minmax(240px,300px) minmax(0,1fr);width:100%;min-width:0;min-height:430px;height:min(760px,calc(100dvh - 260px));border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.wpnazmul-surface .conversation-list{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--line)}
+.wpnazmul-surface .conversation-items{min-height:0;flex:1;overflow:auto}
+.wpnazmul-surface .conversation-panel{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.wpnazmul-surface .inbox-search{padding:18px;border-bottom:1px solid var(--line)}
+.wpnazmul-surface .message-scroll{min-height:0;flex:1;overflow:auto}
+.wpnazmul-surface .conversation-panel>.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;text-align:center;padding:32px;color:var(--muted)}
+.wpnazmul-surface .conversation-info small{display:block;overflow-wrap:anywhere}
+.wpnazmul-surface .inbox-sync-status{font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.7}
+@media(max-width:760px){.wpnazmul-surface .inbox-layout{grid-template-columns:1fr;height:70dvh;min-height:400px}.wpnazmul-surface .inbox-layout:not(.thread-open)>.conversation-panel{display:none}.wpnazmul-surface .inbox-layout.thread-open>.conversation-list{display:none}.wpnazmul-surface .lead-row-actions.lead-icon-actions{max-width:none;justify-content:flex-start}.wpnazmul-surface .admin-inbox-tabs{gap:5px}.wpnazmul-surface .admin-inbox-tabs a{padding-inline:11px;font-size:12px}}

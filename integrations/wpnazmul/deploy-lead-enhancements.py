@@ -38,3 +38,7 @@ s=s.replace("        LeadReplyInbox::outgoing($lead,$input['subject'],$body,$sta
 p.write_text(s)
 shutil.copyfile(source/'hub-mail-reader.mjs',backend/'hub-mail-reader.mjs')
 (backend/'hub-mail-reader.mjs').chmod(0o644)
+
+p=backend/'app/Workspace/LeadGeneration.php';s=p.read_text()
+s=s.replace("'role' => 'nullable|string|max:60',","'role' => 'nullable|string|max:60', 'business_age'=>'nullable|in:any,0-1,1-3,3-6',")
+p.write_text(s)

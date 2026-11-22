@@ -15,7 +15,7 @@ export function LeadDetails({lead,close,save,review,api,onUpdated,busy}) {
  const represented=[lead.crm?.contact_name,lead.crm?.role].filter(Boolean).join(' · ');
  const status=({accepted:'Mail sent',sending:'Sending',unconfirmed:'Delivery unconfirmed',failed:'Mail sending failed'})[lead.status];
  const fields=[['Country',crm.country],['Business type',crm.industry],['Service fit',crm.service],['Team size',crm.team_size],
-  ['Website',<a href={lead.source} target="_blank" rel="noopener noreferrer">{lead.source}</a>],['Email',lead.email]];
+  ['Website',<a href={lead.source} target="_blank" rel="noopener noreferrer">{lead.source}</a>],['Email',lead.email],['Business phone',crm.phone],['Phone source',crm.phone_source&&<a href={crm.phone_source} target="_blank" rel="noopener noreferrer">View published source</a>],['Launch date',crm.launch_date],['Launch evidence',crm.launch_source&&<a href={crm.launch_source} target="_blank" rel="noopener noreferrer">View dated announcement</a>]];
  async function update(event,kind){
   event.preventDefault();
   if(locked)return;

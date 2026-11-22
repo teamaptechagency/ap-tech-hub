@@ -8,7 +8,7 @@ export type History = { messages: Message[]; next_cursor: number | null; has_mor
 const sessionTokens: Partial<Record<Realm, string>> = {};
 
 export class WorkspaceError extends Error {
-  constructor(message: string, readonly status: number) { super(message); }
+  constructor(message: string, readonly status: number, readonly retryAfter=0) { super(message); }
 }
 
 export async function workspace<T>(realm: Realm, path: string, method = 'GET', data?: object, key?: string): Promise<T> {
@@ -25,7 +25,8 @@ export async function workspace<T>(realm: Realm, path: string, method = 'GET', d
   if (!response.ok || !result) {
     if ([401, 419].includes(response.status)) delete sessionTokens[realm];
     const fields = Object.values(result?.error?.fields ?? {}).flat().filter(value => typeof value === 'string');
-    throw new WorkspaceError(fields.join(' ') || result?.error?.message || 'Request failed. Please try again.', response.status);
+    const retryAfter=Math.min(600,Math.max(0,Number(response.headers.get('Retry-After'))||0));
+    throw new WorkspaceError(fields.join(' ') || result?.error?.message || (response.status===429?'Please wait before trying again.':'Request failed. Please try again.'), response.status,retryAfter);
   }
   if (typeof result.csrf === 'string') sessionTokens[realm] = result.csrf;
   else if (['/login', '/logout', '/register'].includes(path)) delete sessionTokens[realm];

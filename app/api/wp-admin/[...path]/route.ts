@@ -27,7 +27,7 @@ async function proxy(request:Request,context:{params:Promise<{path:string[]}>}){
       return new Response(result.body,{headers:{'Content-Type':type||'application/octet-stream','Content-Disposition':result.headers.get('content-disposition')||'attachment','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
     }
     if(!type.includes('application/json')&&result.status!==204)return NextResponse.json({error:{message:"Unexpected response from WP Nazmul."}},{status:502});
-    return new Response(result.status===204?null:await result.text(),{status:result.status,headers:{'Content-Type':'application/json','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
+    return new Response(result.status===204?null:await result.text(),{status:result.status,headers:{'Content-Type':'application/json','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff',...(result.headers.get('retry-after')?{'Retry-After':result.headers.get('retry-after')!}:{})}});
   }catch{return NextResponse.json({error:{message:"WP Nazmul is temporarily unavailable. Check status before retrying a change."}},{status:503});}
 }
 export {proxy as GET,proxy as POST,proxy as PUT,proxy as PATCH,proxy as DELETE};
