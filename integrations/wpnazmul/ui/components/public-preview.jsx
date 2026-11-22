@@ -18,7 +18,7 @@ export function PublicHeader() {
       {[['services','Services'],['work','Selected work'],['reviews','Reviews'],['about','About me'],['contact','Contact']].map(([id,label]) =>
         <Link key={id} href={publicHref + '#' + id}>{label}</Link>)}
       {!publicOnly && <Link className="public-dock-portal" href="/client"><Icon name="user" size={16} />Client portal</Link>}
-      <Link className="public-dock-admin btn btn-dark" href="/wpnazmul">Portal</Link>
+      <Link className="public-dock-admin btn btn-dark" href="https://manage.aptechagency.com/login">Portal</Link>
       <button type="button" className="public-dock-top" onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })} aria-label="Back to top">↑ Top</button>
     </div>
   </nav>;

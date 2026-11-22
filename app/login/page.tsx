@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { LoginForm } from "@/components/auth/login-form";
 import { getBrandingSettings } from "@/lib/branding";
@@ -12,9 +11,6 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const branding = await getBrandingSettings();
-  const hostname = (await headers()).get("host")?.split(":")[0].toLowerCase();
-  const clientPortal = hostname === "portal.aptechagency.com";
-  const administration = hostname === "manage.aptechagency.com";
   const selectedAdmin = params?.workstationAdmin && params.workstationAdmin.length <= 100 ? await prisma.user.findFirst({ where: { id: params.workstationAdmin, accountStatus: "ACTIVE", role: { in: ["SUPER_ADMIN", "ADMIN", "CEO"] } }, select: { name: true, email: true, role: true } }) : null;
   const initialMessage =
     params?.message
@@ -24,19 +20,15 @@ export default async function LoginPage({
       : "";
 
   return (
-    <AuthShell administration={administration} branding={branding}>
+    <AuthShell branding={branding}>
       <div className="auth-login-form">
         <div className="auth-form-intro">
-          <p className="auth-section-kicker">{administration ? "YOUR ADMINISTRATION WORKSPACE" : "WELCOME TO YOUR WORKSPACE"}</p>
+          <p className="auth-section-kicker">WELCOME TO YOUR WORKSPACE</p>
           <h1 className="text-2xl font-bold">
-            {administration ? (
-              <>AP Tech <span className="text-primary">Administration</span></>
-            ) : (
-              <>AP Tech <span className="text-primary">Hub</span></>
-            )}
+            AP Tech <span className="text-primary">Hub</span>
           </h1>
           <p className="auth-form-tagline">
-            {clientPortal ? "Your work. One place." : administration ? "Sign in to your administration panel" : "Sign in to your portal"}
+            Your work. One place.
           </p>
         </div>
 

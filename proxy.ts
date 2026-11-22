@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { canonicalHubRedirect } from "@/lib/hub-origin";
 import { NextResponse } from "next/server";
 import { BUSINESS_POLICY_KEYS } from "@/lib/business-content";
 import {
@@ -90,6 +91,8 @@ const PUBLIC_EXACT_PATHS = [
 ];
 
 export const proxy = auth((req) => {
+  const canonical=canonicalHubRedirect(req.url);
+  if(canonical)return NextResponse.redirect(canonical,308);
   const { pathname } = req.nextUrl;
   const user = req.auth?.user;
   const impersonatedRole =
