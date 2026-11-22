@@ -1,0 +1,13 @@
+# Unified Hub notifications
+
+The Hub bell, account-name dot and website selector share one five-second client poll. Counts are per signed-in user. Opening the bell does not dismiss notifications; opening an item or choosing Mark all read does. Existing Notification records keep read receipts, and deterministic per-user/source/event IDs prevent a poll from recreating a read event. Internal conversation read markers also clear their matching imported notifications.
+
+Sources: existing Hub notifications, permitted Hub conversations, AP Tech visitor messages, WP Nazmul enquiries, public chat guest messages and client project messages. AP public chat requires active ADMIN/SUPER_ADMIN access; WP requires the existing active owner/Super Admin rule. Revoked roles cannot fetch the private feeds. External server credentials stay on loopback requests; no email or WhatsApp is sent by notification import.
+
+`notification-feed.py` backs up and patches the standalone AP service with a read-only notifications operation. Apply the tracked WP HubInboxController, HubApiAccess and hub-inbox route changes with backups and PHP syntax checks. No database migration is required. Never call the general notify helper when importing these events, since that helper can send external messages.
+
+Deployed release: `/srv/astral/sites/manage.aptechagency.com/releases/ap-tech-hub-notifications`. Main unit backup: `/root/aptech-manage-before-notifications-1795338560.service`. Standalone backups: `/root/aptech-notification-feed-1795338437`. WP adapter backups: `/root/aptech-wpn-notifications-1795338449`. Restore the unit to roll back the Hub without deleting notifications or customer records.
+
+Validation: 100 regression tests passed, then the five notification tests passed again after internal read-marker synchronization. Production Next build passed. Both authenticated backend feeds returned 200 (AP: four existing visitor-message events; WP: zero). Anonymous WP feed access returned 401; anonymous Hub WP access returned 403. Public sites/login returned 200 and old portal returned its canonical 308. All relevant live services were active. Signed-in visual QA was unavailable because the browser tool could not initialize its local assets; no live screenshot or end-to-end browser read/dismiss verification is claimed.
+
+The menu initially shows 15 recent items and can expand to the latest 60 loaded records; its unread count includes all accessible unread records. Source connection failures keep existing records and display a source status instead of silently declaring an empty feed. Old website messages may appear on a user's first notification import; Mark all read acknowledges them without changing the conversations.
