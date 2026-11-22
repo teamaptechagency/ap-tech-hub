@@ -1,0 +1,7 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),postcss=require('postcss');
+const css=fs.readFileSync(path.resolve(__dirname,'../integrations/wpnazmul/ui/hub-styles.css'),'utf8');
+const root=postcss.parse(css);
+function rules(selector){const found=[];root.walkRules(rule=>{if(rule.selector.split(',').some(s=>s.trim()===selector))found.push(rule);});return found;}
+test('shared panels, dialogs and chat bodies have real matching layout rules',()=>{for(const selector of ['.panel-body','.modal-body','.widget-body'])assert.ok(rules(selector).length,selector+' must match the rendered JSX class');const panel=rules('.panel-body');assert.ok(panel.some(r=>r.nodes.some(d=>d.prop==='padding'&&d.value!=='0')));const widget=rules('.widget-body');assert.ok(widget.some(r=>r.nodes.some(d=>d.prop==='overflow-y'&&d.value==='auto')));});
+test('scoping preserves body class names in responsive and nested selectors',()=>{root.walkRules(rule=>assert.equal(rule.selector.includes('-:scope'),false,'Class selector corrupted: '+rule.selector));for(const selector of ['.my-pa-body','.lead-filter-panel>.panel-body','.admin-sign-in .panel-body'])assert.ok(rules(selector).length,selector+' layout missing');});
+test('embedded CSS keeps its intended scope boundary',()=>{assert.ok(root.nodes.some(n=>n.type==='atrule'&&n.name==='scope'&&n.params==='(.wpnazmul-surface)'));assert.ok(css.includes('html[data-hub-appearance=dark] .wpnazmul-surface'));});
