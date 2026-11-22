@@ -1,0 +1,4 @@
+-- Additive, narrowly scoped migration. Run with database migration privileges.
+CREATE TABLE IF NOT EXISTS hub_lead_mail_threads (lead_id BIGINT UNSIGNED NOT NULL PRIMARY KEY, contact_id BIGINT UNSIGNED NOT NULL UNIQUE);
+CREATE TABLE IF NOT EXISTS hub_lead_mail_messages (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, contact_id BIGINT UNSIGNED NOT NULL, fingerprint VARCHAR(64) NOT NULL UNIQUE, direction VARCHAR(12) NOT NULL, subject VARCHAR(255) NOT NULL, body TEXT NOT NULL, status VARCHAR(30) NOT NULL, created_at TIMESTAMP NOT NULL, INDEX (contact_id));
+CREATE TABLE IF NOT EXISTS hub_lead_mail_sync (account VARCHAR(64) NOT NULL PRIMARY KEY, last_uid BIGINT UNSIGNED NOT NULL DEFAULT 0, uid_validity VARCHAR(60) NOT NULL DEFAULT '', last_attempt BIGINT UNSIGNED NOT NULL DEFAULT 0);
