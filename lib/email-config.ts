@@ -1,3 +1,4 @@
+import { emailDeliveryConfigured } from "./app-mailer";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -43,6 +44,7 @@ export async function getEmailConfig() {
   ]);
 
   return {
+    configured: Boolean(resendApiKeyFromFile || process.env.RESEND_API_KEY?.trim()) || await emailDeliveryConfigured(),
     resendApiKey:
       resendApiKeyFromFile ||
       normalizeEnvValue("RESEND_API_KEY", process.env.RESEND_API_KEY),

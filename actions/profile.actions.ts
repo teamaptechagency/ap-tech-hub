@@ -1,5 +1,6 @@
 "use server";
 
+import { emailDeliveryConfigured } from "@/lib/app-mailer";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -118,11 +119,11 @@ export async function requestSecurityVerificationCode() {
   }
 
   const emailConfig = await getEmailConfig();
-  if (!emailConfig?.resendApiKey) {
-    console.log(`[DEV] Security verification code for ${user.email}: ${code}`);
+  if (!emailConfig?.configured) {
+    return { error: "Email delivery is not configured. Open Mail setup." };
   } else {
     try {
-      const { Resend } = await import("resend");
+      const { AppMailer: Resend } = await import("@/lib/app-mailer");
       const resend = new Resend(emailConfig.resendApiKey);
       await resend.emails.send({
         from: emailConfig.emailFrom,
@@ -139,8 +140,8 @@ export async function requestSecurityVerificationCode() {
         }),
       });
     } catch (error) {
-      console.error("Security code email failed:", error);
-      console.log(`[FALLBACK] Security verification code for ${user.email}: ${code}`);
+      console.error("Verification email delivery failed");
+      return { error: "Verification email could not be sent. Check Mail setup." };
     }
   }
 

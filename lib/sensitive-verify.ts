@@ -1,3 +1,4 @@
+import { emailDeliveryConfigured } from "@/lib/app-mailer";
 import { prisma } from "@/lib/prisma";
 import { verifyTotp } from "@/lib/totp";
 import { getEmailConfig, getEmailErrorMessage } from "@/lib/email-config";
@@ -82,11 +83,11 @@ export async function requestSensitiveActionCode(
   }
 
   const emailConfig = await getEmailConfig();
-  if (!emailConfig?.resendApiKey) {
-    console.log(`[DEV] Sensitive action code for ${user.email}: ${code}`);
+  if (!emailConfig?.configured) {
+    return { error: "Email delivery is not configured. Open Mail setup." };
   } else {
     try {
-      const { Resend } = await import("resend");
+      const { AppMailer: Resend } = await import("@/lib/app-mailer");
       const resend = new Resend(emailConfig.resendApiKey);
       await resend.emails.send({
         from: emailConfig.emailFrom,
@@ -103,8 +104,8 @@ export async function requestSensitiveActionCode(
         }),
       });
     } catch (error) {
-      console.error("Sensitive action email failed:", getEmailErrorMessage(error));
-      console.log(`[FALLBACK] Sensitive action code for ${user.email}: ${code}`);
+      console.error("Verification email delivery failed");
+      return { error: "Verification email could not be sent. Check Mail setup." };
     }
   }
 

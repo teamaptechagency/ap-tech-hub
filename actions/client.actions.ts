@@ -1,4 +1,5 @@
 "use server";
+import { emailDeliveryConfigured } from "@/lib/app-mailer";
 import { loyaltyEnabled } from "@/lib/loyalty";
 
 import { prisma } from "@/lib/prisma";
@@ -98,14 +99,12 @@ async function sendClientPortalCredentialsEmail(input: {
   reset?: boolean;
 }) {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.log(
-        `[DEV] Client portal credentials mail to ${input.to}: ${input.password}`
-      );
+    if (!(await emailDeliveryConfigured())) {
+
       return;
     }
 
-    const { Resend } = await import("resend");
+    const { AppMailer: Resend } = await import("@/lib/app-mailer");
     const resend = new Resend(process.env.RESEND_API_KEY);
     const base = process.env.APP_URL ?? "http://localhost:3000";
 

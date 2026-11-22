@@ -12,7 +12,7 @@ async function chat(input: Record<string,unknown>){
 }
 export function UnifiedMessages({children}:{children:ReactNode}){
   const search=useSearchParams();
-  const [tab,setTab]=useState(search.get('tab')==='hub'?'hub':'website');
+  const [tab,setTab]=useState(search.get('tab')==='mail'?'mail':search.get('tab')==='hub'?'hub':'website');
   const [conversations,setConversations]=useState<Conversation[]>([]);
   const [id,setId]=useState(search.get('conversation')||'');const [messages,setMessages]=useState<Message[]>([]);
   const [selected,setSelected]=useState<Conversation|null>(null);

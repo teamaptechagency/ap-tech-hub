@@ -1,5 +1,6 @@
 "use server";
 
+import { emailDeliveryConfigured } from "@/lib/app-mailer";
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
@@ -77,13 +78,13 @@ function generateTemporaryPassword() {
 
 async function sendEmail(input: { to: string; subject: string; html: string }) {
   const emailConfig = await getEmailConfig();
-  if (!emailConfig.resendApiKey) {
+  if (!emailConfig.configured) {
     console.log(`[DEV] Email skipped for ${input.to}: ${input.subject}`);
     return false;
   }
 
   try {
-    const { Resend } = await import("resend");
+    const { AppMailer: Resend } = await import("@/lib/app-mailer");
     const resend = new Resend(emailConfig.resendApiKey);
     await resend.emails.send({
       from: emailConfig.emailFrom,

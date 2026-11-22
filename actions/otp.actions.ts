@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { Resend } from "resend";
+import { AppMailer as Resend, emailDeliveryConfigured } from "@/lib/app-mailer";
 import { getEmailConfig, getEmailErrorMessage } from "@/lib/email-config";
 import { renderEmail } from "@/lib/email-template";
 import { sendWhatsAppOtp } from "@/lib/whatsapp";
@@ -37,20 +37,7 @@ export async function sendOtp(email: string, phone?: string) {
   try {
     const emailConfig = await getEmailConfig();
 
-    if (!emailConfig.resendApiKey) {
-      console.log(`[DEV] OTP for ${email}: ${code}`);
-      try {
-        if (phone?.trim()) {
-          await sendWhatsAppOtp(phone, code);
-        }
-      } catch (e) {
-        console.error("OTP WhatsApp failed:", e);
-      }
-      return {
-        success: true,
-        devNote: "Email not configured - check server console for the code",
-      };
-    }
+    if (!emailConfig.configured) return { error: "Email delivery is not configured. Please contact AP Tech support." };
 
     const resend = new Resend(emailConfig.resendApiKey);
     await resend.emails.send({
@@ -67,8 +54,8 @@ export async function sendOtp(email: string, phone?: string) {
       }),
     });
   } catch (e) {
-    console.error("OTP email failed:", e);
-    console.log(`[FALLBACK] OTP for ${email}: ${code}`);
+    console.error("OTP email delivery failed");
+
     try {
       if (phone?.trim()) {
         await sendWhatsAppOtp(phone, code);

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -40,12 +41,17 @@ export default function ForgotPasswordPage() {
               onSubmit={async (e) => {
                 e.preventDefault();
                 setBusy(true);
-                await requestPasswordReset(email);
-                setBusy(false);
-                setSent(true);
+                setError("");
+                try {
+                  const result = await requestPasswordReset(email);
+                  if (result.error) setError(result.error);
+                  else setSent(true);
+                } catch { setError("Unable to request reset. Please try again."); }
+                finally { setBusy(false); }
               }}
               className="space-y-4"
             >
+              {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
               <div className="space-y-2">
                 <Label htmlFor="fpEmail">Your account email</Label>
                 <Input

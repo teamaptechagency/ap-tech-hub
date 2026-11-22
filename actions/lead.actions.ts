@@ -1,5 +1,6 @@
 "use server";
 
+import { emailDeliveryConfigured } from "@/lib/app-mailer";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
@@ -126,13 +127,12 @@ function normalizeStatus(value?: string | null): LeadStatus {
 }
 
 async function sendPlainEmail(to: string, subject: string, body: string) {
-  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
-    console.log(`[DEV] Lead email to ${to}: ${subject}\n${body}`);
-    return "SENT";
+  if (!(await emailDeliveryConfigured())) {
+    return "FAILED";
   }
 
   try {
-    const { Resend } = await import("resend");
+    const { AppMailer: Resend } = await import("@/lib/app-mailer");
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: process.env.EMAIL_FROM,
@@ -481,10 +481,10 @@ export async function sendLeadBulkEmail(input: {
   for (const lead of leads) {
     let status = "SENT";
     try {
-      if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
-        console.log(`[DEV] Lead email to ${lead.email}: ${subject}\n${body}`);
+      if (!(await emailDeliveryConfigured())) {
+        throw new Error("Email delivery is not configured. Open Mail setup.");
       } else {
-        const { Resend } = await import("resend");
+        const { AppMailer: Resend } = await import("@/lib/app-mailer");
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
           from: process.env.EMAIL_FROM,

@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { Resend } from "resend";
+import { AppMailer as Resend, emailDeliveryConfigured } from "@/lib/app-mailer";
 import { notifyAdmins } from "@/lib/notify";
 import { isEmailVerified } from "@/actions/otp.actions";
 import { captureReferralForSignup } from "@/actions/referral.actions";
@@ -43,7 +43,7 @@ async function sendRegistrationWelcomeEmail(input: {
   profession?: string;
 }) {
   try {
-    if (!process.env.RESEND_API_KEY) {
+    if (!(await emailDeliveryConfigured())) {
       console.log(
         `[DEV] Registration welcome mail to ${input.email}: ${input.kind}`
       );
@@ -99,7 +99,7 @@ async function sendRegistrationDecisionEmail(input: {
   email: string;
 }) {
   try {
-    if (!process.env.RESEND_API_KEY) {
+    if (!(await emailDeliveryConfigured())) {
       console.log(
         `[DEV] Registration decision mail to ${input.email}: ${input.action}`
       );
@@ -318,6 +318,8 @@ export async function processRegistration(
 // FORGOT PASSWORD — send reset email
 // ============================================
 export async function requestPasswordReset(email: string) {
+  if (!(await emailDeliveryConfigured())) return { error: "Email delivery is not configured. Please contact AP Tech support." };
+  email = email.trim().toLowerCase();
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (user) {
@@ -330,7 +332,7 @@ export async function requestPasswordReset(email: string) {
     });
 
     try {
-      if (process.env.RESEND_API_KEY) {
+      if (await emailDeliveryConfigured()) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const base = process.env.APP_URL ?? "http://localhost:3000";
         await resend.emails.send({

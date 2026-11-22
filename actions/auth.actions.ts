@@ -1,5 +1,6 @@
 "use server";
 
+import { emailDeliveryConfigured } from "@/lib/app-mailer";
 import { randomUUID } from "node:crypto";
 import { signIn, signOut } from "@/lib/auth";
 import { AuthError } from "next-auth";
@@ -55,11 +56,11 @@ async function sendLoginCode({
   const shouldWhatsApp = method === "WHATSAPP";
   const emailConfig = shouldEmail ? await getEmailConfig() : null;
 
-  if (shouldEmail && !emailConfig?.resendApiKey) {
-    console.log(`[DEV] Login 2FA code for ${email}: ${code}`);
+  if (shouldEmail && !emailConfig?.configured) {
+    return false;
   } else if (shouldEmail && emailConfig) {
     try {
-      const { Resend } = await import("resend");
+      const { AppMailer: Resend } = await import("@/lib/app-mailer");
       const resend = new Resend(emailConfig.resendApiKey);
       await resend.emails.send({
         from: emailConfig.emailFrom,
@@ -75,8 +76,8 @@ async function sendLoginCode({
         }),
       });
     } catch (error) {
-      console.error("2FA email failed:", error);
-      console.log(`[FALLBACK] Login 2FA code for ${email}: ${code}`);
+      console.error("2FA email delivery failed");
+      return false;
     }
   }
 
@@ -85,8 +86,10 @@ async function sendLoginCode({
       await sendWhatsAppOtp(phone, code);
     }
   } catch (error) {
-    console.error("2FA WhatsApp failed:", error);
+    console.error("2FA WhatsApp delivery failed");
+    return false;
   }
+  return true;
 }
 
 // ============================================
@@ -220,12 +223,13 @@ export async function login(formData: {
           twoFactorCodeExp: new Date(Date.now() + 10 * 60 * 1000),
         },
       });
-      await sendLoginCode({
+      const delivered = await sendLoginCode({
         email: user.email,
         code: nextCode,
         method: codeMethod,
         phone: user.phone,
       });
+      if (!delivered) return { error: "Login code could not be sent. Please contact AP Tech support." };
       return {
         requires2fa: true,
         message:
@@ -458,12 +462,13 @@ export async function requestPasswordlessLoginCode(
       twoFactorCodeExp: new Date(Date.now() + 10 * 60 * 1000),
     },
   });
-  await sendLoginCode({
+  const delivered = await sendLoginCode({
     email: user.email,
     code: nextCode,
     method,
     phone: user.phone,
   });
+  if (!delivered) return { error: "Login code could not be sent. Please contact AP Tech support." };
 
   return {
     success: true,

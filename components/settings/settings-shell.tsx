@@ -1136,6 +1136,8 @@ export function SettingsShell({
         </p>
       </div>
 
+      <Link href="/mail-setup" className="block rounded-xl border bg-card p-5 hover:bg-muted/40"><strong>Mail setup</strong><p className="mt-1 text-sm text-muted-foreground">Connect your AP Tech mailbox for OTP, password resets, notifications and Inbox. Save and test the connection here.</p></Link>
+
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {settingsSections.map((section) => {
           const active = activeSection === section.key;

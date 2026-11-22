@@ -1,3 +1,4 @@
+import { emailDeliveryConfigured } from "@/lib/app-mailer";
 import { getEmailConfig } from "@/lib/email-config";
 import { renderEmail } from "@/lib/email-template";
 import { notify } from "@/lib/notify";
@@ -56,12 +57,12 @@ export async function notifyClientActivity({
     if (recipients.length === 0) return;
 
     const config = await getEmailConfig();
-    if (!config?.resendApiKey) {
+    if (!config?.configured) {
       console.log(`[DEV] Client activity mail to ${recipients.join(", ")}: ${title} — ${body}`);
       return;
     }
 
-    const { Resend } = await import("resend");
+    const { AppMailer: Resend } = await import("@/lib/app-mailer");
     const resend = new Resend(config.resendApiKey);
     const base = process.env.APP_URL ?? "http://localhost:3000";
     const actionHref = href

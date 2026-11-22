@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Resend } from "resend";
+import { AppMailer as Resend, emailDeliveryConfigured } from "@/lib/app-mailer";
 import { renderEmail } from "@/lib/email-template";
 import { sendWhatsAppNotification } from "@/lib/whatsapp";
 
@@ -32,7 +32,7 @@ export async function notify({
   const absoluteHref = href ? `${base}${href}` : null;
 
   try {
-    if (process.env.RESEND_API_KEY) {
+    if (await emailDeliveryConfigured()) {
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       await resend.emails.send({
