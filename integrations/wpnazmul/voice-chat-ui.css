@@ -31,3 +31,12 @@
 .preview-assistant :is(button,input,select):focus-visible{outline:2px solid #348657;outline-offset:3px}
 .preview-assistant .widget-body [role=alert]{padding:12px;background:#fff0f1;color:#9c303a;border:1px solid #efc9cd;border-radius:10px;font-size:12px}
 @media(max-width:480px){.preview-assistant{inset:auto 12px 84px 12px;width:auto;max-width:none}.preview-assistant .widget-header{padding:17px}.preview-assistant .voice-controls{gap:12px;margin:0 12px;padding:15px}.preview-assistant .voice-call-clock{font-size:14px}}
+/* Keep the white chat readable even when the page behind it uses dark tokens. */
+.preview-assistant{--ink:#233b2b;--muted:#597261;--line:#d7e5db;--white:#fff;--bg:#f5f9f6;color:#233b2b;color-scheme:light}
+.preview-assistant .widget-body :is(p,strong,label,h3){color:#294734}
+.preview-assistant .widget-body>p{font-size:13px;line-height:1.7;margin:0 0 12px}
+.preview-assistant .widget-body>p:has(>strong){background:#edf5ef;padding:10px 13px;border-radius:12px}
+.preview-assistant .widget-body>button{min-height:40px;font-size:12px;margin:12px 0}
+.preview-assistant .widget-body section h3{font-size:14px;margin:12px 0}
+.preview-assistant .widget-form input{color:#233b2b!important}.preview-assistant .widget-form input::placeholder{color:#62796a;opacity:1}
+.preview-assistant .widget-body [role=alert]{color:#9c303a}
