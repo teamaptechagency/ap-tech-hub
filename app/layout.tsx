@@ -7,6 +7,7 @@ import { getBrandingSettings } from "@/lib/branding";
 import "./globals.css";
 import "./public-site.css";
 import "./hub-redesign.css";
+import "./hub-colors.css";
 import { HubThemeProvider } from "@/components/layout/hub-theme-provider";
 
 export const dynamic = "force-dynamic";

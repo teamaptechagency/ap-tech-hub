@@ -30,7 +30,7 @@ export function ImpersonationBanner({
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border hub-impersonation-banner px-3 py-2 text-sm">
       <div>
         <p className="font-semibold">
           Viewing as {targetName}{" "}
@@ -38,7 +38,7 @@ export function ImpersonationBanner({
             ({targetRole.replaceAll("_", " ").toLowerCase()})
           </span>
         </p>
-        <p className="text-xs text-amber-800">
+        <p className="text-xs">
           {targetEmail} / Super admin session kept: {adminName}
         </p>
       </div>
@@ -46,7 +46,7 @@ export function ImpersonationBanner({
         type="button"
         size="sm"
         variant="outline"
-        className="border-amber-400 bg-white text-amber-950 hover:bg-amber-100"
+        className="hub-impersonation-return"
         disabled={busy}
         onClick={goBack}
       >
