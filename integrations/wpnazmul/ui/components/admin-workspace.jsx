@@ -248,7 +248,7 @@ function ConnectionForm({kind}){
  </div>;
 }
 
-function Integrations({publishedProfile}){
+export function Integrations({publishedProfile}){
  const live=true;
  const [sms,setSms]=useState(null),[error,setError]=useState('');
  const [acquisition,setAcquisition]=useState(null),[acquisitionError,setAcquisitionError]=useState('');

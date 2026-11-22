@@ -138,6 +138,12 @@ export const adminNavItems: AdminNavItem[] = [
     section: "Support",
   },
   {
+    label: "Integration & Config",
+    href: "/integrations-config",
+    icon: Monitor,
+    section: "Account",
+  },
+  {
     label: "Settings",
     href: "/settings",
     icon: Settings,
@@ -170,7 +176,7 @@ export const wpNavItems: AdminNavItem[] = [
   {label:"Invoices",href:"/wpnazmul/invoices",icon:Receipt},
   {label:"Services",href:"/wpnazmul/services",icon:ShoppingBag},
   {label:"Website settings",href:"/wpnazmul/settings",icon:Settings},
-  {label:"Integrations",href:"/wpnazmul/integrations",icon:Monitor},
+  {label:"Integration & Config",href:"/integrations-config?tab=wpnazmul",icon:Monitor},
 ];
 export function AdminSidebar({ user, branding, canAccessWp=false }: AdminSidebarProps) {
   const pathname = usePathname();

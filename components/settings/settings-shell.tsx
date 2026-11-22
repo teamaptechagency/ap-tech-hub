@@ -1,6 +1,6 @@
 "use client";
 
-import { AiMessagingSettings } from "@/components/settings/ai-messaging-settings";
+
 
 import { type FormEvent, useState } from "react";
 import Link from "next/link";
@@ -153,7 +153,6 @@ const settingsSections: {
   label: string;
   description: string;
 }[] = [
-  { key: "ai", label: "AI Integration", description: "Website project messaging and handoff" },
   {
     key: "branding",
     label: "Branding",
@@ -1136,7 +1135,6 @@ export function SettingsShell({
         </p>
       </div>
 
-      <Link href="/mail-setup" className="block rounded-xl border bg-card p-5 hover:bg-muted/40"><strong>Mail setup</strong><p className="mt-1 text-sm text-muted-foreground">Connect your AP Tech mailbox for OTP, password resets, notifications and Inbox. Save and test the connection here.</p></Link>
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {settingsSections.map((section) => {
@@ -1164,7 +1162,6 @@ export function SettingsShell({
         })}
       </div>
 
-      {activeSection === "ai" && <AiMessagingSettings />}
 
       {activeSection === "branding" && (
       <Card>
