@@ -411,3 +411,30 @@ a.public-dock-admin.btn.btn-dark:focus-visible{outline:2px solid #397252;outline
 
 }
 .wpnazmul-surface{min-width:0;min-height:0;background:#f6f9f6;color:#173a2a;padding:20px;border-radius:12px;color-scheme:light}.wpnazmul-surface .ws-title{margin-top:0}.wpnazmul-surface .project-layout{min-width:0}
+
+/* Follow the shared Hub appearance instead of locking the embedded admin to light. */
+html[data-hub-appearance=dark] .wpnazmul-surface {
+  --ink:#e9efea;--muted:#a8b8af;--green:#b8f1cf;--green-dark:#b8f1cf;
+  --green-soft:#263e30;--line:#34483c;--bg:#14231f;--white:#1a2b25;--dark:#101f19;
+  background:var(--bg);color:var(--ink);color-scheme:dark;
+}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.panel,.stat-card,.inbox-layout,.conversation-item,.message-scroll,.message-bubble,.message-compose textarea,.field input,.field textarea,.field select,.search-field input,.filter-select,.file-card,.client-card,.modal,.modal-header,.preview-dialog,.my-pa-dialog,.lead-email-dialog,.lead-email-dialog .panel-head,.lead-context-dialog,.lead-context-head,.lead-context-footer,.my-pa-voice-notice,.order-panel,.service-option,.upload-area,.success-card,.support-option,.widget-compose input,.widget-prompts button,.widget-message,.chat-widget) {
+  background:var(--white);color:var(--ink);border-color:var(--line);
+}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.data-table th,.conversation-item:hover,.data-table tbody tr:hover,.message-system,.internal-note,.notice-box,.milestone-note,.lead-context-note,.file-icon,.activity-icon,.widget-message.system,.sidebar-help) {
+  background:var(--green-soft);color:var(--ink);border-color:var(--line);
+}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.btn-outline,.data-table .table-action) {background:var(--white);color:var(--ink);border-color:var(--line)}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.btn-outline:hover,.conversation-item.active,.service-option.selected,.message-group.mine .message-bubble) {background:var(--green-soft);color:var(--ink)}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.btn-dark,.btn-green) {background:#b8f1cf;color:#17251d;border-color:#b8f1cf}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.pill-green,.pill-gray,.lead-service-tag) {background:#263e30;color:#d8efdf;border-color:#43644e}
+html[data-hub-appearance=dark] .wpnazmul-surface .pill-blue {background:#25364b;color:#c6dcff;border-color:#415774}
+html[data-hub-appearance=dark] .wpnazmul-surface .pill-amber {background:#443724;color:#f4dcaa;border-color:#6a5738}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.admin-error,.client-error,.form-error) {background:#422a29;color:#ffd4cd;border-color:#75443f}
+html[data-hub-appearance=dark] .wpnazmul-surface input::placeholder,
+html[data-hub-appearance=dark] .wpnazmul-surface textarea::placeholder {color:var(--muted);opacity:1}
+html[data-hub-appearance=dark] .wpnazmul-surface .lead-action-icon {color:var(--ink)}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.field label,.check-list li,.data-table td,.data-table td strong,.activity-item strong,.detail-kv dd,.empty-state h3,.workload-row,.client-card .client-meta,.service-admin-row .price-text,.detail-tabs button.active) {color:var(--ink)}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.field-hint,.form-note,.ws-title p,.ws-title .date-text,.stat-card .stat-label,.stat-card .stat-detail,.project-spotlight>p,.project-spotlight .progress-meta,.milestone-note p,.activity-item p,.activity-item small,.project-row p,.row-progress small,.data-table .subtext,.attention-item p,.empty-state,.conversation-info p,.conversation-info small,.conversation-head p,.project-detail-head p,.detail-tabs button,.milestone p,.detail-kv dt,.file-card p,.client-card p,.toggle-row p,.service-admin-row p,.message-time,.widget-note,.widget-brief) {color:var(--muted)}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.notice-strip,.stat-card.highlight) {background:var(--green-soft);color:var(--ink);border-color:var(--line)}
+html[data-hub-appearance=dark] .wpnazmul-surface :is(.panel-head .link-btn,.attention-item button,.stat-card.highlight .stat-value,.compose-toolbar .icon-btn,.file-actions button) {color:var(--green)}

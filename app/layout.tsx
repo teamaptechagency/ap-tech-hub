@@ -7,6 +7,7 @@ import { getBrandingSettings } from "@/lib/branding";
 import "./globals.css";
 import "./public-site.css";
 import "./hub-redesign.css";
+import { HubThemeProvider } from "@/components/layout/hub-theme-provider";
 
 export const dynamic = "force-dynamic";
 
@@ -32,8 +33,10 @@ export default async function RootLayout({
     <html
       lang="en"
       className="h-full antialiased"
+      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
+        <HubThemeProvider>
         {children}
         <PublicVisitorTracker />
         <FaviconSync href={branding.faviconUrl} />
@@ -44,6 +47,7 @@ export default async function RootLayout({
           richColors
           closeButton
         />
+        </HubThemeProvider>
       </body>
     </html>
   );
