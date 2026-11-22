@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { HubAppearance } from "@/components/layout/hub-appearance";
 import { useNotifications } from "@/components/layout/notification-store";
 
-const names: Record<string, string> = { e: "Employee", c: "Client", r: "Referral partner", p: "Partner", g: "Growth", dashboard: "Dashboard", "blog-manager": "Blog", "special-orders": "Special orders", "business-office": "Business office", "device-activity": "Work station", "job-requests": "Job requests", "work-station": "Work station", "my-applications": "My applications" };
+const names: Record<string, string> = { e: "Employee", c: "Client", r: "Referral partner", p: "Partner", g: "Growth", dashboard: "Dashboard", "integrations-config": "Integration & Config", "blog-manager": "Blog", "special-orders": "Special orders", "business-office": "Business office", "device-activity": "Work station", "job-requests": "Job requests", "work-station": "Work station", "my-applications": "My applications" };
 
 export function WorkspaceTopbar({ role, name }: { role: string; name: string }) {
   const pathname = usePathname();
