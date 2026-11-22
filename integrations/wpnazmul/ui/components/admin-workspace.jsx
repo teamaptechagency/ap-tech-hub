@@ -173,32 +173,27 @@ function Clients({clients,orders}){
  const [search,setSearch]=useState('');
  const [verification,setVerification]=useState('all');
  const terms=search.trim().toLowerCase().split(/\s+/).filter(Boolean);
- const visible=clients.filter(client=>{
-  const text=(client.name+' '+client.email).toLowerCase();
-  return terms.every(term=>text.includes(term)) &&
-   (verification==='all'||Boolean(client.email_verified)===(verification==='verified'));
- });
- return <><Title title="The people behind the projects." copy="A simple view of your client relationships."/>
-  <div className="panel"><div className="panel-body">
-   <div className="client-search-controls">
-    <label className="field">Search clients<input type="search" placeholder="Search by name or email" value={search} onChange={event=>setSearch(event.target.value)}/></label>
-    <label className="field">Email verification<select value={verification} onChange={event=>setVerification(event.target.value)}>
-      <option value="all">All clients</option><option value="verified">Verified email</option><option value="unverified">Unverified email</option>
-    </select></label>
-    {(search||verification!=='all')&&<button type="button" className="btn btn-outline btn-sm" onClick={()=>{setSearch('');setVerification('all');}}>Clear filters</button>}
+ const filtered=Boolean(search||verification!=='all');
+ const clear=()=>{setSearch('');setVerification('all');};
+ const visible=clients.filter(client=>terms.every(term=>(client.name+' '+client.email).toLowerCase().includes(term)) && (verification==='all'||Boolean(client.email_verified)===(verification==='verified')));
+ return <section className="hub-client-directory" aria-label="Client directory">
+  <header className="hub-clients-heading"><div><p className="hub-clients-eyebrow">CLIENT RELATIONSHIPS</p><h1>Clients</h1><p>Client details, projects and conversations, together.</p></div><Link href="/wpnazmul/orders" className="btn btn-outline btn-sm"><Icon name="folder" size={17}/>View projects</Link></header>
+  <div className="hub-clients-panel">
+   <div className="hub-clients-panel-head"><div className="flex"><span className="hub-clients-symbol"><Icon name="users"/></span><div><h2>Client directory</h2><p>Find the right person and pick up where you left off.</p></div></div><span className="hub-clients-count" aria-live="polite">{clients.length} {clients.length===1?'client':'clients'}</span></div>
+   <div className="hub-clients-filters">
+    <label className="field"><span>Search clients</span><span className="hub-clients-search"><Icon name="search" size={18}/><input type="search" placeholder="Search by name or email" value={search} onChange={event=>setSearch(event.target.value)}/></span></label>
+    <label className="field"><span>Email verification</span><select value={verification} onChange={event=>setVerification(event.target.value)}><option value="all">All clients</option><option value="verified">Verified email</option><option value="unverified">Unverified email</option></select></label>
+    {filtered&&<button type="button" className="btn btn-outline btn-sm" onClick={clear}>Clear filters</button>}
    </div>
-  </div></div>
-  {visible.length?<div className="clients-grid">{visible.map(item=>{
+   {visible.length?<div className="hub-clients-grid">{visible.map(item=>{
     const projects=orders.filter(order=>order.client_id===item.id);
     const active=projects.filter(order=>!['new','completed','cancelled'].includes(order.status)).length;
-    return <article className="client-card" key={item.id}><Avatar className="large purple" initial={item.name.trim().split(/\s+/).slice(0,2).map(word=>word[0]).join('')}/><h3>{item.name}</h3><p>{item.email}</p><span className="pill pill-gray">{item.email_verified?"Verified email":"Unverified email"}</span>
-    <div className="client-meta"><span>{projects.length} loaded projects</span><span>{active} active</span></div>
-    {projects.length?<Link href={'/wpnazmul/messages?project='+encodeURIComponent(recordId(projects[0]))} className="btn btn-outline btn-sm btn-full"><Icon name="chat"/>Open conversation</Link>:
-    <Link href={'/wpnazmul/orders?client='+encodeURIComponent(item.id)} className="btn btn-outline btn-sm btn-full"><Icon name="folder"/>View projects</Link>}</article>;
-  })}</div>:<p className="empty-state" role="status">{clients.length?"No clients match your search and filter.":"No client accounts are available."}</p>}
- </>;
+    return <article className="hub-client-card" key={item.id}><div className="hub-client-card-heading"><Avatar className="large purple" initial={item.name.trim().split(/\s+/).slice(0,2).map(word=>word[0]).join('')}/><span className={'pill '+(item.email_verified?'pill-green':'pill-gray')}>{item.email_verified?'Verified email':'Unverified email'}</span></div><h3>{item.name}</h3><p className="hub-client-email">{item.email}</p><div className="hub-client-project-counts"><span><strong>{projects.length}</strong> loaded projects</span><span><strong>{active}</strong> active</span></div>{projects.length?<Link href={'/wpnazmul/messages?project='+encodeURIComponent(recordId(projects[0]))} className="btn btn-outline btn-sm btn-full"><Icon name="chat" size={16}/>Open conversation</Link>:<Link href={'/wpnazmul/orders?client='+encodeURIComponent(item.id)} className="btn btn-outline btn-sm btn-full"><Icon name="folder" size={16}/>View projects</Link>}</article>;
+   })}</div>:<div className="hub-clients-empty" role="status"><span className="hub-clients-empty-icon"><Icon name={clients.length?'search':'users'} size={28}/></span><h3>{clients.length?'No matching clients':'Your client list starts here'}</h3><p>{clients.length?'Try another name or email, or clear your filters.':'Client accounts will appear here once they join your workspace.'}</p>{filtered&&<button type="button" className="btn btn-outline btn-sm" onClick={clear}>Clear filters</button>}</div>}
+   <footer className="hub-clients-footer"><span>{filtered?visible.length+' matching clients':'All loaded clients'}</span><span><Icon name="check" size={14}/>{clients.filter(client=>client.email_verified).length} verified</span></footer>
+  </div>
+ </section>;
 }
-
 const connectionFields={
  mail:[
   ['host','SMTP host','text','smtp.hostinger.com'],

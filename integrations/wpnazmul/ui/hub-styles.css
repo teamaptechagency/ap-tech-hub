@@ -438,3 +438,37 @@ html[data-hub-appearance=dark] .wpnazmul-surface :is(.field label,.check-list li
 html[data-hub-appearance=dark] .wpnazmul-surface :is(.field-hint,.form-note,.ws-title p,.ws-title .date-text,.stat-card .stat-label,.stat-card .stat-detail,.project-spotlight>p,.project-spotlight .progress-meta,.milestone-note p,.activity-item p,.activity-item small,.project-row p,.row-progress small,.data-table .subtext,.attention-item p,.empty-state,.conversation-info p,.conversation-info small,.conversation-head p,.project-detail-head p,.detail-tabs button,.milestone p,.detail-kv dt,.file-card p,.client-card p,.toggle-row p,.service-admin-row p,.message-time,.widget-note,.widget-brief) {color:var(--muted)}
 html[data-hub-appearance=dark] .wpnazmul-surface :is(.notice-strip,.stat-card.highlight) {background:var(--green-soft);color:var(--ink);border-color:var(--line)}
 html[data-hub-appearance=dark] .wpnazmul-surface :is(.panel-head .link-btn,.attention-item button,.stat-card.highlight .stat-value,.compose-toolbar .icon-btn,.file-actions button) {color:var(--green)}
+
+/* Client directory: explicit spacing, responsive filters, and a useful empty state. */
+.wpnazmul-surface .hub-client-directory{width:100%;min-width:0;color:var(--ink)}
+.wpnazmul-surface .hub-clients-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px}
+.wpnazmul-surface .hub-clients-eyebrow{font-size:10px;font-weight:650;letter-spacing:1.5px;color:var(--green-dark);margin:0 0 10px}
+.wpnazmul-surface .hub-clients-heading h1{font-size:30px;letter-spacing:-1px;margin:0 0 10px}
+.wpnazmul-surface .hub-clients-heading>div>p:last-child{font-size:14px;line-height:1.6;color:var(--muted)}
+.wpnazmul-surface .hub-clients-panel{background:var(--white);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.wpnazmul-surface .hub-clients-panel-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:24px;border-bottom:1px solid var(--line)}
+.wpnazmul-surface .hub-clients-panel-head h2{font-size:16px;letter-spacing:-.3px;margin:0 0 4px}
+.wpnazmul-surface .hub-clients-panel-head p{font-size:12px;color:var(--muted);line-height:1.6}
+.wpnazmul-surface .hub-clients-symbol{display:grid;place-items:center;width:42px;height:42px;flex-shrink:0;background:var(--green-soft);color:var(--green-dark);border-radius:11px}
+.wpnazmul-surface .hub-clients-count{white-space:nowrap;font-size:12px;padding:6px 11px;border:1px solid var(--line);border-radius:50px;color:var(--muted)}
+.wpnazmul-surface .hub-clients-filters{display:flex;flex-wrap:wrap;align-items:end;gap:18px;padding:22px 24px;border-bottom:1px solid var(--line);background:var(--bg)}
+.wpnazmul-surface .hub-clients-filters>.field{display:grid;gap:9px;flex:1 1 210px;min-width:0;margin:0;font-size:12px;font-weight:550;color:var(--ink)}
+.wpnazmul-surface .hub-clients-filters>.field:first-child{flex:2 1 300px}
+.wpnazmul-surface .hub-clients-filters input,.wpnazmul-surface .hub-clients-filters select{width:100%;height:44px;margin:0;border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:7px;font-size:13px;padding:10px 12px}
+.wpnazmul-surface .hub-clients-search{position:relative;display:block;min-width:0}
+.wpnazmul-surface .hub-clients-search>.icon{position:absolute;left:13px;top:13px;color:var(--muted);pointer-events:none}
+.wpnazmul-surface .hub-clients-search input{padding-left:40px}
+.wpnazmul-surface .hub-clients-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;min-height:300px;padding:48px 24px;gap:13px}
+.wpnazmul-surface .hub-clients-empty-icon{width:68px;height:68px;display:grid;place-items:center;background:var(--green-soft);color:var(--green-dark);border:1px solid var(--line);border-radius:20px;margin-bottom:7px}
+.wpnazmul-surface .hub-clients-empty h3{font-size:19px;letter-spacing:-.5px;color:var(--ink)}
+.wpnazmul-surface .hub-clients-empty p{max-width:340px;font-size:13px;line-height:1.8;color:var(--muted)}
+.wpnazmul-surface .hub-clients-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:15px 24px;color:var(--muted);font-size:11px}
+.wpnazmul-surface .hub-clients-footer>span:last-child{display:flex;align-items:center;gap:6px}
+.wpnazmul-surface .hub-clients-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:18px;padding:24px}
+.wpnazmul-surface .hub-client-card{min-width:0;padding:22px;border:1px solid var(--line);border-radius:10px;background:var(--white)}
+.wpnazmul-surface .hub-client-card-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.wpnazmul-surface .hub-client-card h3{font-size:17px;letter-spacing:-.4px;color:var(--ink);overflow-wrap:anywhere}
+.wpnazmul-surface .hub-client-email{font-size:12px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere;margin:6px 0 18px}
+.wpnazmul-surface .hub-client-project-counts{display:flex;justify-content:space-between;gap:12px;padding:15px 0;margin-bottom:16px;border-block:1px solid var(--line);font-size:11px;color:var(--muted)}
+.wpnazmul-surface .hub-client-project-counts strong{font-size:16px;color:var(--ink);margin-right:4px}
+@media(max-width:600px){.wpnazmul-surface .hub-clients-heading{align-items:flex-start;flex-direction:column}.wpnazmul-surface .hub-clients-panel-head{padding:18px;align-items:flex-start}.wpnazmul-surface .hub-clients-panel-head .flex{align-items:flex-start}.wpnazmul-surface .hub-clients-panel-head p{max-width:200px}.wpnazmul-surface .hub-clients-filters{padding:18px;gap:16px}.wpnazmul-surface .hub-clients-filters>.field,.wpnazmul-surface .hub-clients-filters>.field:first-child{flex-basis:100%}.wpnazmul-surface .hub-clients-grid{padding:18px}.wpnazmul-surface .hub-clients-footer{padding:15px 18px}.wpnazmul-surface .hub-clients-count{font-size:10px;padding:5px 8px}}
