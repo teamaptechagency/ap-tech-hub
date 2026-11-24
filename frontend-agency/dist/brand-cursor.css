@@ -1,0 +1,69 @@
+.ap-logo-cursor {
+  display: none;
+  position: fixed;
+  z-index: 2147483646;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  pointer-events: none !important;
+  user-select: none;
+  /* Position follows the mouse directly; only the small mark changes shape. */
+  transition: none !important;
+}
+
+.ap-logo-cursor * {
+  pointer-events: none !important;
+  user-select: none;
+}
+
+.ap-cursor-mark {
+  display: block;
+  width: 24px;
+  height: 32px;
+  overflow: visible;
+  opacity: 0;
+  transform: scale(1);
+  transform-origin: 3px 2px;
+}
+
+.ap-logo-cursor[data-mode="pointer"] .ap-cursor-mark {
+  opacity: 1;
+  transform: scale(1);
+  transition: transform 120ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.ap-logo-cursor[data-mode="pointer"][data-hover="true"] .ap-cursor-mark {
+  transform: scale(1.07);
+}
+
+.ap-logo-cursor[data-mode="pointer"][data-pressed="true"] .ap-cursor-mark {
+  transform: scale(.94);
+}
+
+/* The real I-beam appears immediately as the arrow narrows and fades away. */
+.ap-logo-cursor[data-mode="text"] .ap-cursor-mark {
+  opacity: 0;
+  transform: scale(.12, .72);
+  transition: transform 140ms cubic-bezier(.2, .8, .2, 1), opacity 110ms ease-out;
+}
+
+@media screen and (hover: hover) and (pointer: fine) and (forced-colors: none) and (prefers-reduced-motion: no-preference) {
+  .ap-logo-cursor {
+    display: block;
+  }
+
+  html.ap-cursor-active,
+  html.ap-cursor-active * {
+    cursor: none !important;
+  }
+
+  html.ap-cursor-text,
+  html.ap-cursor-text * {
+    cursor: text !important;
+  }
+}

@@ -1,0 +1,3162 @@
+[
+  {
+    "slug": "denistek-product-ui",
+    "name": "DenisTek",
+    "category": "Product UI",
+    "summary": "UI concepts for an AI campaign assistant, from its homepage to conversation and analytics dashboards.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=190-40000",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "190:39180",
+      "pageName": "DenisTek",
+      "frameIds": [
+        "190:40000",
+        "190:39762",
+        "190:42882",
+        "190:43163"
+      ],
+      "pages": [
+        {
+          "pageId": "190:39180",
+          "pageName": "DenisTek "
+        }
+      ]
+    },
+    "cover": {
+      "nodeId": "190:39762",
+      "label": "Dashboard · Version 1",
+      "group": "Dashboard",
+      "sourceName": "Dashboard",
+      "pageId": "190:39180",
+      "pageName": "DenisTek ",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=190-39762",
+      "sourceWidth": 1440,
+      "sourceHeight": 1517,
+      "src": "/assets/portfolio/figma-190-39762-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-190-39762.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1000,
+      "fullHeight": 1053,
+      "objectPosition": "50% 0%",
+      "alt": "DenisTek — Dashboard · Version 1",
+      "pageType": "dashboard"
+    },
+    "gallery": [
+      {
+        "nodeId": "190:43163",
+        "label": "Dashboard · Version 2",
+        "group": "Dashboard",
+        "sourceName": "Dashboard",
+        "pageId": "190:39180",
+        "pageName": "DenisTek ",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=190-43163",
+        "sourceWidth": 1920,
+        "sourceHeight": 1635.3330078125,
+        "src": "/assets/portfolio/figma-190-43163-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-190-43163.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 1000,
+        "fullHeight": 852,
+        "objectPosition": "50% 0%",
+        "alt": "DenisTek — Dashboard · Version 2",
+        "pageType": "dashboard"
+      },
+      {
+        "nodeId": "190:40000",
+        "label": "Homepage",
+        "group": "Homepage variants",
+        "sourceName": "Landing",
+        "pageId": "190:39180",
+        "pageName": "DenisTek ",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=190-40000",
+        "previewRestricted": true,
+        "sourceWidth": 1440,
+        "sourceHeight": 8189.5087890625,
+        "pageType": "homepage"
+      }
+    ],
+    "description": "The homepage introduces the assistant with a clear headline, feature cards and prompts to view a demo. Two dashboard concepts arrange conversation activity, items awaiting review, AI performance data and audience analytics in an overview.",
+    "deliverables": [
+      "Product homepage UI",
+      "Conversation and analytics dashboard UI",
+      "Dashboard overview variations"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "grow-advisory-dashboard",
+    "name": "Grow Advisory",
+    "category": "Dashboard UI",
+    "summary": "An advisory dashboard UI that organises practice activity, client records, tasks and reports in one place.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=131-49648",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "131:3325",
+      "pageName": "Grow Advisory",
+      "frameIds": [
+        "131:49648",
+        "131:3322",
+        "131:54628",
+        "131:7088",
+        "131:7319",
+        "131:8386",
+        "131:14914",
+        "131:15048",
+        "131:15148",
+        "131:15248",
+        "131:15352",
+        "131:15693",
+        "131:15931",
+        "131:15997",
+        "131:16043",
+        "131:16093",
+        "131:16146",
+        "131:16191",
+        "131:16417",
+        "131:16667",
+        "131:16932",
+        "131:17123",
+        "131:17354",
+        "131:17699",
+        "131:18016",
+        "131:18298",
+        "131:18583",
+        "131:18823",
+        "131:18967",
+        "131:19100",
+        "131:19223",
+        "131:19411",
+        "131:19580",
+        "131:19827",
+        "131:20034",
+        "131:20234",
+        "131:20481",
+        "131:20617",
+        "131:20673",
+        "131:20729",
+        "131:20805",
+        "131:20986",
+        "131:21167",
+        "131:21308",
+        "131:21387",
+        "131:21535",
+        "131:21605",
+        "131:21902",
+        "131:22165",
+        "131:22387",
+        "131:22751",
+        "131:23081",
+        "131:23620",
+        "131:24070",
+        "131:24524",
+        "131:24641",
+        "131:24784",
+        "131:24995",
+        "131:25258",
+        "131:25743",
+        "131:25910",
+        "131:26054",
+        "131:26153",
+        "131:26302",
+        "131:26465",
+        "131:26634",
+        "131:26800",
+        "131:26959",
+        "131:27151",
+        "131:27276",
+        "131:27417",
+        "131:27538",
+        "131:27591",
+        "131:27804",
+        "131:27936",
+        "131:28079",
+        "131:28198",
+        "131:28322",
+        "131:28450",
+        "131:28566",
+        "131:28704",
+        "131:40258",
+        "131:28714",
+        "131:40268",
+        "131:39483",
+        "131:39623",
+        "131:39767",
+        "131:39887",
+        "131:40012",
+        "131:40141",
+        "131:40280",
+        "131:40414",
+        "131:40514",
+        "131:40614",
+        "131:40718",
+        "131:40967",
+        "131:41157",
+        "131:41289",
+        "131:41444",
+        "131:41843",
+        "131:42378",
+        "131:42815",
+        "131:42932",
+        "131:43121",
+        "131:43224",
+        "131:43277",
+        "131:43415",
+        "131:43686",
+        "131:43806",
+        "131:43927",
+        "131:44421",
+        "131:49204",
+        "131:49338",
+        "131:49438",
+        "131:49541",
+        "131:49989",
+        "131:50208",
+        "131:50274",
+        "131:50320",
+        "131:50370",
+        "131:50423",
+        "131:50468",
+        "131:50733",
+        "131:50792",
+        "131:50978",
+        "131:51323",
+        "131:51640",
+        "131:51922",
+        "131:52207",
+        "131:52409",
+        "131:52524",
+        "131:52655",
+        "131:52749",
+        "131:52937",
+        "131:52984",
+        "131:53153",
+        "131:53181",
+        "131:53428",
+        "131:53591",
+        "131:53747",
+        "131:53883",
+        "131:53939",
+        "131:53995",
+        "131:54071",
+        "131:54247",
+        "131:54392",
+        "131:54471",
+        "131:54698",
+        "131:54939",
+        "131:55179",
+        "131:55401",
+        "131:55765",
+        "131:56094",
+        "131:56673",
+        "131:57036",
+        "131:57526",
+        "131:58020",
+        "131:58131",
+        "131:58268",
+        "131:58480",
+        "131:58743",
+        "131:59268",
+        "131:59430",
+        "131:59574",
+        "131:59618",
+        "131:59717",
+        "131:59866",
+        "131:60029",
+        "131:60212",
+        "131:60378",
+        "131:60537",
+        "131:60729",
+        "131:60849",
+        "131:60976",
+        "131:61122",
+        "131:61207",
+        "131:61328",
+        "131:61381",
+        "131:61594",
+        "131:61726",
+        "131:61869",
+        "131:61988",
+        "131:62112",
+        "131:62240",
+        "131:62356",
+        "131:62493",
+        "131:63215",
+        "131:63400",
+        "131:63634",
+        "131:63881",
+        "131:64196",
+        "131:64474",
+        "131:64752",
+        "131:65021",
+        "131:65290",
+        "131:65533",
+        "131:65577",
+        "131:65658",
+        "131:65882",
+        "131:66106",
+        "131:66320",
+        "131:66349",
+        "131:66543",
+        "131:66737",
+        "131:66776",
+        "131:67047",
+        "131:67419",
+        "131:67449",
+        "131:67800",
+        "131:68171",
+        "131:68200",
+        "131:68623",
+        "131:68707",
+        "131:69071",
+        "131:69435",
+        "131:69666",
+        "131:69863",
+        "131:69977",
+        "131:70072",
+        "131:70266",
+        "131:70415",
+        "131:70579",
+        "131:70690",
+        "131:70755",
+        "131:70837",
+        "131:71190",
+        "131:135619",
+        "131:3834",
+        "131:4064",
+        "131:4251",
+        "131:4477",
+        "131:4688",
+        "131:4880",
+        "131:5253",
+        "131:5677",
+        "131:6049",
+        "131:6401",
+        "131:6766",
+        "131:7517",
+        "131:7712",
+        "131:7810",
+        "131:7893",
+        "131:7959",
+        "131:8071",
+        "131:8236",
+        "131:8740",
+        "131:9084",
+        "131:9424",
+        "131:9809",
+        "131:10157"
+      ],
+      "pages": [
+        {
+          "pageId": "131:3325",
+          "pageName": "Grow Advisory"
+        },
+        {
+          "pageId": "130:3320",
+          "pageName": "Dashboard"
+        }
+      ]
+    },
+    "cover": {
+      "nodeId": "131:49648",
+      "label": "Dashboard overview",
+      "group": "Dashboard",
+      "sourceName": "Dashboard",
+      "pageId": "131:3325",
+      "pageName": "Grow Advisory",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=131-49648",
+      "sourceWidth": 1440,
+      "sourceHeight": 1219,
+      "src": "/assets/portfolio/figma-131-49648-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-131-49648.webp",
+      "width": 700,
+      "height": 466,
+      "fullWidth": 1000,
+      "fullHeight": 847,
+      "objectPosition": "50% 0%",
+      "alt": "Grow Advisory — Dashboard overview",
+      "pageType": "dashboard"
+    },
+    "gallery": [
+      {
+        "nodeId": "131:3322",
+        "label": "Dashboard image study",
+        "group": "Dashboard",
+        "sourceName": "Dashboard 1",
+        "pageId": "130:3320",
+        "pageName": "Dashboard",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=131-3322",
+        "sourceWidth": 1148,
+        "sourceHeight": 972,
+        "src": "/assets/portfolio/figma-131-3322-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-131-3322.webp",
+        "width": 700,
+        "height": 466,
+        "fullWidth": 1000,
+        "fullHeight": 847,
+        "objectPosition": "50% 0%",
+        "alt": "Grow Advisory — Dashboard image study",
+        "pageType": "dashboard"
+      },
+      {
+        "nodeId": "131:15352",
+        "label": "Dashboard — Variant 1",
+        "group": "Dashboard",
+        "sourceName": "Dashboard",
+        "pageId": "131:3325",
+        "pageName": "Grow Advisory",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=131-15352",
+        "previewRestricted": true,
+        "sourceWidth": 1440,
+        "sourceHeight": 1219,
+        "pageType": "dashboard"
+      },
+      {
+        "nodeId": "131:40718",
+        "label": "Dashboard — Variant 2",
+        "group": "Dashboard",
+        "sourceName": "Dashboard",
+        "pageId": "131:3325",
+        "pageName": "Grow Advisory",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=131-40718",
+        "previewRestricted": true,
+        "sourceWidth": 1440,
+        "sourceHeight": 947,
+        "pageType": "dashboard"
+      }
+    ],
+    "description": "Overview designs for an accounting and advisory dashboard. The selected screens use blue and white layouts to present practice activity, key figures, task summaries and charts.",
+    "deliverables": [
+      "Overview dashboard UI",
+      "Client and task card layouts",
+      "Workflow canvas UI"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "cattlemens-kona-gold",
+    "name": "Cattlemen’s Kona Gold",
+    "category": "E-commerce UI",
+    "summary": "Coffee storefront UI pairing Hawaiian landscape photography with product collections and brand storytelling.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-162",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:162"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-162-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-162.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Cattlemen’s Kona Gold — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:162",
+      "group": "Design variations",
+      "sourceName": "Sample 1",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-162",
+      "fullWidth": 1204,
+      "fullHeight": 5307,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Hawaiian landscape photography opens this olive and gold storefront. Coffee collections, origin stories, a coffee club and journal sections introduce the products and the story behind them.",
+    "deliverables": [
+      "Storefront homepage design",
+      "Coffee product card layouts",
+      "Coffee club and journal sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "kaiserzeit-hospitality-ui",
+    "name": "Kaiserzeit",
+    "category": "UI/UX design & WordPress",
+    "summary": "UI/UX design and WordPress development for a vacation-apartment website. Current project direction: Design v3.",
+    "scope": "ui-development",
+    "website": "https://kaiserzeit-im-himmelbett.de/",
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=274-12717",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "274:1458",
+      "pageName": "Kaiserzeit",
+      "frameIds": [
+        "274:12717",
+        "274:9230",
+        "274:2193",
+        "274:2381",
+        "274:2665",
+        "274:3062",
+        "274:3251",
+        "274:3393",
+        "274:3516",
+        "274:3752",
+        "274:3988",
+        "274:4264",
+        "274:4541",
+        "274:4874",
+        "274:5289",
+        "274:5767",
+        "274:5857",
+        "274:6448",
+        "274:6637",
+        "274:8361",
+        "274:8549",
+        "274:8833",
+        "274:9419",
+        "274:9561",
+        "274:9684",
+        "274:9920",
+        "274:10163",
+        "274:10439",
+        "274:10716",
+        "274:11049",
+        "274:11363",
+        "274:11843",
+        "274:11935",
+        "274:12526"
+      ],
+      "pages": [
+        {
+          "pageId": "274:1458",
+          "pageName": "Kaiserzeit"
+        }
+      ]
+    },
+    "cover": {
+      "nodeId": "274:12717",
+      "label": "German · Homepage",
+      "group": "Homepage variants",
+      "sourceName": "Landing ",
+      "pageId": "274:1458",
+      "pageName": "Kaiserzeit",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=274-12717",
+      "sourceWidth": 1440,
+      "sourceHeight": 9120,
+      "src": "/assets/portfolio/figma-274-12717-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-274-12717.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1000,
+      "fullHeight": 6333,
+      "objectPosition": "50% 0%",
+      "alt": "Kaiserzeit — German · Homepage",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "nodeId": "274:6637",
+        "label": "English · Homepage",
+        "group": "Homepage variants",
+        "sourceName": "Landing",
+        "pageId": "274:1458",
+        "pageName": "Kaiserzeit",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=274-6637",
+        "sourceWidth": 1440,
+        "sourceHeight": 9120,
+        "src": "/assets/portfolio/figma-274-6637-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-274-6637.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 1000,
+        "fullHeight": 6333,
+        "objectPosition": "50% 0%",
+        "alt": "Kaiserzeit — English · Homepage",
+        "pageType": "homepage"
+      }
+    ],
+    "description": "A vacation-apartment website designed and developed in WordPress for Kaiserzeit im Himmelbett. The gallery presents the complete homepage designs in English and German. The current project is identified as Design v3.",
+    "deliverables": [
+      "Website UI/UX design",
+      "WordPress website development",
+      "Apartment, booking and information-page layouts",
+      "English and German page designs"
+    ],
+    "stack": [
+      "WordPress"
+    ],
+    "websiteStatus": "available",
+    "workTypes": [
+      "design",
+      "development",
+      "wordpress"
+    ],
+    "versionLabel": "Design v3"
+  },
+  {
+    "slug": "industry-insights-editorial-ui",
+    "name": "Industry Insights",
+    "category": "Editorial UI",
+    "summary": "An editorial homepage that balances a featured story, topical reading lists and a structured article grid.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=190-47361",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "190:44816",
+      "pageName": "Industry-Insights",
+      "frameIds": [
+        "190:47361",
+        "190:46073",
+        "190:46694",
+        "190:48095"
+      ],
+      "pages": [
+        {
+          "pageId": "190:44816",
+          "pageName": "Industry-Insights "
+        }
+      ]
+    },
+    "cover": {
+      "nodeId": "190:47361",
+      "label": "Homepage · Version 3",
+      "group": "Homepage variants",
+      "sourceName": "Landing_v3",
+      "pageId": "190:44816",
+      "pageName": "Industry-Insights ",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=190-47361",
+      "sourceWidth": 1920,
+      "sourceHeight": 7157,
+      "src": "/assets/portfolio/figma-190-47361-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-190-47361.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1000,
+      "fullHeight": 3725,
+      "objectPosition": "50% 0%",
+      "alt": "Industry Insights — Homepage · Version 3",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "nodeId": "190:46073",
+        "label": "Homepage · Version 1",
+        "group": "Homepage variants",
+        "sourceName": "Landing_v1",
+        "pageId": "190:44816",
+        "pageName": "Industry-Insights ",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=190-46073",
+        "sourceWidth": 1920,
+        "sourceHeight": 7189.14794921875,
+        "src": "/assets/portfolio/figma-190-46073-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-190-46073.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 1000,
+        "fullHeight": 3744,
+        "objectPosition": "50% 0%",
+        "alt": "Industry Insights — Homepage · Version 1",
+        "pageType": "homepage"
+      },
+      {
+        "nodeId": "190:46694",
+        "label": "Homepage · Version 2",
+        "group": "Homepage variants",
+        "sourceName": "Landing_v2",
+        "pageId": "190:44816",
+        "pageName": "Industry-Insights ",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=190-46694",
+        "sourceWidth": 1920,
+        "sourceHeight": 7812,
+        "src": "/assets/portfolio/figma-190-46694-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-190-46694.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 1000,
+        "fullHeight": 4065,
+        "objectPosition": "50% 0%",
+        "alt": "Industry Insights — Homepage · Version 2",
+        "pageType": "homepage"
+      },
+      {
+        "nodeId": "190:48095",
+        "label": "Homepage · Version 4",
+        "group": "Homepage variants",
+        "sourceName": "Frame 1",
+        "pageId": "190:44816",
+        "pageName": "Industry-Insights ",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=190-48095",
+        "sourceWidth": 1440,
+        "sourceHeight": 3943,
+        "src": "/assets/portfolio/figma-190-48095-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-190-48095.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 1000,
+        "fullHeight": 2738,
+        "objectPosition": "50% 0%",
+        "alt": "Industry Insights — Homepage · Version 4",
+        "pageType": "homepage"
+      }
+    ],
+    "description": "A light green and white palette frames a featured story and a ranked reading list. Category labels, article imagery and compact author details give the supporting content a consistent editorial structure.",
+    "deliverables": [
+      "Editorial homepage UI",
+      "Featured-story and topic layouts",
+      "Article-card components"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "power-technology-ui",
+    "name": "Power Technology",
+    "category": "Technology UI",
+    "summary": "Energy and industrial technology website UI with service, project and enquiry sections.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-4163",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "47:4163",
+        "47:11158",
+        "47:12718",
+        "16:1932",
+        "16:2959"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        },
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-4163-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-4163.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Power Technology — Teal and lime direction",
+      "label": "Teal and lime direction",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:4163",
+      "group": "Desktop directions",
+      "sourceName": "Frame 254",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-4163",
+      "fullWidth": 1206,
+      "fullHeight": 5072,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "src": "/assets/portfolio/figma-47-12718-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-47-12718.webp",
+        "width": 1000,
+        "height": 664,
+        "alt": "Power Technology — Dark technology direction",
+        "label": "Dark technology direction",
+        "objectPosition": "50% 0%",
+        "nodeId": "47:12718",
+        "group": "Desktop directions",
+        "sourceName": "Homepage_Desktop",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-12718",
+        "fullWidth": 1201,
+        "fullHeight": 6092,
+        "pageId": "42:2340",
+        "pageName": "Our Templete",
+        "pageType": "homepage"
+      },
+      {
+        "src": "/assets/portfolio/figma-47-11158-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-47-11158.webp",
+        "width": 1000,
+        "height": 665,
+        "alt": "Power Technology — Energy and infrastructure direction",
+        "label": "Energy and infrastructure direction",
+        "objectPosition": "50% 0%",
+        "nodeId": "47:11158",
+        "group": "Desktop directions",
+        "sourceName": "Frame 2147230948",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-11158",
+        "fullWidth": 1205,
+        "fullHeight": 4235,
+        "pageId": "42:2340",
+        "pageName": "Our Templete",
+        "pageType": "homepage"
+      },
+      {
+        "nodeId": "16:2959",
+        "label": "Responsive energy website — desktop",
+        "group": "Desktop directions",
+        "sourceName": "Desktop homepage",
+        "pageId": "0:1",
+        "pageName": "Recent Web Project",
+        "device": "desktop",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=16-2959",
+        "sourceWidth": 1920,
+        "sourceHeight": 6788,
+        "src": "/assets/portfolio/figma-16-2959-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-16-2959.webp",
+        "width": 800,
+        "height": 532,
+        "fullWidth": 1000,
+        "fullHeight": 3518,
+        "objectPosition": "50% 0%",
+        "alt": "Power Technology — Responsive energy website — desktop",
+        "pageType": "homepage"
+      },
+      {
+        "nodeId": "16:1932",
+        "label": "Energy website — mobile",
+        "group": "Mobile designs",
+        "sourceName": "Mobile homepage",
+        "pageId": "0:1",
+        "pageName": "Recent Web Project",
+        "device": "mobile",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=16-1932",
+        "sourceWidth": 375,
+        "sourceHeight": 5672,
+        "src": "/assets/portfolio/figma-16-1932-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-16-1932.webp",
+        "width": 375,
+        "height": 900,
+        "fullWidth": 375,
+        "fullHeight": 5672,
+        "objectPosition": "50% 0%",
+        "alt": "Power Technology — Energy website — mobile",
+        "pageType": "homepage"
+      }
+    ],
+    "description": "Desktop and mobile homepage concepts use infrastructure photography to introduce services, project examples and the company. The variations explore teal, orange and navy colour schemes.",
+    "deliverables": [
+      "Technology company homepage design",
+      "Service and case-study layouts",
+      "Contact and newsletter sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "advisory-consulting-solutions-ui",
+    "name": "Advisory Consulting Solutions",
+    "category": "Business website UI",
+    "summary": "A navy and gold consulting homepage concept, with a cityscape opening and a clear introduction to the services.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=274-405",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "274:2",
+      "pageName": "Advisory Consulting V4",
+      "frameIds": [
+        "274:405",
+        "274:518",
+        "274:576",
+        "274:655",
+        "274:751",
+        "274:958"
+      ],
+      "pages": [
+        {
+          "pageId": "274:2",
+          "pageName": "Advisory Consulting V4"
+        }
+      ]
+    },
+    "cover": {
+      "nodeId": "274:405",
+      "label": "Homepage · Desktop",
+      "group": "Homepage variants",
+      "sourceName": "Home",
+      "pageId": "274:2",
+      "pageName": "Advisory Consulting V4",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=274-405",
+      "sourceWidth": 1920,
+      "sourceHeight": 5541.115234375,
+      "src": "/assets/portfolio/figma-274-405-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-274-405.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1000,
+      "fullHeight": 2884,
+      "objectPosition": "50% 0%",
+      "alt": "Advisory Consulting Solutions — Homepage · Desktop",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "nodeId": "274:958",
+        "label": "Homepage · Laptop",
+        "group": "Homepage variants",
+        "sourceName": "Laptop",
+        "pageId": "274:2",
+        "pageName": "Advisory Consulting V4",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=274-958",
+        "sourceWidth": 1440,
+        "sourceHeight": 5592,
+        "src": "/assets/portfolio/figma-274-958-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-274-958.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 1000,
+        "fullHeight": 3883,
+        "objectPosition": "50% 0%",
+        "alt": "Advisory Consulting Solutions — Homepage · Laptop",
+        "pageType": "homepage"
+      }
+    ],
+    "description": "Serif headlines and cream sections contrast with a dark skyline photograph. A company introduction leads into service cards with photographs and prompts to request a consultation.",
+    "deliverables": [
+      "Consulting homepage UI",
+      "Service and approach section layouts",
+      "Consultation call-to-action design"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "irs-belgium",
+    "name": "IRS Belgium",
+    "category": "Business website UI",
+    "summary": "Automotive website UI with bold typography, vehicle imagery and repair service sections.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-2648",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:2648",
+        "47:12175"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-2648-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-2648.webp",
+      "width": 1000,
+      "height": 665,
+      "alt": "IRS Belgium — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:2648",
+      "group": "Design variations",
+      "sourceName": "Sample 2",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-2648",
+      "fullWidth": 1205,
+      "fullHeight": 5445,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "duplicateNodeIds": [
+        "47:12175"
+      ],
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "The homepage opens with a dark vehicle image, then introduces the company, repair services and a photo gallery. Orange accents and bold headings tie the sections together.",
+    "deliverables": [
+      "Automotive homepage design",
+      "Company and service section layouts",
+      "Vehicle gallery and repair cards"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "flypharma",
+    "name": "FlyPharma",
+    "category": "UI/UX design & WordPress",
+    "summary": "UI/UX design and WordPress development for a biomanufacturing website.",
+    "scope": "ui-development",
+    "website": "https://flypharma.bio/",
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-3397",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:3397"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-3397-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-3397.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "FlyPharma — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:3397",
+      "group": "Design variations",
+      "sourceName": "Sample 3 - Client Recommandetion",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-3397",
+      "fullWidth": 1206,
+      "fullHeight": 4168,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A blue and white homepage pairs technical illustrations with platform details, market information and science content. Partnership enquiry prompts complete the design.",
+    "deliverables": [
+      "Website UI/UX design",
+      "WordPress website development",
+      "Platform, market and partnership page layouts"
+    ],
+    "stack": [
+      "WordPress"
+    ],
+    "websiteStatus": "available",
+    "workTypes": [
+      "design",
+      "development",
+      "wordpress"
+    ]
+  },
+  {
+    "slug": "benchmarker",
+    "name": "Benchmarker",
+    "category": "UI/UX design & WordPress",
+    "summary": "UI/UX design and WordPress development for an automotive consultancy and training business.",
+    "scope": "ui-development",
+    "website": "https://www.benchmarker.com/",
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-5340",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:5340"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-5340-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-5340.webp",
+      "width": 1000,
+      "height": 665,
+      "alt": "Benchmarker — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:5340",
+      "group": "Design variations",
+      "sourceName": "Sample 4 - https://www.benchmarker.com/",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-5340",
+      "fullWidth": 1200,
+      "fullHeight": 3435,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Automotive photography opens a blue and orange design that introduces consulting services, training programmes and educational resources. The portfolio shows the original website design.",
+    "deliverables": [
+      "Website UI/UX design",
+      "WordPress website development",
+      "Consulting, training and resource page layouts"
+    ],
+    "stack": [
+      "WordPress"
+    ],
+    "websiteStatus": "expired",
+    "workTypes": [
+      "design",
+      "development",
+      "wordpress"
+    ],
+    "websiteNote": "The original website is expired. The project designs remain available here."
+  },
+  {
+    "slug": "bridge-the-gap-training",
+    "name": "Bridge the Gap Training",
+    "category": "UI/UX design & WordPress",
+    "summary": "UI/UX design and WordPress development for a communication-training website.",
+    "scope": "ui-development",
+    "website": "https://bridgethegap-training.com/",
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7002",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:7002"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-7002-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-7002.webp",
+      "width": 1000,
+      "height": 665,
+      "alt": "Bridge the Gap Training — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:7002",
+      "group": "Design variations",
+      "sourceName": "Sample 6 - https://bridgethegap-training.com/",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7002",
+      "fullWidth": 1200,
+      "fullHeight": 4203,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Bridge photography sets the theme for this communication training website. The content explains communication challenges, training goals and the learning approach, with clear enquiry information.",
+    "deliverables": [
+      "Website UI/UX design",
+      "WordPress website development",
+      "Training-content and enquiry layouts"
+    ],
+    "stack": [
+      "WordPress"
+    ],
+    "websiteStatus": "available",
+    "workTypes": [
+      "design",
+      "development",
+      "wordpress"
+    ]
+  },
+  {
+    "slug": "kaylashae-adventures",
+    "name": "KayLashae Adventures",
+    "category": "UI/UX design & WordPress",
+    "summary": "UI/UX design and WordPress development for an outdoor-travel and adventure website.",
+    "scope": "ui-development",
+    "website": "https://www.kaylashae.com/",
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7677",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:7677"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-7677-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-7677.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "KayLashae Adventures — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:7677",
+      "group": "Design variations",
+      "sourceName": "Sample 7 - URL Renew Expired",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7677",
+      "fullWidth": 1201,
+      "fullHeight": 3217,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Travel photography leads the homepage, followed by stories, group hikes and opportunities to collaborate. Social photos and a newsletter section complete the original website design shown here.",
+    "deliverables": [
+      "Travel website UI/UX design",
+      "WordPress website development",
+      "Article, community and newsletter layouts"
+    ],
+    "stack": [
+      "WordPress"
+    ],
+    "websiteStatus": "expired",
+    "workTypes": [
+      "design",
+      "development",
+      "wordpress"
+    ],
+    "websiteNote": "The original website is expired. The project designs remain available here."
+  },
+  {
+    "slug": "britannia-accounting",
+    "name": "Britannia Accounting",
+    "category": "UI/UX design & WordPress",
+    "summary": "UI/UX design and WordPress development for an accounting-services website.",
+    "scope": "ui-development",
+    "website": "https://brittania-accounting.com/",
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7684",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:7684"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-7684-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-7684.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Britannia Accounting — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:7684",
+      "group": "Design variations",
+      "sourceName": "Sample 8",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7684",
+      "fullWidth": 1201,
+      "fullHeight": 4103,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A navy and gold design sets out company formation information, accounting services, business details and ways to enquire. The portfolio shows the original project design.",
+    "deliverables": [
+      "Accounting website UI/UX design",
+      "WordPress website development",
+      "Service-information and contact layouts"
+    ],
+    "stack": [
+      "WordPress"
+    ],
+    "websiteStatus": "expired",
+    "workTypes": [
+      "design",
+      "development",
+      "wordpress"
+    ],
+    "websiteNote": "The original website is expired. The project designs remain available here."
+  },
+  {
+    "slug": "hoffman-biotechnology-law",
+    "name": "Hoffman Biotechnology Law",
+    "category": "UI/UX design & WordPress",
+    "summary": "UI/UX design and WordPress development for a specialist biotechnology-law website.",
+    "scope": "ui-development",
+    "website": "https://hoffmanbiotechlaw.com/",
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7694",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:7694"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-7694-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-7694.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Hoffman Biotechnology Law — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:7694",
+      "group": "Design variations",
+      "sourceName": "Sample 9 - https://hoffmanbiotechlaw.com/",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7694",
+      "fullWidth": 1201,
+      "fullHeight": 2373,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "DNA imagery introduces the specialist practice in a purple and white homepage design. Legal service cards and practice information lead to a consultation section.",
+    "deliverables": [
+      "Website UI/UX design",
+      "WordPress website development",
+      "Practice-area and consultation page layouts"
+    ],
+    "stack": [
+      "WordPress"
+    ],
+    "websiteStatus": "review",
+    "workTypes": [
+      "design",
+      "development",
+      "wordpress"
+    ],
+    "websiteNote": "External website link under review."
+  },
+  {
+    "slug": "ready-kitchen",
+    "name": "Ready Kitchen",
+    "category": "Business website UI",
+    "summary": "Commercial kitchen website UI comparing spaces and guiding visitors toward an enquiry.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7936",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:7936"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-7936-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-7936.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Ready Kitchen — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:7936",
+      "group": "Design variations",
+      "sourceName": "Sample 10",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-7936",
+      "fullWidth": 1201,
+      "fullHeight": 4302,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A clean website design for Ready Kitchen. The page presents delivery kitchens and central production units through large photographs, audience sections and FAQs, with booking and contact prompts placed throughout the layout.",
+    "deliverables": [
+      "Kitchen rental homepage design",
+      "Space and audience section layouts",
+      "FAQ and enquiry sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "pickwick-yacht-brokers",
+    "name": "Pickwick Yacht Brokers",
+    "category": "Business website UI",
+    "summary": "Yacht brokerage UI with inventory filters, listing cards and ownership service information.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-8275",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "1:8275"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-1-8275-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-1-8275.webp",
+      "width": 1000,
+      "height": 665,
+      "alt": "Pickwick Yacht Brokers — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "1:8275",
+      "group": "Design variations",
+      "sourceName": "Contest Winner Design",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=1-8275",
+      "fullWidth": 1200,
+      "fullHeight": 4555,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A marine website design for Pickwick Yacht Brokers. Yacht photography anchors the hero, while make, price and year filter controls introduce featured listings. Supporting sections cover buying, selling and editorial content.",
+    "deliverables": [
+      "Yacht brokerage homepage design",
+      "Inventory filter and listing layouts",
+      "Buying and selling service sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "trim-energy-powershave",
+    "name": "Trim Energy — PowerShave",
+    "category": "Technology UI",
+    "summary": "Landing page UI for PowerShave, presenting the energy concept through problem, solution and process sections.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=10-1465",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "10:1465",
+        "10:2356"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-10-1465-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-10-1465.webp",
+      "width": 1000,
+      "height": 665,
+      "alt": "Trim Energy — PowerShave — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "10:1465",
+      "group": "Homepage directions",
+      "sourceName": "v1.2-light",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=10-1465",
+      "fullWidth": 1200,
+      "fullHeight": 7455,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "nodeId": "10:2356",
+        "label": "Deep blue direction",
+        "group": "Homepage directions",
+        "sourceName": "v1.1-deep",
+        "pageId": "0:1",
+        "pageName": "Recent Web Project",
+        "device": "desktop",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=10-2356",
+        "sourceWidth": 1440,
+        "sourceHeight": 8956,
+        "src": "/assets/portfolio/figma-10-2356-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-10-2356.webp",
+        "width": 800,
+        "height": 532,
+        "fullWidth": 1000,
+        "fullHeight": 6214,
+        "objectPosition": "50% 0%",
+        "alt": "Trim Energy — PowerShave — Deep blue direction",
+        "pageType": "homepage"
+      }
+    ],
+    "description": "Light and deep blue homepage concepts explain the problem, introduce the proposed solution and outline the process. Technical information and a team section complete the PowerShave presentation.",
+    "deliverables": [
+      "Energy product landing page design",
+      "Problem, solution and process sections",
+      "Technical content and team layouts"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "bdtwo-business-ui-concept",
+    "name": "BDtwo Business UI Concept",
+    "category": "Business website UI",
+    "summary": "Business consultancy UI concept with service cards, project imagery and orange accents.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=12-1972",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "12:1972"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-12-1972-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-12-1972.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "BDtwo Business UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "12:1972",
+      "group": "Design variations",
+      "sourceName": "bd2",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=12-1972",
+      "fullWidth": 1198,
+      "fullHeight": 4745,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A business website concept carrying the BDtwo name. The design combines a photographic hero with company information, a multi-service grid and project tiles.",
+    "deliverables": [
+      "Business homepage concept",
+      "Multi-service card grid",
+      "Project showcase section"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "4air-dashboard",
+    "name": "4AIR Monitoring Dashboard",
+    "category": "Dashboard UI",
+    "summary": "Aviation monitoring dashboard UI organizing emissions, regulatory information and flight activity.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2134",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "23:2134"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-23-2134-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-23-2134.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "4AIR Monitoring Dashboard — Monitoring dashboard",
+      "label": "Monitoring dashboard",
+      "objectPosition": "50% 0%",
+      "nodeId": "23:2134",
+      "group": "Design variations",
+      "sourceName": "Contest Winner Design",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2134",
+      "fullWidth": 1201,
+      "fullHeight": 2263,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "dashboard"
+    },
+    "gallery": [],
+    "description": "A monitoring dashboard concept with a fixed sidebar and an overview of aviation activity. Summary cards, bar and line charts, regulatory information and a flight activity table organise the screen.",
+    "deliverables": [
+      "Dashboard screen design",
+      "Metric cards and chart layouts",
+      "Flight activity table layout"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "apoplex-projects",
+    "name": "Apoplex Projects",
+    "category": "Business website UI",
+    "summary": "Interior design and shopfitting UI with large project imagery and editorial typography.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2135",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "23:2135"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-23-2135-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-23-2135.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Apoplex Projects — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "23:2135",
+      "group": "Design variations",
+      "sourceName": "Contest Winner Design",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2135",
+      "fullWidth": 1201,
+      "fullHeight": 5022,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A warm neutral website design for Apoplex Projects. Oversized serif typography sits over interior photography, followed by service categories, a plan-design-build sequence and a selected work gallery.",
+    "deliverables": [
+      "Interior studio homepage design",
+      "Services and process sections",
+      "Selected project gallery layout"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "adhd-remapped-rise-together",
+    "name": "ADHD Remapped — Rise Together",
+    "category": "Business website UI",
+    "summary": "Coaching programme UI introducing a men’s group through clear sections and an enquiry form.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2136",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "23:2136"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-23-2136-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-23-2136.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "ADHD Remapped — Rise Together — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "23:2136",
+      "group": "Design variations",
+      "sourceName": "Contest Winner Design",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2136",
+      "fullWidth": 1201,
+      "fullHeight": 3642,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Group photography introduces the Rise Together programme from ADHD Remapped. White, charcoal and orange sections explain the group format and provide space for contact details.",
+    "deliverables": [
+      "Programme landing page design",
+      "Group format and introduction sections",
+      "Contact form layout"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "raoatech-digital-newsroom",
+    "name": "RAOATECH Digital Newsroom",
+    "category": "Editorial UI",
+    "summary": "Digital magazine UI with topic navigation, article collections and clear sections for newsletters and community discussion.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2137",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "23:2137",
+        "23:2138",
+        "23:2147"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-23-2137-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-23-2137.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "RAOATECH Digital Newsroom — Light editorial direction",
+      "label": "Light editorial direction",
+      "objectPosition": "50% 0%",
+      "nodeId": "23:2137",
+      "group": "Theme directions",
+      "sourceName": "Contest Winner Design",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2137",
+      "fullWidth": 1201,
+      "fullHeight": 6945,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "src": "/assets/portfolio/figma-23-2138-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-23-2138.webp",
+        "width": 1000,
+        "height": 664,
+        "alt": "RAOATECH Digital Newsroom — Dark editorial direction",
+        "label": "Dark editorial direction",
+        "objectPosition": "50% 0%",
+        "nodeId": "23:2138",
+        "group": "Theme directions",
+        "sourceName": "Contest Winner Design",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2138",
+        "fullWidth": 1201,
+        "fullHeight": 6969,
+        "pageId": "0:1",
+        "pageName": "Recent Web Project",
+        "pageType": "homepage"
+      }
+    ],
+    "description": "Light and dark homepage concepts for RAOATECH. Prominent headlines and colour-coded topics introduce article collections, followed by newsletter, subscription and community discussion sections.",
+    "deliverables": [
+      "Editorial homepage design",
+      "Topic and article card system",
+      "Newsletter and subscription sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "farm-and-events-ui-concept",
+    "name": "Archangel Acres — Farm & Events UI",
+    "category": "Hospitality UI",
+    "summary": "A farm destination homepage concept for experiences, events and planning a visit.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2140",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "23:2140",
+        "23:2141",
+        "23:2146"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-23-2140-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-23-2140.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Archangel Acres — Farm & Events UI — Destination homepage",
+      "label": "Destination homepage",
+      "objectPosition": "50% 0%",
+      "nodeId": "23:2140",
+      "group": "Homepage variants",
+      "sourceName": "Contest Winner Design",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2140",
+      "fullWidth": 1201,
+      "fullHeight": 7121,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Landscape photography, green and cream colours and traditional lettering introduce Archangel Acres. The homepage presents farm experiences, events and animals, with information for planning a visit.",
+    "deliverables": [
+      "Farm destination homepage concept",
+      "Experience and event section layouts",
+      "Animal and visit planning sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "alachua-property-appraiser-ui-concept",
+    "name": "Alachua Property Appraiser — UI Concept",
+    "category": "Public service UI",
+    "summary": "Public-service website UI centered on property search, resident tasks and office information.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2143",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "23:2143"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-23-2143-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-23-2143.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Alachua Property Appraiser — UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "23:2143",
+      "group": "Design variations",
+      "sourceName": "Contest Winner Design",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2143",
+      "fullWidth": 1201,
+      "fullHeight": 4672,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A website interface concept headed Alachua County Property Appraiser’s Office. The design puts property search and common resident actions near the top, followed by responsibilities, calendar information, news and outreach sections.",
+    "deliverables": [
+      "Public-service homepage concept",
+      "Task shortcut and search layouts",
+      "Calendar, news and outreach sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "matthew-lopez-law",
+    "name": "Matthew Lopez Law",
+    "category": "Business website UI",
+    "summary": "Criminal defence website UI with practice-area navigation and prominent contact entry points.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2144",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "23:2144"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-23-2144-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-23-2144.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Matthew Lopez Law — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "23:2144",
+      "group": "Design variations",
+      "sourceName": "Contest Winner Design",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=23-2144",
+      "fullWidth": 1201,
+      "fullHeight": 8654,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A long-form website design for Matthew Lopez Law using navy, white and red. Attorney imagery leads into practice areas, office locations, explanatory content and FAQs, with recurring consultation prompts throughout the layout.",
+    "deliverables": [
+      "Legal homepage design",
+      "Practice area and office layouts",
+      "FAQ and consultation sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "solo-travel-journal-ui-concept",
+    "name": "Solo Travel Journal UI Concept",
+    "category": "Editorial UI",
+    "summary": "Personal travel journal UI with destination stories, photography and video collections.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=42-2405",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "42:2405"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-42-2405-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-42-2405.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Solo Travel Journal UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "42:2405",
+      "group": "Design variations",
+      "sourceName": "Blog",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=42-2405",
+      "fullWidth": 1201,
+      "fullHeight": 6257,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A travel publishing concept headed Global Solo Travel Storyteller. The design combines a landscape hero and author introduction with article grids, a photo gallery, video cards and social content sections.",
+    "deliverables": [
+      "Travel journal homepage concept",
+      "Article and destination grids",
+      "Photo gallery and video layouts"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "snazy-wear",
+    "name": "Snazy Wear",
+    "category": "E-commerce UI",
+    "summary": "Fashion storefront UI with collection tabs, product grids and seasonal campaign imagery.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=42-3153",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "42:3153"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-42-3153-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-42-3153.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Snazy Wear — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "42:3153",
+      "group": "Design variations",
+      "sourceName": "Ecommarce",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=42-3153",
+      "fullWidth": 1201,
+      "fullHeight": 5094,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A bright storefront concept for Snazy Wear. A fashion campaign hero leads into new arrivals, accessory promotions and separate women’s, men’s and kids’ collection sections, followed by editorial cards and a newsletter layout.",
+    "deliverables": [
+      "Fashion storefront homepage design",
+      "Collection navigation and product grids",
+      "Campaign and editorial sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "shower-time",
+    "name": "Shower Time",
+    "category": "E-commerce UI",
+    "summary": "A storefront homepage concept for aromatherapy shower products, using botanical imagery and calm colours.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-2874",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "47:2874",
+        "47:3181",
+        "47:3588"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-2874-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-2874.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Shower Time — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:2874",
+      "group": "Homepage directions",
+      "sourceName": "beauty",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-2874",
+      "fullWidth": 1201,
+      "fullHeight": 4484,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "nodeId": "47:3588",
+        "label": "Editorial shower direction",
+        "group": "Homepage directions",
+        "sourceName": "beauty",
+        "pageId": "0:1",
+        "pageName": "Recent Web Project",
+        "device": "desktop",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-3588",
+        "sourceWidth": 1440,
+        "sourceHeight": 4945,
+        "src": "/assets/portfolio/figma-47-3588-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-47-3588.webp",
+        "width": 800,
+        "height": 532,
+        "fullWidth": 1000,
+        "fullHeight": 3432,
+        "objectPosition": "50% 0%",
+        "alt": "Shower Time — Editorial shower direction",
+        "pageType": "homepage"
+      },
+      {
+        "nodeId": "47:3181",
+        "label": "Soft blush direction",
+        "group": "Homepage directions",
+        "sourceName": "Frame 334",
+        "pageId": "0:1",
+        "pageName": "Recent Web Project",
+        "device": "desktop",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-3181",
+        "sourceWidth": 1441,
+        "sourceHeight": 5458,
+        "src": "/assets/portfolio/figma-47-3181-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-47-3181.webp",
+        "width": 800,
+        "height": 532,
+        "fullWidth": 1000,
+        "fullHeight": 3784,
+        "objectPosition": "50% 0%",
+        "alt": "Shower Time — Soft blush direction",
+        "pageType": "homepage"
+      }
+    ],
+    "description": "Three homepage concepts explore a focus on the product, soft blush colours and photography. Shopping sections, product benefits and everyday routines give each version its content structure.",
+    "deliverables": [
+      "Wellbeing storefront homepage concept",
+      "Product and category card layouts",
+      "Brand story and FAQ sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "metasearch-seo-ui-concept",
+    "name": "Metasearch SEO UI Concept",
+    "category": "Business website UI",
+    "summary": "Marketing agency UI concept with service cards, feature explanations and FAQs.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-6262",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "47:6262"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-6262-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-6262.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Metasearch SEO UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:6262",
+      "group": "Design variations",
+      "sourceName": "Home",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-6262",
+      "fullWidth": 1201,
+      "fullHeight": 5971,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A blue and white marketing website concept carrying the Metasearch name. The design arranges service introductions, research-tool content, project examples and FAQs into a spacious page.",
+    "deliverables": [
+      "Marketing homepage concept",
+      "Service and feature section layouts",
+      "Project and FAQ sections"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "jana-fish",
+    "name": "Jana Fish",
+    "category": "UI/UX design & WordPress",
+    "summary": "UI/UX design and WordPress development for a seafood-trade business.",
+    "scope": "ui-development",
+    "website": "https://janaocean.com/",
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=77-3304",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "77:3304"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-77-3304-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-77-3304.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Jana Fish — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "77:3304",
+      "group": "Design variations",
+      "sourceName": "Landing",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=77-3304",
+      "fullWidth": 1201,
+      "fullHeight": 3561,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A seafood-trade website designed and developed in WordPress, with the JFC Jana Fish identity shown in the original interface. Processing photography introduces product categories, market information, the trading process and quote enquiries. The original project was published at janaocean.com.",
+    "deliverables": [
+      "Seafood-trade website UI/UX design",
+      "WordPress website development",
+      "Product, market and quote-enquiry layouts"
+    ],
+    "stack": [
+      "WordPress"
+    ],
+    "websiteStatus": "expired",
+    "workTypes": [
+      "design",
+      "development",
+      "wordpress"
+    ],
+    "websiteNote": "The original website is expired. The project designs remain available here."
+  },
+  {
+    "slug": "bounce-party-mania",
+    "name": "Bounce Party Mania",
+    "category": "E-commerce UI",
+    "summary": "Party rental UI concept with playful category navigation and colourful equipment cards.",
+    "scope": "ui",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=85-3320",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "frameIds": [
+        "85:3320",
+        "85:3806"
+      ],
+      "pages": [
+        {
+          "pageId": "0:1",
+          "pageName": "Recent Web Project"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-85-3320-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-85-3320.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Bounce Party Mania — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "85:3320",
+      "group": "Homepage directions",
+      "sourceName": "concept 1",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=85-3320",
+      "fullWidth": 1207,
+      "fullHeight": 2719,
+      "pageId": "0:1",
+      "pageName": "Recent Web Project",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "nodeId": "85:3806",
+        "label": "Concept 2 — blue hero",
+        "group": "Homepage directions",
+        "sourceName": "concept 2",
+        "pageId": "0:1",
+        "pageName": "Recent Web Project",
+        "device": "desktop",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=85-3806",
+        "sourceWidth": 1920,
+        "sourceHeight": 2794,
+        "src": "/assets/portfolio/figma-85-3806-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-85-3806.webp",
+        "width": 800,
+        "height": 532,
+        "fullWidth": 1000,
+        "fullHeight": 1450,
+        "objectPosition": "50% 0%",
+        "alt": "Bounce Party Mania — Concept 2 — blue hero",
+        "pageType": "homepage"
+      }
+    ],
+    "description": "Two bright rental-storefront directions for Bounce Party Mania. Rounded controls, illustrated accents and blue hero layouts introduce equipment categories, featured rentals and booking prompts.",
+    "deliverables": [
+      "Party rental homepage concept",
+      "Category and equipment card layouts",
+      "Booking prompt section"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design"
+    ]
+  },
+  {
+    "slug": "alisa-boutique-ui-concept",
+    "name": "Alisa Boutique — Website UI Concept",
+    "category": "Website UI template",
+    "summary": "A general website layout exploration using a portrait-led hero, image grids and bright pink calls to action.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=45-4320",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "45:4320"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-45-4320-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-45-4320.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Alisa Boutique — Website UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "45:4320",
+      "group": "Design variations",
+      "sourceName": "Home-Page-Template-1",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=45-4320",
+      "fullWidth": 1201,
+      "fullHeight": 6216,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "This early layout study uses a white and navy page with an oversized photographic introduction. Modular image sections and contrasting promotional blocks explore the page rhythm with placeholder content.",
+    "deliverables": [
+      "Homepage layout exploration",
+      "Image and content-card grids",
+      "Call-to-action styling"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "spurwechsel-driving-school-ui",
+    "name": "Spurwechsel — Driving school UI Concept",
+    "category": "Website UI template",
+    "summary": "An orange and charcoal driving-school concept with a photographic hero and a clear registration focus.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-5512",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:5512"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-5512-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-5512.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Spurwechsel — Driving school UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:5512",
+      "group": "Design variations",
+      "sourceName": "Frame 91",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-5512",
+      "fullWidth": 1201,
+      "fullHeight": 7912,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Condensed display type and angular orange accents give the driving-school page a direct visual character. Training information, an icon-led benefits grid and registration prompts organize the offering into distinct sections.",
+    "deliverables": [
+      "Driving-school homepage UI",
+      "Training and benefits section layouts",
+      "Registration call-to-action design"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "peoplepertask-marketplace-ui",
+    "name": "PeoplePerTask — Marketplace UI Concept",
+    "category": "Product UI template",
+    "summary": "An early freelance-marketplace homepage exploring service categories, project thumbnails and freelancer discovery.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-6597",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:6597"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-6597-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-6597.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "PeoplePerTask — Marketplace UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:6597",
+      "group": "Design variations",
+      "sourceName": "home",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-6597",
+      "fullWidth": 1201,
+      "fullHeight": 3797,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Blue and orange highlights introduce service categories, project thumbnails, freelancer cards and offers. These early layouts explore how the marketplace could present its services and freelancers.",
+    "deliverables": [
+      "Marketplace homepage concept",
+      "Service-category navigation UI",
+      "Freelancer and offer-card exploration"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "studiozone-agency-ui",
+    "name": "Marketing Agency — UI Concept",
+    "category": "Website UI template",
+    "summary": "Related light and dark agency directions built around bold headlines, tall service cards and photographic project galleries.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-7834",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:7834",
+        "47:8191"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-7834-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-7834.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Marketing Agency — UI Concept — Light agency direction",
+      "label": "Light agency direction",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:7834",
+      "group": "Design variations",
+      "sourceName": "Frame 2147230865",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-7834",
+      "fullWidth": 1201,
+      "fullHeight": 6035,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "src": "/assets/portfolio/figma-47-8191-cover.webp",
+        "fullSrc": "/assets/portfolio/figma-47-8191.webp",
+        "width": 1000,
+        "height": 664,
+        "alt": "Marketing Agency — UI Concept — Dark agency direction",
+        "label": "Dark agency direction",
+        "objectPosition": "50% 0%",
+        "nodeId": "47:8191",
+        "group": "Design variations",
+        "sourceName": "Frame 2147230864",
+        "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-8191",
+        "fullWidth": 1201,
+        "fullHeight": 6626,
+        "pageId": "42:2340",
+        "pageName": "Our Templete",
+        "pageType": "homepage"
+      }
+    ],
+    "description": "Bold headlines, tall service cards and large project photos appear in both light and dark homepage concepts. The related designs carry StudioZone and Music Zone labels.",
+    "deliverables": [
+      "Agency homepage UI",
+      "Service-card system",
+      "Project image-gallery layouts"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "regency-cafe-ui-concept",
+    "name": "Regency Café — UI Concept",
+    "category": "Hospitality UI template",
+    "summary": "A café website concept pairing editorial typography with storefront, food and coffee photography.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-8567",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:8567",
+        "47:8738"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-8567-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-8567.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Regency Café — UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:8567",
+      "group": "Design variations",
+      "sourceName": "Frame 2147230885",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-8567",
+      "fullWidth": 1201,
+      "fullHeight": 3372,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "duplicateNodeIds": [
+        "47:8738"
+      ],
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "The page opens with the café name and a storefront photograph. Its story, food features and menu displays follow in warm neutral colours with small orange accents.",
+    "deliverables": [
+      "Café homepage UI",
+      "Story and featured-menu layouts",
+      "Food and product-card design"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "laravia-construction-ui",
+    "name": "Laravia — Construction UI Concept",
+    "category": "Website UI template",
+    "summary": "An architecture and construction concept combining a scenic hero with spacious project and service sections.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-8909",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:8909"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-8909-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-8909.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Laravia — Construction UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:8909",
+      "group": "Design variations",
+      "sourceName": "Frame 2147230861",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-8909",
+      "fullWidth": 1201,
+      "fullHeight": 6232,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A floating white navigation bar sits over landscape photography, followed by a quiet two-column introduction. Project cards pair architecture images with descriptive details and feature tags.",
+    "deliverables": [
+      "Construction homepage UI",
+      "Project showcase-card layouts",
+      "Service and enquiry section design"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "mindor-wellness-ui",
+    "name": "Mindor — Wellness UI Concept",
+    "category": "Website UI template",
+    "summary": "A wellness homepage concept with outdoor photography, soft greens and sections for mind, body and recent articles.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-9136",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:9136"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-9136-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-9136.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Mindor — Wellness UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:9136",
+      "group": "Design variations",
+      "sourceName": "Frame 2147230866",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-9136",
+      "fullWidth": 1201,
+      "fullHeight": 3992,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Outdoor photography sits behind a translucent menu. Paired mind and body cards lead into the brand story and recent articles, set against soft green backgrounds.",
+    "deliverables": [
+      "Wellness homepage UI",
+      "Mind and body content-card layouts",
+      "Story and insights section design"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "vitality-fit-fitness-ui",
+    "name": "Vitality-Fit — Fitness UI Concept",
+    "category": "Website UI template",
+    "summary": "A dark fitness homepage concept with bold training photography and distinct sections for services and profiles.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-9477",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:9477"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-9477-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-9477.webp",
+      "width": 1000,
+      "height": 665,
+      "alt": "Vitality-Fit — Fitness UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:9477",
+      "group": "Design variations",
+      "sourceName": "162121",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-9477",
+      "fullWidth": 1200,
+      "fullHeight": 9980,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "Black and deep green surfaces frame large workout imagery and high-contrast typography. Repeated dividers, image pairs and profile sections organize the longer fitness page.",
+    "deliverables": [
+      "Fitness homepage UI",
+      "Training-content section layouts",
+      "Profile and image-pair components"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "bravien-legal-ui",
+    "name": "Bravien — Legal services UI Concept",
+    "category": "Website UI template",
+    "summary": "A restrained legal-services concept built around white space, rounded photography and muted teal accents.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-9954",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:9954"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-9954-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-9954.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Bravien — Legal services UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:9954",
+      "group": "Design variations",
+      "sourceName": "Frame 2147230875",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-9954",
+      "fullWidth": 1201,
+      "fullHeight": 4467,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "The opening section pairs a service statement with a photograph of document review. Compact capability cards and photo sections continue the white and muted teal theme.",
+    "deliverables": [
+      "Legal-services homepage UI",
+      "Capability-card layouts",
+      "Editorial and consultation section design"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "merlin-marketing-ui",
+    "name": "Merlin — Marketing agency UI Concept",
+    "category": "Website UI template",
+    "summary": "A light marketing agency homepage concept with pastel service cards and numbered project features.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-10121",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:10121"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-10121-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-10121.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Merlin — Marketing agency UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:10121",
+      "group": "Design variations",
+      "sourceName": "Frame 2147230870",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-10121",
+      "fullWidth": 1201,
+      "fullHeight": 4447,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A headline and photograph introduce the agency, followed by pastel service cards. Numbered project rows pair descriptions with thumbnail groups, while thin lines and small labels separate the sections.",
+    "deliverables": [
+      "Agency homepage UI",
+      "Pastel service-card system",
+      "Numbered project-list layouts"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "lumea-beauty-store-ui",
+    "name": "Luméa — Beauty store UI Concept",
+    "category": "E-commerce UI template",
+    "summary": "A beauty-store concept using blush pink, dark green and oversized product imagery throughout its shopping layout.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-10518",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:10518"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-10518-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-10518.webp",
+      "width": 1000,
+      "height": 665,
+      "alt": "Luméa — Beauty store UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:10518",
+      "group": "Design variations",
+      "sourceName": "Frame 184",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-10518",
+      "fullWidth": 1200,
+      "fullHeight": 4215,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A full-width campaign image leads into a brand story that mixes product and portrait photography. Repeated product cards, serif headlines and blush-pink surfaces create a consistent storefront direction.",
+    "deliverables": [
+      "Beauty-store homepage UI",
+      "Featured product-card system",
+      "Brand-story and promotion layouts"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "paynext-fintech-ui",
+    "name": "Paynext — Fintech UI Concept",
+    "category": "Product UI template",
+    "summary": "A purple fintech landing-page concept that pairs a mobile-product mockup with clear feature and process sections.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-10679",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:10679"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-10679-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-10679.webp",
+      "width": 1000,
+      "height": 665,
+      "alt": "Paynext — Fintech UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:10679",
+      "group": "Design variations",
+      "sourceName": "Frame 2147227077",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-10679",
+      "fullWidth": 1200,
+      "fullHeight": 3970,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A purple gradient hero frames a mobile payment-app mockup. Feature cards visualize payments and budgeting, while a later section arranges the proposed product journey into a vertical sequence.",
+    "deliverables": [
+      "Fintech landing page UI",
+      "Feature and transaction-card components",
+      "Process-section layout"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "meddoc-healthcare-ui",
+    "name": "Meddoc — Healthcare UI Concept",
+    "category": "Website UI template",
+    "summary": "A blue and white healthcare concept with a split hero, service cards and a medical-department image grid.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-10928",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:10928"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-10928-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-10928.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Meddoc — Healthcare UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:10928",
+      "group": "Design variations",
+      "sourceName": "diya",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-10928",
+      "fullWidth": 1201,
+      "fullHeight": 5352,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "An appointment prompt sits beside a clinician photograph in a spacious blue and white layout. Rounded specialty cards and a grid of department images present the healthcare services.",
+    "deliverables": [
+      "Healthcare homepage UI",
+      "Specialty and department-card layouts",
+      "Appointment call-to-action design"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  },
+  {
+    "slug": "elevated-wake-water-sports-ui",
+    "name": "Elevated Wake Co. — UI Concept",
+    "category": "Hospitality UI template",
+    "summary": "A water sports homepage concept with action photography, activity details and clear availability prompts.",
+    "scope": "template",
+    "website": null,
+    "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-11420",
+    "source": {
+      "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "frameIds": [
+        "47:11420"
+      ],
+      "pages": [
+        {
+          "pageId": "42:2340",
+          "pageName": "Our Templete"
+        }
+      ]
+    },
+    "cover": {
+      "src": "/assets/portfolio/figma-47-11420-cover.webp",
+      "fullSrc": "/assets/portfolio/figma-47-11420.webp",
+      "width": 1000,
+      "height": 664,
+      "alt": "Elevated Wake Co. — UI Concept — Homepage design",
+      "label": "Homepage design",
+      "objectPosition": "50% 0%",
+      "nodeId": "47:11420",
+      "group": "Design variations",
+      "sourceName": "Frame 2147231035",
+      "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=47-11420",
+      "fullWidth": 1206,
+      "fullHeight": 5905,
+      "pageId": "42:2340",
+      "pageName": "Our Templete",
+      "pageType": "homepage"
+    },
+    "gallery": [],
+    "description": "A large lake photograph introduces the activities, with navy and turquoise accents. Benefit icons, experience photos and information cards are grouped around prompts to check availability.",
+    "deliverables": [
+      "Recreation homepage UI",
+      "Experience and activity-card layouts",
+      "Availability call-to-action design"
+    ],
+    "stack": [],
+    "websiteStatus": "design-only",
+    "workTypes": [
+      "design",
+      "template"
+    ]
+  }
+]

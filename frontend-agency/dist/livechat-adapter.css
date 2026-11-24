@@ -1,0 +1,7 @@
+/* Keep the supplied WhatsApp shortcut and add the existing connected live chat. */
+#ap-support .ap-support-launch{bottom:94px;right:24px;background:#172b25;color:#d7efb2;border:1px solid #9fb77e;box-shadow:0 8px 24px #0002}
+#ap-support .ap-support-options{bottom:158px;right:24px}
+#ap-support .ap-chat-window{bottom:94px;right:24px;max-height:calc(100dvh - 116px)}
+#ap-support{position:fixed;bottom:94px;right:24px;z-index:1000} #ap-support .ap-support-launch{bottom:auto;right:auto} #ap-support .ap-support-options{bottom:68px;right:0} #ap-support .ap-chat-window{bottom:0;right:0}
+#ap-support .ap-chat-window,#ap-support .ap-chat-window input,#ap-support .ap-chat-window textarea{font-family:Manrope,Arial,sans-serif}
+@media(max-width:640px){#ap-support{bottom:154px;right:16px}#ap-support .ap-support-launch{right:16px;bottom:154px}#ap-support .ap-support-options{right:16px;bottom:218px}#ap-support .ap-chat-window{right:12px;left:12px;width:auto;bottom:90px;max-height:calc(100dvh - 110px)}}

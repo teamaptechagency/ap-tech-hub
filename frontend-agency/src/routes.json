@@ -1,0 +1,342 @@
+[
+  {
+    "route": "/",
+    "title": "AI automation, websites & digital design",
+    "description": "AP Tech Agency builds AI chat and voice agents, business websites and online stores. Get help with customer questions, orders, bookings and follow-ups."
+  },
+  {
+    "route": "/services/",
+    "title": "AI automation, website development & design",
+    "description": "Explore AI automation, custom websites, WordPress, UI/UX design, ecommerce and website care. Find the right support for your next project."
+  },
+  {
+    "route": "/reviews/",
+    "title": "Client reviews from Fiverr",
+    "description": "Read selected client feedback on our design and development work, with ratings and links to our team’s Fiverr profiles."
+  },
+  {
+    "route": "/services/ai-automation/",
+    "title": "AI automation · Chat, voice, orders & bookings",
+    "description": "Give customers a helpful first response and your team a clearer next step. We build AI chat and voice agents that answer routine questions, gather order details, arrange bookings and follow up through your business tools. Requests that need a person go to your team."
+  },
+  {
+    "route": "/services/website-development/",
+    "title": "Website development",
+    "description": "Give customers a useful place to visit and your team the features to get things done. We design and build custom websites and web apps around your pages, business processes and everyday tasks."
+  },
+  {
+    "route": "/services/wordpress/",
+    "title": "WordPress",
+    "description": "Present your business clearly and keep your content fresh. We build WordPress and Elementor websites with reusable pages, useful features and an editing setup your team can learn to manage."
+  },
+  {
+    "route": "/services/ui-ux-design/",
+    "title": "UI/UX design",
+    "description": "Help people understand your offer, find what they need and know what to do next. We plan the structure, layouts and interactions for websites and digital products, then turn them into clear Figma designs for your development team."
+  },
+  {
+    "route": "/services/ecommerce/",
+    "title": "Ecommerce",
+    "description": "Give shoppers a clear path from finding a product to placing an order. We build online stores around your catalogue, payment and delivery needs, with practical tools for the people managing products and orders."
+  },
+  {
+    "route": "/services/website-care/",
+    "title": "Website care",
+    "description": "Get help with updates, fixes and practical improvements after launch. We review your WordPress or custom website, set priorities and plan the support your team needs to keep everyday work moving."
+  },
+  {
+    "route": "/work/",
+    "title": "Selected websites, interfaces & templates",
+    "description": "Browse AP Tech Agency websites, WordPress builds, UI/UX designs and templates, with homepage and dashboard variations grouped by project."
+  },
+  {
+    "route": "/work/footstep-online/",
+    "title": "Footstep Online · Development",
+    "description": "One store, two regional shopping experiences. React and PHP/Laravel power Bangladesh and international storefronts selected by IP address and location."
+  },
+  {
+    "route": "/work/monlegs/",
+    "title": "MonLegs · UI/UX + Development",
+    "description": "UI/UX design and development for a French planning platform, built with Next.js and Strapi."
+  },
+  {
+    "route": "/work/dna-digital-consultancy/",
+    "title": "DNA Digital Consultancy · UI/UX",
+    "description": "Homepage UI/UX design for a digital consultancy, with desktop and mobile variations."
+  },
+  {
+    "route": "/work/lena-dugnus-photography/",
+    "title": "Lena Dugnus Photography · Development + WordPress",
+    "description": "A WordPress rebuild that puts the photography first, with space to explore the portfolio and learn about the services."
+  },
+  {
+    "route": "/work/hudson-yacht-services/",
+    "title": "Hudson Yacht Services · Development + WordPress",
+    "description": "A WordPress website that introduces the yacht services and gives visitors a clear way to contact the team."
+  },
+  {
+    "route": "/work/denistek-product-ui/",
+    "title": "DenisTek · UI/UX",
+    "description": "UI concepts for an AI campaign assistant, from its homepage to conversation and analytics dashboards."
+  },
+  {
+    "route": "/work/grow-advisory-dashboard/",
+    "title": "Grow Advisory · UI/UX",
+    "description": "An advisory dashboard UI that organises practice activity, client records, tasks and reports in one place."
+  },
+  {
+    "route": "/work/cattlemens-kona-gold/",
+    "title": "Cattlemen’s Kona Gold · UI/UX",
+    "description": "Coffee storefront UI pairing Hawaiian landscape photography with product collections and brand storytelling."
+  },
+  {
+    "route": "/work/kaiserzeit-hospitality-ui/",
+    "title": "Kaiserzeit · UI/UX + Development + WordPress",
+    "description": "UI/UX design and WordPress development for a vacation-apartment website. Current project direction: Design v3."
+  },
+  {
+    "route": "/work/industry-insights-editorial-ui/",
+    "title": "Industry Insights · UI/UX",
+    "description": "An editorial homepage that balances a featured story, topical reading lists and a structured article grid."
+  },
+  {
+    "route": "/work/power-technology-ui/",
+    "title": "Power Technology · UI/UX",
+    "description": "Energy and industrial technology website UI with service, project and enquiry sections."
+  },
+  {
+    "route": "/work/advisory-consulting-solutions-ui/",
+    "title": "Advisory Consulting Solutions · UI/UX",
+    "description": "A navy and gold consulting homepage concept, with a cityscape opening and a clear introduction to the services."
+  },
+  {
+    "route": "/work/irs-belgium/",
+    "title": "IRS Belgium · UI/UX",
+    "description": "Automotive website UI with bold typography, vehicle imagery and repair service sections."
+  },
+  {
+    "route": "/work/flypharma/",
+    "title": "FlyPharma · UI/UX + Development + WordPress",
+    "description": "UI/UX design and WordPress development for a biomanufacturing website."
+  },
+  {
+    "route": "/work/benchmarker/",
+    "title": "Benchmarker · UI/UX + Development + WordPress",
+    "description": "UI/UX design and WordPress development for an automotive consultancy and training business."
+  },
+  {
+    "route": "/work/bridge-the-gap-training/",
+    "title": "Bridge the Gap Training · UI/UX + Development + WordPress",
+    "description": "UI/UX design and WordPress development for a communication-training website."
+  },
+  {
+    "route": "/work/kaylashae-adventures/",
+    "title": "KayLashae Adventures · UI/UX + Development + WordPress",
+    "description": "UI/UX design and WordPress development for an outdoor-travel and adventure website."
+  },
+  {
+    "route": "/work/britannia-accounting/",
+    "title": "Britannia Accounting · UI/UX + Development + WordPress",
+    "description": "UI/UX design and WordPress development for an accounting-services website."
+  },
+  {
+    "route": "/work/hoffman-biotechnology-law/",
+    "title": "Hoffman Biotechnology Law · UI/UX + Development + WordPress",
+    "description": "UI/UX design and WordPress development for a specialist biotechnology-law website."
+  },
+  {
+    "route": "/work/ready-kitchen/",
+    "title": "Ready Kitchen · UI/UX",
+    "description": "Commercial kitchen website UI comparing spaces and guiding visitors toward an enquiry."
+  },
+  {
+    "route": "/work/pickwick-yacht-brokers/",
+    "title": "Pickwick Yacht Brokers · UI/UX",
+    "description": "Yacht brokerage UI with inventory filters, listing cards and ownership service information."
+  },
+  {
+    "route": "/work/trim-energy-powershave/",
+    "title": "Trim Energy — PowerShave · UI/UX",
+    "description": "Landing page UI for PowerShave, presenting the energy concept through problem, solution and process sections."
+  },
+  {
+    "route": "/work/bdtwo-business-ui-concept/",
+    "title": "BDtwo Business UI Concept · UI/UX",
+    "description": "Business consultancy UI concept with service cards, project imagery and orange accents."
+  },
+  {
+    "route": "/work/4air-dashboard/",
+    "title": "4AIR Monitoring Dashboard · UI/UX",
+    "description": "Aviation monitoring dashboard UI organizing emissions, regulatory information and flight activity."
+  },
+  {
+    "route": "/work/apoplex-projects/",
+    "title": "Apoplex Projects · UI/UX",
+    "description": "Interior design and shopfitting UI with large project imagery and editorial typography."
+  },
+  {
+    "route": "/work/adhd-remapped-rise-together/",
+    "title": "ADHD Remapped — Rise Together · UI/UX",
+    "description": "Coaching programme UI introducing a men’s group through clear sections and an enquiry form."
+  },
+  {
+    "route": "/work/raoatech-digital-newsroom/",
+    "title": "RAOATECH Digital Newsroom · UI/UX",
+    "description": "Digital magazine UI with topic navigation, article collections and clear sections for newsletters and community discussion."
+  },
+  {
+    "route": "/work/farm-and-events-ui-concept/",
+    "title": "Archangel Acres — Farm & Events UI · UI/UX",
+    "description": "A farm destination homepage concept for experiences, events and planning a visit."
+  },
+  {
+    "route": "/work/alachua-property-appraiser-ui-concept/",
+    "title": "Alachua Property Appraiser — UI Concept · UI/UX",
+    "description": "Public-service website UI centered on property search, resident tasks and office information."
+  },
+  {
+    "route": "/work/matthew-lopez-law/",
+    "title": "Matthew Lopez Law · UI/UX",
+    "description": "Criminal defence website UI with practice-area navigation and prominent contact entry points."
+  },
+  {
+    "route": "/work/solo-travel-journal-ui-concept/",
+    "title": "Solo Travel Journal UI Concept · UI/UX",
+    "description": "Personal travel journal UI with destination stories, photography and video collections."
+  },
+  {
+    "route": "/work/snazy-wear/",
+    "title": "Snazy Wear · UI/UX",
+    "description": "Fashion storefront UI with collection tabs, product grids and seasonal campaign imagery."
+  },
+  {
+    "route": "/work/shower-time/",
+    "title": "Shower Time · UI/UX",
+    "description": "A storefront homepage concept for aromatherapy shower products, using botanical imagery and calm colours."
+  },
+  {
+    "route": "/work/metasearch-seo-ui-concept/",
+    "title": "Metasearch SEO UI Concept · UI/UX",
+    "description": "Marketing agency UI concept with service cards, feature explanations and FAQs."
+  },
+  {
+    "route": "/work/jana-fish/",
+    "title": "Jana Fish · UI/UX + Development + WordPress",
+    "description": "UI/UX design and WordPress development for a seafood-trade business."
+  },
+  {
+    "route": "/work/bounce-party-mania/",
+    "title": "Bounce Party Mania · UI/UX",
+    "description": "Party rental UI concept with playful category navigation and colourful equipment cards."
+  },
+  {
+    "route": "/work/alisa-boutique-ui-concept/",
+    "title": "Alisa Boutique — Website UI Concept · UI template",
+    "description": "A general website layout exploration using a portrait-led hero, image grids and bright pink calls to action."
+  },
+  {
+    "route": "/work/spurwechsel-driving-school-ui/",
+    "title": "Spurwechsel — Driving school UI Concept · UI template",
+    "description": "An orange and charcoal driving-school concept with a photographic hero and a clear registration focus."
+  },
+  {
+    "route": "/work/peoplepertask-marketplace-ui/",
+    "title": "PeoplePerTask — Marketplace UI Concept · UI template",
+    "description": "An early freelance-marketplace homepage exploring service categories, project thumbnails and freelancer discovery."
+  },
+  {
+    "route": "/work/studiozone-agency-ui/",
+    "title": "Marketing Agency — UI Concept · UI template",
+    "description": "Related light and dark agency directions built around bold headlines, tall service cards and photographic project galleries."
+  },
+  {
+    "route": "/work/regency-cafe-ui-concept/",
+    "title": "Regency Café — UI Concept · UI template",
+    "description": "A café website concept pairing editorial typography with storefront, food and coffee photography."
+  },
+  {
+    "route": "/work/laravia-construction-ui/",
+    "title": "Laravia — Construction UI Concept · UI template",
+    "description": "An architecture and construction concept combining a scenic hero with spacious project and service sections."
+  },
+  {
+    "route": "/work/mindor-wellness-ui/",
+    "title": "Mindor — Wellness UI Concept · UI template",
+    "description": "A wellness homepage concept with outdoor photography, soft greens and sections for mind, body and recent articles."
+  },
+  {
+    "route": "/work/vitality-fit-fitness-ui/",
+    "title": "Vitality-Fit — Fitness UI Concept · UI template",
+    "description": "A dark fitness homepage concept with bold training photography and distinct sections for services and profiles."
+  },
+  {
+    "route": "/work/bravien-legal-ui/",
+    "title": "Bravien — Legal services UI Concept · UI template",
+    "description": "A restrained legal-services concept built around white space, rounded photography and muted teal accents."
+  },
+  {
+    "route": "/work/merlin-marketing-ui/",
+    "title": "Merlin — Marketing agency UI Concept · UI template",
+    "description": "A light marketing agency homepage concept with pastel service cards and numbered project features."
+  },
+  {
+    "route": "/work/lumea-beauty-store-ui/",
+    "title": "Luméa — Beauty store UI Concept · UI template",
+    "description": "A beauty-store concept using blush pink, dark green and oversized product imagery throughout its shopping layout."
+  },
+  {
+    "route": "/work/paynext-fintech-ui/",
+    "title": "Paynext — Fintech UI Concept · UI template",
+    "description": "A purple fintech landing-page concept that pairs a mobile-product mockup with clear feature and process sections."
+  },
+  {
+    "route": "/work/meddoc-healthcare-ui/",
+    "title": "Meddoc — Healthcare UI Concept · UI template",
+    "description": "A blue and white healthcare concept with a split hero, service cards and a medical-department image grid."
+  },
+  {
+    "route": "/work/elevated-wake-water-sports-ui/",
+    "title": "Elevated Wake Co. — UI Concept · UI template",
+    "description": "A water sports homepage concept with action photography, activity details and clear availability prompts."
+  },
+  {
+    "route": "/about/",
+    "title": "AI automation, with a team behind every step.",
+    "description": "We help businesses turn customer conversations into useful next steps. AI automation is our main focus, supported by website development and UI/UX design. Led by founder and technical lead Nazmul Hasan, our five-person team works from Bangladesh."
+  },
+  {
+    "route": "/approach/",
+    "title": "How we plan, build and launch your project",
+    "description": "See how AP Tech Agency plans, designs and builds your project, with a fixed quote, regular reviews and guidance for your team at launch."
+  },
+  {
+    "route": "/insights/",
+    "title": "Ideas for better websites and workflows",
+    "description": "Straightforward guides to planning a website, improving what you have and using AI in everyday work."
+  },
+  {
+    "route": "/insights/write-a-useful-website-brief/",
+    "title": "A clear website brief starts with five questions",
+    "description": "What should the site do, who is it for and what comes first? A few clear answers give your project a useful starting point."
+  },
+  {
+    "route": "/insights/redesign-or-improve-your-website/",
+    "title": "Should you improve your website or start again?",
+    "description": "A confusing page, a broken form and an ageing platform need different solutions. Find the problem before choosing the size of the project."
+  },
+  {
+    "route": "/insights/choose-your-first-business-automation/",
+    "title": "Your first automation: start with one useful task",
+    "description": "Choose a repeated task, define a useful result and give someone responsibility for checking it. Build confidence before adding more."
+  },
+  {
+    "route": "/contact/",
+    "title": "Let’s talk about your project",
+    "description": "Talk to AP Tech Agency about AI automation, websites or design. Prepare a project brief and send it through WhatsApp or email."
+  },
+  {
+    "route": "/privacy/",
+    "title": "Privacy and website use",
+    "description": "How this AP Tech Agency website handles your theme preference, project drafts, WhatsApp and email links, and external client portal access."
+  }
+]

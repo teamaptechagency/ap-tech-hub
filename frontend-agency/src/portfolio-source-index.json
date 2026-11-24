@@ -1,0 +1,1057 @@
+{
+  "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
+  "updated": "2026-11-23",
+  "projects": [
+    {
+      "projectSlug": "monlegs",
+      "name": "MonLegs",
+      "sourceNodes": 48,
+      "distinctScreens": 48,
+      "imagePreviews": 26,
+      "restrictedSources": 20,
+      "unavailablePreviews": 2,
+      "groups": [
+        "Account & onboarding",
+        "Dashboard",
+        "Homepage variants",
+        "Information pages"
+      ]
+    },
+    {
+      "projectSlug": "dna-digital-consultancy",
+      "name": "DNA Digital Consultancy",
+      "sourceNodes": 23,
+      "distinctScreens": 23,
+      "imagePreviews": 10,
+      "restrictedSources": 0,
+      "unavailablePreviews": 13,
+      "groups": [
+        "Footer variants",
+        "Homepage variants",
+        "Information pages",
+        "Mobile",
+        "Section variants"
+      ]
+    },
+    {
+      "projectSlug": "denistek-product-ui",
+      "name": "DenisTek",
+      "sourceNodes": 4,
+      "distinctScreens": 4,
+      "imagePreviews": 3,
+      "restrictedSources": 1,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Dashboard",
+        "Homepage variants"
+      ]
+    },
+    {
+      "projectSlug": "grow-advisory-dashboard",
+      "name": "Grow Advisory",
+      "sourceNodes": 250,
+      "distinctScreens": 247,
+      "imagePreviews": 27,
+      "restrictedSources": 204,
+      "unavailablePreviews": 16,
+      "groups": [
+        "Account & access",
+        "Accounting",
+        "Audit history",
+        "Client management",
+        "Dashboard",
+        "Dialogs & controls",
+        "Files & documents",
+        "Messages & notifications",
+        "Reports & signing",
+        "Tasks & workflow",
+        "Workpapers"
+      ]
+    },
+    {
+      "projectSlug": "cattlemens-kona-gold",
+      "name": "Cattlemen’s Kona Gold",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "kaiserzeit-hospitality-ui",
+      "name": "Kaiserzeit",
+      "sourceNodes": 34,
+      "distinctScreens": 34,
+      "imagePreviews": 29,
+      "restrictedSources": 0,
+      "unavailablePreviews": 5,
+      "groups": [
+        "Apartments",
+        "Booking & account",
+        "Homepage variants",
+        "Information pages"
+      ]
+    },
+    {
+      "projectSlug": "industry-insights-editorial-ui",
+      "name": "Industry Insights",
+      "sourceNodes": 4,
+      "distinctScreens": 4,
+      "imagePreviews": 4,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Homepage variants"
+      ]
+    },
+    {
+      "projectSlug": "power-technology-ui",
+      "name": "Power Technology",
+      "sourceNodes": 5,
+      "distinctScreens": 5,
+      "imagePreviews": 5,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Desktop directions",
+        "Mobile designs"
+      ]
+    },
+    {
+      "projectSlug": "advisory-consulting-solutions-ui",
+      "name": "Advisory Consulting Solutions",
+      "sourceNodes": 6,
+      "distinctScreens": 6,
+      "imagePreviews": 6,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Homepage variants",
+        "Information pages"
+      ]
+    },
+    {
+      "projectSlug": "irs-belgium",
+      "name": "IRS Belgium",
+      "sourceNodes": 2,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "flypharma",
+      "name": "FlyPharma",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "benchmarker",
+      "name": "Benchmarker",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "bridge-the-gap-training",
+      "name": "Bridge the Gap Training",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "kaylashae-adventures",
+      "name": "KayLashae Adventures",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "britannia-accounting",
+      "name": "Britannia Accounting",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "hoffman-biotechnology-law",
+      "name": "Hoffman Biotechnology Law",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "ready-kitchen",
+      "name": "Ready Kitchen",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "pickwick-yacht-brokers",
+      "name": "Pickwick Yacht Brokers",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "trim-energy-powershave",
+      "name": "Trim Energy — PowerShave",
+      "sourceNodes": 2,
+      "distinctScreens": 2,
+      "imagePreviews": 2,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Homepage directions"
+      ]
+    },
+    {
+      "projectSlug": "bdtwo-business-ui-concept",
+      "name": "BDtwo Business UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "4air-dashboard",
+      "name": "4AIR Monitoring Dashboard",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "apoplex-projects",
+      "name": "Apoplex Projects",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "adhd-remapped-rise-together",
+      "name": "ADHD Remapped — Rise Together",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "raoatech-digital-newsroom",
+      "name": "RAOATECH Digital Newsroom",
+      "sourceNodes": 3,
+      "distinctScreens": 3,
+      "imagePreviews": 3,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design presentations",
+        "Theme directions"
+      ]
+    },
+    {
+      "projectSlug": "farm-and-events-ui-concept",
+      "name": "Archangel Acres — Farm & Events UI",
+      "sourceNodes": 3,
+      "distinctScreens": 3,
+      "imagePreviews": 3,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design presentations",
+        "Website pages"
+      ]
+    },
+    {
+      "projectSlug": "alachua-property-appraiser-ui-concept",
+      "name": "Alachua Property Appraiser — UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "matthew-lopez-law",
+      "name": "Matthew Lopez Law",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "solo-travel-journal-ui-concept",
+      "name": "Solo Travel Journal UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "snazy-wear",
+      "name": "Snazy Wear",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "shower-time",
+      "name": "Shower Time",
+      "sourceNodes": 3,
+      "distinctScreens": 3,
+      "imagePreviews": 3,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Homepage directions"
+      ]
+    },
+    {
+      "projectSlug": "metasearch-seo-ui-concept",
+      "name": "Metasearch SEO UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "jana-fish",
+      "name": "Jana Fish",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "bounce-party-mania",
+      "name": "Bounce Party Mania",
+      "sourceNodes": 2,
+      "distinctScreens": 2,
+      "imagePreviews": 2,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Homepage directions"
+      ]
+    },
+    {
+      "projectSlug": "alisa-boutique-ui-concept",
+      "name": "Alisa Boutique — Website UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "spurwechsel-driving-school-ui",
+      "name": "Spurwechsel — Driving school UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "peoplepertask-marketplace-ui",
+      "name": "PeoplePerTask — Marketplace UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "studiozone-agency-ui",
+      "name": "Marketing Agency — UI Concept",
+      "sourceNodes": 2,
+      "distinctScreens": 2,
+      "imagePreviews": 2,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "regency-cafe-ui-concept",
+      "name": "Regency Café — UI Concept",
+      "sourceNodes": 2,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "laravia-construction-ui",
+      "name": "Laravia — Construction UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "mindor-wellness-ui",
+      "name": "Mindor — Wellness UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "vitality-fit-fitness-ui",
+      "name": "Vitality-Fit — Fitness UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "bravien-legal-ui",
+      "name": "Bravien — Legal services UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "merlin-marketing-ui",
+      "name": "Merlin — Marketing agency UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "lumea-beauty-store-ui",
+      "name": "Luméa — Beauty store UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "paynext-fintech-ui",
+      "name": "Paynext — Fintech UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "meddoc-healthcare-ui",
+      "name": "Meddoc — Healthcare UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    },
+    {
+      "projectSlug": "elevated-wake-water-sports-ui",
+      "name": "Elevated Wake Co. — UI Concept",
+      "sourceNodes": 1,
+      "distinctScreens": 1,
+      "imagePreviews": 1,
+      "restrictedSources": 0,
+      "unavailablePreviews": 0,
+      "groups": [
+        "Design variations"
+      ]
+    }
+  ],
+  "totals": {
+    "sourceNodes": 424,
+    "distinctScreens": 419,
+    "imagePreviews": 158,
+    "restrictedSources": 225,
+    "unavailablePreviews": 36
+  },
+  "coverageNotes": [
+    "Complete project screens, responsive artboards, significant section variants and interface states are grouped under the existing project.",
+    "Title cards, atomic component libraries, privacy overlays and generic template fragments are excluded.",
+    "Exact repeated source designs retain duplicate node provenance within the canonical screen.",
+    "Source-private designs are linked to Figma without exposing an isolated screenshot.",
+    "Remaining export-quota-limited designs retain their direct Figma links."
+  ],
+  "removedIsolatedExports": [
+    "/assets/portfolio/figma-190-40000-cover.webp",
+    "/assets/portfolio/figma-190-40000.webp",
+    "/assets/portfolio/figma-131-54628-cover.webp",
+    "/assets/portfolio/figma-131-54628.webp"
+  ],
+  "publishedSelection": {
+    "updated": "2026-11-23",
+    "pageTypes": [
+      "homepage",
+      "dashboard"
+    ],
+    "projects": [
+      {
+        "projectSlug": "monlegs",
+        "screens": 28,
+        "homepages": 7,
+        "dashboards": 21,
+        "imagePreviews": 9,
+        "restrictedSources": 17,
+        "unavailablePreviews": 2
+      },
+      {
+        "projectSlug": "dna-digital-consultancy",
+        "screens": 6,
+        "homepages": 6,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 5
+      },
+      {
+        "projectSlug": "denistek-product-ui",
+        "screens": 3,
+        "homepages": 1,
+        "dashboards": 2,
+        "imagePreviews": 2,
+        "restrictedSources": 1,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "grow-advisory-dashboard",
+        "screens": 4,
+        "homepages": 0,
+        "dashboards": 4,
+        "imagePreviews": 2,
+        "restrictedSources": 2,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "cattlemens-kona-gold",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "kaiserzeit-hospitality-ui",
+        "screens": 2,
+        "homepages": 2,
+        "dashboards": 0,
+        "imagePreviews": 2,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "industry-insights-editorial-ui",
+        "screens": 4,
+        "homepages": 4,
+        "dashboards": 0,
+        "imagePreviews": 4,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "power-technology-ui",
+        "screens": 5,
+        "homepages": 5,
+        "dashboards": 0,
+        "imagePreviews": 5,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "advisory-consulting-solutions-ui",
+        "screens": 2,
+        "homepages": 2,
+        "dashboards": 0,
+        "imagePreviews": 2,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "irs-belgium",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "flypharma",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "benchmarker",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "bridge-the-gap-training",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "kaylashae-adventures",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "britannia-accounting",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "hoffman-biotechnology-law",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "ready-kitchen",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "pickwick-yacht-brokers",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "trim-energy-powershave",
+        "screens": 2,
+        "homepages": 2,
+        "dashboards": 0,
+        "imagePreviews": 2,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "bdtwo-business-ui-concept",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "4air-dashboard",
+        "screens": 1,
+        "homepages": 0,
+        "dashboards": 1,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "apoplex-projects",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "adhd-remapped-rise-together",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "raoatech-digital-newsroom",
+        "screens": 2,
+        "homepages": 2,
+        "dashboards": 0,
+        "imagePreviews": 2,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "farm-and-events-ui-concept",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "alachua-property-appraiser-ui-concept",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "matthew-lopez-law",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "solo-travel-journal-ui-concept",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "snazy-wear",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "shower-time",
+        "screens": 3,
+        "homepages": 3,
+        "dashboards": 0,
+        "imagePreviews": 3,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "metasearch-seo-ui-concept",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "jana-fish",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "bounce-party-mania",
+        "screens": 2,
+        "homepages": 2,
+        "dashboards": 0,
+        "imagePreviews": 2,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "alisa-boutique-ui-concept",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "spurwechsel-driving-school-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "peoplepertask-marketplace-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "studiozone-agency-ui",
+        "screens": 2,
+        "homepages": 2,
+        "dashboards": 0,
+        "imagePreviews": 2,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "regency-cafe-ui-concept",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "laravia-construction-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "mindor-wellness-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "vitality-fit-fitness-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "bravien-legal-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "merlin-marketing-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "lumea-beauty-store-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "paynext-fintech-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "meddoc-healthcare-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      },
+      {
+        "projectSlug": "elevated-wake-water-sports-ui",
+        "screens": 1,
+        "homepages": 1,
+        "dashboards": 0,
+        "imagePreviews": 1,
+        "restrictedSources": 0,
+        "unavailablePreviews": 0
+      }
+    ],
+    "totals": {
+      "screens": 99,
+      "homepages": 71,
+      "dashboards": 28,
+      "imagePreviews": 72,
+      "restrictedSources": 20,
+      "unavailablePreviews": 7
+    },
+    "excludedFromOriginalImport": 320,
+    "additionalWebsiteHomepages": 2
+  }
+}

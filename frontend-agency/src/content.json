@@ -1,0 +1,608 @@
+{
+  "brand": "AP Tech Agency",
+  "language": "en",
+  "status": "Published website content",
+  "services": [
+    {
+      "slug": "ai-automation",
+      "shortTitle": "AI automation",
+      "title": "Turn customer conversations into next steps.",
+      "eyebrow": "AI AGENTS & BUSINESS AUTOMATION",
+      "intro": "Give customers a helpful first response and your team a clearer next step. We build AI chat and voice agents that answer routine questions, gather order details, arrange bookings and follow up through your business tools. Requests that need a person go to your team.",
+      "outcome": "Help customers get answers and move forward, while your team focuses on the work that needs a person.",
+      "audience": [
+        "Businesses handling customer questions through chat and calls",
+        "Teams collecting details for new enquiries, orders and appointments",
+        "Sales and support teams keeping customer records and follow-ups in order"
+      ],
+      "deliverables": [
+        "Chat and call flows built around your customers",
+        "Approved answers, useful questions and clear routes to your team",
+        "Steps for collecting orders, making bookings and following up",
+        "Connections to the calendars, CRM and tools covered by your project",
+        "Tests with realistic examples and guidance for your team"
+      ],
+      "process": [
+        {
+          "title": "Find the right starting point",
+          "text": "We look at the questions customers ask and the tasks your team repeats. Then we choose a useful first process and define what it should do."
+        },
+        {
+          "title": "Build around your process",
+          "text": "We prepare the answers, set up the required connections and define when the agent can act, ask for approval or pass a request to a person."
+        },
+        {
+          "title": "Test real situations",
+          "text": "We try normal enquiries, missing details and unusual requests. Your team reviews the results before we agree on launch, monitoring and day-to-day use."
+        }
+      ],
+      "faq": [
+        {
+          "q": "Can this work with my website, phone, calendar or CRM?",
+          "a": "We first check the tools, accounts and access you have. Your proposal then lists the connections we can build, any setup required and the limits to plan around."
+        },
+        {
+          "q": "Can an AI agent take orders or book appointments?",
+          "a": "Yes, where the required systems support it. The agent can collect details and carry out the actions you approve. An order or booking is confirmed only after the relevant system accepts it. Unclear requests can be passed to your team."
+        },
+        {
+          "q": "How is an AI automation project priced?",
+          "a": "You receive a fixed quote for the agreed work, connections and team handover. Calling, messaging, AI usage, paid platforms and ongoing support are listed separately where they apply."
+        }
+      ],
+      "related": [
+        "website-development",
+        "ecommerce",
+        "wordpress"
+      ],
+      "useCases": [
+        {
+          "title": "Customer questions, answered",
+          "text": "Help customers find product and service information using answers you approve. Collect the details your team needs and offer a clear way to reach a person."
+        },
+        {
+          "title": "A clearer picture of each enquiry",
+          "text": "Ask useful questions about what a customer needs. Summarise the enquiry and pass it to the right person with enough context to take the next step."
+        },
+        {
+          "title": "Order details, ready to act on",
+          "text": "Collect product choices, quantities and delivery details. Let customers review their request, then pass it into your order process and report its status accurately."
+        },
+        {
+          "title": "A helpful first step on the phone",
+          "text": "Handle routine inbound questions and requested callbacks with a voice agent. Capture why the customer is calling and arrange a transfer or team callback when needed."
+        },
+        {
+          "title": "Bookings with a clear confirmation",
+          "text": "Collect appointment details, check the available times in your calendar and submit the booking. Confirm it once the calendar accepts it, and pass exceptions to your team."
+        },
+        {
+          "title": "Follow-ups with the details in place",
+          "text": "Prepare or send the follow-ups you approve, update customer records and share conversation summaries. Set clear timing, review rules and stopping points for each process."
+        }
+      ],
+      "deliveryNotes": [
+        {
+          "title": "Your knowledge, useful answers",
+          "text": "Choose the information the agent can use, who keeps it current and which questions need a person."
+        },
+        {
+          "title": "Important actions stay clear",
+          "text": "Let customers review key order and booking details. Decide which actions need their confirmation or your team’s approval."
+        },
+        {
+          "title": "A clear route to your team",
+          "text": "Introduce the AI assistant openly. Let customers ask for a person and pass along the conversation so they do not have to start again."
+        },
+        {
+          "title": "Control as your needs change",
+          "text": "Set the rules for calls, callbacks and follow-ups. Decide who reviews exceptions and how your team can pause or adjust the process."
+        }
+      ]
+    },
+    {
+      "slug": "website-development",
+      "shortTitle": "Website development",
+      "title": "Custom websites for the way you work.",
+      "eyebrow": "WEBSITE DEVELOPMENT",
+      "intro": "Give customers a useful place to visit and your team the features to get things done. We design and build custom websites and web apps around your pages, business processes and everyday tasks.",
+      "outcome": "A custom website or web app that brings the right pages, features and tools together.",
+      "audience": [
+        "Businesses planning a custom website or web app",
+        "Teams whose current site no longer supports the way they work",
+        "Organisations that need features beyond a standard page layout"
+      ],
+      "deliverables": [
+        "A clear page structure and feature plan",
+        "Layouts for desktop, tablet and mobile",
+        "Custom features and tool connections defined in your proposal",
+        "Checks for key pages, forms and user actions",
+        "Launch preparation and guidance for managing the finished site"
+      ],
+      "process": [
+        {
+          "title": "Plan the useful features",
+          "text": "We discuss what customers and staff need to do, review your current setup and turn those needs into a page plan, feature list and fixed quote."
+        },
+        {
+          "title": "Design and build",
+          "text": "We shape the layouts and develop the features, sharing progress at clear review points so you can see how the site is coming together."
+        },
+        {
+          "title": "Test and prepare for launch",
+          "text": "We work through the main tasks, check the finished pages and prepare for launch. Your team receives the access and guidance included in the project."
+        }
+      ],
+      "faq": [
+        {
+          "q": "Which platform will you use?",
+          "a": "The choice depends on your features, existing systems and editing needs. Our custom development work includes PHP, Laravel, React and Next.js. For a business site with everyday content editing, WordPress may also be a suitable option."
+        },
+        {
+          "q": "Can you work with my existing website or code?",
+          "a": "Yes, after reviewing it. We need to understand the platform, code, hosting and available access before confirming the changes we can take on."
+        },
+        {
+          "q": "What does the fixed project quote include?",
+          "a": "Your proposal lists the pages, features, review points and launch work included in the price. It also explains who supplies the content and any separate hosting, licence or service costs."
+        }
+      ],
+      "related": [
+        "wordpress",
+        "ui-ux-design"
+      ]
+    },
+    {
+      "slug": "wordpress",
+      "shortTitle": "WordPress",
+      "title": "Your business website. Easy to update.",
+      "eyebrow": "WORDPRESS & ELEMENTOR",
+      "intro": "Present your business clearly and keep your content fresh. We build WordPress and Elementor websites with reusable pages, useful features and an editing setup your team can learn to manage.",
+      "outcome": "A business website with a consistent look and a practical way to update everyday content.",
+      "audience": [
+        "Business owners who want to edit their own pages",
+        "Teams ready to refresh or rebuild a WordPress site",
+        "Organisations that need reusable layouts as their content grows"
+      ],
+      "deliverables": [
+        "Responsive page templates and reusable sections",
+        "An editing setup suited to your team",
+        "The plugins, forms and connections listed in your proposal",
+        "Existing content moved where included in the project",
+        "Launch checks and guidance for everyday editing"
+      ],
+      "process": [
+        {
+          "title": "Plan for everyday editing",
+          "text": "We review your content, brand and current setup. Together, we choose the pages and features you need and confirm the fixed project price."
+        },
+        {
+          "title": "Build the pages",
+          "text": "We create consistent templates, add the required features and review the main pages with you. Reusable sections help keep the site organised."
+        },
+        {
+          "title": "Prepare your team",
+          "text": "We check key actions and show your team how to update the content. We also explain the care and support options available after launch."
+        }
+      ],
+      "faq": [
+        {
+          "q": "Does every WordPress project use Elementor?",
+          "a": "We use Elementor when it suits the site and the people editing it. We can also work with an existing WordPress setup or custom code, depending on the project."
+        },
+        {
+          "q": "Can you keep my current content and branding?",
+          "a": "Yes. We can build around your logo, colours and existing content. We review what needs to move or change before confirming the migration work."
+        },
+        {
+          "q": "Are updates and maintenance included?",
+          "a": "Your proposal explains the support included after launch. Ongoing updates, maintenance and new features can be quoted separately."
+        }
+      ],
+      "related": [
+        "website-care",
+        "ecommerce"
+      ]
+    },
+    {
+      "slug": "ui-ux-design",
+      "shortTitle": "UI/UX design",
+      "title": "Design that guides the next step.",
+      "eyebrow": "UI/UX & DIGITAL DESIGN",
+      "intro": "Help people understand your offer, find what they need and know what to do next. We plan the structure, layouts and interactions for websites and digital products, then turn them into clear Figma designs for your development team.",
+      "outcome": "Thoughtful page designs, clear user journeys and organised files ready for development.",
+      "audience": [
+        "Businesses with pages or menus that confuse visitors",
+        "Teams planning a new website or digital product",
+        "Developers who need clear layouts and interaction details"
+      ],
+      "deliverables": [
+        "Key user journeys and a proposed page structure",
+        "Wireframes for the pages in your project",
+        "Responsive Figma designs",
+        "Reusable interface elements and visual guidelines",
+        "Organised design files with notes for development"
+      ],
+      "process": [
+        {
+          "title": "Understand the user",
+          "text": "We look at who will use the site, what they want to do and where the current experience gets in their way."
+        },
+        {
+          "title": "Shape the experience",
+          "text": "We plan the page structure, work through wireframes and develop the visual style. You review the design at each key stage."
+        },
+        {
+          "title": "Prepare the design files",
+          "text": "We organise the approved screens and reusable elements, explain key interactions and provide the notes your developers need."
+        }
+      ],
+      "faq": [
+        {
+          "q": "Can I hire you for design only?",
+          "a": "Yes. UI/UX design can be a separate project with files prepared for your developers. We can also include development in the same proposal."
+        },
+        {
+          "q": "Will you follow our existing brand?",
+          "a": "Yes. We work from your approved logo and brand guidelines. Creating or changing the brand identity is separate work and needs to be included in the proposal."
+        },
+        {
+          "q": "Is user research included?",
+          "a": "Planning includes a discussion of your audience and can include a review of the current site. Interviews, usability sessions or wider research are included only when specified in the proposal."
+        }
+      ],
+      "related": [
+        "website-development",
+        "ecommerce"
+      ]
+    },
+    {
+      "slug": "ecommerce",
+      "shortTitle": "Ecommerce",
+      "title": "Make your store easier to shop and manage.",
+      "eyebrow": "ECOMMERCE DEVELOPMENT",
+      "intro": "Give shoppers a clear path from finding a product to placing an order. We build online stores around your catalogue, payment and delivery needs, with practical tools for the people managing products and orders.",
+      "outcome": "A considered buying journey for customers and useful store tools for your team.",
+      "audience": [
+        "Shops preparing to sell online",
+        "Existing stores with difficult shopping or order processes",
+        "Businesses that need custom checkout or store management features"
+      ],
+      "deliverables": [
+        "Product, category and storefront layouts",
+        "Cart and checkout flows for your purchase options",
+        "Product and order management features",
+        "Payment, delivery and tracking connections listed in your proposal",
+        "Checks from browsing to order handling, plus guidance for your team"
+      ],
+      "process": [
+        {
+          "title": "Plan the buying journey",
+          "text": "We review your products, payment options, delivery rules and order process, then confirm the features and fixed project quote."
+        },
+        {
+          "title": "Build the store",
+          "text": "We develop the storefront and management tools, set up the required connections and review the experience with sample products."
+        },
+        {
+          "title": "Check from cart to order",
+          "text": "We test browsing, cart, checkout and order handling. Before launch, your team receives guidance on the store features included in the project."
+        }
+      ],
+      "faq": [
+        {
+          "q": "Can customers pay online or choose cash on delivery?",
+          "a": "We can include cash on delivery and suitable online payment options. Availability depends on the platform, your business and provider approval. Account setup and provider fees are discussed separately."
+        },
+        {
+          "q": "Can you move our existing products and orders?",
+          "a": "We first review the available data. The proposal then defines what we can transfer, how it needs to be prepared and which migration checks are included."
+        },
+        {
+          "q": "Can you build custom store management features?",
+          "a": "Yes. Tell us how your team handles products, customers and orders. We review the process and quote for the features that fit your requirements."
+        }
+      ],
+      "related": [
+        "wordpress",
+        "website-care"
+      ]
+    },
+    {
+      "slug": "website-care",
+      "shortTitle": "Website care",
+      "title": "Keep your website working for your business.",
+      "eyebrow": "WEBSITE CARE & IMPROVEMENTS",
+      "intro": "Get help with updates, fixes and practical improvements after launch. We review your WordPress or custom website, set priorities and plan the support your team needs to keep everyday work moving.",
+      "outcome": "A clear care plan, practical improvements and a record of what changed.",
+      "audience": [
+        "Business owners without an in-house development team",
+        "Teams with website problems they need to resolve",
+        "Organisations planning ongoing support after launch"
+      ],
+      "deliverables": [
+        "A review of the website, hosting and available access",
+        "Software updates and compatibility checks included in your plan",
+        "Backups and restore checks where specified",
+        "Priority fixes and improvements",
+        "Clear change notes and support arrangements"
+      ],
+      "process": [
+        {
+          "title": "Find what needs attention",
+          "text": "We review the current setup and the problems affecting your business. Then we set priorities and confirm the work and price."
+        },
+        {
+          "title": "Update, fix and check",
+          "text": "We make the planned changes, using backup and review steps suited to your website and the work involved."
+        },
+        {
+          "title": "Keep the next steps clear",
+          "text": "We explain what changed, note anything that still needs attention and help you decide what to tackle next."
+        }
+      ],
+      "faq": [
+        {
+          "q": "Can you look after a site built by someone else?",
+          "a": "We can review it before taking on the work. We need suitable access and information about the platform, hosting and services it relies on."
+        },
+        {
+          "q": "Are new features part of website care?",
+          "a": "Your care plan defines what is included. Larger features and extra requests receive a separate fixed quote before work begins."
+        },
+        {
+          "q": "What happens if an urgent issue comes up?",
+          "a": "Your proposal sets out how to report problems and the support arrangements available. We confirm response expectations before support begins."
+        }
+      ],
+      "related": [
+        "wordpress",
+        "ecommerce"
+      ]
+    }
+  ],
+  "about": {
+    "eyebrow": "ABOUT AP TECH AGENCY",
+    "title": "AI automation, with a team behind every step.",
+    "intro": "We help businesses turn customer conversations into useful next steps. AI automation is our main focus, supported by website development and UI/UX design. Led by founder and technical lead Nazmul Hasan, our five-person team works from Bangladesh.",
+    "founder": {
+      "name": "Nazmul Hasan",
+      "role": "Founder & technical lead",
+      "bio": "Nazmul leads the technical work at AP Tech Agency. His development experience includes WordPress, Elementor, PHP and Laravel. He turns business needs into a practical build plan and helps the designers and developers bring it to life.",
+      "focus": [
+        "Understanding how your business works",
+        "Choosing a practical technical approach",
+        "Guiding development and preparing your team for launch"
+      ]
+    },
+    "team": {
+      "size": 5,
+      "location": "Bangladesh",
+      "title": "Five people. One shared plan.",
+      "intro": "Two UI/UX designers, two developers and one analyst/project manager bring different skills to the same goal. Clear roles and regular review points help everyone work from the same plan.",
+      "roles": [
+        {
+          "count": 2,
+          "title": "UI/UX designers",
+          "text": "Plan the user journey, shape the layouts and make the design ready to build."
+        },
+        {
+          "count": 2,
+          "title": "Developers",
+          "text": "Build websites and features, connect business tools and solve technical problems."
+        },
+        {
+          "count": 1,
+          "title": "Analyst / project manager",
+          "text": "Turn requirements into a clear plan, coordinate feedback and keep track of decisions."
+        }
+      ]
+    },
+    "principles": [
+      {
+        "title": "Start with your business",
+        "text": "We ask about your customers, your goals and the work your team needs to do."
+      },
+      {
+        "title": "Make the plan clear",
+        "text": "Your proposal sets out the features, responsibilities, review points and price."
+      },
+      {
+        "title": "Choose what is useful",
+        "text": "We explain the options and choose tools that fit the job, your budget and the people using them."
+      },
+      {
+        "title": "Leave you ready to use it",
+        "text": "We plan the files, access and guidance your team needs to manage the finished work."
+      }
+    ],
+    "workingModel": {
+      "title": "A clear scope. A fixed project price.",
+      "text": "You know what the project includes and what it costs before work starts. If the requirements change, we explain the extra work, price and effect on timing before proceeding. Hosting, paid tools and ongoing support are listed separately where they apply."
+    },
+    "cta": {
+      "title": "What would you like to make easier?",
+      "text": "Tell us about the task, the challenge or the idea. We will help you shape a practical next step.",
+      "label": "Talk about your project"
+    },
+    "coreServiceStatement": "AI automation is our core service. Custom websites, WordPress, ecommerce, UI/UX design and website care support the rest of your digital experience."
+  },
+  "journal": [
+    {
+      "slug": "write-a-useful-website-brief",
+      "title": "A clear website brief starts with five questions",
+      "category": "Planning",
+      "excerpt": "What should the site do, who is it for and what comes first? A few clear answers give your project a useful starting point.",
+      "sections": [
+        {
+          "heading": "1. What should the website achieve?",
+          "paragraphs": [
+            "Start with the job you need the website to do. Before choosing layouts or collecting design examples, write down the problem you want to solve and what a useful result would look like.",
+            "For example: “Help business owners understand our services and request a quote.” That gives your team a starting point for the pages, content and main call to action."
+          ]
+        },
+        {
+          "heading": "2. Who will use it?",
+          "paragraphs": [
+            "Describe your visitors and what they need. A new customer may want a simple explanation of your service. An existing customer may need support or order details. Include the questions people ask before they buy or contact you."
+          ]
+        },
+        {
+          "heading": "3. What must the first version include?",
+          "paragraphs": [
+            "List the essential pages and features, then put later ideas in a separate list. Explain features through a task: “Customers can send their project details and request a quote” gives the team something concrete to plan.",
+            "Describe what happens when that task is complete. Which details does the form collect? Who receives the enquiry? What does the visitor see next? These answers make the work easier to estimate and review."
+          ]
+        },
+        {
+          "heading": "4. What do you already have?",
+          "paragraphs": [
+            "Gather your logo, brand guidelines, useful text, product details and images. Add links to the current website and any tools it uses. If you share a design reference, say what you like about it: the menu, the spacing or the way a service is explained."
+          ]
+        },
+        {
+          "heading": "5. Who decides, and what needs planning?",
+          "paragraphs": [
+            "Name the people providing content, reviewing designs and approving the finished work. Include your budget range, target launch date and anything the project depends on. Your team can then turn the brief into a proposal with a clear scope, price and review process.",
+            "You do not need every answer on day one. Keep open questions visible and update the brief as decisions are made. A short, current document is more useful than a long one nobody works from."
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "redesign-or-improve-your-website",
+      "title": "Should you improve your website or start again?",
+      "category": "Website decisions",
+      "excerpt": "A confusing page, a broken form and an ageing platform need different solutions. Find the problem before choosing the size of the project.",
+      "sections": [
+        {
+          "heading": "Name what is getting in the way",
+          "paragraphs": [
+            "If your website feels dated, first ask what is making it hard to use. Can customers understand your service, find a product and contact you? Can your team update the content without a struggle?",
+            "Write down each problem in plain language. This helps you decide which parts need attention and which still serve the business well."
+          ]
+        },
+        {
+          "heading": "Try the tasks that matter",
+          "paragraphs": [
+            "Open the site on a phone and a larger screen. Find a service, read a product page, complete a form or work through an order. Note where you get stuck. Screenshots and a short list of steps give the team useful evidence to review."
+          ]
+        },
+        {
+          "heading": "See what a focused change could solve",
+          "paragraphs": [
+            "When the structure and editing setup still fit your needs, a few improvements may be enough. Clearer service text, a simpler menu, a repaired form or a better product layout can each address a specific problem. Ask what needs to change and what should be checked afterward."
+          ]
+        },
+        {
+          "heading": "Know when a bigger change makes sense",
+          "paragraphs": [
+            "A redesign becomes worth considering when the structure, visual style and main user journeys all need work. A rebuild may be needed if the current platform cannot support your requirements. Ask the team to connect each proposed change to a problem you have identified."
+          ]
+        },
+        {
+          "heading": "Compare the complete plans",
+          "paragraphs": [
+            "Compare the cost, features, content work and time required for a focused update and a wider redesign. Include the practical details: product data, payment connections and the pages people already link to.",
+            "Plan for the work behind the pages too. Content may need moving, old links may need redirects and your team may need help learning a new editor. Those tasks belong in the proposal.",
+            "Choose the plan that fits your goals and the resources you can commit. Agree on the tasks visitors should be able to complete when the work is finished, and keep later ideas separate from the current project."
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "choose-your-first-business-automation",
+      "title": "Your first automation: start with one useful task",
+      "category": "Practical automation",
+      "excerpt": "Choose a repeated task, define a useful result and give someone responsibility for checking it. Build confidence before adding more.",
+      "sections": [
+        {
+          "heading": "Choose a task you can explain",
+          "paragraphs": [
+            "Look for work your team repeats in a similar way: collecting enquiry details, preparing a summary or drafting an answer from approved information. Choose a task with a clear starting point and a result someone can check.",
+            "Write down the steps. If they change every time, settle the process first. You will have a clearer idea of what to automate and where a person needs to decide."
+          ]
+        },
+        {
+          "heading": "Define what it can and cannot do",
+          "paragraphs": [
+            "Decide what starts the process, which information it can use and what it should produce. Name the tools involved and the person responsible. Set approval rules for actions such as sending messages or changing customer records. A first version can simply prepare a draft.",
+            "For example, an enquiry process might collect the submitted details, flag anything missing and prepare an internal note. A team member can review the note and choose the next action. Describe that result before building."
+          ]
+        },
+        {
+          "heading": "Use AI where it has a clear role",
+          "paragraphs": [
+            "A simple rule may be enough to place a completed form in the right list. AI can help summarise a message or prepare a draft reply. Give each step a clear purpose and decide how a person will review work that needs judgement."
+          ]
+        },
+        {
+          "heading": "Test the less obvious situations",
+          "paragraphs": [
+            "Try missing details, unclear wording, duplicate enquiries and requests outside the process. Decide when the automation should pause and ask for help. Keep a record of what happened so the responsible person can find and correct a problem."
+          ]
+        },
+        {
+          "heading": "Check whether it helps your team",
+          "paragraphs": [
+            "Look at the work the automation creates as well as the work it removes. How much checking does it need? Does the result help someone take the next step? Use your team’s examples to improve it.",
+            "Include tool costs, access permissions and ongoing maintenance in the plan. Once the first task works as intended, review whether another step is worth adding. Keep each new action clear so your team can stay in control."
+          ]
+        }
+      ]
+    }
+  ],
+  "editorialNotes": [
+    "The six service pages describe proposed service scope; the final client proposal still defines what is included.",
+    "The five-person team and founder role follow the user's supplied information. No additional named staff, portraits or biographies are invented.",
+    "The journal articles are original practical guidance, with no product-specific claims, statistics or external quotations.",
+    "No prices, delivery deadlines, response-time commitments, testimonials or guaranteed business results have been added.",
+    "Headings are page copy suggestions and should not be treated as an approved brand slogan.",
+    "No new contact details or live submission claims are included in this content draft."
+  ],
+  "homepage": {
+    "eyebrow": "AI Automation · Our core service",
+    "title": "AI that talks. Work that moves.",
+    "intro": "We build AI agents for customer chats and calls, order details, bookings and follow-ups. They work with your business tools and pass requests to your team when a person is needed.",
+    "primaryCtaLabel": "Plan your AI project",
+    "primaryCtaHref": "/contact/?service=ai-automation",
+    "secondaryCtaLabel": "Explore AI automation",
+    "secondaryCtaHref": "/services/ai-automation/",
+    "supportingServicesTitle": "Good conversations need a good experience.",
+    "supportingServicesText": "Alongside AI automation, we build custom websites, WordPress sites and online stores, with UI/UX design and ongoing care to support the people using them.",
+    "serviceCardSnippet": "AI agents that answer routine questions, collect details, arrange bookings and keep the next step clear.",
+    "heroNote": "Start with one useful task. Build from there."
+  },
+  "chat": {
+    "intro": "What would you like to make easier?",
+    "messagePlaceholder": "Tell us about a customer task, a business challenge or your next website.",
+    "topics": [
+      {
+        "label": "Customer chat",
+        "value": "AI customer conversations and enquiry handling"
+      },
+      {
+        "label": "New enquiries",
+        "value": "AI lead qualification and enquiry routing"
+      },
+      {
+        "label": "Orders & bookings",
+        "value": "AI order capture and appointment bookings"
+      },
+      {
+        "label": "Calls & callbacks",
+        "value": "AI voice agents for inbound calls and requested callbacks"
+      },
+      {
+        "label": "Follow-ups & CRM",
+        "value": "Customer follow-ups, CRM updates and team handoff"
+      },
+      {
+        "label": "Website & design",
+        "value": "Website development or UI/UX design"
+      }
+    ],
+    "handoffLabel": "Continue on WhatsApp",
+    "handoffNote": "Opens WhatsApp with a draft. Review your message before sending."
+  }
+}
