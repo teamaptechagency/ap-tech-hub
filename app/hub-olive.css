@@ -1,0 +1,130 @@
+/* Workspace adaptation of frontend-agency/dist/site.css.
+ * Public pages and printed invoice documents keep their own styles.
+ * Variables live on body so portalled dialogs inherit the same palette.
+ */
+@font-face{font-family:HubManrope;src:url('/fonts/manrope.woff2') format('woff2');font-weight:200 800;font-style:normal;font-display:swap}
+@media screen {
+  body:has(.hub-shell),body:has(.auth-redesign){
+    --hub-olive:#556B2F;--hub-olive-deep:#3C5128;--hub-navy:#172B3A;--hub-gold:#C5A46D;
+    --hub-paper:#F6F5F0;--hub-surface:#F6F5F0;--hub-card:#FFFFFF;--hub-ink:#172B3A;
+    --hub-muted:#626F63;--hub-line:#D8DFD0;--hub-soft:#E7EBDD;--hub-nav:#FCFCF9;
+    --hub-action:#172B3A;--hub-action-ink:#F6F5F0;--hub-action-hover:#556B2F;
+    --hub-sidebar:#3C5128;--hub-sidebar-active:#556B2F;--hub-sidebar-ink:#F6F5F0;
+    --hub-sidebar-muted:#D0D8C3;--hub-sidebar-line:#60704C;--hub-sidebar-accent:#E2C795;
+    --background:var(--hub-surface);--foreground:var(--hub-ink);
+    --card:var(--hub-card);--card-foreground:var(--hub-ink);
+    --popover:var(--hub-card);--popover-foreground:var(--hub-ink);
+    --primary:var(--hub-olive);--primary-foreground:#FFFFFF;
+    --secondary:var(--hub-soft);--secondary-foreground:#3C5128;
+    --muted:var(--hub-soft);--muted-foreground:var(--hub-muted);
+    --accent:var(--hub-soft);--accent-foreground:#3C5128;
+    --border:var(--hub-line);--input:#A2AE95;--ring:var(--hub-olive);
+    --radius:.75rem;--chart-1:#556B2F;--chart-2:#172B3A;--chart-3:#C5A46D;--chart-4:#879B67;--chart-5:#8B7960;
+    --sidebar:var(--hub-sidebar);--sidebar-foreground:var(--hub-sidebar-ink);
+    --sidebar-primary:var(--hub-sidebar-accent);--sidebar-primary-foreground:#172B3A;
+    --sidebar-accent:var(--hub-sidebar-active);--sidebar-accent-foreground:var(--hub-sidebar-ink);
+    --sidebar-border:var(--hub-sidebar-line);--sidebar-ring:var(--hub-sidebar-accent);
+    color-scheme:light;background:var(--background);color:var(--foreground);
+    font-family:HubManrope,Manrope,"Segoe UI",Arial,sans-serif;
+  }
+  html[data-hub-appearance=dark] :is(body:has(.hub-shell),body:has(.auth-redesign)){
+    --hub-surface:#112127;--hub-card:#1B2E34;--hub-ink:#F1F4E9;--hub-muted:#B8C7BE;
+    --hub-line:#3A5147;--hub-soft:#283E32;--hub-nav:#1B2D32;
+    --hub-action:#C5A46D;--hub-action-ink:#172B3A;--hub-action-hover:#D5B780;
+    --hub-sidebar:#293F25;--hub-sidebar-active:#3D552F;--hub-sidebar-muted:#CBD5BD;
+    --hub-sidebar-line:#4E6442;--hub-sidebar-accent:#E0C493;
+    --primary:#BED49E;--primary-foreground:#172B3A;
+    --secondary-foreground:#DFE9D0;--accent-foreground:#E8F0DC;
+    --input:#5C7162;--ring:#BED49E;
+    --chart-1:#BED49E;--chart-2:#C5A46D;--chart-3:#8DA58F;--chart-4:#719395;--chart-5:#D8C6A2;
+    color-scheme:dark;
+  }
+  .hub-shell,.auth-redesign{font-family:HubManrope,Manrope,"Segoe UI",Arial,sans-serif;line-height:1.6}
+  html .hub-shell,html[data-hub-appearance=dark] .hub-shell{--background:var(--hub-surface);--foreground:var(--hub-ink);--muted-foreground:var(--hub-muted);--border:var(--hub-line)}
+  .hub-shell [data-hub-main]{background:var(--hub-surface);scrollbar-color:var(--input) transparent}
+  .hub-shell .hub-workspace-topbar{background:var(--hub-nav);border-color:var(--hub-line);min-height:72px}
+  .hub-content h1{font-weight:600;letter-spacing:-.04em}
+  .hub-content h2,.hub-content h3{font-weight:600;letter-spacing:-.025em}
+  .hub-content{padding-top:32px}
+  .hub-shell [data-hub-sidebar]{
+    background:var(--hub-sidebar);color:var(--hub-sidebar-ink);border-color:var(--hub-sidebar-line);
+    --background:var(--hub-sidebar);--foreground:var(--hub-sidebar-ink);
+    --card:var(--hub-sidebar);--card-foreground:var(--hub-sidebar-ink);
+    --muted:var(--hub-sidebar-active);--muted-foreground:var(--hub-sidebar-muted);
+    --border:var(--hub-sidebar-line);--input:var(--hub-sidebar-line);
+    --accent:var(--hub-sidebar-active);--accent-foreground:var(--hub-sidebar-ink);
+    --primary:var(--hub-sidebar-accent);--primary-foreground:#172B3A;
+    --popover:var(--hub-sidebar);--popover-foreground:var(--hub-sidebar-ink);
+  }
+  .hub-shell [data-hub-sidebar] .text-primary{color:var(--hub-sidebar-accent)}
+  .hub-shell [data-hub-sidebar] :is(.hub-sidebar-label,nav p){color:var(--hub-sidebar-muted)}
+  .hub-shell [data-hub-sidebar] nav{scrollbar-color:var(--hub-sidebar-line) transparent}
+  .hub-shell [data-hub-sidebar] nav a{font-size:13px;min-height:42px;border-radius:9px}
+  .hub-shell [data-hub-sidebar] nav a:hover{background:var(--hub-sidebar-active);color:var(--hub-sidebar-ink)}
+  .hub-shell [data-hub-sidebar] nav :is(a.bg-primary,a[aria-current=page]){background:var(--hub-sidebar-active);color:var(--hub-sidebar-ink);box-shadow:inset 3px 0 var(--hub-sidebar-accent)}
+  .hub-shell [data-hub-sidebar]>div:last-child{background:var(--hub-sidebar);border-color:var(--hub-sidebar-line);color:var(--hub-sidebar-ink)}
+  .hub-shell [data-hub-sidebar]>div:last-child form button{color:var(--hub-sidebar-muted)}
+  .hub-shell [data-hub-sidebar] :is(input,button[aria-label="Select website"]){border-radius:9px;border-color:var(--hub-sidebar-line);background:var(--hub-sidebar);color:var(--hub-sidebar-ink)}
+  .hub-shell [data-slot=card]{border-radius:16px;background:var(--card);color:var(--card-foreground);border-color:var(--border);box-shadow:none}
+  .hub-shell [data-slot=card-title]{font-size:15px;font-weight:650}
+  .hub-shell [data-slot=card-description]{font-size:13px}
+  .hub-shell :is(input:not([type=checkbox]):not([type=radio]),select,textarea,[data-slot=select-trigger]){border-radius:9px;border-color:var(--input);background-color:var(--card);color:var(--foreground);font-size:14px}
+  .hub-shell :is(input:not([type=checkbox]):not([type=radio]),select,[data-slot=select-trigger]){min-height:42px}
+  .hub-shell input:is([type=checkbox],[type=radio]){accent-color:var(--primary)}
+  .hub-shell [data-slot=button]{border-radius:8px;font-size:13px;font-weight:650}
+  .hub-shell [data-slot=button]:is([data-size=default],[data-size=lg]){min-height:42px}
+  .hub-shell [data-slot=button][data-size=sm]{min-height:36px}
+  .hub-shell [data-slot=button][data-size=xs]{min-height:30px}
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) [data-slot=button][data-variant=default]{background:var(--hub-action);color:var(--hub-action-ink);border-color:transparent}
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) [data-slot=button][data-variant=default]:hover{background:var(--hub-action-hover);color:var(--hub-action-ink)}
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) [data-slot=button][data-variant=outline]{background:transparent;color:var(--foreground);border-color:var(--border)}
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) [data-slot=button][data-variant=outline]:hover{background:var(--muted)}
+  .hub-shell :is([role=tablist],.hub-role-badge){border-radius:9px;background:var(--hub-soft);border-color:var(--hub-line)}
+  .hub-shell [role=tab][data-state=active]{color:var(--primary);background:var(--card);border-radius:7px}
+  .hub-shell table{font-size:13px}
+  .hub-shell thead{background:var(--hub-soft)}
+  .hub-shell th{color:var(--hub-muted);font-size:11px}
+  .hub-shell td,.hub-shell th{border-color:var(--hub-line)}
+  .hub-shell tbody tr:hover{background:color-mix(in srgb,var(--hub-soft) 50%,transparent)}
+  .hub-shell [data-slot=badge]{border-radius:20px;font-size:11px}
+  .hub-shell .hub-dashboard>.grid:first-of-type :is([data-slot=card],a>[data-slot=card]){border-radius:16px;border-left-color:var(--primary)}
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) :is([data-slot=dialog-content],[data-slot=alert-dialog-content],[data-slot=popover-content],[data-slot=dropdown-menu-content],[data-slot=select-content],[role=dialog]){
+    background:var(--popover);color:var(--popover-foreground);border:1px solid var(--border);border-radius:18px;
+    font-family:HubManrope,Manrope,"Segoe UI",Arial,sans-serif;
+  }
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) :is([data-slot=dialog-overlay],[data-slot=alert-dialog-overlay]){background:rgb(17 33 39 / .35);backdrop-filter:blur(8px)}
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) :is([data-slot=dialog-content],[role=dialog]) :is(input,select,textarea){border-color:var(--input);background:var(--card);color:var(--foreground);border-radius:9px}
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) :is(input,textarea)::placeholder{color:var(--muted-foreground);opacity:1}
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid var(--ring);outline-offset:3px}
+  :is(body:has(.hub-shell),body:has(.auth-redesign)) ::selection{background:var(--hub-gold);color:var(--hub-navy)}
+
+  /* WP Nazmul's native components use different variable names. */
+  body:has(.hub-shell) .wpnazmul-surface{
+    --ink:var(--hub-ink);--muted:var(--hub-muted);--green:var(--hub-soft);
+    --green-dark:var(--primary);--green-soft:var(--hub-soft);--line:var(--hub-line);
+    --bg:var(--hub-surface);--white:var(--hub-card);--dark:var(--hub-sidebar);
+    --radius:16px;--heading:HubManrope,Manrope,"Segoe UI",Arial,sans-serif;
+    --body:HubManrope,Manrope,"Segoe UI",Arial,sans-serif;
+    background:var(--hub-surface);color:var(--hub-ink);color-scheme:inherit;
+  }
+  body:has(.hub-shell) .wpnazmul-surface :is(.btn-green,.btn-dark){background:var(--hub-action);color:var(--hub-action-ink);border-color:transparent}
+  body:has(.hub-shell) .wpnazmul-surface :is(.btn-green,.btn-dark):hover{background:var(--hub-action-hover);color:var(--hub-action-ink)}
+  body:has(.hub-shell) .wpnazmul-surface :is(.btn-outline,.btn-light){background:var(--hub-card);color:var(--hub-ink);border-color:var(--hub-line)}
+  body:has(.hub-shell) .wpnazmul-surface :is(.card,.stat-card,.client-card,.file-card,.project-card,.modal){background:var(--hub-card);border-color:var(--hub-line);color:var(--hub-ink);border-radius:16px}
+  body:has(.hub-shell) .wpnazmul-surface :is(input,textarea,select){background:var(--hub-card);border-color:var(--input);color:var(--hub-ink)}
+  body:has(.hub-shell) .wpnazmul-surface :is(.tab.active,.filter-pill.active,.detail-tabs button.active){color:var(--primary);border-color:var(--primary)}
+  body:has(.hub-shell) .wpnazmul-surface :is(.progress-fill,.progress-bar>span){background:var(--primary)}
+  body:has(.hub-shell) .wpnazmul-surface :is(.conversation-list,.conversation-head,.message-compose,.settings-panel){background:var(--hub-card);border-color:var(--hub-line)}
+  body:has(.hub-shell) .wpnazmul-surface .conversation-item.active{background:var(--hub-soft)}
+  body:has(.hub-shell) .wpnazmul-surface .message-bubble{border-color:var(--hub-line)}
+  body:has(.hub-shell) .wpnazmul-surface .message-group.outgoing .message-bubble{background:var(--hub-soft);color:var(--hub-ink)}
+  body:has(.hub-shell) .wpnazmul-surface .bg-muted{background-color:var(--hub-soft)}
+
+  .auth-redesign .auth-brand-panel{background:var(--hub-olive);color:#F6F5F0}
+  html[data-hub-appearance=dark] .auth-redesign .auth-brand-panel{background:#293F25}
+  .auth-redesign .auth-brand-story :is(em,.text-primary){color:#E2C795}
+  .auth-redesign .auth-form-panel{background:var(--hub-surface)}
+  .auth-redesign .auth-form-card form>button[type=submit]{background:var(--hub-action);color:var(--hub-action-ink);border-color:transparent;border-radius:8px}
+  .auth-redesign .auth-form-card form>button[type=submit]:hover{background:var(--hub-action-hover)}
+  @media(max-width:767px){.hub-shell .hub-workspace-topbar{min-height:56px}.hub-content{padding-top:24px}.hub-shell [data-slot=card]{border-radius:13px}}
+}

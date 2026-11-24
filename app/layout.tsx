@@ -8,6 +8,7 @@ import "./globals.css";
 import "./public-site.css";
 import "./hub-redesign.css";
 import "./hub-colors.css";
+import "./hub-olive.css";
 import { HubThemeProvider } from "@/components/layout/hub-theme-provider";
 
 export const dynamic = "force-dynamic";
