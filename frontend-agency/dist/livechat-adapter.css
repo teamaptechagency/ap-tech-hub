@@ -28,3 +28,16 @@
 #ap-support .ap-chat-window input::placeholder{color:#a8bcab}
 body:has(#ap-support .ap-chat-window:not([hidden])) #chat-launcher{visibility:hidden;pointer-events:none}
 @media(max-width:640px){#ap-support .ap-chat-window{inset:auto 12px 12px 12px;width:auto;max-width:none;max-height:calc(100dvh - 24px);border-radius:18px}#ap-support .ap-chat-start{padding:20px}body:has(#ap-support .ap-chat-window:not([hidden])) .floating-header,body:has(#ap-support .ap-chat-window:not([hidden])) .page-control{visibility:hidden;pointer-events:none}}
+
+/* Clear live-chat entry above the bottom navigation. */
+#ap-support{right:24px;bottom:98px}
+#ap-support .ap-support-launch{position:relative;inset:auto;display:inline-flex;align-items:center;justify-content:center;gap:9px;width:auto;min-width:128px;height:46px;padding:0 17px;border-radius:14px;background:#b9d58c;color:#17291d;border:1px solid #d5e7b7;box-shadow:0 8px 24px #0003;font-size:13px;font-weight:700;transition:background .18s,transform .18s}
+#ap-support .ap-support-launch:after{content:'Live chat'}
+#ap-support .ap-support-launch>svg{width:20px;height:20px}
+#ap-support .ap-support-launch:hover{background:#d0e5ac;transform:translateY(-2px)}
+#ap-support .ap-support-launch[aria-expanded=true]{background:#e2edce}
+#ap-support .ap-support-options{right:0;bottom:58px}
+#ap-support:has(.ap-chat-window:not([hidden])) .ap-support-launch{visibility:hidden;pointer-events:none}
+.floating-header .nav-contact{min-height:44px;padding:11px 20px;border:1px solid transparent;background:#c4a669;color:#17291d;box-shadow:inset 0 1px 0 #ffffff40;font-size:13px;letter-spacing:.1px}
+.floating-header .nav-contact:hover{background:#dfc48f;color:#17291d}
+@media(max-width:640px){#ap-support{right:16px;bottom:152px}#ap-support .ap-support-launch{min-width:116px;height:44px;padding:0 14px}.floating-header .nav-contact{padding:10px 15px;min-height:42px}}
