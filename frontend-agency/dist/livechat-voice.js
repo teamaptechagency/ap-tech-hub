@@ -1,0 +1,19 @@
+(()=>{'use strict';
+ const root=document.getElementById('ap-support');if(!root)return;
+ const options=root.querySelector('.ap-support-options'),active=root.querySelector('.ap-chat-active'),compose=root.querySelector('.ap-chat-compose'),input=compose?.querySelector('textarea'),log=root.querySelector('.ap-chat-messages');if(!options||!active||!input)return;
+ const entry=document.createElement('button');entry.type='button';entry.className='ap-voice-menu';entry.innerHTML='<span aria-hidden="true">◉</span><span>Voice conversation<small>Speak your message and hear replies</small></span><span aria-hidden="true">→</span>';options.append(entry);
+ const tools=document.createElement('section');tools.className='ap-voice-tools';tools.setAttribute('aria-label','Voice conversation');tools.hidden=true;
+ tools.innerHTML='<select aria-label="Voice language"><option value="en-US">English</option><option value="bn-BD">বাংলা</option></select><button type="button" aria-pressed="false">Use microphone</button><label><input type="checkbox">Read replies aloud</label><button type="button" class="ap-voice-exit">Text chat</button><p class="ap-voice-note" role="status">Start a conversation first. Then speak, review the text and send.</p>';
+ active.prepend(tools);let voice=false,recognition=null;const mic=tools.querySelector('button'),language=tools.querySelector('select'),read=tools.querySelector('input'),note=tools.querySelector('p');
+ function stop(){recognition?.abort();recognition=null;mic.textContent='Use microphone';mic.setAttribute('aria-pressed','false');window.speechSynthesis?.cancel();}
+ entry.addEventListener('click',()=>{voice=true;root.querySelector('.ap-live-open').click();tools.hidden=false;read.checked=true;});
+ tools.querySelector('.ap-voice-exit').addEventListener('click',()=>{voice=false;tools.hidden=true;read.checked=false;stop();});
+ mic.addEventListener('click',()=>{if(recognition){stop();return;}const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Recognition){note.textContent='Voice input is unavailable in this browser. Try Chrome or type your message.';return;}if(input.disabled){note.textContent='This conversation is closed. Start a new conversation.';return;}
+  window.speechSynthesis?.cancel();const r=new Recognition();recognition=r;r.lang=language.value;r.interimResults=false;
+  r.onresult=e=>{const text=e.results[0]?.[0]?.transcript?.trim();if(text){input.value=[input.value.trim(),text].filter(Boolean).join(' ').slice(0,4000);input.dispatchEvent(new Event('input',{bubbles:true}));note.textContent='Review your words, then press Send.';}};
+  r.onerror=()=>{note.textContent='Microphone stopped or access was denied. Try again or type.';};r.onend=()=>{recognition=null;mic.textContent='Use microphone';mic.setAttribute('aria-pressed','false');};
+  try{r.start();mic.textContent='Stop microphone';mic.setAttribute('aria-pressed','true');note.textContent='Listening…';}catch{stop();note.textContent='Could not start microphone. You can type instead.';}
+ });
+ new MutationObserver(changes=>{if(!voice||!read.checked||document.hidden||root.querySelector('.ap-chat-window').hidden)return;for(const change of changes)for(const node of change.addedNodes){if(node.nodeType!==1||!node.matches('.ap-chat-message.incoming'))continue;const text=node.querySelector('p')?.textContent;if(!text||!window.speechSynthesis||!window.SpeechSynthesisUtterance)continue;const speech=new SpeechSynthesisUtterance(text);speech.lang=/[\u0980-\u09ff]/.test(text)?'bn-BD':language.value;window.speechSynthesis.speak(speech);}}).observe(log,{childList:true});
+ root.querySelector('.ap-chat-close')?.addEventListener('click',stop);read.addEventListener('change',()=>{if(!read.checked)window.speechSynthesis?.cancel();});window.addEventListener('pagehide',stop);
+})();
