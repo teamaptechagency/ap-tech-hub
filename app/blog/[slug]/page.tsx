@@ -151,14 +151,14 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
           blogPostingJsonLd(post, data),
           breadcrumbJsonLd(origin, [
             { name: "Home", path: "/" },
-            { name: "Blog", path: "/blog" },
+            { name: "Insights", path: "/blog" },
             { name: post.title, path: `/blog/${post.slug}` },
           ]),
         ]}
       />
 
-      <section className="relative overflow-hidden bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)] py-14 text-white md:py-16">
-        <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
+      <section className="journal-hero">
+
         <div className="relative z-10 mx-auto max-w-[860px] px-4">
           <nav
             aria-label="Breadcrumb"
@@ -169,7 +169,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
             </Link>
             <span>/</span>
             <Link href="/blog" className="hover:text-white">
-              Blog
+              Insights
             </Link>
             {post.category ? (
               <>
@@ -186,7 +186,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
           <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight md:text-[40px]">
             {post.title}
           </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#cbd2df]">
+          <div className="journal-meta mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <span className="font-semibold text-white">{post.authorName}</span>
             <time dateTime={publishedAt.toISOString()}>
               {formatDate(publishedAt)}
@@ -218,7 +218,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="mb-8 w-full rounded-2xl border border-[#e8e3dc] object-cover"
+              className="journal-cover mb-8"
             />
           ) : null}
 
@@ -290,7 +290,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
             </div>
           )}
 
-          <aside className="mt-12 rounded-2xl bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)] p-8 text-white">
+          <aside className="journal-cta mt-12 rounded-2xl bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)] p-8 text-white">
             <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b8cf85]">
               Work with us
             </p>

@@ -57,7 +57,7 @@
   {
     "route": "/work/monlegs/",
     "title": "MonLegs · UI/UX + Development",
-    "description": "UI/UX design and development for a French planning platform, built with Next.js and Strapi."
+    "description": "UI/UX refinement for MonLegs. The client is reviewing the remaining design updates before a fresh development phase begins."
   },
   {
     "route": "/work/dna-digital-consultancy/",
@@ -73,6 +73,46 @@
     "route": "/work/hudson-yacht-services/",
     "title": "Hudson Yacht Services · Development + WordPress",
     "description": "A WordPress website that introduces the yacht services and gives visitors a clear way to contact the team."
+  },
+  {
+    "route": "/work/hertsplumbfix/",
+    "title": "HertsPlumb Fix · Development + WordPress",
+    "description": "Plumbing and heating services in St Albans and Hertfordshire, with pages for boilers, emergency plumbing and repairs."
+  },
+  {
+    "route": "/work/patriot-group/",
+    "title": "Patriot Group · Development + WordPress",
+    "description": "Corporate website for a Bangladesh apparel manufacturer, presenting its company story, clothing ranges and factory information."
+  },
+  {
+    "route": "/work/always-best-care/",
+    "title": "Always Best Care · Development + WordPress",
+    "description": "Senior-care website with in-home care information, location search, caregiver resources and consultation enquiries."
+  },
+  {
+    "route": "/work/ecca-family-foundation/",
+    "title": "ECCA Family Foundation · Development + WordPress",
+    "description": "Foundation website presenting its work with nature and communities, projects, annual reports and learning resources."
+  },
+  {
+    "route": "/work/giving-kitchen/",
+    "title": "Giving Kitchen · Development + WordPress",
+    "description": "Nonprofit website connecting food-service workers with emergency assistance, community resources and ways to get involved."
+  },
+  {
+    "route": "/work/kiogi-store/",
+    "title": "Kiogi Store · Development + WordPress",
+    "description": "Online store for personalised crystal gifts, with product collections for family, pets and meaningful memories."
+  },
+  {
+    "route": "/work/daniels-rv-park/",
+    "title": "Daniel’s RV Park · Development + WordPress",
+    "description": "RV park website in Baytown, Texas, with information about RV spaces, full hookups, pricing, location and booking."
+  },
+  {
+    "route": "/work/th-consulting/",
+    "title": "TH Consulting · Development",
+    "description": "Consultancy website presenting business opportunities, company registration and market-entry services in East Africa."
   },
   {
     "route": "/work/denistek-product-ui/",

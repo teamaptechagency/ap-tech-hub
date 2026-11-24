@@ -1,0 +1,228 @@
+{
+  "hertsplumbfix.co.uk": {
+    "desktop": {
+      "src": "/assets/portfolio/hertsplumbfix-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/hertsplumbfix-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 4448,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "HertsPlumb Fix desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "mobile": {
+      "src": "/assets/portfolio/hertsplumbfix-mobile-cover.webp",
+      "fullSrc": "/assets/portfolio/hertsplumbfix-mobile.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 423,
+      "fullHeight": 8980,
+      "label": "Mobile website",
+      "group": "Website views",
+      "device": "mobile",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "HertsPlumb Fix mobile homepage screenshot",
+      "pageType": "homepage"
+    }
+  },
+  "patriotgroupbd.com": {
+    "desktop": {
+      "src": "/assets/portfolio/patriot-group-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/patriot-group-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 4330,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Patriot Group desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "mobile": {
+      "src": "/assets/portfolio/patriot-group-mobile-cover.webp",
+      "fullSrc": "/assets/portfolio/patriot-group-mobile.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 423,
+      "fullHeight": 8537,
+      "label": "Mobile website",
+      "group": "Website views",
+      "device": "mobile",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Patriot Group mobile homepage screenshot",
+      "pageType": "homepage"
+    }
+  },
+  "alwaysbestcare.com": {
+    "desktop": {
+      "src": "/assets/portfolio/always-best-care-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/always-best-care-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 6475,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Always Best Care desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "mobile": {
+      "src": "/assets/portfolio/always-best-care-mobile-cover.webp",
+      "fullSrc": "/assets/portfolio/always-best-care-mobile.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 423,
+      "fullHeight": 10450,
+      "label": "Mobile website",
+      "group": "Website views",
+      "device": "mobile",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Always Best Care mobile homepage screenshot",
+      "pageType": "homepage"
+    }
+  },
+  "eccafamily.foundation": {
+    "desktop": {
+      "src": "/assets/portfolio/ecca-family-foundation-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/ecca-family-foundation-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 5573,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "ECCA Family Foundation desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "mobile": {
+      "src": "/assets/portfolio/ecca-family-foundation-mobile-cover.webp",
+      "fullSrc": "/assets/portfolio/ecca-family-foundation-mobile.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 423,
+      "fullHeight": 9033,
+      "label": "Mobile website",
+      "group": "Website views",
+      "device": "mobile",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "ECCA Family Foundation mobile homepage screenshot",
+      "pageType": "homepage"
+    }
+  },
+  "givingkitchen.org": {
+    "desktop": {
+      "src": "/assets/portfolio/giving-kitchen-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/giving-kitchen-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 13084,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Giving Kitchen desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "mobile": {
+      "src": "/assets/portfolio/giving-kitchen-mobile-cover.webp",
+      "fullSrc": "/assets/portfolio/giving-kitchen-mobile.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 423,
+      "fullHeight": 13973,
+      "label": "Mobile website",
+      "group": "Website views",
+      "device": "mobile",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Giving Kitchen mobile homepage screenshot",
+      "pageType": "homepage"
+    }
+  },
+  "www.kiogistore.com": {
+    "desktop": {
+      "src": "/assets/portfolio/kiogi-store-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/kiogi-store-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 1987,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Kiogi Store desktop homepage screenshot",
+      "pageType": "homepage"
+    }
+  },
+  "danielrvpark.com": {
+    "desktop": {
+      "src": "/assets/portfolio/daniels-rv-park-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/daniels-rv-park-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 3875,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Daniel’s RV Park desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "mobile": {
+      "src": "/assets/portfolio/daniels-rv-park-mobile-cover.webp",
+      "fullSrc": "/assets/portfolio/daniels-rv-park-mobile.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 423,
+      "fullHeight": 6175,
+      "label": "Mobile website",
+      "group": "Website views",
+      "device": "mobile",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Daniel’s RV Park mobile homepage screenshot",
+      "pageType": "homepage"
+    }
+  },
+  "www.thconsulting.ke": {
+    "desktop": {
+      "src": "/assets/portfolio/th-consulting-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/th-consulting-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 8081,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "TH Consulting desktop homepage screenshot",
+      "pageType": "homepage"
+    }
+  }
+}

@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 9;
 
-const BLOG_TITLE = "Blog";
+const BLOG_TITLE = "Insights";
 const BLOG_DESCRIPTION =
   "Practical guides on web development, UI/UX design, SEO, branding and digital growth from the AP Tech Agency team.";
 
@@ -139,7 +139,7 @@ export default async function BlogIndexPage({
           blogListingJsonLd(posts, data),
           breadcrumbJsonLd(origin, [
             { name: "Home", path: "/" },
-            { name: "Blog", path: "/blog" },
+            { name: "Insights", path: "/blog" },
           ]),
         ]}
       />
@@ -149,8 +149,8 @@ export default async function BlogIndexPage({
         path="/blog"
       />
 
-      <section className="public-hero relative overflow-hidden bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)] py-14 text-white md:py-16">
-        <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
+      <section className="journal-hero">
+
         <div className="relative z-10 mx-auto max-w-[1140px] px-4">
           <nav
             aria-label="Breadcrumb"
@@ -160,13 +160,13 @@ export default async function BlogIndexPage({
               Home
             </Link>
             <span>/</span>
-            <span className="text-white">Blog</span>
+            <span className="text-white">Insights</span>
           </nav>
           <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[#b8cf85]">
             Insights &amp; Guides
           </p>
           <h1 className="max-w-2xl text-3xl font-extrabold leading-[1.1] tracking-tight md:text-[42px]">
-            AP Tech Agency Blog
+            Ideas worth exploring.
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[#cbd2df]">
             {BLOG_DESCRIPTION}

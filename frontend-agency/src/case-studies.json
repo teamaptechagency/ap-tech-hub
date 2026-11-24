@@ -66,16 +66,15 @@
     "slug": "monlegs",
     "name": "MonLegs",
     "category": "UI/UX design & web development",
-    "summary": "UI/UX design and development for a French planning platform, built with Next.js and Strapi.",
-    "role": "UI/UX design and website development using Next.js and Strapi.",
-    "challenge": "Present a sensitive planning journey through a clear homepage and approachable dashboard layouts.",
+    "summary": "UI/UX refinement for MonLegs. The client is reviewing the remaining design updates before a fresh development phase begins.",
+    "role": "UI/UX design refinements and preparation for renewed website development.",
+    "challenge": "The client returned to our team after a separate development handover did not meet their expectations. Remaining interface work needs client approval before development restarts.",
     "work": [
-      "Designed homepage directions and dashboard interfaces for the planning platform.",
-      "Explored homepage variations and dashboard layouts for different plans.",
-      "Developed the Next.js frontend and connected the website to Strapi.",
-      "Worked across public and dashboard layouts to keep the experience consistent."
+      "Refining the remaining homepage and dashboard interfaces.",
+      "Reviewing design updates with the client.",
+      "Preparing the approved UI for the next development phase."
     ],
-    "outcome": "The project brings homepage and dashboard design together with a Next.js frontend and Strapi content management. The selected designs show the homepage variations and dashboards for each plan.",
+    "outcome": "Design updates are under client review. The new development phase has not started.",
     "stack": [
       "Next.js",
       "Strapi"
@@ -585,7 +584,9 @@
       "design",
       "development"
     ],
-    "websiteStatus": "available"
+    "websiteStatus": "review",
+    "deliveryStatus": "design-review",
+    "websiteNote": "Current stage: client design review. Development will restart after the remaining UI is approved."
   },
   {
     "slug": "dna-digital-consultancy",
@@ -826,6 +827,413 @@
       "previewType": "imagery",
       "sourceUrl": "https://hudsonyachtservices.com/wp-content/uploads/2025/04/789E9F01-31D4-4B0A-BA10-517C6E644B44-1024x768.jpeg",
       "objectPosition": "50% 50%"
+    },
+    "gallery": []
+  },
+  {
+    "slug": "hertsplumbfix",
+    "name": "HertsPlumb Fix",
+    "factualOverview": true,
+    "category": "WordPress website",
+    "scope": "development",
+    "workTypes": [
+      "development",
+      "wordpress"
+    ],
+    "summary": "Plumbing and heating services in St Albans and Hertfordshire, with pages for boilers, emergency plumbing and repairs.",
+    "role": "WordPress website development.",
+    "challenge": "Plumbing and heating services in St Albans and Hertfordshire, with pages for boilers, emergency plumbing and repairs.",
+    "work": [
+      "WordPress website development."
+    ],
+    "outcome": "Plumbing and heating services in St Albans and Hertfordshire, with pages for boilers, emergency plumbing and repairs.",
+    "stack": [
+      "WordPress"
+    ],
+    "website": "https://hertsplumbfix.co.uk/",
+    "websiteStatus": "available",
+    "cover": {
+      "src": "/assets/portfolio/hertsplumbfix-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/hertsplumbfix-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 4448,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "HertsPlumb Fix desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "src": "/assets/portfolio/hertsplumbfix-mobile-cover.webp",
+        "fullSrc": "/assets/portfolio/hertsplumbfix-mobile.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 423,
+        "fullHeight": 8980,
+        "label": "Mobile website",
+        "group": "Website views",
+        "device": "mobile",
+        "previewType": "website",
+        "objectPosition": "50% 0%",
+        "alt": "HertsPlumb Fix mobile homepage screenshot",
+        "pageType": "homepage"
+      }
+    ]
+  },
+  {
+    "slug": "patriot-group",
+    "name": "Patriot Group",
+    "factualOverview": true,
+    "category": "WordPress website",
+    "scope": "development",
+    "workTypes": [
+      "development",
+      "wordpress"
+    ],
+    "summary": "Corporate website for a Bangladesh apparel manufacturer, presenting its company story, clothing ranges and factory information.",
+    "role": "WordPress website development.",
+    "challenge": "Corporate website for a Bangladesh apparel manufacturer, presenting its company story, clothing ranges and factory information.",
+    "work": [
+      "WordPress website development."
+    ],
+    "outcome": "Corporate website for a Bangladesh apparel manufacturer, presenting its company story, clothing ranges and factory information.",
+    "stack": [
+      "WordPress"
+    ],
+    "website": "https://patriotgroupbd.com/",
+    "websiteStatus": "available",
+    "cover": {
+      "src": "/assets/portfolio/patriot-group-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/patriot-group-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 4330,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Patriot Group desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "src": "/assets/portfolio/patriot-group-mobile-cover.webp",
+        "fullSrc": "/assets/portfolio/patriot-group-mobile.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 423,
+        "fullHeight": 8537,
+        "label": "Mobile website",
+        "group": "Website views",
+        "device": "mobile",
+        "previewType": "website",
+        "objectPosition": "50% 0%",
+        "alt": "Patriot Group mobile homepage screenshot",
+        "pageType": "homepage"
+      }
+    ]
+  },
+  {
+    "slug": "always-best-care",
+    "name": "Always Best Care",
+    "factualOverview": true,
+    "category": "WordPress website",
+    "scope": "development",
+    "workTypes": [
+      "development",
+      "wordpress"
+    ],
+    "summary": "Senior-care website with in-home care information, location search, caregiver resources and consultation enquiries.",
+    "role": "WordPress website development.",
+    "challenge": "Senior-care website with in-home care information, location search, caregiver resources and consultation enquiries.",
+    "work": [
+      "WordPress website development."
+    ],
+    "outcome": "Senior-care website with in-home care information, location search, caregiver resources and consultation enquiries.",
+    "stack": [
+      "WordPress"
+    ],
+    "website": "https://alwaysbestcare.com/",
+    "websiteStatus": "available",
+    "cover": {
+      "src": "/assets/portfolio/always-best-care-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/always-best-care-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 6475,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Always Best Care desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "src": "/assets/portfolio/always-best-care-mobile-cover.webp",
+        "fullSrc": "/assets/portfolio/always-best-care-mobile.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 423,
+        "fullHeight": 10450,
+        "label": "Mobile website",
+        "group": "Website views",
+        "device": "mobile",
+        "previewType": "website",
+        "objectPosition": "50% 0%",
+        "alt": "Always Best Care mobile homepage screenshot",
+        "pageType": "homepage"
+      }
+    ]
+  },
+  {
+    "slug": "ecca-family-foundation",
+    "name": "ECCA Family Foundation",
+    "factualOverview": true,
+    "category": "WordPress website",
+    "scope": "development",
+    "workTypes": [
+      "development",
+      "wordpress"
+    ],
+    "summary": "Foundation website presenting its work with nature and communities, projects, annual reports and learning resources.",
+    "role": "WordPress website development.",
+    "challenge": "Foundation website presenting its work with nature and communities, projects, annual reports and learning resources.",
+    "work": [
+      "WordPress website development."
+    ],
+    "outcome": "Foundation website presenting its work with nature and communities, projects, annual reports and learning resources.",
+    "stack": [
+      "WordPress"
+    ],
+    "website": "https://eccafamily.foundation/",
+    "websiteStatus": "available",
+    "cover": {
+      "src": "/assets/portfolio/ecca-family-foundation-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/ecca-family-foundation-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 5573,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "ECCA Family Foundation desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "src": "/assets/portfolio/ecca-family-foundation-mobile-cover.webp",
+        "fullSrc": "/assets/portfolio/ecca-family-foundation-mobile.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 423,
+        "fullHeight": 9033,
+        "label": "Mobile website",
+        "group": "Website views",
+        "device": "mobile",
+        "previewType": "website",
+        "objectPosition": "50% 0%",
+        "alt": "ECCA Family Foundation mobile homepage screenshot",
+        "pageType": "homepage"
+      }
+    ]
+  },
+  {
+    "slug": "giving-kitchen",
+    "name": "Giving Kitchen",
+    "factualOverview": true,
+    "category": "WordPress website",
+    "scope": "development",
+    "workTypes": [
+      "development",
+      "wordpress"
+    ],
+    "summary": "Nonprofit website connecting food-service workers with emergency assistance, community resources and ways to get involved.",
+    "role": "WordPress website development.",
+    "challenge": "Nonprofit website connecting food-service workers with emergency assistance, community resources and ways to get involved.",
+    "work": [
+      "WordPress website development."
+    ],
+    "outcome": "Nonprofit website connecting food-service workers with emergency assistance, community resources and ways to get involved.",
+    "stack": [
+      "WordPress"
+    ],
+    "website": "https://givingkitchen.org/",
+    "websiteStatus": "available",
+    "cover": {
+      "src": "/assets/portfolio/giving-kitchen-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/giving-kitchen-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 13084,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Giving Kitchen desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "src": "/assets/portfolio/giving-kitchen-mobile-cover.webp",
+        "fullSrc": "/assets/portfolio/giving-kitchen-mobile.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 423,
+        "fullHeight": 13973,
+        "label": "Mobile website",
+        "group": "Website views",
+        "device": "mobile",
+        "previewType": "website",
+        "objectPosition": "50% 0%",
+        "alt": "Giving Kitchen mobile homepage screenshot",
+        "pageType": "homepage"
+      }
+    ]
+  },
+  {
+    "slug": "kiogi-store",
+    "name": "Kiogi Store",
+    "factualOverview": true,
+    "category": "WordPress website",
+    "scope": "development",
+    "workTypes": [
+      "development",
+      "wordpress"
+    ],
+    "summary": "Online store for personalised crystal gifts, with product collections for family, pets and meaningful memories.",
+    "role": "WordPress website development.",
+    "challenge": "Online store for personalised crystal gifts, with product collections for family, pets and meaningful memories.",
+    "work": [
+      "WordPress website development."
+    ],
+    "outcome": "Online store for personalised crystal gifts, with product collections for family, pets and meaningful memories.",
+    "stack": [
+      "WordPress"
+    ],
+    "website": "https://www.kiogistore.com/",
+    "websiteStatus": "available",
+    "cover": {
+      "src": "/assets/portfolio/kiogi-store-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/kiogi-store-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 1987,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Kiogi Store desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "gallery": []
+  },
+  {
+    "slug": "daniels-rv-park",
+    "name": "Daniel’s RV Park",
+    "factualOverview": true,
+    "category": "WordPress website",
+    "scope": "development",
+    "workTypes": [
+      "development",
+      "wordpress"
+    ],
+    "summary": "RV park website in Baytown, Texas, with information about RV spaces, full hookups, pricing, location and booking.",
+    "role": "WordPress website development.",
+    "challenge": "RV park website in Baytown, Texas, with information about RV spaces, full hookups, pricing, location and booking.",
+    "work": [
+      "WordPress website development."
+    ],
+    "outcome": "RV park website in Baytown, Texas, with information about RV spaces, full hookups, pricing, location and booking.",
+    "stack": [
+      "WordPress"
+    ],
+    "website": "https://danielrvpark.com/",
+    "websiteStatus": "available",
+    "cover": {
+      "src": "/assets/portfolio/daniels-rv-park-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/daniels-rv-park-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 3875,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "Daniel’s RV Park desktop homepage screenshot",
+      "pageType": "homepage"
+    },
+    "gallery": [
+      {
+        "src": "/assets/portfolio/daniels-rv-park-mobile-cover.webp",
+        "fullSrc": "/assets/portfolio/daniels-rv-park-mobile.webp",
+        "width": 800,
+        "height": 560,
+        "fullWidth": 423,
+        "fullHeight": 6175,
+        "label": "Mobile website",
+        "group": "Website views",
+        "device": "mobile",
+        "previewType": "website",
+        "objectPosition": "50% 0%",
+        "alt": "Daniel’s RV Park mobile homepage screenshot",
+        "pageType": "homepage"
+      }
+    ]
+  },
+  {
+    "slug": "th-consulting",
+    "name": "TH Consulting",
+    "factualOverview": true,
+    "category": "Consultancy website",
+    "scope": "development",
+    "workTypes": [
+      "development"
+    ],
+    "summary": "Consultancy website presenting business opportunities, company registration and market-entry services in East Africa.",
+    "role": "Website project using an Nginx web server.",
+    "challenge": "Consultancy website presenting business opportunities, company registration and market-entry services in East Africa.",
+    "work": [
+      "Website implementation."
+    ],
+    "outcome": "Consultancy website presenting business opportunities, company registration and market-entry services in East Africa.",
+    "stack": [
+      "Nginx"
+    ],
+    "website": "https://www.thconsulting.ke/",
+    "websiteStatus": "available",
+    "cover": {
+      "src": "/assets/portfolio/th-consulting-desktop-cover.webp",
+      "fullSrc": "/assets/portfolio/th-consulting-desktop.webp",
+      "width": 800,
+      "height": 560,
+      "fullWidth": 1440,
+      "fullHeight": 8081,
+      "label": "Desktop website",
+      "group": "Website views",
+      "device": "desktop",
+      "previewType": "website",
+      "objectPosition": "50% 0%",
+      "alt": "TH Consulting desktop homepage screenshot",
+      "pageType": "homepage"
     },
     "gallery": []
   }

@@ -1351,13 +1351,13 @@
     "stack": [
       "WordPress"
     ],
-    "websiteStatus": "review",
+    "websiteStatus": "available",
     "workTypes": [
       "design",
       "development",
       "wordpress"
     ],
-    "websiteNote": "External website link under review."
+    "deliveryStatus": "delivered"
   },
   {
     "slug": "ready-kitchen",
@@ -2047,7 +2047,7 @@
     "category": "E-commerce UI",
     "summary": "Fashion storefront UI with collection tabs, product grids and seasonal campaign imagery.",
     "scope": "ui",
-    "website": null,
+    "website": "https://snazywear.com/",
     "figmaUrl": "https://www.figma.com/design/ZqnBudMa9gBN1UC8avoUaT/Portfolio--AP-Tech-Team-?node-id=42-3153",
     "source": {
       "fileKey": "ZqnBudMa9gBN1UC8avoUaT",
@@ -2089,10 +2089,11 @@
       "Campaign and editorial sections"
     ],
     "stack": [],
-    "websiteStatus": "design-only",
+    "websiteStatus": "expired",
     "workTypes": [
       "design"
-    ]
+    ],
+    "websiteNote": "The original website has expired. The design preview is retained here."
   },
   {
     "slug": "shower-time",
