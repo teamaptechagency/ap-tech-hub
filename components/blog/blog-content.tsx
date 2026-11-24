@@ -14,7 +14,7 @@ function Inline({ parts }: { parts: BlogInline[] }) {
         switch (part.kind) {
           case "bold":
             return (
-              <strong key={index} className="font-bold text-[#101623]">
+              <strong key={index} className="font-bold text-[#14261c]">
                 {part.text}
               </strong>
             );
@@ -24,7 +24,7 @@ function Inline({ parts }: { parts: BlogInline[] }) {
             return (
               <code
                 key={index}
-                className="rounded bg-[#f2efe9] px-1.5 py-0.5 font-mono text-[13px] text-[#101623]"
+                className="rounded bg-[#f2efe9] px-1.5 py-0.5 font-mono text-[13px] text-[#14261c]"
               >
                 {part.text}
               </code>
@@ -39,7 +39,7 @@ function Inline({ parts }: { parts: BlogInline[] }) {
                 href={part.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold text-[#c6613f] underline underline-offset-2 hover:text-[#a94e30]"
+                className="font-semibold text-[#557236] underline underline-offset-2 hover:text-[#39522a]"
               >
                 {part.text}
               </a>
@@ -47,7 +47,7 @@ function Inline({ parts }: { parts: BlogInline[] }) {
               <Link
                 key={index}
                 href={part.href}
-                className="font-semibold text-[#c6613f] underline underline-offset-2 hover:text-[#a94e30]"
+                className="font-semibold text-[#557236] underline underline-offset-2 hover:text-[#39522a]"
               >
                 {part.text}
               </Link>
@@ -66,10 +66,10 @@ function Block({ block }: { block: BlogBlock }) {
     case "heading": {
       const className =
         block.level === 2
-          ? "mt-10 scroll-mt-24 text-2xl font-extrabold tracking-tight text-[#101623] md:text-[28px]"
+          ? "mt-10 scroll-mt-24 text-2xl font-extrabold tracking-tight text-[#14261c] md:text-[28px]"
           : block.level === 3
-            ? "mt-8 scroll-mt-24 text-xl font-bold tracking-tight text-[#101623]"
-            : "mt-6 scroll-mt-24 text-lg font-bold tracking-tight text-[#101623]";
+            ? "mt-8 scroll-mt-24 text-xl font-bold tracking-tight text-[#14261c]"
+            : "mt-6 scroll-mt-24 text-lg font-bold tracking-tight text-[#14261c]";
 
       if (block.level === 2) {
         return (
@@ -92,6 +92,7 @@ function Block({ block }: { block: BlogBlock }) {
       );
     }
     case "paragraph":
+      if (block.content.map(part=>part.text).join("").trim()==="---") return <hr className="my-8 border-[#dce4d5]"/>;
       return (
         <p className="mt-4 text-[16px] leading-8 text-[#3a4152]">
           <Inline parts={block.content} />
@@ -117,13 +118,13 @@ function Block({ block }: { block: BlogBlock }) {
       );
     case "quote":
       return (
-        <blockquote className="mt-6 border-l-4 border-[#c6613f] bg-[#faf8f5] px-5 py-4 text-[17px] italic leading-8 text-[#101623]">
+        <blockquote className="mt-6 border-l-4 border-[#557236] bg-[#faf8f5] px-5 py-4 text-[17px] italic leading-8 text-[#14261c]">
           <Inline parts={block.content} />
         </blockquote>
       );
     case "code":
       return (
-        <pre className="mt-6 overflow-x-auto rounded-xl bg-[#101623] p-4 text-[13px] leading-6 text-[#e8e3dc]">
+        <pre className="mt-6 overflow-x-auto rounded-xl bg-[#14261c] p-4 text-[13px] leading-6 text-[#e8e3dc]">
           <code>{block.text}</code>
         </pre>
       );

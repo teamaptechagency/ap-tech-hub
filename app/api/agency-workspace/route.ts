@@ -12,6 +12,7 @@ async function access() {
 async function forward(request: Request) {
   if (!await access()) return Response.json({ error: "Not authorized" }, { status: 403 });
   const url = new URL(request.url);
+  if (url.searchParams.has("asset")) return Response.json({ error: "The separate website panel has been retired. Use the main admin menu." }, { status: 410 });
   if (request.method === "POST") {
     const origin = request.headers.get("origin");
     if (!origin || new URL(origin).host !== request.headers.get("host")) return Response.json({ error: "Invalid origin" }, { status: 403 });

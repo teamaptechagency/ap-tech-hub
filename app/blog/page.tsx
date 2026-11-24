@@ -149,7 +149,7 @@ export default async function BlogIndexPage({
         path="/blog"
       />
 
-      <section className="public-hero relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">
+      <section className="public-hero relative overflow-hidden bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)] py-14 text-white md:py-16">
         <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
         <div className="relative z-10 mx-auto max-w-[1140px] px-4">
           <nav
@@ -162,7 +162,7 @@ export default async function BlogIndexPage({
             <span>/</span>
             <span className="text-white">Blog</span>
           </nav>
-          <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[#f5a83c]">
+          <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[#b8cf85]">
             Insights &amp; Guides
           </p>
           <h1 className="max-w-2xl text-3xl font-extrabold leading-[1.1] tracking-tight md:text-[42px]">
@@ -191,11 +191,11 @@ export default async function BlogIndexPage({
               defaultValue={search}
               placeholder="Search articles..."
               aria-label="Search articles"
-              className="min-w-0 flex-[1_1_12rem] rounded-[10px] border border-[#e8e3dc] px-4 py-2.5 text-sm outline-none focus:border-[#c6613f]"
+              className="min-w-0 flex-[1_1_12rem] rounded-[10px] border border-[#e8e3dc] px-4 py-2.5 text-sm outline-none focus:border-[#557236]"
             />
             <button
               type="submit"
-              className="rounded-[10px] bg-[#101623] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1c2438]"
+              className="rounded-[10px] bg-[#14261c] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#213c2a]"
             >
               Search
             </button>
@@ -207,8 +207,8 @@ export default async function BlogIndexPage({
                 href={buildHref({ category: "" })}
                 className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                   category
-                    ? "border-[#e8e3dc] text-[#6b7280] hover:border-[#101623] hover:text-[#101623]"
-                    : "border-[#101623] bg-[#101623] text-white"
+                    ? "border-[#e8e3dc] text-[#6b7280] hover:border-[#14261c] hover:text-[#14261c]"
+                    : "border-[#14261c] bg-[#14261c] text-white"
                 }`}
               >
                 All posts
@@ -219,8 +219,8 @@ export default async function BlogIndexPage({
                   href={buildHref({ category: item.slug })}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                     category === item.slug
-                      ? "border-[#101623] bg-[#101623] text-white"
-                      : "border-[#e8e3dc] text-[#6b7280] hover:border-[#101623] hover:text-[#101623]"
+                      ? "border-[#14261c] bg-[#14261c] text-white"
+                      : "border-[#e8e3dc] text-[#6b7280] hover:border-[#14261c] hover:text-[#14261c]"
                   }`}
                 >
                   {item.name}
@@ -236,7 +236,7 @@ export default async function BlogIndexPage({
 
           {posts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#e8e3dc] p-12 text-center">
-              <p className="text-lg font-bold text-[#101623]">
+              <p className="text-lg font-bold text-[#14261c]">
                 No articles here yet
               </p>
               <p className="mt-2 text-sm text-[#6b7280]">
@@ -246,7 +246,7 @@ export default async function BlogIndexPage({
               </p>
               <Link
                 href="/services"
-                className="mt-5 inline-flex rounded-[10px] bg-[#c6613f] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#a94e30]"
+                className="mt-5 inline-flex rounded-[10px] bg-[#557236] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#39522a]"
               >
                 Browse our services
               </Link>
@@ -268,20 +268,20 @@ export default async function BlogIndexPage({
                         className="h-44 w-full object-cover"
                       />
                     ) : (
-                      <div className="h-44 w-full bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)]" />
+                      <div className="h-44 w-full bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)]" />
                     )}
                   </Link>
                   <div className="flex flex-1 flex-col p-5">
-                    <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#c6613f]">
+                    <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#557236]">
                       {post.category ? <span>{post.category.name}</span> : null}
                       <span className="text-[#9aa3b3]">
                         {post.readingMinutes} min read
                       </span>
                     </div>
-                    <h2 className="text-lg font-extrabold leading-snug tracking-tight text-[#101623]">
+                    <h2 className="text-lg font-extrabold leading-snug tracking-tight text-[#14261c]">
                       <Link
                         href={`/blog/${post.slug}`}
-                        className="transition hover:text-[#c6613f]"
+                        className="transition hover:text-[#557236]"
                       >
                         {post.title}
                       </Link>
@@ -290,7 +290,7 @@ export default async function BlogIndexPage({
                       {post.excerpt}
                     </p>
                     <div className="mt-4 flex items-center justify-between gap-3 text-xs text-[#9aa3b3]">
-                      <span>{post.authorName}</span>
+                      <span>{post.authorName}</span>{post.authorName === "Aptee AI" && <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">AI generated</span>}
                       {post.publishedAt ? (
                         <time dateTime={post.publishedAt.toISOString()}>
                           {formatDate(post.publishedAt)}
@@ -312,7 +312,7 @@ export default async function BlogIndexPage({
                 <Link
                   href={buildHref({ page: page - 1 })}
                   rel="prev"
-                  className="rounded-[10px] border border-[#e8e3dc] px-4 py-2 text-sm font-bold text-[#101623] transition hover:border-[#101623]"
+                  className="rounded-[10px] border border-[#e8e3dc] px-4 py-2 text-sm font-bold text-[#14261c] transition hover:border-[#14261c]"
                 >
                   Previous
                 </Link>
@@ -324,7 +324,7 @@ export default async function BlogIndexPage({
                 <Link
                   href={buildHref({ page: page + 1 })}
                   rel="next"
-                  className="rounded-[10px] border border-[#e8e3dc] px-4 py-2 text-sm font-bold text-[#101623] transition hover:border-[#101623]"
+                  className="rounded-[10px] border border-[#e8e3dc] px-4 py-2 text-sm font-bold text-[#14261c] transition hover:border-[#14261c]"
                 >
                   Next
                 </Link>

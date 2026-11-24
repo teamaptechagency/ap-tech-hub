@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {validateSiteDraft,hubSiteEditor} from '../integrations/agency-site-editor.mjs';
+const read=n=>JSON.parse(fs.readFileSync(new URL('../frontend-agency/src/'+n,import.meta.url),'utf8'));
+const seed=()=>({content:read('content.json'),projects:read('case-studies.json'),designs:read('portfolio-designs.json'),reviews:read('reviews.json')});
+test('current public design content is accepted unchanged',()=>assert.equal(validateSiteDraft(seed()).content.brand,'AP Tech Agency'));
+test('project slugs cannot write outside the public website',()=>{const d=seed();d.projects[0].slug='../private';assert.throws(()=>validateSiteDraft(d),/slugs/);});
+test('duplicate project slugs are rejected before publication',()=>{const d=seed();d.projects.push(d.projects[0]);assert.throws(()=>validateSiteDraft(d),/unique/);});
+test('unsafe link protocols are rejected',()=>{const d=seed();d.content.brand='javascript:alert(1)';assert.throws(()=>validateSiteDraft(d),/Unsupported/);});
+test('private editor denies missing server credentials',async()=>{let status;await hubSiteEditor({method:'GET',headers:{},socket:{remoteAddress:'127.0.0.1'}},{},{send:(_,s)=>{status=s;}});assert.equal(status,403);});

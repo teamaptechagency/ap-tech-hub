@@ -60,12 +60,6 @@ type AdminSidebarProps = {
 
 export const adminNavItems: AdminNavItem[] = [
   {
-    label: "Website management",
-    href: "/website-management",
-    icon: Monitor,
-    section: "Content",
-  },
-  {
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
@@ -107,6 +101,10 @@ export const adminNavItems: AdminNavItem[] = [
     icon: Newspaper,
     section: "Content",
   },
+  { label: "Website content", href: "/site-content", icon: Monitor, section: "Content" },
+  { label: "Recent projects", href: "/site-projects", icon: Briefcase, section: "Content" },
+  { label: "Services", href: "/site-services", icon: GalleryHorizontalEnd, section: "Content" },
+  { label: "Client reviews", href: "/site-reviews", icon: Users, section: "Content" },
   {
     label: "Invoices",
     href: "/invoices",

@@ -1,102 +1,17 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
-
-import { PublicHeaderBar } from "@/components/public/public-header-bar";
-import type { TrustStats } from "@/components/public/public-top-bar";
-import type { LandingPageData } from "@/lib/landing-data";
-import { PUBLIC_NAV_LINKS } from "@/lib/public-nav";
-
-export type BlogShellProps = {
-  children: ReactNode;
-  portalHref?: string | null;
-  publicLogoUrl?: string | null;
-  copyright: string;
-  compactFooter?: boolean;
-  topBar: LandingPageData["topBar"];
-  stats: TrustStats | null;
-};
-
-export function BlogShell({
-  children,
-  portalHref,
-  publicLogoUrl,
-  copyright,
-  compactFooter = false,
-  topBar,
-  stats,
-}: BlogShellProps) {
-  return (
-    <main className="public-site min-h-screen w-full overflow-x-clip bg-white font-sans text-[#2a3040]">
-      <PublicHeaderBar
-        portalHref={portalHref}
-        publicLogoUrl={publicLogoUrl}
-        topBar={topBar}
-        stats={stats}
-      />
-
-      {children}
-
-      <footer className={compactFooter ? "border-t border-[#e8e3dc] bg-white" : "public-footer bg-[#101623] text-white"}>
-        <div className="mx-auto max-w-[1140px] px-4 py-4 text-sm"><Link href="/partners/payment-policy" className="underline">Referral Partner Payment &amp; Commission Policy</Link><Link href="/download" className="ml-5 underline">Download Apps</Link></div>
-        {!compactFooter && (
-        <div className="mx-auto grid max-w-[1140px] gap-8 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <p className="text-lg font-extrabold">
-              AP Tech <span className="text-[#c6613f]">Agency</span>
-            </p>
-            <p className="mt-3 text-sm leading-6 text-[#9aa3b3]">
-              Web development, UI/UX design, SEO, branding and 3D visualization
-              for growing businesses.
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#f5a83c]">
-              Explore
-            </p>
-            <ul className="mt-3 space-y-2 text-sm text-[#9aa3b3]">
-              {PUBLIC_NAV_LINKS.slice(0, 5).map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="hover:text-white">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#f5a83c]">
-              Company
-            </p>
-            <ul className="mt-3 space-y-2 text-sm text-[#9aa3b3]">
-              {PUBLIC_NAV_LINKS.slice(5).map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="hover:text-white">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#f5a83c]">
-              Start a project
-            </p>
-            <p className="mt-3 text-sm leading-6 text-[#9aa3b3]">
-              Tell us what you need and the team will get back to you.
-            </p>
-            <Link
-              href="/contact"
-              className="mt-4 inline-flex rounded-[10px] bg-[#c6613f] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#a94e30]"
-            >
-              Contact us
-            </Link>
-          </div>
-        </div>
-        )}
-        <div className={compactFooter ? "px-4 py-5 text-center" : "bg-[#0b101b] px-4 py-5 text-center"}>
-          <p className={compactFooter ? "text-xs text-[#6b7280]" : "text-xs text-[#9aa3b3]"}>{copyright}</p>
-        </div>
-      </footer>
-    </main>
-  );
+import type {ReactNode} from "react";
+import {headers} from "next/headers";
+import Script from "next/script";
+import type {TrustStats} from "@/components/public/public-top-bar";
+import type {LandingPageData} from "@/lib/landing-data";
+export type BlogShellProps={children:ReactNode;portalHref?:string|null;publicLogoUrl?:string|null;copyright:string;compactFooter?:boolean;topBar:LandingPageData["topBar"];stats:TrustStats|null};
+const PUBLIC="https://aptechagency.com";
+export async function BlogShell({children,portalHref,copyright}:BlogShellProps){
+ const host=(await headers()).get('host')?.split(':')[0];
+ const publicSite=host==='aptechagency.com'||host==='www.aptechagency.com';
+ return <main className="public-site min-h-screen w-full overflow-x-clip bg-[#fafbf7] font-sans text-[#24352b]">
+  <header className="border-b border-[#dce4d5] bg-[#14261c] text-[#f5f7ee]"><div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4 px-5 py-5"><a href={PUBLIC} className="flex items-center gap-3 text-lg font-semibold"><img src={PUBLIC+'/assets/ap-tech-symbol-light.png'} alt="" className="h-10 w-10 object-contain"/><span>AP Tech Agency</span></a><nav aria-label="Main navigation" className="flex flex-wrap items-center gap-5 text-sm">{[['/','Home'],['/services/','Services'],['/work/','Work'],['/about/','About'],['/blog','Blog']].map(([url,label])=><a key={url} href={PUBLIC+url} className="transition hover:text-[#bbd28b]">{label}</a>)}</nav><div className="flex items-center overflow-hidden rounded-full border border-[#60704d]"><a href={'https://manage.aptechagency.com'+(portalHref||'/login')} className="px-4 py-2.5 text-sm">Portal</a><a href={PUBLIC+'/contact/'} className="rounded-full bg-[#bdd18f] px-5 py-2.5 text-sm font-semibold text-[#14261c]">Let’s talk</a></div></div></header>
+  {children}
+  <footer className="mt-12 border-t border-[#dce4d5] bg-[#14261c] px-5 py-8 text-[#eaf0df]"><div className="mx-auto flex max-w-[1140px] flex-wrap items-center justify-between gap-5 text-sm"><p>{copyright}</p><nav className="flex flex-wrap gap-5"><a href={PUBLIC+'/privacy/'}>Privacy</a><a href="https://manage.aptechagency.com/partners/payment-policy">Referral partner policy</a><a href="https://manage.aptechagency.com/download">Download apps</a><a href={PUBLIC+'/contact/'}>Contact</a><a href="https://manage.aptechagency.com/login">Portal</a></nav></div></footer>
+  {publicSite&&<><link rel="stylesheet" href={PUBLIC+'/assets/support.css'}/><link rel="stylesheet" href={PUBLIC+'/livechat-adapter.css?v=voice-visual-2'}/><div id="ap-support" className="ap-support" data-whatsapp="8801799664826"/><Script src={PUBLIC+'/assets/support.js'} strategy="afterInteractive"/><Script src={PUBLIC+'/livechat-voice.js?v=voice-visual-2'} strategy="afterInteractive"/></>}
+ </main>;
 }

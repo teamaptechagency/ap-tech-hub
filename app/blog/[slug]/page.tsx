@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { isAutomatedBlogPost, AI_BLOG_DISCLOSURE } from "@/lib/blog-automation";
 
 import { getLandingVisitorStats } from "@/actions/landing.actions";
 import { BlogContent } from "@/components/blog/blog-content";
@@ -122,6 +123,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
   const post = await getBlogPostBySlug(slug);
 
   if (!post) notFound();
+  const automated = post.authorName === "Aptee AI" || await isAutomatedBlogPost(post.id);
 
   const [data, session, branding, related, stats] = await Promise.all([
     getLandingPageData(),
@@ -155,7 +157,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
         ]}
       />
 
-      <section className="relative overflow-hidden bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] py-14 text-white md:py-16">
+      <section className="relative overflow-hidden bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)] py-14 text-white md:py-16">
         <div className="absolute -right-36 -top-36 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(198,97,63,.32),transparent_65%)]" />
         <div className="relative z-10 mx-auto max-w-[860px] px-4">
           <nav
@@ -220,7 +222,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
             />
           ) : null}
 
-          <p className="text-[17px] font-medium leading-8 text-[#101623]">
+          <p className="text-[17px] font-medium leading-8 text-[#14261c]">
             {post.excerpt}
           </p>
 
@@ -229,7 +231,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
               aria-label="Table of contents"
               className="mt-8 rounded-2xl border border-[#e8e3dc] bg-[#faf8f5] p-5"
             >
-              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#c6613f]">
+              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#557236]">
                 In this article
               </p>
               <ol className="mt-3 space-y-2 text-sm">
@@ -237,7 +239,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
                   <li key={heading.id}>
                     <a
                       href={`#${heading.id}`}
-                      className="text-[#3a4152] underline-offset-2 hover:text-[#c6613f] hover:underline"
+                      className="text-[#3a4152] underline-offset-2 hover:text-[#557236] hover:underline"
                     >
                       {heading.text}
                     </a>
@@ -247,7 +249,8 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
             </nav>
           )}
 
-          <BlogContent content={post.content} />
+          <BlogContent content={post.content.endsWith(AI_BLOG_DISCLOSURE) ? post.content.slice(0, -AI_BLOG_DISCLOSURE.length) : post.content} />
+          {automated && <aside aria-label="AI publishing disclosure" className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-relaxed text-emerald-950"><span className="mb-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold">✦ Automated by Aptee</span><p>This article and its thumbnail were generated automatically using AI. This site uses automated publishing; human review is not implied. Please verify important information independently.</p></aside>}
 
           {/* Author-picked links to the pages this article should feed. Real
               anchors, so crawlers follow them as internal links. */}
@@ -256,7 +259,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
               aria-label="Related pages"
               className="mt-10 rounded-2xl border border-[#e8e3dc] bg-[#faf8f5] p-6"
             >
-              <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#c6613f]">
+              <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#557236]">
                 Related pages
               </p>
               <ul className="mt-3 flex flex-wrap gap-2">
@@ -264,7 +267,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="inline-flex rounded-full border border-[#e8e3dc] bg-white px-4 py-2 text-sm font-semibold text-[#101623] transition hover:border-[#c6613f] hover:text-[#c6613f]"
+                      className="inline-flex rounded-full border border-[#e8e3dc] bg-white px-4 py-2 text-sm font-semibold text-[#14261c] transition hover:border-[#557236] hover:text-[#557236]"
                     >
                       {link.label}
                     </Link>
@@ -287,21 +290,20 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
             </div>
           )}
 
-          <aside className="mt-12 rounded-2xl bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)] p-8 text-white">
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#f5a83c]">
+          <aside className="mt-12 rounded-2xl bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)] p-8 text-white">
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b8cf85]">
               Work with us
             </p>
             <h2 className="mt-2 text-2xl font-extrabold tracking-tight">
               Need help putting this into practice?
             </h2>
             <p className="mt-2 text-sm leading-7 text-[#cbd2df]">
-              Our team handles web development, UI/UX design, SEO and branding
-              for businesses worldwide.
+              Our team builds AI automation, websites and practical digital experiences for businesses.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 href="/contact"
-                className="rounded-[10px] bg-[#c6613f] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#a94e30]"
+                className="rounded-[10px] bg-[#557236] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#39522a]"
               >
                 Start a project
               </Link>
@@ -323,14 +325,14 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
             path={`/blog/${post.slug}`}
           />
           <div className="mx-auto max-w-[1140px] px-4">
-            <h2 className="mb-7 text-2xl font-extrabold tracking-tight text-[#101623]">
+            <h2 className="mb-7 text-2xl font-extrabold tracking-tight text-[#14261c]">
               Keep reading
             </h2>
             <div className="grid gap-6 md:grid-cols-3">
               {related.map((item) => (
                 <article
                   key={item.id}
-                  className="flex flex-col overflow-hidden rounded-2xl border border-[#e8e3dc] bg-white transition hover:border-[#c6613f]"
+                  className="flex flex-col overflow-hidden rounded-2xl border border-[#e8e3dc] bg-white transition hover:border-[#557236]"
                 >
                   <Link href={`/blog/${item.slug}`} className="block">
                     {item.coverImageUrl ? (
@@ -342,14 +344,14 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
                         className="h-40 w-full object-cover"
                       />
                     ) : (
-                      <div className="h-40 w-full bg-[linear-gradient(130deg,#101623_0%,#1c2438_58%,#37281f_100%)]" />
+                      <div className="h-40 w-full bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)]" />
                     )}
                   </Link>
                   <div className="flex flex-1 flex-col p-5">
-                    <h3 className="text-base font-extrabold leading-snug tracking-tight text-[#101623]">
+                    <h3 className="text-base font-extrabold leading-snug tracking-tight text-[#14261c]">
                       <Link
                         href={`/blog/${item.slug}`}
-                        className="transition hover:text-[#c6613f]"
+                        className="transition hover:text-[#557236]"
                       >
                         {item.title}
                       </Link>
