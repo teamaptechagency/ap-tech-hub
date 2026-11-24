@@ -9,7 +9,7 @@ source=controller.read_text()
 old="        for slug in ('home','about','services','reviews','contact','privacy','portfolio'):"
 if old in source:
  shutil.copy2(controller,'/root/lifecycle-before-frontend-'+str(int(time.time()))+'.py')
- controller.write_text(source.replace(old,"        for slug in (() if site.get('agency_static_frontend') else ('home','about','services','reviews','contact','privacy','portfolio')):"))
+ controller.write_text(source.replace(old,"        for slug in (() if pathlib.Path('/srv/astral/sites/aptechagency.com/public/.frontend-static').is_file() else ('home','about','services','reviews','contact','privacy','portfolio')):"))
 inventory=Path('/var/lib/astral-agent/inventory.json')
 sites=json.loads(inventory.read_text())
 shutil.copy2(inventory,'/root/inventory-before-frontend-'+str(int(time.time()))+'.json')
@@ -18,6 +18,7 @@ inventory.write_text(json.dumps(sites,indent=2))
 public=Path('/srv/astral/sites/aptechagency.com/public')
 shutil.make_archive('/root/aptech-public-before-design-'+str(int(time.time())),'gztar',public)
 shutil.copytree(root,public,dirs_exist_ok=True)
+(public/'.frontend-static').write_text('Supplied frontend design 2026-11-24\n')
 subprocess.run(['systemctl','restart','astral-agent'],check=True)
 p=Path('/etc/nginx/sites-available/astral-aptechagency.com');s=p.read_text()
 backup='/root/aptech-nginx-before-frontend-'+str(int(time.time()))+'.conf'
