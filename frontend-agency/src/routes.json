@@ -52,7 +52,7 @@
   {
     "route": "/work/footstep-online/",
     "title": "Footstep Online · Development",
-    "description": "One store, two regional shopping experiences. React and PHP/Laravel power Bangladesh and international storefronts selected by IP address and location."
+    "description": "One store, two regional shopping experiences. A Next.js frontend and PHP/Laravel backend power Bangladesh and international storefronts selected by IP address and location."
   },
   {
     "route": "/work/monlegs/",
@@ -62,7 +62,7 @@
   {
     "route": "/work/dna-digital-consultancy/",
     "title": "DNA Digital Consultancy · UI/UX",
-    "description": "Homepage UI/UX design for a digital consultancy, with desktop and mobile variations."
+    "description": "UI/UX design and Astro website development for a digital consultancy, with GoHighLevel AI, live chat and forms."
   },
   {
     "route": "/work/lena-dugnus-photography/",
