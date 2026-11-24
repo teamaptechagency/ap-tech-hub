@@ -13,7 +13,7 @@ export function createVoiceService({chat,keys,WebSocket,request=fetch}) {
   const calls=new Map(),lastStart=new Map(); let day='',daily=0;
   async function end(call) {
     if(call.ended)return; call.ended=true;clearTimeout(call.expiry);clearInterval(call.watch);
-    calls.delete(call.cid); call.socket?.close();
+    if(calls.get(call.cid)===call)calls.delete(call.cid);call.socket?.close();
     if(call.id)try{await request('https://api.openai.com/v1/realtime/calls/'+call.id+'/hangup',{method:'POST',headers:{Authorization:'Bearer '+call.key},signal:AbortSignal.timeout(8000)});}catch{}
   }
   return async function handle(req,res,{body,send}) {
