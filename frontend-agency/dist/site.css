@@ -292,3 +292,28 @@ html[data-theme=dark] .review-stars{color:var(--gold)}
 :root{--olive:#556b2f;--olive-deep:#455727;--navy:#272a23;--gold:#e8a317;--paper:#f7f8f5;--surface:#f7f8f5;--card:#ffffff;--ink:#000000;--muted:#565c4e;--line:#dde0d6;--soft:#e8edda;--accent:#46621f;--hero:#556b2f;--nav:#ffffff;--action:#556b2f;--action-ink:#ffffff;font-family:Roboto,system-ui,-apple-system,'Segoe UI',Arial,sans-serif}
 html[data-theme=dark]{--surface:#12150d;--card:#1b1f14;--ink:#f1f3ec;--muted:#a7ad9c;--line:#343b29;--soft:#232918;--accent:#aecb7a;--hero:#283218;--nav:#1b1f14;--action:#b3c38a;--action-ink:#12150d}
 h1,h2{font-weight:700}h3,h4{font-weight:500}em{font-family:inherit}button,.button{font-weight:500}.button.gold{background:var(--action);color:var(--action-ink)}.button.gold:hover{background:#455727;color:#fff}
+/* Hero workflow motion — demonstration only; no simulated customer activity. */
+@keyframes ap-demo-reveal{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ap-demo-wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes ap-demo-pulse{0%,100%{box-shadow:0 0 0 0 #b3c38a00}50%{box-shadow:0 0 0 12px #b3c38a20}}
+@keyframes ap-demo-float{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@keyframes ap-demo-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.ai-studio-board{box-shadow:0 24px 64px #181e0e25}
+.ai-studio-board .board-tabs button{position:relative;overflow:hidden;transition:background .25s,color .25s,box-shadow .25s}
+.ai-studio-board[data-auto-demo=true] .board-tabs button[aria-selected=true]:after{content:'';position:absolute;inset:auto 12px 0;height:2px;background:#556b2f;transform-origin:left;animation:ap-demo-progress 8s linear both}
+.ai-studio-board .board-panel:not([hidden]) .board-title{animation:ap-demo-reveal .6s both}
+.ai-studio-board .board-panel:not([hidden]) .demo-message{animation:ap-demo-reveal .65s .35s both}
+.ai-studio-board .board-panel:not([hidden]) .demo-message.assistant{animation-delay:1.4s}
+.ai-studio-board .board-panel:not([hidden]) .demo-outcome{animation:ap-demo-reveal .65s 2.6s both}
+.ai-studio-board .board-panel:not([hidden]) .demo-order>div{animation:ap-demo-reveal .6s .4s both}
+.ai-studio-board .board-panel:not([hidden]) .demo-order>div:nth-child(2){animation-delay:1.1s}
+.ai-studio-board .board-panel:not([hidden]) .demo-order>div:nth-child(3){animation-delay:1.8s}
+.ai-studio-board .board-panel:not([hidden]) .demo-order b{animation:ap-demo-reveal .45s 2.3s both}
+.ai-studio-board .voice-icon{animation:ap-demo-pulse 2.4s ease-in-out infinite}
+.ai-studio-board .voice-bars i{animation:ap-demo-wave .9s ease-in-out infinite;transform-origin:center}
+.ai-studio-board .voice-bars i:nth-child(2n){animation-delay:-.35s;animation-duration:.75s}
+.ai-studio-board .voice-bars i:nth-child(3n){animation-delay:-.6s;animation-duration:1.1s}
+.ai-studio-board .voice-bars i:nth-child(5){animation-delay:-.2s;animation-duration:.65s}
+.ai-hero .hero-sticker{animation:ap-demo-float 5s ease-in-out infinite}
+.ai-studio-board[data-demo-paused=true] .board-tabs button:after{animation-play-state:paused!important}
+@media(prefers-reduced-motion:reduce){.ai-studio-board *,.ai-studio-board :after,.ai-hero .hero-sticker{animation:none!important;transition:none!important}}

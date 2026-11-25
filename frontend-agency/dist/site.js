@@ -419,3 +419,17 @@
     });
   }
 })();
+
+// Automatic hero demonstration, paused while interacting or outside the viewport.
+(() => {
+ const board=document.querySelector('.ai-studio-board');if(!board)return;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)'),tabs=[...board.querySelectorAll('[role="tab"]')];
+ let timer=null,visible=true,hovered=false,focused=false,manual=false;
+ const stop=()=>{clearInterval(timer);timer=null;board.dataset.autoDemo='false';};
+ const sync=()=>{stop();const paused=!visible||document.hidden||hovered||focused;board.dataset.demoPaused=String(paused);if(paused||manual||reduced.matches)return;board.dataset.autoDemo='true';timer=setInterval(()=>{const i=tabs.findIndex(t=>t.getAttribute('aria-selected')==='true');tabs[(i+1)%tabs.length].click();},8000);};
+ board.addEventListener('pointerenter',()=>{hovered=true;sync();});board.addEventListener('pointerleave',()=>{hovered=false;sync();});
+ board.addEventListener('focusin',()=>{focused=true;sync();});board.addEventListener('focusout',e=>{if(!board.contains(e.relatedTarget)){focused=false;sync();}});
+ board.addEventListener('click',e=>{if(e.isTrusted&&e.target.closest('[role="tab"]')){manual=true;sync();}});
+ document.addEventListener('visibilitychange',sync);reduced.addEventListener('change',sync);
+ new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;sync();},{threshold:.15}).observe(board);sync();
+})();
