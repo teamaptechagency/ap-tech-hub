@@ -53,6 +53,11 @@ def main():
                 target.parent.mkdir(parents=True,exist_ok=True)
                 temporary=target.with_name(target.name+'.publishing')
                 shutil.copyfile(p,temporary);temporary.chmod(0o644);os.replace(temporary,target)
+            snapshot = DATA / 'published.json.tmp'
+            snapshot.write_text(json.dumps({'version':job['version'],'draft':job['draft']}))
+            shutil.chown(snapshot, user='aptech-agency', group='aptech-agency')
+            snapshot.chmod(0o600)
+            snapshot.replace(DATA / 'published.json')
             atomic_result({'id':job['id'],'version':job['version'],'state':'published','completedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())})
     except Exception:
         atomic_result({'id':job['id'],'version':job['version'],'state':'failed','error':'Publication failed. The saved draft remains available; check required fields and project image details.'})

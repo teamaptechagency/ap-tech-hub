@@ -12,7 +12,7 @@ export function voiceConfig(assistant,context='') {
 }
 
 // Audio goes browser <-> OpenAI. Only our authenticated server stores provider transcripts.
-export function createVoiceService({chat,keys,WebSocket,request=fetch,sendCode,store}) {
+export function createVoiceService({chat,keys,WebSocket,request=fetch,sendCode,store,publicContext=()=>''}) {
   const stateFile=path.join(process.env.AP_DATA||'/var/lib/aptech-agency','voice-access.json');
   const read=()=>{if(store)return store;try{return JSON.parse(fs.readFileSync(stateFile,'utf8'));}catch{return {};}};
   const write=value=>{if(store)return;fs.mkdirSync(path.dirname(stateFile),{recursive:true});fs.writeFileSync(stateFile+'.tmp',JSON.stringify(value),{mode:0o600});fs.renameSync(stateFile+'.tmp',stateFile);};
@@ -47,7 +47,7 @@ export function createVoiceService({chat,keys,WebSocket,request=fetch,sendCode,s
     if(c.status!=='open'||c.mode!=='ai')throw Object.assign(Error('Choose Talk to Aptee in text chat before starting a voice call.'),{status:409});
     if(access.verifiedCid!==c.id||!(access.verifiedUntil>now))throw Object.assign(Error('Verify your email before starting voice chat.'),{status:403});
     if(access.cooldownUntil>now)throw Object.assign(Error('Please wait '+Math.ceil((access.cooldownUntil-now)/1000)+' seconds before another voice call. Continue in text chat.'),{status:429});
-    const config=voiceConfig(p.assistant,JSON.stringify(chat.details(c.id,true).messages.slice(-12).map(m=>({speaker:m.actor,text:m.text}))));
+    const config=voiceConfig(p.assistant,publicContext()+'\nConversation history:\n'+JSON.stringify(chat.details(c.id,true).messages.slice(-12).map(m=>({speaker:m.actor,text:m.text}))));
     if(typeof p.sdp!=='string'||!p.sdp.startsWith('v=0')||p.sdp.length>64000||!p.sdp.includes('m=audio'))throw Object.assign(Error('A valid voice connection is required.'),{status:400});
     const today=new Date().toISOString().slice(0,10);if(day!==today){day=today;daily=0;}
     if(calls.has(c.id)||calls.size>=6||daily>=100||Date.now()-(lastStart.get(c.id)||0)<10000)throw Object.assign(Error('Voice is busy. Please try again shortly.'),{status:429});
