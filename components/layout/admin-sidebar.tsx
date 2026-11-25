@@ -73,6 +73,18 @@ export const adminNavItems: AdminNavItem[] = [
     section: "Overview",
   },
   {
+    label: "Messages",
+    href: "/messages",
+    icon: MessageCircle,
+    section: "Support",
+  },
+  {
+    label: "Bug & Feedback",
+    href: "/feedback",
+    icon: Bug,
+    section: "Support",
+  },
+  {
     label: "Clients",
     href: "/clients",
     icon: Users,
@@ -131,18 +143,6 @@ export const adminNavItems: AdminNavItem[] = [
     href: "/reports",
     icon: BarChart3,
     section: "Finance",
-  },
-  {
-    label: "Messages",
-    href: "/messages",
-    icon: MessageCircle,
-    section: "Support",
-  },
-  {
-    label: "Bug & Feedback",
-    href: "/feedback",
-    icon: Bug,
-    section: "Support",
   },
   {
     label: "Integration & Config",
