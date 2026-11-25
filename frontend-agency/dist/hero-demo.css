@@ -129,3 +129,15 @@ html[data-theme="dark"] .apx .apx-logo--dark{display:block !important}
 
 
 .apx svg{flex-shrink:0}.apx-tags em{font-family:inherit}.apx{min-width:0;width:100%}.apx-stage{max-width:560px}.apx-badge--top{right:0;top:0}.apx-badge--bottom{left:0}.apx-body{min-height:370px}.apx-panel{min-width:0}.apx-msg{min-width:0}.apx-tab,.apx-chip{font-family:Manrope,Arial,sans-serif}.apx-card p{margin:0}.apx svg{width:auto}.apx-id{min-width:0}.apx-name{white-space:nowrap}@media(max-width:480px){.apx-head{padding:14px 12px;gap:6px}.apx-status{font-size:10px}.apx-id{gap:8px}.apx-live{font-size:9px;padding:4px 6px}.apx-body{padding:14px;min-height:410px}.apx-tabs-wrap{padding:14px 12px 0}.apx-user,.apx-bot{font-size:12px;max-width:88%}.apx-call{padding:13px;gap:8px;font-size:12px}.apx-call small{font-size:11px}.apx-ring{width:34px;height:34px}.apx-badge{font-size:11px;padding:8px 10px}.apx-badge small{font-size:10px}.apx-tags{font-size:11px}.apx-summary__title{font-size:12px}.apx-step small{font-size:12px}.apx-step b{font-size:13px}}
+/* Classic voice panel and layered tilted demo card. */
+.apx-stage{isolation:isolate}.apx-stage:before{content:'';position:absolute;inset:66px 12px 56px 14px;background:#181e0e;border:1px solid #343b29;border-radius:22px;transform:rotate(7deg);z-index:-1}
+.apx-card{transform:rotate(-3deg)}.apx-stage:hover .apx-card{transform:rotate(-3deg) translateY(-6px)}
+.apx #apx-p-calls .board-title{font-size:30px;max-width:none;margin-bottom:6px;color:var(--text)}
+.apx #apx-p-calls .board-title em{font-family:Georgia,serif;font-style:italic;font-weight:400;color:var(--primary)}
+.apx .demo-voice{background:var(--subtle);border-color:var(--border);color:var(--text);padding:18px 12px}
+.apx .voice-icon{display:grid;place-items:center;width:42px;height:42px;margin:0 auto 9px;border-radius:50%;background:#455727;color:#b3c38a;border:1px solid #6f8442;animation:apx-ring 1.6s infinite}
+.apx .voice-icon svg{width:20px;height:20px}.apx .voice-bars i{background:var(--primary);animation:ap-demo-wave .9s ease-in-out infinite}.apx .voice-bars i:nth-child(2n){animation-delay:-.3s}.apx .voice-bars i:nth-child(3n){animation-delay:-.6s}.apx .voice-bars i:nth-child(5){background:#e8a317}
+.apx .demo-voice>span:last-child{color:var(--muted)}
+.apx #apx-p-calls .demo-outcome{margin-top:auto;padding:12px 14px;background:var(--amber-tint);border:0;border-radius:12px;color:var(--text);animation:apx-rise .6s .9s both}
+@media(max-width:640px){.apx-card{transform:rotate(-1.5deg)}.apx-stage:hover .apx-card{transform:rotate(-1.5deg) translateY(-3px)}.apx-stage:before{inset:66px 8px 56px;transform:rotate(3deg)}}
+@media(prefers-reduced-motion:reduce){.apx .voice-icon,.apx .voice-bars i{animation:none!important}}
