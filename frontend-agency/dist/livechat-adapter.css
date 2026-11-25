@@ -113,3 +113,11 @@ body:has(#ap-support .ap-chat-window:not([hidden])) #chat-launcher{visibility:hi
 @media(max-height:740px){#ap-support .ap-voice-visual{height:105px}#ap-support .ap-voice-halo{width:110px;height:110px}#ap-support .ap-voice-orb{width:70px;height:70px}#ap-support .ap-voice-tools.ap-realtime{padding-block:13px}#ap-support .ap-assistant-choice{margin-top:10px}#ap-support .ap-voice-tools .ap-voice-heading{font-size:20px!important}}
 @media(prefers-reduced-motion:reduce){#ap-support .ap-voice-tools *{animation:none!important;transition:none!important}}
 @media(max-width:640px){#ap-support .ap-chat-window.ap-voice-window{position:fixed;left:auto;right:14px;bottom:90px;width:calc(100vw - 28px);max-height:calc(100dvh - 110px)}}
+#ap-support .ap-voice-permission-help{background:#fff8e9;color:#4d4029;border:1px solid #dcc89c;border-radius:12px;padding:14px;margin:0 0 14px;font-size:12px;line-height:1.7}
+#ap-support .ap-voice-permission-help[hidden]{display:none!important}
+#ap-support .ap-voice-permission-help strong{display:block;font-size:13px;margin-bottom:8px}
+#ap-support .ap-voice-permission-help ol{margin:0;padding-left:18px;list-style:decimal}
+#ap-support .ap-voice-permission-help li+li{margin-top:7px}
+#ap-support .ap-voice-permission-help p{font-size:10px;line-height:1.6;margin:10px 0 6px;color:#695b42}
+#ap-support .ap-voice-permission-help a{color:#193b50;text-decoration:underline;font-size:11px}
+#ap-support .ap-realtime[data-voice-state=blocked] :is(.ap-voice-visual,.ap-assistant-choice){display:none}
