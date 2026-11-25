@@ -1,4 +1,7 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
 
 export const VOICES = Object.freeze({female:'marin',male:'cedar'});
 export function voiceConfig(assistant,context='') {
@@ -9,26 +12,48 @@ export function voiceConfig(assistant,context='') {
 }
 
 // Audio goes browser <-> OpenAI. Only our authenticated server stores provider transcripts.
-export function createVoiceService({chat,keys,WebSocket,request=fetch}) {
+export function createVoiceService({chat,keys,WebSocket,request=fetch,sendCode,store}) {
+  const stateFile=path.join(process.env.AP_DATA||'/var/lib/aptech-agency','voice-access.json');
+  const read=()=>{if(store)return store;try{return JSON.parse(fs.readFileSync(stateFile,'utf8'));}catch{return {};}};
+  const write=value=>{if(store)return;fs.mkdirSync(path.dirname(stateFile),{recursive:true});fs.writeFileSync(stateFile+'.tmp',JSON.stringify(value),{mode:0o600});fs.renameSync(stateFile+'.tmp',stateFile);};
   const calls=new Map(),lastStart=new Map(); let day='',daily=0;
   async function end(call) {
     if(call.ended)return; call.ended=true;clearTimeout(call.expiry);clearInterval(call.watch);
     if(calls.get(call.cid)===call)calls.delete(call.cid);call.socket?.close();
+    if(call.id){const data=read();const k=call.email;data[k]={...data[k],cooldownUntil:Date.now()+300000};write(data);}
     if(call.id)try{await request('https://api.openai.com/v1/realtime/calls/'+call.id+'/hangup',{method:'POST',headers:{Authorization:'Bearer '+call.key},signal:AbortSignal.timeout(8000)});}catch{}
   }
   return async function handle(req,res,{body,send}) {
     const p=await body(req,70000),token=String(req.headers.authorization||'').replace(/^Bearer /,'');
     const c=chat.visitor(p.id,token);
     if(p.op==='end'){const call=calls.get(c.id);if(call)await end(call);send(res,200,{ok:true});return;}
+    const email=String(p.email||c.email||'').trim().toLowerCase(),valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)&&email.length<=254;
+    if(!valid)throw Object.assign(Error('Enter a valid email address to verify voice access.'),{status:400});
+    const data=read(),access=data[email]||{},now=Date.now();
+    if(p.op==='verify-send'){
+      if(now-(access.sentAt||0)<60000)throw Object.assign(Error('Wait one minute before requesting another code.'),{status:429});
+      if(!sendCode)throw Object.assign(Error('Email verification is not configured. Please use text chat.'),{status:503});
+      const code=String(crypto.randomInt(100000,1000000));
+      data[email]={...access,cid:c.id,hash:crypto.createHash('sha256').update(c.id+':'+code).digest('hex'),expires:now+600000,attempts:0,sentAt:now};write(data);
+      await sendCode(email,code);send(res,200,{ok:true});return;
+    }
+    if(p.op==='verify-code'){
+      if(access.cid!==c.id||access.expires<now||!access.hash||access.attempts>=5)throw Object.assign(Error('Code expired. Request a new code.'),{status:400});
+      access.attempts++;write(data);
+      if(crypto.createHash('sha256').update(c.id+':'+String(p.code||'')).digest('hex')!==access.hash)throw Object.assign(Error('Incorrect verification code.'),{status:400});
+      access.verifiedCid=c.id;access.verifiedUntil=now+86400000;delete access.hash;write(data);send(res,200,{ok:true});return;
+    }
     if(p.op!=='start')throw Object.assign(Error('Unknown voice action.'),{status:400});
     if(c.status!=='open'||c.mode!=='ai')throw Object.assign(Error('Choose Talk to Aptee in text chat before starting a voice call.'),{status:409});
+    if(access.verifiedCid!==c.id||!(access.verifiedUntil>now))throw Object.assign(Error('Verify your email before starting voice chat.'),{status:403});
+    if(access.cooldownUntil>now)throw Object.assign(Error('Please wait '+Math.ceil((access.cooldownUntil-now)/1000)+' seconds before another voice call. Continue in text chat.'),{status:429});
     const config=voiceConfig(p.assistant,JSON.stringify(chat.details(c.id,true).messages.slice(-12).map(m=>({speaker:m.actor,text:m.text}))));
     if(typeof p.sdp!=='string'||!p.sdp.startsWith('v=0')||p.sdp.length>64000||!p.sdp.includes('m=audio'))throw Object.assign(Error('A valid voice connection is required.'),{status:400});
     const today=new Date().toISOString().slice(0,10);if(day!==today){day=today;daily=0;}
     if(calls.has(c.id)||calls.size>=6||daily>=100||Date.now()-(lastStart.get(c.id)||0)<10000)throw Object.assign(Error('Voice is busy. Please try again shortly.'),{status:429});
     const slots=await keys();if(!slots.length)throw Object.assign(Error('Voice is not configured. Please use text chat.'),{status:503});
     // Reserve before awaiting the provider to prevent duplicate parallel calls.
-    const call={cid:c.id,ended:false,id:null,key:null};calls.set(c.id,call);lastStart.set(c.id,Date.now());daily++;
+    const call={cid:c.id,email,ended:false,id:null,key:null};calls.set(c.id,call);lastStart.set(c.id,Date.now());daily++;
     try {
       let response;
       for(const key of slots){const form=new FormData();form.set('sdp',p.sdp);form.set('session',JSON.stringify(config));call.key=key;

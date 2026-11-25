@@ -10,13 +10,13 @@ test('server owns model, voices and language behavior',()=>{
  assert.match(voiceConfig('female').instructions,/Never act as an English translator/);
  assert.equal(voiceConfig('female').audio.input.transcription.language,undefined);
 });
-function fixture(){
- let upstream=0,recorded=[],socket,mode='ai';
+function fixture(verified=true){
+ let upstream=0,recorded=[],socket,mode='ai',code; const store={'visitor@example.com':verified?{verifiedCid:'conversation',verifiedUntil:Date.now()+3600000}:{}};
  class Socket extends EventEmitter{constructor(){super();socket=this;queueMicrotask(()=>this.emit('open'));}close(){}}
- const chat={visitor:(id,token)=>{if(token!=='own-token')throw Object.assign(Error('Forbidden'),{status:403});return {id,status:'open',mode};},details:()=>({messages:[]}),voiceTranscript:(...a)=>recorded.push(a)};
- const handle=createVoiceService({chat,keys:async()=>['private-test-key'],WebSocket:Socket,request:async(url,opts)=>{upstream++;if(url.endsWith('/hangup'))return new Response('{}');assert.equal(opts.headers.Authorization,'Bearer private-test-key');return new Response('v=0\r\nanswer',{headers:{location:'/v1/realtime/calls/rtc_test'}});}});
+ const chat={visitor:(id,token)=>{if(token!=='own-token')throw Object.assign(Error('Forbidden'),{status:403});return {id,email:'visitor@example.com',status:'open',mode};},details:()=>({messages:[]}),voiceTranscript:(...a)=>recorded.push(a)};
+ const handle=createVoiceService({chat,store,sendCode:async(email,value)=>{code=value;},keys:async()=>['private-test-key'],WebSocket:Socket,request:async(url,opts)=>{upstream++;if(url.endsWith('/hangup'))return new Response('{}');assert.equal(opts.headers.Authorization,'Bearer private-test-key');return new Response('v=0\r\nanswer',{headers:{location:'/v1/realtime/calls/rtc_test'}});}});
  const invoke=async(p,token='own-token')=>{let result;await handle({headers:{authorization:'Bearer '+token}},{},{body:async()=>({id:'conversation',...p}),send:(_,status,value)=>{result={status,value};}});return result;};
- return {invoke,upstream:()=>upstream,recorded:()=>recorded,socket:()=>socket,human:()=>mode='human'};
+ return {invoke,code:()=>code,store,upstream:()=>upstream,recorded:()=>recorded,socket:()=>socket,human:()=>mode='human'};
 }
 const offer={op:'start',assistant:'female',sdp:'v=0\r\nm=audio 9 RTP/AVP 111'};
 test('unauthorized requests never reach OpenAI',async()=>{const f=fixture();await assert.rejects(f.invoke(offer,'someone-else'),{status:403});assert.equal(f.upstream(),0);});
@@ -34,3 +34,5 @@ test('one call per conversation, private credentials, provider-only transcripts,
  }finally{await f.invoke({op:'end'});}
  assert.equal(f.upstream(),2);
 });
+
+test('voice requires inbox verification and rejects incorrect codes',async()=>{const f=fixture(false);await assert.rejects(f.invoke(offer),{status:403});assert.equal(f.upstream(),0);await f.invoke({op:'verify-send'});await assert.rejects(f.invoke({op:'verify-code',code:'wrong'}),{status:400});await f.invoke({op:'verify-code',code:f.code()});await f.invoke(offer);await f.invoke({op:'end'});await assert.rejects(f.invoke(offer),{status:429});assert.ok(f.store['visitor@example.com'].cooldownUntil>Date.now()+290000);});

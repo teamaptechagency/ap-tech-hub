@@ -121,3 +121,5 @@ body:has(#ap-support .ap-chat-window:not([hidden])) #chat-launcher{visibility:hi
 #ap-support .ap-voice-permission-help p{font-size:10px;line-height:1.6;margin:10px 0 6px;color:#695b42}
 #ap-support .ap-voice-permission-help a{color:#193b50;text-decoration:underline;font-size:11px}
 #ap-support .ap-realtime[data-voice-state=blocked] :is(.ap-voice-visual,.ap-assistant-choice){display:none}
+
+.ap-voice-verification{padding:14px;display:grid;gap:10px;text-align:left}.ap-voice-verification[hidden]{display:none}.ap-voice-verification label{display:grid;gap:6px;font-size:13px}.ap-voice-verification input{width:100%;padding:10px;border:1px solid #9cae83;border-radius:8px;background:#fff;color:#1b2b23}.ap-voice-verification p{font-size:12px;line-height:1.5}

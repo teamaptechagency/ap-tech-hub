@@ -39,6 +39,8 @@ if "from './agency-voice.mjs'" not in server:
     needle=" if(req.method==='POST'&&/^chat\\/(start|state|send|resume-ai)$/.test(route))"
     assert needle in server
     server=server.replace(needle," if(req.method==='POST'&&route==='chat/voice'){rate(req,'voice',30);await voice(req,res,{body,send});return;}\n"+needle,1)
+# Voice verification uses only the selected website mailbox, never another site's sender.
+server=server.replace("const voice=createVoiceService({chat,keys:()=>keySlots(),WebSocket});", "const voice=createVoiceService({chat,keys:()=>keySlots(),WebSocket,sendCode:async(to,code)=>{const account=mail.status('aptechagency.com');if(!account.configured)throw Object.assign(Error('Configure AP Tech email in Integration & Config before voice verification can send codes.'),{status:503});await mail.operation({op:'send',domain:'aptechagency.com',revision:account.revision,confirmSend:true,requestKey:crypto.randomUUID(),to,subject:'Your Aptee voice verification code',text:'Your AP Tech Agency voice verification code is '+code+'. It expires in 10 minutes. Do not share this code. If you did not request it, ignore this email.'});}});")
 (APP/'agency-server.mjs').write_text(server)
 chat=(APP/'agency-chat.mjs').read_text()
 if 'voiceTranscript:' not in chat:
