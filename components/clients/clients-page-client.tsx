@@ -392,7 +392,7 @@ export function ClientsPageClient({
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="hub-mobile-stats grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Card>
           <CardContent className="flex items-center gap-2.5 p-3">
             <div className="rounded-md bg-primary/10 p-1.5 text-primary">

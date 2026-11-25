@@ -43,12 +43,13 @@ export function PortalMobileNav({
           : clientNavItems;
 
   return (
-    <>{canAccessWp&&<div className="md:hidden"><SiteSwitcher/></div>}<MobileNav
+    <MobileNav
+      canAccessWp={canAccessWp}
       items={items}
       userName={userName}
       userSub={userSub}
       userImageUrl={userImageUrl}
       branding={branding}
-    /></>
+    />
   );
 }

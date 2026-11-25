@@ -12,10 +12,7 @@ import { GlobalFloatingMessenger } from "@/components/chat/global-floating-messe
 import { TermsGate } from "@/components/terms-gate";
 import { PartnerSidebar } from "@/components/layout/partner-sidebar";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
-import {
-  BottomNav,
-  type BottomNavItem,
-} from "@/components/layout/bottom-nav";
+
 import { ImpersonationBanner } from "@/components/auth/impersonation-banner";
 
 export default async function PartnerLayout({
@@ -57,16 +54,7 @@ export default async function PartnerLayout({
     getBrandingSettings(),
   ]);
 
-  const bottomItems: BottomNavItem[] = [
-    { label: "Dashboard", href: "/p/dashboard", icon: "dashboard" },
-    { label: "Orders", href: "/p/special-orders", icon: "special" },
-    { label: "Messages", href: "/p/messages", icon: "messages" },
-    { label: "Balance", href: "/p/balance", icon: "wallet" },
-    { label: "Report", href: "/p/feedback", icon: "feedback" },
-    { label: "Profile", href: "/p/profile", icon: "profile" },
-  ];
-
-  return (
+return (
     <div className="hub-shell flex min-h-screen flex-col md:flex-row">
       <PortalMobileNav
         portal="partner"
@@ -103,7 +91,7 @@ export default async function PartnerLayout({
         currentUserId={floatingMessages.currentUserId}
       />
 
-      <BottomNav items={bottomItems} />
+
     </div>
   );
 }
