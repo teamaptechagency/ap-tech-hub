@@ -127,13 +127,13 @@ function normalizeStatus(value?: string | null): LeadStatus {
 }
 
 async function sendPlainEmail(to: string, subject: string, body: string) {
-  if (!(await emailDeliveryConfigured())) {
+  if (!(await emailDeliveryConfigured("communication"))) {
     return "FAILED";
   }
 
   try {
     const { AppMailer: Resend } = await import("@/lib/app-mailer");
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    const resend = new Resend(process.env.RESEND_API_KEY, "communication");
     await resend.emails.send({
       from: process.env.EMAIL_FROM,
       to,
@@ -481,11 +481,11 @@ export async function sendLeadBulkEmail(input: {
   for (const lead of leads) {
     let status = "SENT";
     try {
-      if (!(await emailDeliveryConfigured())) {
+      if (!(await emailDeliveryConfigured("communication"))) {
         throw new Error("Email delivery is not configured. Open Mail setup.");
       } else {
         const { AppMailer: Resend } = await import("@/lib/app-mailer");
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        const resend = new Resend(process.env.RESEND_API_KEY, "communication");
         await resend.emails.send({
           from: process.env.EMAIL_FROM,
           to: lead.email,
