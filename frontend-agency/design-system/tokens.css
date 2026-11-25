@@ -1,0 +1,182 @@
+/* AP Tech Agency — generated from tokens.json */
+:root, [data-theme="light"] {
+  --olive-50: #f5f7ef; /* Tinted page sections, hover rows. */
+  --olive-100: #e8edda; /* Subtle fills: tags, selected rows, info cards. */
+  --olive-200: #d1dbb5; /* Borders on olive fills; dividers inside tinted sections. */
+  --olive-300: #b3c38a; /* Primary color in the dark theme; decorative shapes. */
+  --olive-400: #8fa35f; /* Illustrations, charts, icons on dark grounds. Not for text on white. */
+  --olive-500: #6f8442; /* Hover on dark olive surfaces; large text only on white (4.1:1). */
+  --olive-600: #556b2f; /* PRIMARY — Olive (darkolivegreen, the aptechagency.com theme color). Buttons, links, key headings. White text on it = 5.9:1. */
+  --olive-700: #455727; /* Primary hover / pressed. White text on it = 7.9:1. */
+  --olive-800: #36441f; /* Dark olive sections, footer background. */
+  --olive-900: #283218; /* Deep olive hero backgrounds. */
+  --olive-950: #181e0e; /* Darkest olive; dark-theme surfaces tint. */
+  --leaf-100: #e6efd5; /* Light leaf tint for badges and highlights. */
+  --leaf-300: #aecb7a; /* Leaf on dark backgrounds. */
+  --leaf-500: #6c9535; /* Logo green (from the AP mark). Secondary/accent: icons, illustrations, highlights, large text. Not for small white text (3.5:1). */
+  --leaf-700: #46621f; /* Leaf text on light leaf tints. */
+  --amber-100: #fcf1d6; /* Amber highlight background (offers, 'new' badges). */
+  --amber-500: #e8a317; /* Accent — warm contrast to olive: stars, highlights, small attention marks. Use dark text on it, never white. */
+  --amber-700: #9a6a06; /* Amber text on light grounds (4.7:1 on white). */
+  --gray-0: #ffffff; /* Pure white: cards, inputs. */
+  --gray-50: #f7f8f5; /* Page background (light). */
+  --gray-100: #eef0ea; /* Alt section background, table header. */
+  --gray-200: #dde0d6; /* Default borders and dividers. */
+  --gray-300: #c3c7ba; /* Strong borders, disabled outlines. */
+  --gray-400: #9aa091; /* Placeholder icons, disabled text (not body text). */
+  --gray-500: #737a69; /* Secondary icons. Text only at 18px+. */
+  --gray-600: #565c4e; /* Muted body text on white (6.9:1). */
+  --gray-700: #3e4338; /* Secondary headings. */
+  --gray-800: #272a23; /* Dark surfaces. */
+  --gray-900: #171915; /* Near-black text alternative. */
+  --black: #000000; /* Logo black — the AP mark and wordmark. Main heading/text ink. */
+  --success: #2f7d4f; /* Success states, confirmations (5.0:1 on white). */
+  --warning: #b45309; /* Warnings (5.0:1 on white). */
+  --error: #c53030; /* Errors, destructive actions (5.5:1 on white). */
+  --info: #2b6cb0; /* Informational notices (5.4:1 on white). */
+  --bg: var(--gray-50); /* Page background. */
+  --surface: var(--gray-0); /* Cards, panels, inputs. */
+  --surface-alt: var(--olive-50); /* Alternate sections, highlighted cards. */
+  --border: var(--gray-200); /* Default borders and dividers. */
+  --text: var(--black); /* Primary text on bg/surface. */
+  --text-muted: var(--gray-600); /* Secondary text, captions. */
+  --primary: var(--olive-600); /* Primary buttons, links, active states. */
+  --primary-hover: var(--olive-700); /* Hover/pressed for primary. */
+  --on-primary: var(--gray-0); /* Text/icons on primary fills. */
+  --primary-subtle: var(--olive-100); /* Subtle primary fills: tags, selected items. */
+  --accent: var(--leaf-500); /* Brand accent from the logo: icons, highlights, decorative shapes. */
+  --highlight: var(--amber-500); /* Attention accent — use sparingly; dark text on it. */
+  --focus: var(--olive-500); /* Focus ring (2px, 2px offset). */
+  --shadow-sm: 0 1px 2px rgba(23,25,21,0.08); /* Inputs, small cards. */
+  --shadow-md: 0 4px 12px rgba(23,25,21,0.10); /* Cards on hover, dropdowns. */
+  --shadow-lg: 0 12px 32px rgba(23,25,21,0.14); /* Modals, floating panels. */
+}
+[data-theme="dark"] {
+  --bg: #12150d;
+  --surface: #1b1f14;
+  --surface-alt: #232918;
+  --border: #343b29;
+  --text: #f1f3ec;
+  --text-muted: #a7ad9c;
+  --primary: var(--olive-300);
+  --primary-hover: var(--olive-200);
+  --on-primary: #12150d;
+  --primary-subtle: #2a3320;
+  --accent: var(--leaf-300);
+  --highlight: var(--amber-500);
+  --focus: var(--olive-300);
+}
+:root {
+  --space-1: 4px; /* Icon gaps. */
+  --space-2: 8px; /* Tight gaps: tag padding, inline icons. */
+  --space-3: 12px; /* Button vertical padding x2, form gaps. */
+  --space-4: 16px; /* Default gap; card padding on mobile. */
+  --space-6: 24px; /* Card padding; grid gutters. */
+  --space-8: 32px; /* Between content blocks. */
+  --space-12: 48px; /* Section padding on mobile. */
+  --space-16: 64px; /* Section padding (desktop). */
+  --space-24: 96px; /* Hero and major section padding. */
+  --radius-sm: 4px; /* Tags, small inputs. */
+  --radius-md: 8px; /* Buttons, inputs. */
+  --radius-lg: 12px; /* Cards, panels. */
+  --radius-xl: 20px; /* Feature blocks, images. */
+  --radius-pill: 9999px; /* Pills, avatars. */
+  --font-sans: Roboto, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, Consolas, monospace;
+  --text-display: 700 56px/60px var(--font-sans); /* Hero headline only. */
+  --text-h1: 700 44px/52px var(--font-sans); /* Page titles. */
+  --text-h2: 700 32px/40px var(--font-sans); /* Section titles. */
+  --text-h3: 500 24px/32px var(--font-sans); /* Card and sub-section titles. */
+  --text-h4: 500 20px/28px var(--font-sans); /* Small headings, list titles. */
+  --text-body-lg: 400 18px/28px var(--font-sans); /* Hero subhead, intro paragraphs. */
+  --text-body: 400 16px/24px var(--font-sans); /* Default paragraph text. */
+  --text-small: 400 14px/20px var(--font-sans); /* Helper text, meta info. */
+  --text-caption: 400 12px/16px var(--font-sans); /* Captions, footnotes. */
+  --text-button: 500 15px/20px var(--font-sans); /* Buttons and CTAs. */
+  --text-overline: 700 12px/16px var(--font-sans); /* Eyebrow labels above headings, set in uppercase — echoes the logo wordmark. */
+  --text-code: 400 14px/20px var(--font-mono); /* Code snippets, technical docs. */
+}
+.display {
+  font-family: var(--font-sans);
+  font-size: 56px;
+  line-height: 60px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.h1 {
+  font-family: var(--font-sans);
+  font-size: 44px;
+  line-height: 52px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.h2 {
+  font-family: var(--font-sans);
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h3 {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.h4 {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.body-lg {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.small {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.caption {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.button {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+.overline {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
