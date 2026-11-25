@@ -195,3 +195,9 @@
  .hub-live-history{min-height:0;max-height:none;overscroll-behavior:contain}
  .hub-live-thread form{flex-shrink:0;padding:10px 12px}
 }
+@media(max-width:767px){
+ body:has(.hub-live-screen) .hub-shell .hub-content{flex-direction:column;width:100%}
+ body:has(.hub-live-screen) .hub-shell .hub-footer{display:none!important}
+ .hub-shell .hub-live-screen{width:100%;min-width:0}
+ .hub-shell .hub-message-tabs{display:flex;flex-direction:row;flex-wrap:nowrap}
+}
