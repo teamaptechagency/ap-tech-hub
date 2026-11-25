@@ -396,6 +396,7 @@
       if (form.elements.name.value.trim().length < 2) { form.elements.name.setCustomValidity('Please enter your name.'); form.elements.name.reportValidity(); return; }
       if (form.elements.message.value.trim().length < 20) { form.elements.message.setCustomValidity('Please add at least 20 characters about your project.'); form.elements.message.reportValidity(); return; }
       updateBrief();
+      document.dispatchEvent(new CustomEvent('aptech:brief-ready'));
       result.hidden = false;
       status.textContent = 'Your brief is ready. Choose how you would like to share it.';
       result.querySelector('h2').focus({preventScroll:true});

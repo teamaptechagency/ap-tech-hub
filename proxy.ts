@@ -36,6 +36,7 @@ const PUBLIC_PATHS = [
 ];
 
 const PUBLIC_EXACT_PATHS = [
+  "/api/marketing-config", // GET exposes public IDs; POST checks Super Admin.
   "/work-tracker",
   "/hub-app",
   "/api/portal-app",

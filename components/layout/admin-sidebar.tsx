@@ -59,6 +59,7 @@ type AdminSidebarProps = {
 };
 
 export const adminNavItems: AdminNavItem[] = [
+  {label:"Marketing",href:"/marketing",icon:BarChart3,section:"Sales & clients"},
   {
     label: "Dashboard",
     href: "/dashboard",

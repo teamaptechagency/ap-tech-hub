@@ -2,14 +2,14 @@ import { BUSINESS_POLICY_KEYS } from "@/lib/business-policy-slugs";
 
 export function publicSiteOrigin(value?: string | null): string {
   try {
-    const url = new URL(value?.trim() || "https://www.aptechagency.com");
+    const url = new URL(value?.trim() || "https://aptechagency.com");
     if (!["http:", "https:"].includes(url.protocol)) throw new Error("Invalid protocol");
-    // Production redirects the apex domain to www; canonical signals must agree.
+    // Public pages are served on the apex domain; canonical signals must agree.
     if (["aptechagency.com", "www.aptechagency.com"].includes(url.hostname)) {
-      return "https://www.aptechagency.com";
+      return "https://aptechagency.com";
     }
     return url.origin;
-  } catch { return "https://www.aptechagency.com"; }
+  } catch { return "https://aptechagency.com"; }
 }
 
 export const PUBLIC_CONTENT_PATHS = [

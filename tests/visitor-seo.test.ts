@@ -23,10 +23,10 @@ test("monthly boundaries handle Dhaka New Year and leap-day months", () => {
   assert.equal((february.end.getTime() - february.start.getTime()) / 86400000, 29);
 });
 
-test("canonical origin agrees with the production www redirect", () => {
-  assert.equal(publicSiteOrigin("http://aptechagency.com/landing"), "https://www.aptechagency.com");
-  assert.equal(publicSiteOrigin("https://www.aptechagency.com/"), "https://www.aptechagency.com");
-  assert.equal(publicSiteOrigin("invalid"), "https://www.aptechagency.com");
+test("canonical origin agrees with the production apex domain", () => {
+  assert.equal(publicSiteOrigin("http://aptechagency.com/landing"), "https://aptechagency.com");
+  assert.equal(publicSiteOrigin("https://www.aptechagency.com/"), "https://aptechagency.com");
+  assert.equal(publicSiteOrigin("invalid"), "https://aptechagency.com");
   assert.equal(publicSiteOrigin("https://example.org/path"), "https://example.org");
 });
 
@@ -50,9 +50,9 @@ test("blog entrances and every public section are tracked, with no portal or arb
 test("sitemap important links exclude login, aliases, private URLs and lookalike external origins", () => {
   const urls = sitemapImportantUrls([
     "https://aptechagency.com/services", "/services?utm_source=email", "/services#quote", "/landing", "/login", "/register", "/visitors",
-    "https://www.aptechagency.com.evil.example/blog/test", "https://other.example/about", "javascript:/about", "/blog/a-guide",
-  ].join(","), "https://www.aptechagency.com");
-  assert.deepEqual(urls, ["https://www.aptechagency.com/services", "https://www.aptechagency.com/blog/a-guide"]);
+    "https://aptechagency.com.evil.example/blog/test", "https://other.example/about", "javascript:/about", "/blog/a-guide",
+  ].join(","), "https://aptechagency.com");
+  assert.deepEqual(urls, ["https://aptechagency.com/services", "https://aptechagency.com/blog/a-guide"]);
 });
 
 test("known crawlers do not count as visitors; ordinary browsers are allowed", () => {
@@ -70,11 +70,11 @@ const landing = {
 test("public metadata has a canonical origin and distinct service/about descriptions", () => {
   const services = buildLandingMetadata(landing, { faviconUrl: "" }, { path: "/services", titleSuffix: "Services" });
   const about = buildLandingMetadata(landing, { faviconUrl: "" }, { path: "/about", titleSuffix: "About" });
-  assert.equal(new URL(String(services.metadataBase)).origin, "https://www.aptechagency.com");
+  assert.equal(new URL(String(services.metadataBase)).origin, "https://aptechagency.com");
   assert.equal(services.alternates?.canonical, "/services");
   assert.notEqual(services.description, about.description);
   assert.notEqual(services.description, landing.seo.description);
-  assert.equal(services.openGraph?.url, "https://www.aptechagency.com/services");
+  assert.equal(services.openGraph?.url, "https://aptechagency.com/services");
 });
 
 test("explicit indexing-off setting is respected", () => {
