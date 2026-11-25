@@ -157,9 +157,9 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
         ]}
       />
 
-      <section className="journal-hero">
+      <section className="journal-hero journal-article-hero">
 
-        <div className="relative z-10 mx-auto max-w-[860px] px-4">
+        <div className="journal-article-head"><div className="journal-article-intro">
           <nav
             aria-label="Breadcrumb"
             className="mb-3 flex flex-wrap items-center gap-2 text-xs text-[#9aa3b3]"
@@ -183,9 +183,11 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
               </>
             ) : null}
           </nav>
+          <p className="journal-eyebrow">{post.category?.name || "AP Tech Journal"}</p>
           <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight md:text-[40px]">
             {post.title}
           </h1>
+          <p className="journal-article-deck">{post.excerpt}</p>
           <div className="journal-meta mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <span className="font-semibold text-white">{post.authorName}</span>
             <time dateTime={publishedAt.toISOString()}>
@@ -202,29 +204,16 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
               </span>
             ) : null}
           </div>
-        </div>
+        </div>{post.coverImageUrl&&<figure className="journal-article-art"><img src={post.coverImageUrl} alt={post.coverImageAlt||post.title} loading="eager" fetchPriority="high" decoding="async"/><figcaption>Ideas for a better digital experience.</figcaption></figure>}</div>
       </section>
 
       <BlogViewCounter postId={post.id} />
 
       <article className="py-12">
         <div className="mx-auto max-w-[860px] px-4">
-          {post.coverImageUrl ? (
-            <img
-              src={post.coverImageUrl}
-              alt={post.coverImageAlt || post.title}
-              // The cover is the largest element above the fold — eager +
-              // high priority keeps it from dragging LCP down.
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-              className="journal-cover mb-8"
-            />
-          ) : null}
 
-          <p className="text-[17px] font-medium leading-8 text-[#14261c]">
-            {post.excerpt}
-          </p>
+
+
 
           {headings.length > 2 && (
             <nav

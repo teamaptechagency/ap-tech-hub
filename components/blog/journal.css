@@ -23,3 +23,63 @@
 html[data-theme=dark] .agency-insights :is([class*="bg-emerald-50"],[class*="bg-emerald-100"]){background:var(--soft);color:var(--ink);border-color:var(--line)}
 html[data-theme=dark] .agency-insights [class*="text-emerald-"]{color:var(--ink)}
 @media(max-width:700px){.agency-insights .journal-hero{padding-block:30px}.agency-insights .journal-hero>div{padding-inline:20px}.agency-insights .journal-cover{border-radius:12px}.agency-insights article h2{font-size:24px}.agency-insights .footer{padding-bottom:120px}}
+
+/* Editorial rhythm: one lead story, clear reading hierarchy, useful next steps. */
+.agency-insights .journal-index-hero{padding:64px 0 50px;border:0;position:relative}
+.agency-insights .journal-index-hero:after{content:'';position:absolute;right:7%;top:70px;width:92px;height:92px;border:1px solid var(--line);border-radius:50%;box-shadow:22px 14px 0 -1px var(--surface),22px 14px 0 0 var(--line);pointer-events:none}
+.agency-insights .journal-index-hero nav{display:none}
+.agency-insights .journal-index-hero h1{font-size:clamp(40px,6vw,76px);line-height:1.03;font-weight:550;max-width:960px;letter-spacing:-.055em;margin-block:20px}
+.agency-insights .journal-index-hero h1 em,.agency-insights .journal-explore h2 em{font-family:Georgia,serif;font-weight:400;color:var(--accent);letter-spacing:-.045em}
+.agency-insights .journal-index-hero h1+p{max-width:500px!important;font-size:15px;line-height:1.8;color:var(--muted)!important}
+.agency-insights .journal-collection{padding-top:12px;padding-bottom:70px}
+.agency-insights .journal-collection>.mx-auto{max-width:1140px}
+.agency-insights .public-blog-search{max-width:440px;margin-left:auto;margin-bottom:22px;gap:8px}
+.agency-insights .public-blog-search input{font-size:13px;min-height:42px;border-radius:9px}
+.agency-insights .public-blog-search button{background:var(--action);color:var(--action-ink);border-radius:9px;font-size:12px}
+.agency-insights .journal-categories{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:28px;gap:8px}
+.agency-insights .journal-categories a{border:0;border-radius:6px;font-size:12px;font-weight:550;padding:10px 14px;color:var(--muted)}
+.agency-insights .journal-categories a[class*="bg-"]{background:var(--soft);color:var(--ink)}
+.agency-insights .journal-story{padding:0;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:none;transition:transform .2s,border-color .2s}
+.agency-insights .journal-story:hover{transform:translateY(-3px);border-color:var(--accent)}
+.agency-insights .journal-story-image{overflow:hidden;background:var(--soft)}
+.agency-insights .journal-story-image img{transition:transform .5s ease;display:block;width:100%;height:230px;object-fit:cover}
+.agency-insights .journal-story:hover .journal-story-image img{transform:scale(1.025)}
+.agency-insights .journal-story-copy{padding:26px;min-width:0;gap:15px}
+.agency-insights .journal-story-copy>h2{margin:0;font-size:23px;line-height:1.25;font-weight:600;letter-spacing:-.035em;order:2}
+.agency-insights .journal-story-copy>h2 a{text-decoration:none}
+.agency-insights .journal-story-copy>div:first-of-type{order:1;color:var(--accent)!important;font-size:10px;letter-spacing:1px;margin:0}
+.agency-insights .journal-story-copy>div:last-of-type{order:4;display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:10px;color:var(--muted)}
+.agency-insights .journal-story-copy .journal-story-excerpt{order:3;margin:0;font-size:13px;line-height:1.8;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.agency-insights .journal-read-link{order:5;display:flex;justify-content:space-between;align-items:center;padding-top:18px;margin-top:auto;border-top:1px solid var(--line);font-size:12px;font-weight:600;color:var(--ink);text-decoration:none}
+.agency-insights .journal-read-link span{font-size:22px;color:var(--accent)}
+.agency-insights .journal-featured{grid-column:1/-1;display:grid;grid-template-columns:1.12fr 1fr;min-height:420px}
+.agency-insights .journal-featured .journal-story-image img{height:100%;min-height:420px}
+.agency-insights .journal-featured .journal-story-copy{padding:38px}
+.agency-insights .journal-featured .journal-story-copy h2{font-size:clamp(25px,2.8vw,36px)}
+.agency-insights .journal-feature-label{order:0;display:flex;justify-content:space-between;font-size:10px!important;letter-spacing:1.8px;font-weight:650;line-height:1;margin:0 0 16px!important;color:var(--muted)}
+.agency-insights .journal-feature-label span{font-size:20px;letter-spacing:0;color:var(--accent)}
+.agency-insights .journal-explore{padding:65px 0;background:var(--soft);border-block:1px solid var(--line)}
+.agency-insights .journal-explore>.wrap{display:grid;grid-template-columns:1fr 1.15fr;gap:70px;align-items:center}
+.agency-insights .journal-explore h2{font-size:clamp(32px,4vw,48px);line-height:1.1;letter-spacing:-.045em;margin:20px 0}
+.agency-insights .journal-explore p:last-child{font-size:14px;line-height:1.8;color:var(--muted);max-width:360px}
+.agency-insights .journal-explore nav{border-top:1px solid var(--line)}
+.agency-insights .journal-explore nav a{display:grid;grid-template-columns:1fr auto;gap:8px;padding:22px 0;border-bottom:1px solid var(--line);text-decoration:none}
+.agency-insights .journal-explore nav a>span:first-child{grid-column:1/-1;font-size:10px;letter-spacing:.7px;color:var(--muted)}
+.agency-insights .journal-explore nav strong{font-size:19px;font-weight:550;letter-spacing:-.5px}
+.agency-insights .journal-explore nav a>span:last-child{font-size:23px;color:var(--accent)}
+.agency-insights .journal-article-hero{padding:48px 0 55px;border-bottom:1px solid var(--line)}
+.agency-insights .journal-article-head{display:grid;grid-template-columns:1.3fr .85fr;gap:55px;align-items:center;margin:auto;max-width:1140px!important}
+.agency-insights .journal-article-intro{min-width:0}
+.agency-insights .journal-article-intro nav{margin-bottom:28px;font-size:11px}
+.agency-insights .journal-eyebrow{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--accent)!important;font-weight:650;margin-bottom:15px}
+.agency-insights .journal-article-hero h1{font-size:clamp(32px,4vw,52px);line-height:1.08;font-weight:550;letter-spacing:-.045em}
+.agency-insights .journal-article-deck{margin-top:22px;font-size:14px;line-height:1.85;color:var(--muted)!important}
+.agency-insights .journal-meta{font-size:11px;margin-top:24px;gap:12px}
+.agency-insights .journal-article-art{margin:0;padding:14px;background:var(--soft);border:1px solid var(--line);border-radius:22px;transform:rotate(2deg)}
+.agency-insights .journal-article-art img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:12px}
+.agency-insights .journal-article-art figcaption{font-size:9px;text-align:center;padding-top:12px;color:var(--muted);line-height:1.6}
+.agency-insights main>article{padding:50px 0 65px}
+.agency-insights main>article>div{max-width:780px}
+.agency-insights main>article p{font-size:16px}
+@media(max-width:760px){.agency-insights .journal-index-hero{padding:35px 0}.agency-insights .journal-index-hero:after{display:none}.agency-insights .journal-index-hero h1{font-size:44px}.agency-insights .public-blog-search{max-width:none}.agency-insights .journal-featured{grid-template-columns:1fr}.agency-insights .journal-featured .journal-story-image img{min-height:0;height:260px}.agency-insights .journal-featured .journal-story-copy{padding:25px}.agency-insights .journal-story-copy h2{font-size:26px}.agency-insights .journal-feature-label{margin-bottom:0!important}.agency-insights .journal-explore>.wrap{grid-template-columns:1fr;gap:30px}.agency-insights .journal-article-head{grid-template-columns:1fr;gap:30px}.agency-insights .journal-article-art{max-width:520px;transform:none}.agency-insights .journal-article-art img{aspect-ratio:16/10}.agency-insights .journal-article-hero{padding-top:28px}.agency-insights .journal-article-hero h1{font-size:36px}.agency-insights .journal-explore{padding-block:42px}}
+@media(prefers-reduced-motion:reduce){.agency-insights .journal-story,.agency-insights .journal-story-image img{transition:none;transform:none!important}}

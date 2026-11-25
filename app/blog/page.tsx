@@ -149,7 +149,7 @@ export default async function BlogIndexPage({
         path="/blog"
       />
 
-      <section className="journal-hero">
+      <section className="journal-hero journal-index-hero">
 
         <div className="relative z-10 mx-auto max-w-[1140px] px-4">
           <nav
@@ -163,18 +163,18 @@ export default async function BlogIndexPage({
             <span className="text-white">Insights</span>
           </nav>
           <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[#b8cf85]">
-            Insights &amp; Guides
+            THE AP TECH JOURNAL
           </p>
           <h1 className="max-w-2xl text-3xl font-extrabold leading-[1.1] tracking-tight md:text-[42px]">
-            Ideas worth exploring.
+            Fresh thinking.<br/><em>Better digital experiences.</em>
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[#cbd2df]">
-            {BLOG_DESCRIPTION}
+            Design decisions, useful technology and a little inspiration for your next big idea.
           </p>
         </div>
       </section>
 
-      <section className="py-12">
+      <section className="journal-collection py-12">
         <div className="mx-auto max-w-[1140px] px-4">
           <form
             action="/blog"
@@ -201,8 +201,8 @@ export default async function BlogIndexPage({
             </button>
           </form>
 
-          {categories.length > 0 && (
-            <div className="mb-8 flex flex-wrap gap-2">
+          {categories.some(item=>(item.postCount??0)>0||item.slug===category) && (
+            <div className="journal-categories mb-8 flex flex-wrap gap-2">
               <Link
                 href={buildHref({ category: "" })}
                 className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
@@ -211,9 +211,9 @@ export default async function BlogIndexPage({
                     : "border-[#14261c] bg-[#14261c] text-white"
                 }`}
               >
-                All posts
+                All stories
               </Link>
-              {categories.map((item) => (
+              {categories.filter(item=>(item.postCount??0)>0||item.slug===category).map((item) => (
                 <Link
                   key={item.id}
                   href={buildHref({ category: item.slug })}
@@ -252,13 +252,13 @@ export default async function BlogIndexPage({
               </Link>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {posts.map((post) => (
+            <div className="journal-story-grid grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post,index) => (
                 <article
                   key={post.id}
-                  className="public-feature-card flex flex-col overflow-hidden rounded-2xl border border-[#e8e3dc] bg-white"
+                  className={'journal-story public-feature-card flex flex-col overflow-hidden rounded-2xl border border-[#e8e3dc] bg-white'+(index===0&&page===1&&!search&&!category?' journal-featured':'')}
                 >
-                  <Link href={`/blog/${post.slug}`} className="block">
+                  <Link href={`/blog/${post.slug}`} className="journal-story-image block" aria-label={post.title}>
                     {post.coverImageUrl ? (
                       <img
                         src={post.coverImageUrl}
@@ -271,8 +271,9 @@ export default async function BlogIndexPage({
                       <div className="h-44 w-full bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)]" />
                     )}
                   </Link>
-                  <div className="flex flex-1 flex-col p-5">
-                    <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#557236]">
+                  <div className="journal-story-copy flex flex-1 flex-col p-5">
+                    {index===0&&page===1&&!search&&!category&&<p className="journal-feature-label">THE LATEST <span>↗</span></p>}
+                    <div className="journal-story-meta mb-2 flex flex-wrap items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#557236]">
                       {post.category ? <span>{post.category.name}</span> : null}
                       <span className="text-[#9aa3b3]">
                         {post.readingMinutes} min read
@@ -286,7 +287,7 @@ export default async function BlogIndexPage({
                         {post.title}
                       </Link>
                     </h2>
-                    <p className="mt-2 flex-1 text-sm leading-7 text-[#6b7280]">
+                    <p className="journal-story-excerpt">
                       {post.excerpt}
                     </p>
                     <div className="mt-4 flex items-center justify-between gap-3 text-xs text-[#9aa3b3]">
@@ -297,6 +298,7 @@ export default async function BlogIndexPage({
                         </time>
                       ) : null}
                     </div>
+                    <Link className="journal-read-link" href={`/blog/${post.slug}`}>Read the story <span aria-hidden="true">↗</span></Link>
                   </div>
                 </article>
               ))}
@@ -333,6 +335,7 @@ export default async function BlogIndexPage({
           )}
         </div>
       </section>
+      <section className="journal-explore"><div className="wrap"><div><p className="eyebrow">FROM IDEAS TO ACTION</p><h2>Something sparked<br/><em>an idea?</em></h2><p>Explore how we turn good thinking into useful digital products.</p></div><nav aria-label="Explore our expertise">{[['/services/ui-ux-design/','01','Design that feels right','UI/UX design'],['/services/website-development/','02','Make your next move','Website development'],['/services/ai-automation/','03','A smarter way to work','AI automation']].map(([url,n,title,label])=><Link href={url} key={url}><span>{n} / {label}</span><strong>{title}</strong><span aria-hidden="true">↗</span></Link>)}</nav></div></section>
     </BlogShell>
   );
 }
