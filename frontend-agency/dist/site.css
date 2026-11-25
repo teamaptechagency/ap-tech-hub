@@ -369,3 +369,15 @@ h1,h2,h3{font-weight:550}em{font-family:Georgia,serif;font-weight:400}.hero h1 e
 .creative-summary>div{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.creative-summary>div>span{background:var(--demo-selected);color:var(--demo-muted);padding:6px 8px;border-radius:7px;font-size:10px}.creative-summary b{color:var(--demo-ink);font-weight:600}
 @media(max-width:480px){.ai-studio-board #panel-chat{height:430px;padding:18px}.demo-bubble{font-size:12px;padding:10px 12px}.demo-choices{gap:5px}.demo-choices span{padding:6px 8px;font-size:10px}.creative-summary>div{gap:4px}}
 @media(prefers-reduced-motion:reduce){.creative-conversation *,.creative-summary{animation:none!important}}
+/* Numbered illustrative order flow. */
+.ai-studio-board #panel-orders{height:405px;padding:22px}
+.creative-order-flow{display:grid;gap:12px}
+.creative-order-step{position:relative;display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--demo-line);border-radius:14px;background:var(--demo-bg);color:var(--demo-ink);animation:ap-demo-reveal .55s .2s both}
+.creative-order-step+ .creative-order-step:before{content:'';position:absolute;left:30px;top:-13px;height:12px;width:1px;background:var(--demo-line)}
+.creative-order-step:nth-child(2){animation-delay:1s}.creative-order-step:nth-child(3){animation-delay:1.8s}
+.order-step-number{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:50%;background:#b3c38a;color:#12150d;font-size:13px;font-weight:700}
+.creative-order-step strong{display:block;font-size:14px;line-height:1.5;font-weight:650}.creative-order-step p{font-size:12px;line-height:1.5;color:var(--demo-muted);margin-top:3px}
+.ai-studio-board .creative-order-confirm{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:14px;border:0;border-radius:14px;background:var(--demo-summary);color:var(--demo-summary-ink);animation-delay:2.7s!important}
+.creative-order-confirm strong{font-size:12px;line-height:1.5}.creative-order-confirm>span{padding:7px 10px;border-radius:30px;background:#2f7d4f;color:#fff;font-size:10px;font-weight:700}
+@media(max-width:480px){.ai-studio-board #panel-orders{height:430px;padding:18px}.creative-order-step{padding:13px 11px;gap:10px}.creative-order-step strong{font-size:12px}.creative-order-step p{font-size:11px}.creative-order-confirm strong{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.creative-order-step,.creative-order-confirm{animation:none!important}}
