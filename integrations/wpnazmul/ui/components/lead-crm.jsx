@@ -17,11 +17,11 @@ function download(name, rows) {
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
-export function exportLeads(leads) {
-  download('wpnazmul-leads.csv',[csvFields,...leads.map(lead=>csvFields.map(field=>field==='company'?lead.name:field==='website'?lead.source:field==='email'?lead.email:lead.crm?.[field]??''))]);
+export function exportLeads(leads,prefix="wpnazmul") {
+  download(prefix+'-leads.csv',[csvFields,...leads.map(lead=>csvFields.map(field=>field==='company'?lead.name:field==='website'?lead.source:field==='email'?lead.email:lead.crm?.[field]??''))]);
 }
 
-export function LeadTools({api, panel, onClose, onSaved, countries, industries, services}) {
+export function LeadTools({exportPrefix="wpnazmul",api, panel, onClose, onSaved, countries, industries, services}) {
   const dialog=useRef(null);
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   useEffect(()=>{
@@ -59,7 +59,7 @@ export function LeadTools({api, panel, onClose, onSaved, countries, industries, 
         {error&&<p role="alert">{error}</p>}
         {panel.type==='csv'?<>
           <p>Import up to 200 rows. Existing email addresses are skipped.</p>
-          <button type="button" className="btn btn-outline" onClick={()=>download('wpnazmul-lead-template.csv',[csvFields])}>Download CSV template</button>
+          <button type="button" className="btn btn-outline" onClick={()=>download(exportPrefix+'-lead-template.csv',[csvFields])}>Download CSV template</button>
           <label className="field">CSV file<input type="file" name="csv" accept=".csv,text/csv" required/></label>
         </>:<>
           {!lead&&<>

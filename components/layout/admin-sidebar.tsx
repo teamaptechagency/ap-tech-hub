@@ -17,6 +17,7 @@ import type { BrandingSettings } from "@/lib/branding";
 
 import {
   BarChart3,
+  Search,
   Briefcase,
   Bug,
   ContactRound,
@@ -59,7 +60,6 @@ type AdminSidebarProps = {
 };
 
 export const adminNavItems: AdminNavItem[] = [
-  {label:"Marketing",href:"/marketing",icon:BarChart3,section:"Sales & clients"},
   {
     label: "Dashboard",
     href: "/dashboard",
@@ -84,6 +84,8 @@ export const adminNavItems: AdminNavItem[] = [
     icon: ContactRound,
     section: "Sales & clients",
   },
+  {label:"Lead Generation",href:"/lead-generation",icon:Search,section:"Sales & clients"},
+  {label:"Marketing",href:"/marketing",icon:BarChart3,section:"Sales & clients"},
   {
     label: "Referrals",
     href: "/referrals",

@@ -13,7 +13,10 @@ const leadOptions = {
   services: ['WordPress development', 'WooCommerce development', 'Website redesign and maintenance', 'Full-stack development', 'Database design', 'Software planning'],
 };
 
-export function LeadWorkspace() {
+export function LeadWorkspace({site='wpnazmul',serviceNames=[]}={}) {
+ const isAp=site==='aptech';
+ const options=isAp?{...leadOptions,keywords:['AI automation for business','Website development','Website redesign','UI/UX design','WordPress support','Ecommerce store'],services:serviceNames.length?serviceNames:['AI automation','Website development','UI/UX design','WordPress','Ecommerce','Website care']}:leadOptions;
+
   const [leads, setLeads] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -66,14 +69,17 @@ export function LeadWorkspace() {
     return()=>{current=false;};
   },[selected]);
   const [reviewError, setReviewError] = useState('');
+ const [sender,setSender]=useState(isAp?'AP Tech mailbox':'hello@wpnazmul.com');
+ const [canSend,setCanSend]=useState(!isAp);
+
   useEffect(() => {
     const dialog = review.current;
     if (selected && dialog && !dialog.open) dialog.showModal();
     if (!selected && dialog?.open) dialog.close();
   }, [selected]);
-  const api = (path = '', method, body) => workspace('admin', '/leads' + path, method, body);
+  const api = async(path='',method='GET',body)=>{if(!isAp)return workspace('admin','/leads'+path,method,body);const r=await fetch('/api/aptech-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,method,data:body||{}})});const d=await r.json();if(!r.ok){const e=new Error(d.error?.message||d.error||'Request failed');e.status=r.status;e.retryAfter=60;throw e;}return d;};
   useEffect(() => {
-    api().then(data => { setLeads(data.leads); setSavedSearches(data.searches ?? []); setLoaded(true); }).catch(problem => setError(problem.message));
+    api().then(data => { if(isAp){setSender(data.sender||'Configure AP Tech mailbox');setCanSend(Boolean(data.canSend));}setLeads(data.leads); setSavedSearches(data.searches ?? []); setLoaded(true); }).catch(problem => setError(problem.message));
   }, []);
 
   async function search(event) {
@@ -106,14 +112,14 @@ export function LeadWorkspace() {
     if(busy)return;setBusy(true);setError('');setNotice('Preparing a personalised draft for '+lead.name+'…');setReviewError('');
     let canReview=lead.status==='ready';
     try{
-      if(!['discovered','ready'].includes(lead.status)){const thread=await api('/'+lead.id+'/mail-thread','POST',{});window.location.assign('/wpnazmul/messages?tab=enquiries&thread='+thread.thread_id);return;}
+      if(!['discovered','ready'].includes(lead.status)){const thread=await api('/'+lead.id+'/mail-thread','POST',{});window.location.assign(isAp?'/messages?tab=mail':'/wpnazmul/messages?tab=enquiries&thread='+thread.thread_id);return;}
       if(lead.status==='discovered'){await api('/'+lead.id+'/save','POST',{});canReview=true;setLeads(items=>items.map(item=>item.id===lead.id?{...item,status:'ready'}:item));}
       const draft=await api('/'+lead.id+'/generate-draft','POST',{tone:draftTone});setSelected({...lead,...draft,status:'ready'});
     }catch(problem){if(canReview){setSelected({...lead,status:'ready'});setReviewError(problem.message+' You can edit and review the draft manually.');}else setError(problem.message);}finally{setBusy(false);setNotice('');}
   }
   function whatsappDraft(form){
     const phone=selected?.crm?.phone?.replace(/[^0-9]/g,'');if(!phone)return;
-    const fields=new FormData(form);const text=fields.get('subject')+'\n\n'+fields.get('body')+(invite?.url?'\n\nStart live conversation:\n'+invite.url:'');
+    const fields=new FormData(form);const text=fields.get('subject')+'\n\n'+fields.get('body')+(invite?.url?'\n\n'+(isAp?'Contact AP Tech:':'Start live conversation:')+'\n'+invite.url:'');
     window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');
   }
   async function save(lead) {
@@ -196,12 +202,12 @@ export function LeadWorkspace() {
     <div className={tab==='Discover'?'lead-discover':''}>
       {tab==='Discover'&&<section className="panel lead-filter-panel"><div className="panel-body"><div className="lead-filter-intro"><span className="lead-initial"><Target size={17} aria-hidden="true"/></span><div><h2>Your next good connection.</h2><p>A few filters make a useful start.</p></div></div>
         <form onSubmit={search} className="stack">
-          <label className="field"><span className="lead-filter-label">Keywords <small>Optional</small></span><span className="lead-keyword"><Search size={15} aria-hidden="true"/><select value={keywords} onChange={event=>setKeywords(event.target.value)}><option value="">Choose a keyword</option>{leadOptions.keywords.map(option=><option key={option}>{option}</option>)}</select></span><small>Choose a focus for the AI search.</small></label>
-          <label className="field">Country / region<select value={country} onChange={event=>setCountry(event.target.value)}><option value="">Choose a country</option>{leadOptions.countries.map(option=><option key={option}>{option}</option>)}</select></label>
+          <label className="field"><span className="lead-filter-label">Keywords <small>Optional</small></span><span className="lead-keyword"><Search size={15} aria-hidden="true"/><select value={keywords} onChange={event=>setKeywords(event.target.value)}><option value="">Choose a keyword</option>{options.keywords.map(option=><option key={option}>{option}</option>)}</select></span><small>Choose a focus for the AI search.</small></label>
+          <label className="field">Country / region<select value={country} onChange={event=>setCountry(event.target.value)}><option value="">Choose a country</option>{options.countries.map(option=><option key={option}>{option}</option>)}</select></label>
           <label className="field">Business age<select value={businessAge} onChange={event=>setBusinessAge(event.target.value)}><option value="any">Any age</option><option value="0-1">Started within 1 month</option><option value="1-3">Started 1–3 months ago</option><option value="3-6">Started 3–6 months ago</option></select><small>Dated public launch evidence is required for startup searches.</small></label>
-          <label className="field">Business type<select value={business} onChange={event=>setBusiness(event.target.value)}><option value="">Any business type</option>{leadOptions.industries.map(option=><option key={option}>{option}</option>)}</select></label>
+          <label className="field">Business type<select value={business} onChange={event=>setBusiness(event.target.value)}><option value="">Any business type</option>{options.industries.map(option=><option key={option}>{option}</option>)}</select></label>
           <label className="field">Service opportunity<select value={service} onChange={event=>setService(event.target.value)}>
-            <option value="">Any service</option>{leadOptions.services.map(option=><option key={option}>{option}</option>)}
+            <option value="">Any service</option>{options.services.map(option=><option key={option}>{option}</option>)}
           </select></label>
           <details><summary>More targeting options</summary><label className="field">Contact role<input value={role} maxLength={60} onChange={event=>setRole(event.target.value)} placeholder="Founder, director, owner…"/></label></details>
           <button className="btn btn-dark" disabled={busy||!country||cooldown>0}><Search size={16} aria-hidden="true"/>{busy?'Finding…':cooldown>0?'Try again in '+cooldown+'s':isNext?'Find next':'Find leads'}</button>
@@ -218,7 +224,7 @@ export function LeadWorkspace() {
       <section className="panel"><div className="panel-head lead-results-head"><div>{tab==='Discover'&&<p className="lead-results-eyebrow">A place to start</p>}<h2>{tab==='Discover'?'People worth a closer look.':tab}</h2><p>{tab==='Follow-ups'?'Scheduled follow-ups and tasks.':loaded?shown.length+(tab==='Discover'?' results':' saved leads'):'Loading leads…'}</p></div>
         {tab!=='Pipeline'&&<label className="field">Sort by<select value={sort} onChange={event=>{setSort(event.target.value);setPage(0);}}><option value="recent">Most recent</option><option value="name">Business name</option></select></label>}
       </div>
-      {tab==='Saved leads'&&<div className="panel-body lead-tool-actions"><label className="field">Search saved leads<input type="search" value={savedFilter} onChange={event=>{setSavedFilter(event.target.value);setPage(0);}}/></label><button type="button" className="btn btn-outline btn-sm" disabled={!shown.length} onClick={()=>exportLeads(shown)}>Export filtered CSV</button></div>}
+      {tab==='Saved leads'&&<div className="panel-body lead-tool-actions"><label className="field">Search saved leads<input type="search" value={savedFilter} onChange={event=>{setSavedFilter(event.target.value);setPage(0);}}/></label><button type="button" className="btn btn-outline btn-sm" disabled={!shown.length} onClick={()=>exportLeads(shown,isAp?'aptech':'wpnazmul')}>Export filtered CSV</button></div>}
       {tab==='Follow-ups'&&<div className="panel-body"><label className="field">Show<select value={followView} onChange={event=>{setFollowView(event.target.value);setPage(0);}}>{['Open','Overdue','Upcoming','Completed'].map(view=><option key={view}>{view}</option>)}</select></label></div>}
       {tab==='Pipeline'?<div className="panel-body lead-metrics">{groups.map(([label,items])=><div className="stack" key={label}><strong>{label} · {items.length}</strong>{items.map(lead=><button key={lead.id} type="button" className="btn btn-outline btn-sm" onClick={()=>setPanel({type:"lead",lead})}>{lead.name} · Edit stage</button>)}</div>)}</div>:
       <>{loaded&&!shown.length&&<div className="panel-body"><p>{tab==='Follow-ups'?'No follow-ups due.':tab==='Discover'?'Run a search to discover leads.':'No saved leads yet.'}</p></div>}
@@ -239,20 +245,20 @@ export function LeadWorkspace() {
     </div>
     <footer className="lead-source"><span>Search public websites and review the source before sending outreach.</span><strong>Data source · OpenAI web search</strong></footer>
     {detail&&<LeadDetails key={detail.id} lead={detail} close={()=>setDetailId(null)} save={save} review={lead=>{setDetailId(null);void openEmail(lead);}} api={api} onUpdated={setLeads} busy={busy}/>}
-    <LeadTools api={api} panel={panel} onClose={()=>setPanel(null)} onSaved={result=>{setLeads(result.leads);setPanel(null);setNotice(result.imported!=null?result.imported+' imported · '+result.skipped+' skipped.':'Lead details saved.');}} countries={leadOptions.countries} industries={leadOptions.industries} services={leadOptions.services}/>
+    <LeadTools exportPrefix={isAp?'aptech':'wpnazmul'} api={api} panel={panel} onClose={()=>setPanel(null)} onSaved={result=>{setLeads(result.leads);setPanel(null);setNotice(result.imported!=null?result.imported+' imported · '+result.skipped+' skipped.':'Lead details saved.');}} countries={options.countries} industries={options.industries} services={options.services}/>
     <dialog ref={review} className="lead-email-dialog" aria-labelledby="lead-email-heading"
       onCancel={event=>{if(busy)event.preventDefault();}} onClose={()=>{if(!review.current?.open)setSelected(null);}}>
     {selected && <><div className="panel-head"><h2 id="lead-email-heading">Email {selected.name}</h2><button type="button" className="btn btn-dark btn-sm" disabled={busy} onClick={()=>void generateDraft()}>{generating?'Generating…':'Regenerate AI draft'}</button></div><div className="panel-body">
       <form key={selected.id} className="stack" onSubmit={send}>
-        <p className="lead-mail-recipient"><strong>{selected.name}</strong><br/>From hello@wpnazmul.com → {selected.email}</p>
-        <label className="field">Start live conversation URL<input readOnly value={invite?.lead_id===selected.id?invite.url:''} placeholder="Preparing your unique link…"/></label>
-        {invite?.lead_id===selected.id&&<button type="button" className="btn btn-outline btn-sm" onClick={()=>navigator.clipboard.writeText(invite.url).catch(()=>setReviewError('Could not copy the link.'))}>Copy chat link</button>}
-        <p>This exact link will be added at the end of the email.</p>
+        <p className="lead-mail-recipient"><strong>{selected.name}</strong><br/>From {sender} → {selected.email}</p>
+        <label className="field">{isAp?'Contact page URL':'Start live conversation URL'}<input readOnly value={invite?.lead_id===selected.id?invite.url:''} placeholder="Preparing contact link…"/></label>
+        {invite?.lead_id===selected.id&&<button type="button" className="btn btn-outline btn-sm" onClick={()=>navigator.clipboard.writeText(invite.url).catch(()=>setReviewError('Could not copy the link.'))}>{isAp?'Copy contact link':'Copy chat link'}</button>}
+        <p>{isAp?'Your AP Tech contact link will be included.':'This exact link will be added at the end of the email.'}</p>
         {reviewError && <p role="alert">{reviewError}</p>}
         <label className="field">Writing tone<select value={draftTone} disabled={busy} onChange={event=>setDraftTone(event.target.value)}><option value="friendly">Friendly and direct</option><option value="professional">Professional</option><option value="brief">Short and casual</option></select></label>
         <label className="field">Subject<input name="subject" defaultValue={selected.subject} required maxLength={190}/></label>
         <label className="field">Message<textarea name="body" defaultValue={selected.body} required rows={8} maxLength={4000}/></label>
-        <button className="btn btn-dark" disabled={busy||!invite||invite.lead_id!==selected.id}>Send email</button>
+        {isAp&&!canSend&&<p className="small muted">Configure your AP Tech mailbox in Integration &amp; Config to send. Drafts can be saved now.</p>}<button className="btn btn-dark" disabled={busy||!canSend||!invite||invite.lead_id!==selected.id}>Send email</button>
         <button type="button" className="btn btn-outline" disabled={busy} onClick={event=>void saveEmailDraft(event.currentTarget.form)}>Save email draft</button>
         {selected.crm?.phone?<button type="button" className="btn btn-outline" disabled={busy} onClick={event=>whatsappDraft(event.currentTarget.form)}>Open same draft in WhatsApp</button>:<p className="small muted">Find a published business phone with the contacts icon to prepare a WhatsApp draft.</p>}
         <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setSelected(null)}>Close review</button>

@@ -1,0 +1,20 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
+import {createLeadService,parseLeadCsv,sourcedLeads,hubLeadRequest} from '../integrations/agency-leads.mjs';
+test('bridge rejects unauthenticated requests without reading or modifying leads',async()=>{let status;await hubLeadRequest({method:'POST',headers:{},socket:{remoteAddress:'127.0.0.1'}},{},{body:()=>{throw Error('must not read');},send:(_,s)=>status=s,service:{operation:()=>{throw Error('must not mutate');}}});assert.equal(status,403);});
+test('CSV handles quoted commas and escaped quotes',()=>{assert.deepEqual(parseLeadCsv('company,email\n"A, B ""Studio""",hello@example.com'),[['company','email'],['A, B "Studio"','hello@example.com']]);});
+test('research excludes contacts without consulted source evidence',()=>{
+ const lead={name:'Example',email:'hello@example.com',source:'https://example.com/',email_source:'https://example.com/contact/'};
+ const response={output:[{type:'web_search_call',action:{sources:[{url:lead.source}]}},{content:[{type:'output_text',text:JSON.stringify({leads:[lead]})}]}]};assert.equal(sourcedLeads(response).length,0);response.output[0].action.sources.push({url:lead.email_source});assert.equal(sourcedLeads(response).length,1);
+ lead.launch_date='2000-01-01';lead.launch_source=lead.source;response.output[1].content[0].text=JSON.stringify({leads:[lead]});assert.equal(sourcedLeads(response,'1-3').length,0);
+});
+test('narrative web research is structured without losing source verification',async()=>{
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'aptech-lead-test-'));let calls=0;
+ const source='https://example.com/contact/',lead={name:'Example',email:'hello@example.com',source,email_source:source,reason:'Possible website partner'};
+ const service=createLeadService({directory,keys:async()=>['test-key'],mail:{status:()=>({configured:false})},request:async()=>{calls++;return new Response(JSON.stringify(calls===1?{output:[{type:'web_search_call',action:{sources:[{url:source}]}},{content:[{type:'output_text',text:'Example publishes hello@example.com on its contact page.'}]}]}:{output:[{content:[{type:'output_text',text:JSON.stringify({leads:[lead]})}]}]}));}});
+ try{const result=await service.operation({path:'/search',method:'POST',data:{query:'Country: UK. Find business partners',business_age:'any'}},'test');assert.equal(calls,2);assert.equal(result.added,1);assert.equal(result.leads[0].email,lead.email);}finally{service.close();assert.ok(path.basename(directory).startsWith('aptech-lead-test-'));fs.rmSync(directory,{recursive:true});}
+});
+test('manual leads deduplicate, preserve archive history and remain isolated',async()=>{
+ const dirs=[fs.mkdtempSync(path.join(os.tmpdir(),'aptech-lead-test-')),fs.mkdtempSync(path.join(os.tmpdir(),'aptech-lead-test-'))];const make=directory=>createLeadService({directory,keys:async()=>[],mail:{status:()=>({configured:false})},request:()=>{throw Error('No network');}});const a=make(dirs[0]),b=make(dirs[1]);
+ try{const result=await a.operation({path:'/manual',method:'POST',data:{company:'Example Agency',email:'hello@example.com'}});assert.equal(result.leads.length,1);assert.equal((await b.operation({})).leads.length,0);await assert.rejects(a.operation({path:'/manual',method:'POST',data:{company:'Duplicate',email:'hello@example.com'}}));const id=result.leads[0].id;await a.operation({path:`/${id}/draft`,method:'POST',data:{subject:'Hello',body:'Draft only'}});await a.operation({path:`/${id}/archive`,method:'POST'});const state=await a.operation({});assert.equal(state.leads[0].crm.archived,true);assert.equal(state.leads[0].body,'Draft only');assert.equal(state.canSend,false);await assert.rejects(a.operation({path:`/${id}/send`,method:'POST',data:{subject:'Hello',body:'Test'}}),/Configure/);
+ }finally{a.close();b.close();for(const d of dirs){assert.ok(path.basename(d).startsWith('aptech-lead-test-'));fs.rmSync(d,{recursive:true});}}
+});
