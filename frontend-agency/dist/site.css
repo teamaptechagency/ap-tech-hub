@@ -285,3 +285,5 @@ html[data-theme=dark] .review-stars{color:var(--gold)}
 @media(forced-colors:active){.review-card,.review-profile,.review-proof,.review-initial{border-color:CanvasText}.review-stars{color:CanvasText}}
 
 .review-grid>[data-review-card][hidden]{display:none!important}.review-load-more{display:flex;flex-direction:column;align-items:center;gap:15px;margin-top:30px}.review-load-more p{font-size:12px;color:var(--muted)}.review-load-more button[hidden]{display:none!important}
+
+.review-load-more{display:flex!important;justify-content:center;align-items:center;margin:54px 0}.review-load-more [data-review-count]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
