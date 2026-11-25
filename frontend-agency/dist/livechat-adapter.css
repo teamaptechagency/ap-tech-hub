@@ -3,11 +3,11 @@
 #ap-support .ap-support-options{bottom:158px;right:24px}
 #ap-support .ap-chat-window{bottom:94px;right:24px;max-height:calc(100dvh - 116px)}
 #ap-support{position:fixed;bottom:94px;right:24px;z-index:1000} #ap-support .ap-support-launch{bottom:auto;right:auto} #ap-support .ap-support-options{bottom:68px;right:0} #ap-support .ap-chat-window{bottom:0;right:0}
-#ap-support .ap-chat-window,#ap-support .ap-chat-window input,#ap-support .ap-chat-window textarea{font-family:Roboto,Arial,sans-serif}
+#ap-support .ap-chat-window,#ap-support .ap-chat-window input,#ap-support .ap-chat-window textarea{font-family:Manrope,Arial,sans-serif}
 @media(max-width:640px){#ap-support{bottom:154px;right:16px}#ap-support .ap-support-launch{right:16px;bottom:154px}#ap-support .ap-support-options{right:16px;bottom:218px}#ap-support .ap-chat-window{right:12px;left:12px;width:auto;bottom:90px;max-height:calc(100dvh - 110px)}}
 
 /* Isolate chat controls from the landing page's full-width form styles. */
-#ap-support{font-family:Roboto,Arial,sans-serif;color:#eef0ea}
+#ap-support{font-family:Manrope,Arial,sans-serif;color:#eef0ea}
 #ap-support .ap-chat-window{position:fixed;inset:auto 24px 94px auto;width:390px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 118px);background:#171915;border:1px solid #565c4e;border-radius:20px;box-shadow:0 20px 65px #00000055;color:#eef0ea;line-height:1.6}
 #ap-support .ap-chat-window>header{padding:18px 20px;background:#272a23;border-color:#3e4338;gap:12px;flex-shrink:0}
 #ap-support .ap-chat-window>header strong{font-size:15px;font-weight:700;line-height:1.5}
