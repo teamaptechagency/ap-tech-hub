@@ -1,12 +1,15 @@
+import Link from "next/link";
+import {EndedLiveChats} from "@/components/chat/quick-live-panel";
 import { availableConversationWhere } from "@/lib/work-availability";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { MessagesShell } from "@/components/chat/messages-shell";
 
-export default async function EmployeeMessagesPage() {
+export default async function EmployeeMessagesPage({searchParams}:{searchParams:Promise<{tab?:string}>}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  if((await searchParams).tab==="ended") return <EndedLiveChats/>;
   const myId = session.user.id;
 
   const conversations = await prisma.conversation.findMany({
@@ -70,6 +73,6 @@ export default async function EmployeeMessagesPage() {
   });
 
   return (
-    <MessagesShell conversations={rows} people={people} currentUserId={myId} />
+    <div className="space-y-4"><Link href="/e/messages?tab=ended" className="inline-flex rounded-lg border px-3 py-2 text-sm">Ended live chats</Link><MessagesShell conversations={rows} people={people} currentUserId={myId} /></div>
   );
 }

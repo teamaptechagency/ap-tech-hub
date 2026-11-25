@@ -2,6 +2,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {EndedLiveChats} from "./quick-live-panel";
 import { WebsiteMail } from "@/components/chat/website-mail";
 import { useSearchParams } from "next/navigation";
 type Conversation={id:string;name:string;email:string;mode:string;status:string;updated:string};
@@ -12,7 +13,7 @@ async function chat(input: Record<string,unknown>){
 }
 export function UnifiedMessages({children}:{children:ReactNode}){
   const search=useSearchParams();
-  const [tab,setTab]=useState(search.get('tab')==='mail'?'mail':search.get('tab')==='hub'?'hub':'website');
+  const [tab,setTab]=useState(search.get('tab')==='ended'?'ended':search.get('tab')==='mail'?'mail':search.get('tab')==='hub'?'hub':'website');
   const [conversations,setConversations]=useState<Conversation[]>([]);
   const [id,setId]=useState(search.get('conversation')||'');const [messages,setMessages]=useState<Message[]>([]);
   const [mobileThread,setMobileThread]=useState(Boolean(search.get("conversation")));
@@ -30,8 +31,8 @@ export function UnifiedMessages({children}:{children:ReactNode}){
   },[id,tab]);
   async function action(input:Record<string,unknown>){setBusy(true);try{await chat(input);const data=await chat({op:"read",id});setMessages(data.messages);setSelected(data.conversation);setError("");return true;}catch(e){setError(e instanceof Error?e.message:"Action failed");return false;}finally{setBusy(false);}}
   return <div className={`hub-unified-messages space-y-4 ${tab==="website"?"hub-live-screen":""} ${mobileThread?"mobile-thread-open":""}`}>
-    <div className="hub-message-tabs flex flex-wrap gap-2"><Button variant={tab==="website"?"default":"outline"} onClick={()=>setTab("website")}>Live chat</Button><Button variant={tab==="hub"?"default":"outline"} onClick={()=>setTab("hub")}>Projects & team</Button><Button variant={tab==="mail"?"default":"outline"} onClick={()=>setTab("mail")}>Mail</Button></div>
-    {tab==="mail"?<WebsiteMail/>:tab==="hub"?children:<>
+    <div className="hub-message-tabs flex flex-wrap gap-2"><Button variant={tab==="website"?"default":"outline"} onClick={()=>setTab("website")}>Live chat</Button><Button variant={tab==="hub"?"default":"outline"} onClick={()=>setTab("hub")}>Projects & team</Button><Button variant={tab==="mail"?"default":"outline"} onClick={()=>setTab("mail")}>Mail</Button><Button variant={tab==="ended"?"default":"outline"} onClick={()=>setTab("ended")}>Ended chats</Button></div>
+    {tab==="ended"?<EndedLiveChats/>:tab==="mail"?<WebsiteMail/>:tab==="hub"?children:<>
       <div><h1 className="text-2xl font-bold">Website live chat</h1><p className="text-sm text-muted-foreground">Visitor and Aptee conversations · Updates automatically every 3 seconds</p></div>
       {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
       <div className="hub-live-columns grid gap-4 lg:grid-cols-[320px_1fr]">
