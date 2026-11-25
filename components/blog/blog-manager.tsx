@@ -6,6 +6,7 @@ import {
   FileText,
   ImageUp,
   Plus,
+  Pencil,
   Search,
   Save,
   Tags,
@@ -703,8 +704,8 @@ export function BlogManager({
           )}
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="grid gap-3">
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-3"><div className="flex items-center justify-between px-1 pb-2"><h2 className="flex items-center gap-2 font-semibold"><Tags className="h-4 w-4 text-primary"/>Your categories</h2><span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{categories.length} topics</span></div>
             {categories.length === 0 ? (
               <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
                 No categories yet. Categories group related posts and give each
@@ -714,21 +715,21 @@ export function BlogManager({
               categories.map((category) => (
                 <div
                   key={category.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4"
+                  className={`grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 rounded-2xl border bg-card p-5 transition-colors ${categoryDraft.id===category.id?"border-primary bg-primary/5":"hover:border-primary/40"}`}
                 >
                   <div>
                     <p className="font-semibold">{category.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="mt-2 break-all text-xs leading-relaxed text-muted-foreground">
                       /blog?category={category.slug} · {category.postCount ?? 0}{" "}
                       post{category.postCount === 1 ? "" : "s"}
                     </p>
                     {category.description ? (
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                         {category.description}
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 gap-2">
                     <button
                       type="button"
                       onClick={() =>
@@ -739,18 +740,15 @@ export function BlogManager({
                           description: category.description ?? "",
                         })
                       }
-                      className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted"
-                    >
-                      Edit
-                    </button>
+                      aria-label={`Edit ${category.name}`} title="Edit category" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-background hover:bg-muted"
+                    ><Pencil className="h-4 w-4" aria-hidden="true"/></button>
                     <button
                       type="button"
                       disabled={pending}
                       onClick={() => removeCategory(category)}
-                      className="inline-flex items-center gap-1 rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-500 hover:bg-red-500/10 disabled:opacity-60"
+                      aria-label={`Delete ${category.name}`} title="Delete category" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-500/20 text-red-500 hover:bg-red-500/10 disabled:opacity-60"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Delete
                     </button>
                   </div>
                 </div>
@@ -758,11 +756,11 @@ export function BlogManager({
             )}
           </div>
 
-          <section className="h-fit rounded-xl border bg-card p-4">
-            <h2 className="mb-4 font-semibold">
+          <section className="rounded-2xl border bg-card p-6 xl:sticky xl:top-24">
+            <div className="mb-6 border-b pb-5"><span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Tags className="h-5 w-5"/></span><h2 className="text-lg font-semibold">
               {categoryDraft.id ? "Edit category" : "Add category"}
-            </h2>
-            <div className="grid gap-4">
+            </h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">Keep related articles together with a clear topic and a short description.</p></div>
+            <div className="grid gap-5">
               <Field
                 label="Name"
                 value={categoryDraft.name}
@@ -801,10 +799,10 @@ export function BlogManager({
                   type="button"
                   disabled={pending}
                   onClick={submitCategory}
-                  className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
                 >
                   <Save className="h-4 w-4" />
-                  {categoryDraft.id ? "Update" : "Add"}
+                  {pending?"Saving…":categoryDraft.id ? "Save changes" : "Create category"}
                 </button>
                 {categoryDraft.id ? (
                   <button
