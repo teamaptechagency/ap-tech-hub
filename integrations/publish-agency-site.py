@@ -33,6 +33,9 @@ def main():
             stage = pathlib.Path(work)
             (stage/'scripts').mkdir(); (stage/'src').mkdir(); (stage/'dist').mkdir()
             shutil.copy2(BUILDER/'scripts/build-site.mjs', stage/'scripts/build-site.mjs')
+            shutil.copy2(BUILDER/'scripts/service-packages.mjs', stage/'scripts/service-packages.mjs')
+            for asset in ['service-packages.css','service-packages.js']:
+                shutil.copy2(BUILDER/'dist'/asset,stage/'dist'/asset)
             for name in ['content.json','case-studies.json','portfolio-designs.json','reviews.json','routes.json']:
                 shutil.copy2(BUILDER/'src'/name, stage/'src'/name)
             for key,name in {'content':'content.json','projects':'case-studies.json','designs':'portfolio-designs.json','reviews':'reviews.json'}.items():

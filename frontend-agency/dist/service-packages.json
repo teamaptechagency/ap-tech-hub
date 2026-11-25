@@ -1,0 +1,332 @@
+[
+  {
+    "slug": "ai-automation",
+    "shortTitle": "AI automation",
+    "packages": [
+      {
+        "id": "starter",
+        "name": "Starter",
+        "price": 650,
+        "currency": "USD",
+        "summary": "One useful automation, done well.",
+        "features": [
+          "1 website chat assistant",
+          "1 defined workflow + 1 standard integration",
+          "Approved knowledge base + human handoff",
+          "2 review rounds + launch handover"
+        ],
+        "delivery": "10 business days",
+        "recommended": false
+      },
+      {
+        "id": "growth",
+        "name": "Growth",
+        "price": 1450,
+        "currency": "USD",
+        "summary": "Connect enquiries to the next step.",
+        "features": [
+          "Website chat + booking or lead qualification",
+          "Up to 3 workflows + 2 standard integrations",
+          "CRM/calendar connection where supported",
+          "3 review rounds + team handover"
+        ],
+        "delivery": "20 business days",
+        "recommended": true
+      },
+      {
+        "id": "scale",
+        "name": "Scale",
+        "price": 2950,
+        "currency": "USD",
+        "summary": "A connected customer workflow.",
+        "features": [
+          "Chat + one supported voice-agent pilot",
+          "Up to 5 workflows + 3 standard integrations",
+          "Order/booking flows with approval safeguards",
+          "4 review rounds + monitoring handover"
+        ],
+        "delivery": "30 business days",
+        "recommended": false
+      }
+    ],
+    "packageBilling": "setup",
+    "packageNote": "AI, phone, messaging, CRM subscriptions and other usage fees are billed separately. Voice requires supported providers and approved account access.",
+    "packageDiscountPercent": 0,
+    "currency": "USD"
+  },
+  {
+    "slug": "website-development",
+    "shortTitle": "Website development",
+    "packages": [
+      {
+        "id": "starter",
+        "name": "Starter",
+        "price": 550,
+        "currency": "USD",
+        "summary": "A focused business presence.",
+        "features": [
+          "Up to 3 responsive pages",
+          "Contact form + basic search metadata",
+          "Performance and accessibility checks",
+          "2 review rounds + launch handover"
+        ],
+        "delivery": "10 business days",
+        "recommended": false
+      },
+      {
+        "id": "growth",
+        "name": "Growth",
+        "price": 1250,
+        "currency": "USD",
+        "summary": "A complete business website.",
+        "features": [
+          "Up to 7 responsive pages",
+          "CMS for agreed content + blog setup",
+          "2 standard forms + analytics-ready setup",
+          "3 review rounds + launch handover"
+        ],
+        "delivery": "15 business days",
+        "recommended": true
+      },
+      {
+        "id": "scale",
+        "name": "Scale",
+        "price": 2450,
+        "currency": "USD",
+        "summary": "A larger, tailored website.",
+        "features": [
+          "Up to 12 responsive pages",
+          "Custom page layouts + structured CMS",
+          "1 standard external integration",
+          "4 review rounds + team handover"
+        ],
+        "delivery": "25 business days",
+        "recommended": false
+      }
+    ],
+    "packageBilling": "project",
+    "packageNote": "Content, domain, hosting and paid services are separate. Complex portals, dashboards, authentication and custom applications need a custom quote.",
+    "packageDiscountPercent": 0,
+    "currency": "USD"
+  },
+  {
+    "slug": "wordpress",
+    "shortTitle": "WordPress",
+    "packages": [
+      {
+        "id": "starter",
+        "name": "Starter",
+        "price": 350,
+        "currency": "USD",
+        "summary": "A simple site you can update.",
+        "features": [
+          "Up to 3 template-based pages",
+          "Responsive WordPress + contact form",
+          "Basic SEO and security configuration",
+          "2 review rounds + editor walkthrough"
+        ],
+        "delivery": "7 business days",
+        "recommended": false
+      },
+      {
+        "id": "growth",
+        "name": "Growth",
+        "price": 750,
+        "currency": "USD",
+        "summary": "Room for a growing business.",
+        "features": [
+          "Up to 7 pages + blog setup",
+          "Theme styling to match your brand",
+          "Forms, caching + analytics-ready setup",
+          "3 review rounds + editor walkthrough"
+        ],
+        "delivery": "12 business days",
+        "recommended": true
+      },
+      {
+        "id": "scale",
+        "name": "Scale",
+        "price": 1450,
+        "currency": "USD",
+        "summary": "A more tailored WordPress site.",
+        "features": [
+          "Up to 12 pages with tailored layouts",
+          "Custom content types where agreed",
+          "1 standard plugin-based integration",
+          "4 review rounds + handover session"
+        ],
+        "delivery": "20 business days",
+        "recommended": false
+      }
+    ],
+    "packageBilling": "project",
+    "packageNote": "WordPress theme/plugin licences, hosting and copywriting are separate. Custom plugins, migrations with complex data and application features need a custom quote.",
+    "packageDiscountPercent": 0,
+    "currency": "USD"
+  },
+  {
+    "slug": "ui-ux-design",
+    "shortTitle": "UI/UX design",
+    "packages": [
+      {
+        "id": "starter",
+        "name": "Starter",
+        "price": 250,
+        "currency": "USD",
+        "summary": "Shape one key experience.",
+        "features": [
+          "Up to 3 unique screens",
+          "Desktop + mobile layouts",
+          "One key user flow + Figma source",
+          "2 review rounds"
+        ],
+        "delivery": "5 business days",
+        "recommended": false
+      },
+      {
+        "id": "growth",
+        "name": "Growth",
+        "price": 650,
+        "currency": "USD",
+        "summary": "Design the core journey.",
+        "features": [
+          "Up to 8 unique screens",
+          "Desktop + mobile layouts",
+          "Clickable prototype + reusable UI styles",
+          "3 review rounds + developer handoff"
+        ],
+        "delivery": "10 business days",
+        "recommended": true
+      },
+      {
+        "id": "scale",
+        "name": "Scale",
+        "price": 1250,
+        "currency": "USD",
+        "summary": "A consistent product foundation.",
+        "features": [
+          "Up to 15 unique screens",
+          "Responsive layouts + key interaction states",
+          "Component library + prototype",
+          "4 review rounds + developer handoff"
+        ],
+        "delivery": "15 business days",
+        "recommended": false
+      }
+    ],
+    "packageBilling": "project",
+    "packageNote": "A screen is one unique layout; responsive variants are included as listed. Development, extensive research recruitment and extra flows are quoted separately.",
+    "packageDiscountPercent": 0,
+    "currency": "USD"
+  },
+  {
+    "slug": "ecommerce",
+    "shortTitle": "Ecommerce",
+    "packages": [
+      {
+        "id": "starter",
+        "name": "Starter",
+        "price": 650,
+        "currency": "USD",
+        "summary": "Launch a focused online store.",
+        "features": [
+          "Theme-based store + up to 15 products",
+          "Up to 5 essential store pages",
+          "1 supported payment gateway + shipping setup",
+          "2 review rounds + order walkthrough"
+        ],
+        "delivery": "12 business days",
+        "recommended": false
+      },
+      {
+        "id": "growth",
+        "name": "Growth",
+        "price": 1450,
+        "currency": "USD",
+        "summary": "A store ready for daily business.",
+        "features": [
+          "Tailored theme + up to 50 products",
+          "Collections, filters + up to 8 pages",
+          "Up to 2 supported gateways + email setup",
+          "3 review rounds + store handover"
+        ],
+        "delivery": "20 business days",
+        "recommended": true
+      },
+      {
+        "id": "scale",
+        "name": "Scale",
+        "price": 2750,
+        "currency": "USD",
+        "summary": "A more connected shopping experience.",
+        "features": [
+          "Tailored storefront + up to 100 products",
+          "Up to 12 store/content pages",
+          "1 standard inventory or marketing workflow",
+          "4 review rounds + team handover"
+        ],
+        "delivery": "30 business days",
+        "recommended": false
+      }
+    ],
+    "packageBilling": "project",
+    "packageNote": "For one Shopify or WooCommerce store. Platform fees, apps, payment processing and photography are separate. Custom marketplaces and advanced integrations need a custom quote.",
+    "packageDiscountPercent": 0,
+    "currency": "USD"
+  },
+  {
+    "slug": "website-care",
+    "shortTitle": "Website care",
+    "packages": [
+      {
+        "id": "starter",
+        "name": "Starter",
+        "price": 69,
+        "currency": "USD",
+        "summary": "Keep the essentials in order.",
+        "features": [
+          "Monthly site/platform update check",
+          "Weekly backup check + uptime alerts",
+          "Up to 1 hour of minor updates per month",
+          "Monthly maintenance summary"
+        ],
+        "delivery": "Monthly service",
+        "recommended": false
+      },
+      {
+        "id": "growth",
+        "name": "Growth",
+        "price": 149,
+        "currency": "USD",
+        "summary": "More regular care and improvements.",
+        "features": [
+          "Weekly update checks",
+          "Daily backup check + uptime alerts",
+          "Up to 3 hours of minor updates per month",
+          "Monthly performance + maintenance summary"
+        ],
+        "delivery": "Monthly service",
+        "recommended": true
+      },
+      {
+        "id": "scale",
+        "name": "Scale",
+        "price": 299,
+        "currency": "USD",
+        "summary": "Hands-on care for a busy site.",
+        "features": [
+          "Weekly updates + priority business-hours queue",
+          "Daily backups + monthly restore test",
+          "Up to 6 hours of minor updates per month",
+          "Monthly performance + care review"
+        ],
+        "delivery": "Monthly service",
+        "recommended": false
+      }
+    ],
+    "packageBilling": "monthly",
+    "packageNote": "For one existing website with access and an initial health review. Included hours reset monthly and do not roll over. Rebuilds, malware recovery, hosting and 24/7 emergency response are separate.",
+    "packageDiscountPercent": 0,
+    "currency": "USD"
+  }
+]
