@@ -22,3 +22,9 @@ test('send-only SMTP verifies and sends with communication Reply-To, without any
  assert.equal((await service.operation(p)).accepted,true);assert.equal((await service.operation(p)).accepted,true);assert.equal(sends,1);assert.equal(imapCalls,0);assert.match(raw,/Reply-To: hello@aptechagency.com/);assert.match(raw,/From: no-reply@aptechagency.com/);
  }finally{service.close();fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test('inbox opens in one connection and serialized requests reuse it, settings invalidate it',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mail-speed-'));let connects=0,lists=0,active=0,max=0;
+ const service=createWebmail({directory:dir,makeImap:()=>({usable:false,on(){},async connect(){connects++;this.usable=true;},close(){this.usable=false;},async list(){lists++;return [{path:'INBOX',name:'Inbox'}];},async getMailboxLock(){active++;max=Math.max(max,active);await new Promise(r=>setTimeout(r,5));return {release(){active--;}};},async status(){return {messages:0,uidValidity:1};},async *fetch(){}})});
+ try{const base={domain:'aptechagency.com'};await service.operation({...base,op:'settings.save',provider:'hostinger',username:'hello@aptechagency.com',password:'test-only'});const opened=await service.operation({...base,op:'open'});assert.equal(opened.account.configured,true);assert.equal(opened.folders.length,1);assert.deepEqual(opened.messages,[]);await Promise.all([service.operation({...base,op:'list'}),service.operation({...base,op:'list'})]);assert.equal(connects,1);assert.equal(lists,1);assert.equal(max,1);await assert.rejects(()=>service.operation({...base,op:'read',uid:1,validity:'2'}),/Mailbox changed/);await service.operation({...base,op:'settings.save',provider:'hostinger',username:'hello@aptechagency.com',password:'changed-test-only'});await service.operation({...base,op:'open'});assert.equal(connects,2);assert.equal(lists,2);}finally{service.close();fs.rmSync(dir,{recursive:true,force:true});}
+});
