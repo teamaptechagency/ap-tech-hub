@@ -112,6 +112,16 @@
     });
   });
 
+  document.querySelectorAll('[data-review-list]').forEach(section => {
+    const cards=[...section.querySelectorAll('[data-review-card]')];
+    const more=section.querySelector('[data-review-more]');
+    const count=section.querySelector('[data-review-count]');
+    let visible=Math.min(3,cards.length);
+    const update=()=>{cards.forEach((card,index)=>{card.hidden=index>=visible;});if(more)more.hidden=visible>=cards.length;if(count)count.textContent=`Showing ${visible} of ${cards.length} reviews`;};
+    more?.addEventListener('click',()=>{visible=Math.min(visible+3,cards.length);update();});
+    update();
+  });
+
   document.querySelectorAll('[data-filter-area]').forEach(area => {
     const buttons = [...area.querySelectorAll('[data-filter]')];
     const cards = [...area.querySelectorAll('[data-filter-item]')];
