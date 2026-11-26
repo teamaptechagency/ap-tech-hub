@@ -25,3 +25,5 @@ To build fresh source from the reviewed existing content, run the importer with 
 Current release override: `card-footer-release.conf` sets WorkingDirectory to `/opt/aptech-public-next/releases/20261126-cards-2`. The asset alias points to this release, including prior content-hashed assets for open clients. Rollback for the footer-only change: `/root/aptech-before-card-footers-1795685564`.
 
 Current Work hero release: /opt/aptech-public-next/releases/20261126-showcase-3. The existing service override and asset alias point here. Prior hashed assets retained. Rollback snapshot: /root/aptech-before-work-showcase-1795685805. Adds a layered real-project showcase only.
+
+Current release: /opt/aptech-public-next/releases/20261126-business-4. Card business context separated from delivery and technology. Rollback: /root/aptech-before-business-cards-1795696206. Prior static chunks retained.

@@ -3,6 +3,7 @@ from pathlib import Path
 import json,re,subprocess,sys,tempfile
 root=Path(sys.argv[1]);app=Path(sys.argv[2]);source=Path(sys.argv[3]);out=app/'work';out.mkdir(parents=True,exist_ok=True)
 html=(root/'work/index.html').read_text()
+businesses=json.loads((Path(__file__).with_name('work-business.json')).read_text())
 projects=re.findall(r'<a\b[^>]*class="work-card[^\"]*"[^>]*href="([^\"]+)"',html)
 if not projects:
  projects=re.findall(r'<a\b[^>]*href="([^\"]+)"[^>]*class="work-card',html)
@@ -32,9 +33,14 @@ def project_card(m):
  stacks=list(dict.fromkeys(stacks))
  if 'PHP' in stacks and 'Laravel' in stacks:stacks=[x for x in stacks if x not in ('PHP','Laravel')]+['PHP/Laravel']
  screen_label=re.sub(r'\s*&amp;\s*variations$','',screens[0]) if screens else ''
- description_text='International storefront' if '/work/footstep-online/' in opening else (description[1] if description else '')
- footer='<div class="work-card-footer"><span class="work-card-technologies">'+(' · '.join(stacks) if stacks else '–')+'</span>'+('' if not screens else '<span class="work-card-screens">'+screen_label+'</span>')+'</div>'
- return opening+image+'<div class="work-card-body"><p class="work-card-kicker">'+kicker+'</p><h3>'+title[1]+'</h3><p class="work-card-description">'+description_text+'</p>'+footer+'</div>'+closing
+ slug=re.search(r'href="/work/([^/]+)/',opening)[1]
+ assert slug in businesses, 'Missing business description: '+slug
+ description_text=businesses[slug]
+ # Business context belongs below the title; delivery and technology belong below the divider.
+ work=description[1] if description else ' · '.join(scope)
+ details=list(dict.fromkeys([work]+[x for x in stacks if x.casefold() not in work.casefold()]))
+ footer='<div class="work-card-footer"><span class="work-card-technologies">'+' · '.join(x for x in details if x)+'</span>'+('' if not screens else '<span class="work-card-screens">'+screen_label+'</span>')+'</div>'
+ return opening+image+'<div class="work-card-body"><h3>'+title[1]+'</h3><p class="work-card-description">'+description_text+'</p>'+footer+'</div>'+closing
 html=re.sub(r'(<a class="work-card[^>]*>)([\s\S]*?)(</a>)',project_card,html)
 
 

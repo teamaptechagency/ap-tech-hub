@@ -115,3 +115,5 @@ Work card information refinement (2026-11-26): compact 20px title, 24px body pad
 Work card footer update (2026-11-26): all 58 cards now render the metadata footer and 1px divider. Absent technology is displayed as an en dash; missing screen counts remain absent without invented values. Lena, Hudson and HertsPlumb footer top positions matched exactly in the desktop row. 390px overflow zero; browser console errors empty. Production release /opt/aptech-public-next/releases/20261126-cards-2 via card-footer-release.conf override; prior static chunks retained for clients/rollback. Rollback /root/aptech-before-card-footers-1795685564.
 
 2026-11-26: Work hero now includes a live layered showcase of three existing portfolio screenshots (DNA Digital, DenisTek, Footstep), with project links, responsive layout and reduced-motion support. Existing typography, Olive theme, totals and project grid retained.
+
+2026-11-26: Updated all 58 Work cards: business type below project name; work delivered and technology in the footer. Existing screenshots, statuses, totals and filtering retained.
