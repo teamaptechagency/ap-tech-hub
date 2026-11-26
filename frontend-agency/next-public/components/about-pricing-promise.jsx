@@ -1,0 +1,5 @@
+const promises=['Fixed price for an agreed scope','Changes priced and timed before we proceed','Hosting, paid tools and support listed separately','Files, access and guidance at handover'];
+export default function AboutPricingPromise(){return <section className="section about-pricing-promise" aria-labelledby="pricing-promise-title"><div className="wrap pricing-promise-layout">
+ <div><p className="eyebrow">Pricing promise</p><h2 id="pricing-promise-title">A clear scope. A fixed project price.</h2><p className="lead">Changes are explained — including cost and timing — before work goes ahead.</p><div className="button-row"><a className="text-link" href="/approach/">See how we work</a></div></div>
+ <ul className="pricing-promise-card">{promises.map(item=><li key={item}><span className="pricing-promise-check" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6"/></svg></span><span>{item}</span></li>)}</ul>
+ </div></section>;}

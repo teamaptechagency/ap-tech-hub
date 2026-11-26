@@ -1,0 +1,6 @@
+.pricing-promise-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:60px;align-items:center}
+.pricing-promise-layout h2{margin-bottom:20px}.pricing-promise-layout .lead{max-width:650px}
+.pricing-promise-card{list-style:none;margin:0;padding:32px;border:1px solid var(--line);border-radius:22px;background:var(--card);color:var(--ink);display:grid;gap:18px}
+.pricing-promise-card li{display:flex;align-items:flex-start;gap:12px}
+.pricing-promise-check{display:grid;place-items:center;width:22px;height:22px;flex:none;border-radius:50%;background:var(--soft);color:var(--accent);margin-top:2px}
+@media(max-width:800px){.pricing-promise-layout{grid-template-columns:1fr;gap:32px}.pricing-promise-card{padding:26px}}

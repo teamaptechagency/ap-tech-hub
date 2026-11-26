@@ -61,3 +61,5 @@ Current release /opt/aptech-public-next/releases/20261126-portrait-20. Founder p
 Current release /opt/aptech-public-next/releases/20261126-founder-link-21. Founder personal website CTA added. Rollback /root/aptech-before-founder-link-1795700863.
 
 Current release /opt/aptech-public-next/releases/20261126-decisions-24. About How we decide card section. Rollback before section /root/aptech-before-decisions-1795701149. Prior static chunks retained.
+
+Current release /opt/aptech-public-next/releases/20261126-promise-25. About Pricing promise layout updated. Rollback /root/aptech-before-pricing-promise-1795701445.

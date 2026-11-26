@@ -94,3 +94,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 Founder website link: existing outline button added below skills, Visit my website with external arrow. Build passed; live verified https://wpnazmul.com/, target=_blank and noopener noreferrer. Theme/type unchanged.
 
 2026-11-26 About decisions: existing four principles presented as numbered icon cards on solid #283218, retaining global Manrope/Georgia typography and original text. Scoped ID selector overrides legacy important section alternation. Build passed; final live fill rgb(40,50,24) verified in light/dark, desktop four columns, mobile one column and zero horizontal overflow.
+
+2026-11-26 Pricing promise: reference two-column layout with existing typography, explanation and four check points on native themed card. Existing approach link retained. Build passed; live four items/two columns/font checked; mobile one column/zero overflow and dark card text/surface verified.
