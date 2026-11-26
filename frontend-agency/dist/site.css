@@ -381,3 +381,9 @@ h1,h2,h3{font-weight:550}em{font-family:Georgia,serif;font-weight:400}.hero h1 e
 .creative-order-confirm strong{font-size:12px;line-height:1.5}.creative-order-confirm>span{padding:7px 10px;border-radius:30px;background:#2f7d4f;color:#fff;font-size:10px;font-weight:700}
 @media(max-width:480px){.ai-studio-board #panel-orders{height:430px;padding:18px}.creative-order-step{padding:13px 11px;gap:10px}.creative-order-step strong{font-size:12px}.creative-order-step p{font-size:11px}.creative-order-confirm strong{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.creative-order-step,.creative-order-confirm{animation:none!important}}
+/* High-contrast review pagination action. */
+.review-load-more .button[data-review-more]{background:#556b2f;color:#fff;border:1px solid #455727;font-weight:700;box-shadow:0 3px 10px #28321818}
+.review-load-more .button[data-review-more]:hover{background:#455727;color:#fff;border-color:#36441f}
+.review-load-more .button[data-review-more]:focus-visible{outline:3px solid #556b2f;outline-offset:4px}
+html[data-theme=dark] .review-load-more .button[data-review-more]{background:#b3c38a;color:#12150d;border-color:#b3c38a}
+html[data-theme=dark] .review-load-more .button[data-review-more]:hover{background:#d1dbb5;border-color:#d1dbb5;color:#12150d}
