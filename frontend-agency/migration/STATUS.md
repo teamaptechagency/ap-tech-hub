@@ -123,3 +123,5 @@ Work card footer update (2026-11-26): all 58 cards now render the metadata foote
 2026-11-26: Reviews hero updated to owner reference after conversion: two-line heading, Olive accent, badge, rating card and two CTAs. Review list unchanged.
 
 2026-11-26: Reviews Ratings by service section complete: two Fiverr profile cards, five-member team wording, existing typography, responsive light/dark layout.
+
+2026-11-26: Recent reviews heading, 9-card initial grid, +3 Show more and Upwork CTA banner complete. Existing theme/typography kept.

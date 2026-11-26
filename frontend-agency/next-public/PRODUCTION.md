@@ -45,3 +45,5 @@ Current release: /opt/aptech-public-next/releases/20261126-profiles-11. Added Ra
 Current release: /opt/aptech-public-next/releases/20261126-review-theme-12. Native theme tokens restored on Reviews rating card; typography unchanged. Rollback /root/aptech-before-review-theme-1795698542.
 
 Current release /opt/aptech-public-next/releases/20261126-solid-13. Exact owner-selected solid Olive rating card. Rollback /root/aptech-before-solid-card-1795698994.
+
+Current release /opt/aptech-public-next/releases/20261126-reviews-grid-15. Recent reviews client component controls 9 initial/+3 pagination across all 69 source cards. Prior static chunks retained. Rollback to before grid: /root/aptech-before-reviews-grid-1795699237.

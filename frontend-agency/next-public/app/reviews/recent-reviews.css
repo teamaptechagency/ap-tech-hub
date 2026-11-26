@@ -1,0 +1,8 @@
+.recent-reviews>.section-head{margin-bottom:40px}
+.recent-reviews .review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.recent-reviews-more{display:flex;flex-direction:column;align-items:center;gap:14px;margin:42px 0 28px;text-align:center}
+.recent-reviews .recent-reviews-upwork{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:28px;border:1px dashed var(--line);border-radius:16px;background:var(--card)}
+.recent-reviews-upwork p>strong,.recent-reviews-upwork p>span{display:block}
+.recent-reviews-upwork .button{flex:none;gap:12px}
+@media(max-width:1000px){.recent-reviews .review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.recent-reviews .review-grid{grid-template-columns:1fr}.recent-reviews .recent-reviews-upwork{align-items:stretch;flex-direction:column;padding:24px;gap:20px}.recent-reviews-upwork .button{width:100%}}
