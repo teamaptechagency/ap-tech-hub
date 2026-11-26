@@ -403,3 +403,15 @@ html[data-theme=dark] .review-load-more .button[data-review-more]:hover{backgrou
 .faq-item[open]:not([data-expanded]) summary:before,.faq-item[data-expanded=true] summary:before{transform:translateY(-50%) scaleY(0)}
 .faq-answer{display:flow-root}.faq-answer p{margin:0}
 @media(prefers-reduced-motion:reduce){.faq-item summary:before{transition:none}}
+/* Calm section hierarchy: one contrast section, two subtle supporting tints. */
+:root{--section-tint:#f5f7ef}
+html[data-theme=dark]{--section-tint:#1b1f14}
+main .surface-alt,main .process-band,main .cta-band{background:var(--surface);color:var(--ink)}
+main .reviews-section,main .service-packages{background:var(--section-tint);color:var(--ink)}
+.process-band .lead,.process-step p,.cta-band p{color:var(--muted)}
+.process-step,.process-foot{border-color:var(--line)}
+.process-foot a:hover{color:var(--accent)}
+main .work-preview{background:#272a23;color:#f1f3ec}
+html[data-theme=dark] main .work-preview{background:var(--surface);color:var(--ink)}
+html[data-theme=dark] .work-card.featured{background:var(--card);border-color:var(--line)}
+.cta-band .button.gold{background:var(--action);color:var(--action-ink)}
