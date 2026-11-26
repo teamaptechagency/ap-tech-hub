@@ -96,3 +96,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 About decisions: existing four principles presented as numbered icon cards on solid #283218, retaining global Manrope/Georgia typography and original text. Scoped ID selector overrides legacy important section alternation. Build passed; final live fill rgb(40,50,24) verified in light/dark, desktop four columns, mobile one column and zero horizontal overflow.
 
 2026-11-26 Pricing promise: reference two-column layout with existing typography, explanation and four check points on native themed card. Existing approach link retained. Build passed; live four items/two columns/font checked; mobile one column/zero overflow and dark card text/surface verified.
+
+2026-11-26 team-block motion: added entry/floating motion, staggered service entries, lift/shadow and icon rotate/scale feedback; preserved solid Olive fill and existing fonts/content. Entry uses translate so it cannot override hover transform. Build passed. Live animation names/delays and keyboard-focus lift -6px/icon matrix verified; 390px stacked layout and zero overflow checked. Reduced-motion CSS disables motion.
