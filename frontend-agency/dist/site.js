@@ -433,3 +433,32 @@
  document.addEventListener('visibilitychange',sync);reduced.addEventListener('change',sync);
  new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;sync();},{threshold:.15}).observe(board);sync();
 })();
+
+// Smooth, single-open FAQ accordion; native details remain the no-JS fallback.
+(() => {
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ document.querySelectorAll('.faq-list').forEach(list=>{
+  const states=new Map();
+  list.querySelectorAll('.faq-item').forEach((item,index)=>{
+   const summary=item.querySelector('summary');if(!summary)return;
+   const answer=document.createElement('div');answer.className='faq-answer';
+   [...item.children].filter(child=>child!==summary).forEach(child=>answer.append(child));item.append(answer);
+   const state={expanded:item.open,height:null,content:null};states.set(item,state);
+   if(index>0&&item.open){item.open=false;state.expanded=false;}
+   item.dataset.expanded=String(state.expanded);summary.setAttribute('aria-expanded',String(state.expanded));
+   const setOpen=expanded=>{
+    const from=item.getBoundingClientRect().height;state.height?.cancel();state.content?.cancel();state.expanded=expanded;
+    item.dataset.expanded=String(expanded);summary.setAttribute('aria-expanded',String(expanded));
+    item.style.height='auto';item.open=true;
+    const to=expanded?item.getBoundingClientRect().height:summary.getBoundingClientRect().height+parseFloat(getComputedStyle(item).borderBottomWidth||0);
+    if(reduced.matches||!item.animate){item.open=expanded;item.style.height='';item.style.overflow='';return;}
+    item.style.overflow='hidden';
+    state.height=item.animate([{height:from+'px'},{height:to+'px'}],{duration:340,easing:'cubic-bezier(.22,.8,.25,1)'});
+    state.content=answer.animate(expanded?[{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'translateY(0)'}]:[{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(-8px)'}],{duration:250,easing:'ease',fill:'both'});
+    const current=state.height;current.onfinish=()=>{if(state.height!==current)return;item.open=state.expanded;item.style.height='';item.style.overflow='';state.content?.cancel();state.height=null;};
+   };
+   state.setOpen=setOpen;
+   summary.addEventListener('click',event=>{event.preventDefault();const next=!state.expanded;if(next)for(const [other,s] of states)if(other!==item&&s.expanded)s.setOpen(false);setOpen(next);});
+  });
+ });
+})();

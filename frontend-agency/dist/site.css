@@ -396,3 +396,10 @@ html[data-theme=dark] .review-load-more .button[data-review-more]:hover{backgrou
 .article-card:is(:hover,:focus-visible) .rethink-shape{transform:rotate(20deg) scale(1.08);box-shadow:48px -10px 0 -5px #dde0d6}
 .article-card:focus-visible .sheet{transform:rotate(-2deg)}
 @media(prefers-reduced-motion:reduce){.article-cover *{transition:none!important;transform:none!important}}
+/* FAQ plus/minus transforms in both directions. */
+.faq-item summary:after{content:'';width:12px;height:2px;right:7px;top:50%;background:var(--accent);transform:translateY(-50%)}
+.faq-item[open] summary:after{content:''}
+.faq-item summary:before{content:'';position:absolute;right:12px;top:50%;width:2px;height:12px;background:var(--accent);transform:translateY(-50%) scaleY(1);transition:transform .28s ease}
+.faq-item[open]:not([data-expanded]) summary:before,.faq-item[data-expanded=true] summary:before{transform:translateY(-50%) scaleY(0)}
+.faq-answer{display:flow-root}.faq-answer p{margin:0}
+@media(prefers-reduced-motion:reduce){.faq-item summary:before{transition:none}}
