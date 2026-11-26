@@ -387,3 +387,12 @@ h1,h2,h3{font-weight:550}em{font-family:Georgia,serif;font-weight:400}.hero h1 e
 .review-load-more .button[data-review-more]:focus-visible{outline:3px solid #556b2f;outline-offset:4px}
 html[data-theme=dark] .review-load-more .button[data-review-more]{background:#b3c38a;color:#12150d;border-color:#b3c38a}
 html[data-theme=dark] .review-load-more .button[data-review-more]:hover{background:#d1dbb5;border-color:#d1dbb5;color:#12150d}
+/* Consistent article artwork interactions. */
+.article-cover .automation-shape,.article-cover .automation-shape i,.article-cover .rethink-shape{transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s}
+.article-card:is(:hover,:focus-visible) .automation-shape{transform:translateY(-5px)}
+.article-card:is(:hover,:focus-visible) .automation-shape i:first-child{transform:translateX(-7px) rotate(-8deg)}
+.article-card:is(:hover,:focus-visible) .automation-shape i:nth-child(2){transform:rotate(135deg) scale(1.12);box-shadow:0 0 0 8px #e8a31718}
+.article-card:is(:hover,:focus-visible) .automation-shape i:last-child{transform:translateX(7px) rotate(8deg)}
+.article-card:is(:hover,:focus-visible) .rethink-shape{transform:rotate(20deg) scale(1.08);box-shadow:48px -10px 0 -5px #dde0d6}
+.article-card:focus-visible .sheet{transform:rotate(-2deg)}
+@media(prefers-reduced-motion:reduce){.article-cover *{transition:none!important;transform:none!important}}
