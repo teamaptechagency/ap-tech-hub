@@ -559,3 +559,29 @@ html body main>section.ai-safeguards:nth-of-type(n):not(.work-preview):not(.home
 @keyframes apt-tile-float{0%,100%{translate:0 0}50%{translate:0 -10px}}
 @media(max-width:420px){.services-overview-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.services-overview-tile:nth-child(n){animation:none!important;translate:none!important;transform:none!important}}
+/* Public page title badges only; section overlines retain their existing design. */
+main nav[aria-label="Breadcrumb"]{display:none}
+:is(.page-hero,.services-overview-hero,.hero) .eyebrow,
+.journal-hero .journal-eyebrow,
+.journal-index-hero nav[aria-label="Breadcrumb"]+p{
+ display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;
+ background:var(--soft,#e8edda);color:var(--accent,#46621f);font-family:inherit;
+ font-size:12px;font-weight:700;line-height:1.4;letter-spacing:.14em;text-transform:uppercase;
+ animation:ap-page-tag-in .6s cubic-bezier(.2,.8,.2,1) both;
+}
+:is(.page-hero,.services-overview-hero,.hero) .eyebrow::before,
+.journal-hero .journal-eyebrow::before,
+.journal-index-hero nav[aria-label="Breadcrumb"]+p::before{
+ content:"";display:block;flex:none;width:8px;height:8px;border-radius:50%;
+ background:var(--accent,#46621f);animation:ap-page-tag-pulse 2s ease-out infinite;
+}
+@keyframes ap-page-tag-pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent,#46621f) 55%,transparent)}100%{box-shadow:0 0 0 8px transparent}}
+@keyframes ap-page-tag-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+ :is(.page-hero,.services-overview-hero,.hero) .eyebrow,
+ :is(.page-hero,.services-overview-hero,.hero) .eyebrow::before,
+ .journal-hero .journal-eyebrow,.journal-hero .journal-eyebrow::before,
+ .journal-index-hero nav[aria-label="Breadcrumb"]+p,
+ .journal-index-hero nav[aria-label="Breadcrumb"]+p::before{animation:none}
+}
+
