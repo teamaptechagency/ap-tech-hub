@@ -49,3 +49,5 @@ Current release /opt/aptech-public-next/releases/20261126-solid-13. Exact owner-
 Current release /opt/aptech-public-next/releases/20261126-reviews-grid-15. Recent reviews client component controls 9 initial/+3 pagination across all 69 source cards. Prior static chunks retained. Rollback to before grid: /root/aptech-before-reviews-grid-1795699237.
 
 Current release /opt/aptech-public-next/releases/20261126-cta-color-16. Shared CTA color CSS and v=cta-color-1 stylesheet version across migrated/static pages. Prior CSS backup /root/aptech-before-cta-color-1795699237.css; routing rollback /root/aptech-before-cta-color-1795699586.
+
+Current release /opt/aptech-public-next/releases/20261126-about-17. Seventh migrated route /about/ and slashless equivalent added to shared nginx snippet. Rollback /root/aptech-before-about-next-1795699829. Existing design preserved; owner's new About hero screenshot remains the next design step after conversion preview.
