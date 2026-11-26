@@ -1,5 +1,10 @@
 .work-page-hero h1 .work-care{display:block;color:var(--action);font:inherit;letter-spacing:inherit}
 .work-page-hero .lead{max-width:660px}
+.work-page-hero .work-hero-copy>.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--soft);color:var(--accent);font-family:inherit;font-size:12px;font-weight:700;line-height:1.4;letter-spacing:.14em;text-transform:uppercase;animation:work-tag-in .6s cubic-bezier(.2,.8,.2,1) both}
+.work-page-hero .work-hero-copy>.eyebrow::before{content:"";display:block;flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:work-tag-pulse 2s ease-out infinite}
+@keyframes work-tag-pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}100%{box-shadow:0 0 0 8px transparent}}
+@keyframes work-tag-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.work-page-hero .work-hero-copy>.eyebrow,.work-page-hero .work-hero-copy>.eyebrow::before{animation:none}}
 .work-totals{display:flex;flex-wrap:wrap;gap:0;margin:28px 0 0;padding:0}
 .work-totals>div{display:flex;flex-direction:column-reverse;padding:0 28px;border-inline-start:1px solid var(--line);min-width:105px}
 .work-totals>div:first-child{padding-inline-start:0;border:0}

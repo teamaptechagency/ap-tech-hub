@@ -60,3 +60,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 Work hero showcase: production build passed; DNA Digital, DenisTek and Footstep images loaded and project hrefs checked. Desktop visual inspection and 390px mobile light/dark inspection passed, with no horizontal overflow. Reduced-motion CSS disables floating and transitions.
 
 2026-11-26 card information: all 58 cards have a business description below the title and delivery/technology below the divider. Existing case-study and design summaries inform the labels; concepts retain concept wording. Build passed using --webpack with shared node_modules symlink. Live HTTP 200; browser counted 58 business descriptions and 58 footers, search Herts returned one matching card, desktop overflow 0 and visual card checked.
+
+2026-11-26: Selected work pill badge published. Webpack build passed. Live browser verified 999px radius, 8px circular pulsing dot, Olive surface and inherited Manrope font. Reduced-motion CSS disables badge animation.
