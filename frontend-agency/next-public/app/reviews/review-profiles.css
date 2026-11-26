@@ -1,0 +1,14 @@
+.ratings-by-service{padding:22px 0 48px;margin-bottom:38px;border-bottom:1px solid var(--line)}
+.ratings-by-service .section-head{margin-bottom:34px}
+.ratings-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.ratings-profile-grid .rating-profile-card{display:block;min-width:0;padding:30px;border:1px solid var(--line);border-radius:20px;background:var(--card)}
+.rating-profile-person{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.rating-profile-avatar{display:grid;place-items:center;width:56px;height:56px;flex:none;border-radius:50%;background:var(--action);color:var(--action-ink)}
+.ratings-profile-grid .rating-profile-avatar{color:var(--action-ink)}
+.rating-profile-person strong{margin-top:0}.rating-profile-person>div>span{display:block}
+.rating-profile-score{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.rating-profile-score .reviews-rating-value{color:var(--action);margin:0}
+.rating-profile-track{height:8px;overflow:hidden;border-radius:999px;background:var(--soft);margin-bottom:12px}
+.rating-profile-track>span{display:block;height:100%;background:var(--accent);border-radius:inherit}
+.rating-profile-card .text-link{color:var(--action);gap:10px;border:0;padding-bottom:0}
+@media(max-width:700px){.ratings-profile-grid{grid-template-columns:1fr;gap:18px}.ratings-profile-grid .rating-profile-card{padding:24px}.ratings-by-service{padding-top:12px;padding-bottom:32px}.ratings-by-service .section-head{margin-bottom:26px}}

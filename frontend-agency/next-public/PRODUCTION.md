@@ -39,3 +39,5 @@ Current release: /opt/aptech-public-next/releases/20261126-reviews-8. Sixth migr
 Current release: /opt/aptech-public-next/releases/20261126-reviews-hero-9. Reviews hero updated after React migration. Rollback: /root/aptech-before-reviews-hero-1795697828. Rating summary snapshot comes from the existing reviews source; rebuild summary when review/profile totals change.
 
 Current release: /opt/aptech-public-next/releases/20261126-reviews-type-10. Hero-only typography/team wording correction. Rollback /root/aptech-before-reviews-type-1795698045.
+
+Current release: /opt/aptech-public-next/releases/20261126-profiles-11. Added Ratings by service section after hero. Rollback /root/aptech-before-profile-cards-1795698364. Profile snapshot is sourced from reviews.json; update snapshot alongside profile ratings/count changes.
