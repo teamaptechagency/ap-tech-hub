@@ -96,3 +96,5 @@ Do not regenerate production from older local content. Use the captured live bas
 - New release /opt/aptech-next-work-cards-preview, independent service port 3327. Work preview nginx route switched after build; previous Work release kept for rollback. Other previews and production page untouched.
 - Verified 58 cards, initial 12 visible, Show more 24; WordPress 17 results and Footstep search one result.
 - At 390px: 1 card column, zero horizontal overflow; dark background #1b1f14; browser console errors empty.
+
+Work card information refinement (2026-11-26): compact 20px title, 24px body padding, clear 1px footer separator. Footstep description is International storefront; PHP/Laravel combined for display; screen counts abbreviated without changing numeric values. All 58 cards retained. At 390px one column, zero overflow; console errors empty. Same Work preview URL, new built release /opt/aptech-next-work-info-preview behind the existing Work card preview service; other preview services remain active. Original static Work page unchanged.
