@@ -445,3 +445,19 @@ main:has(>.home-top)>.service-packages,main:has(>.home-top)>.process-band{backgr
 main:has(>.home-top)>.cta-band{background:var(--landing-cta);border-top:1px solid var(--line);color:var(--ink)}
 main:has(>.home-top)>.work-preview{background:#272a23;color:#f1f3ec}
 html[data-theme=dark] main:has(>.home-top)>.work-preview{background:#1b1f14;color:#f1f3ec}
+/* Supplied services-card motion, integrated with existing site fonts and tokens. */
+@keyframes aps-rise{from{opacity:0;translate:0 16px}to{opacity:1;translate:0 0}}
+@keyframes aps-float{0%,100%{translate:0 0}50%{translate:0 -5px}}
+.services-overview-tile{animation:aps-rise .6s cubic-bezier(.2,.8,.2,1) both;overflow:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s}
+.services-overview-tile:nth-child(1){animation-delay:.05s}.services-overview-tile:nth-child(2){animation-delay:.12s}.services-overview-tile:nth-child(3){animation-delay:.19s}.services-overview-tile:nth-child(4){animation-delay:.26s}.services-overview-tile:nth-child(5){animation-delay:.33s}.services-overview-tile:nth-child(6){animation-delay:.4s}
+.services-overview-tile.featured{animation:aps-rise .6s cubic-bezier(.2,.8,.2,1) .05s both,aps-float 6s ease-in-out 1s infinite}
+.services-overview-tile.featured .services-overview-icon{background:var(--card)}
+.services-overview-tile.featured:is(:hover,:focus-visible){animation-play-state:running,paused}
+.services-overview-tile:is(:hover,:focus-visible){transform:translateY(-6px);box-shadow:0 18px 40px #28321824;border-color:#b3c38a}
+html[data-theme=dark] .services-overview-tile:is(:hover,:focus-visible){box-shadow:0 18px 40px #0007;border-color:#6f8442}
+.services-overview-icon{transition:transform .3s,background .3s,color .3s}
+.services-overview-tile:is(:hover,:focus-visible) .services-overview-icon{transform:rotate(-6deg) scale(1.08);background:var(--action);color:var(--action-ink)}
+.services-overview-row{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}
+.services-overview-arrow{color:var(--action);opacity:0;transform:translateX(-6px);transition:opacity .25s,transform .25s}
+.services-overview-tile:is(:hover,:focus-visible) .services-overview-arrow{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.services-overview-tile,.services-overview-icon,.services-overview-arrow{animation:none!important;transition:none!important;translate:none!important;transform:none!important}.services-overview-arrow{opacity:1}}
