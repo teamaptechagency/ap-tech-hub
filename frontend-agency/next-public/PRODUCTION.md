@@ -29,3 +29,5 @@ Current Work hero release: /opt/aptech-public-next/releases/20261126-showcase-3.
 Current release: /opt/aptech-public-next/releases/20261126-business-4. Card business context separated from delivery and technology. Rollback: /root/aptech-before-business-cards-1795696206. Prior static chunks retained.
 
 Current release: /opt/aptech-public-next/releases/20261126-badge-5. Work overline pill badge only; prior static chunks retained. Rollback snapshot: /root/aptech-before-work-badge-1795696379.
+
+Current release: /opt/aptech-public-next/releases/20261126-monlegs-6. MonLegs selected thumbnail updated in migrated pages; original project detail HTML primary and gallery updated. Rollback snapshot: /root/aptech-before-monlegs-primary-1795696503.
