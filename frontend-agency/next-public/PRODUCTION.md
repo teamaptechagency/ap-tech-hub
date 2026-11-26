@@ -37,3 +37,5 @@ Current release: /opt/aptech-public-next/releases/20261126-titles-7. Public shar
 Current release: /opt/aptech-public-next/releases/20261126-reviews-8. Sixth migrated route /reviews/ (and slashless equivalent) added to existing shared nginx snippet. Rollback /root/aptech-before-reviews-next-1795697532. Prior chunks retained. Reviews imported from live HTML to JSX with route scripts; UI redesign deliberately deferred until after conversion preview.
 
 Current release: /opt/aptech-public-next/releases/20261126-reviews-hero-9. Reviews hero updated after React migration. Rollback: /root/aptech-before-reviews-hero-1795697828. Rating summary snapshot comes from the existing reviews source; rebuild summary when review/profile totals change.
+
+Current release: /opt/aptech-public-next/releases/20261126-reviews-type-10. Hero-only typography/team wording correction. Rollback /root/aptech-before-reviews-type-1795698045.

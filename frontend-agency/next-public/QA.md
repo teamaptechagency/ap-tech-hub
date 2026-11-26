@@ -70,3 +70,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 Reviews migration: webpack build passed; live HTTP 200 with Next prerender headers. Browser confirmed 69 review cards, 3 initially visible and 6 after one Show more click; no horizontal overflow on desktop. Existing design and profile links retained.
 
 2026-11-26 Reviews hero: added React ReviewsHero component with explicit two-line heading, Olive second line, pulsing badge, profile-derived 4.9 rating/69 reviews, Upwork and contact CTAs. Webpack build passed. Live desktop screenshot checked; 390px light/dark inspected with zero overflow. All 69 cards retained; Show more verified 3 to 6.
+
+2026-11-26 hero typography correction: restored inherited Manrope 550 heading and Georgia italic emphasis, reused Services heading scale and original review body/rating styles. Team wording now Two profiles · Five-member team. Profile section deferred at owner request. Build passed; live computed fonts and wording verified, 69 review cards and two profiles retained, desktop/mobile horizontal overflow 0.
