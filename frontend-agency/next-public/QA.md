@@ -46,3 +46,11 @@ Work index checks (2026-11-26):
 - WordPress filter returns 17 matching projects; Footstep search returns one.
 - At 390px, no horizontal overflow; all three totals visible; dark/light mode works.
 - Browser console errors empty. Prior previews and production page unchanged.
+
+Work card layout checks (2026-11-26):
+- Build passed; 58 cards with real images and source metadata.
+- Desktop three columns, mobile 390px one column without horizontal overflow.
+- Real filter counts: 58 / 20 / 17 / 47 / 16 (overlapping service categories).
+- Show more reveals 24; WordPress filter and Footstep search still work.
+- Dark card background #1b1f14; console error list empty.
+- Production Work page unchanged; updated Work preview release retains a rollback.

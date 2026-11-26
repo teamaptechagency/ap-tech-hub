@@ -13,9 +13,29 @@ summary={'projects':projects,'services':[x['slug'] for x in content['services']]
 assert '<h1>Different projects. The same care.</h1>' in html
 html=html.replace('<section class="page-hero">','<section class="page-hero work-page-hero">',1).replace('<h1>Different projects. The same care.</h1>','<h1>Different projects.<span class="work-care">The same care.</span></h1>',1)
 html=re.sub(r'(<section class="page-hero work-page-hero">[\s\S]*?<p class="lead">[\s\S]*?</p>)',r'\1<div data-work-statistics></div>',html,count=1)
+
+# Keep actual screenshots and source metadata; rebuild only the card presentation.
+counts={'all':len(projects)}
+for item in re.findall(r'data-filter-item="([^\"]*)"',html):
+ for category in set(item.split()):counts[category]=counts.get(category,0)+1
+html=re.sub(r'(<button\b[^>]*data-filter="([^\"]+)"[^>]*>)([^<]+)(</button>)',lambda m:m[1]+m[3]+' <span class="work-filter-count">'+str(counts.get(m[2],0))+'</span>'+m[4],html)
+def project_card(m):
+ opening,body,closing=m.groups()
+ cover=re.search(r'<div class="work-cover[^\"]*">[\s\S]*?</div>',body);assert cover
+ title=re.search(r'<h3>([\s\S]*?)</h3>',body);assert title
+ description=re.search(r'<h3>[\s\S]*?</h3><p>([\s\S]*?)</p>',body)
+ def spans(cls):return re.findall(r'<span class="'+cls+r'[^\"]*">([\s\S]*?)</span>',body)
+ scope=spans('project-scope');stacks=spans('project-stack');status=spans('project-version')+spans('website-status');screens=spans('work-screen-count');labels=spans('design-cover-label')
+ image=re.sub(r'<span class="design-cover-label">[\s\S]*?</span>','',cover[0])
+ if status:image=image[:-6]+'<div class="work-card-statuses">'+''.join('<span>'+x+'</span>' for x in status)+'</div></div>'
+ kicker=' · '.join(dict.fromkeys(labels+scope))
+ footer='<div class="work-card-footer"><span class="work-card-technologies">'+' · '.join(dict.fromkeys(stacks))+'</span>'+('' if not screens else '<span class="work-card-screens">'+screens[0]+'</span>')+'</div>' if stacks or screens else ''
+ return opening+image+'<div class="work-card-body"><p class="work-card-kicker">'+kicker+'</p><h3>'+title[1]+'</h3><p class="work-card-description">'+(description[1] if description else '')+'</p>'+footer+'</div>'+closing
+html=re.sub(r'(<a class="work-card[^>]*>)([\s\S]*?)(</a>)',project_card,html)
+
 with tempfile.TemporaryDirectory() as d:
  p=Path(d)/'index.html';p.write_text(html)
  subprocess.run([sys.executable,str(app.parent/'scripts/import-homepage.py'),str(p),str(out),'../interactions'],check=True)
-p=out/'page.jsx';jsx=p.read_text();jsx="import './work-hero.css';\nimport WorkStatistics from '../../components/work-statistics';\n"+jsx
+p=out/'page.jsx';jsx=p.read_text();jsx="import './work-cards.css';\nimport './work-hero.css';\nimport WorkStatistics from '../../components/work-statistics';\n"+jsx
 jsx,n=re.subn(r'<div data-work-statistics=""></div>','<WorkStatistics />',jsx,count=1);assert n==1;p.write_text(jsx)
 print('Work totals:',{k:len(v) for k,v in summary.items()})

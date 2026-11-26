@@ -86,3 +86,13 @@ Do not regenerate production from older local content. Use the captured live bas
 - Hero second line is block, color #556b2f light / #b3c38a dark. At 390px zero horizontal overflow, totals all present. Console errors empty.
 - Existing images, links and project descriptions retained; project detail routes still open production until migrated separately.
 - Owner preview opened; pause before further pages.
+
+## Work card presentation update (2026-11-26)
+
+- Work preview updated at the same review URL with screenshot-based bordered cards: 3 columns desktop, 2 tablet, 1 mobile.
+- Source status badges retained on covers; source title, scope, description, stack and available screen count displayed in card body/footer.
+- Filter counts derive from existing categories (categories overlap): All 58, Development 20, WordPress 17, UI/UX 47, UI templates 16.
+- All real project screenshots and project links preserved; no placeholder screenshots introduced.
+- New release /opt/aptech-next-work-cards-preview, independent service port 3327. Work preview nginx route switched after build; previous Work release kept for rollback. Other previews and production page untouched.
+- Verified 58 cards, initial 12 visible, Show more 24; WordPress 17 results and Footstep search one result.
+- At 390px: 1 card column, zero horizontal overflow; dark background #1b1f14; browser console errors empty.
