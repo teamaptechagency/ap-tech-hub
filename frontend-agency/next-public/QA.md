@@ -80,3 +80,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 owner clarified exact solid fill: Reviews hero rating card now uses the existing CTA solid #283218 in both light/dark modes, no gradient, with original typography unchanged. Build passed; live computed background rgb(40,50,24), background-image none verified in both themes and screenshot checked.
 
 2026-11-26 Recent reviews: added title, initial nine cards (desktop 3x3), native React pagination adding three cards per click, and dashed Upwork banner with primary button. Removed imported legacy hidden flags through cloneElement and legacy list binding. Build passed. Live verified initial 9 visible/3 columns, keyboard expansion to12 then pointer expansion to15, updated remaining count, correct Upwork URL/button, mobile single column/zero overflow. Original card text/typography retained.
+
+2026-11-26 CTA color only: sampled owner screenshot pixels at three positions, all #aecb7a. Applied shared primary project CTA background with #12150d text; no typography/layout changes. Build passed. Live Reviews, Work and About computed rgb(174,203,122) and unchanged Manrope font.
