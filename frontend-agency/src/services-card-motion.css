@@ -1,0 +1,6 @@
+/* All six services hero cards float, with staggered timing. */
+.services-overview-tile,.services-overview-tile.featured{animation:aps-rise .6s cubic-bezier(.2,.8,.2,1) var(--tile-entry,.05s) both,aps-float 6s ease-in-out var(--tile-float,1s) infinite}
+.services-overview-tile:nth-child(2){--tile-entry:.12s;--tile-float:1.7s}.services-overview-tile:nth-child(3){--tile-entry:.19s;--tile-float:2.4s}.services-overview-tile:nth-child(4){--tile-entry:.26s;--tile-float:3.1s}.services-overview-tile:nth-child(5){--tile-entry:.33s;--tile-float:3.8s}.services-overview-tile:nth-child(6){--tile-entry:.4s;--tile-float:4.5s}
+.services-overview-tile:is(:hover,:focus-visible){animation-play-state:running,paused}
+@media(prefers-reduced-motion:reduce){.services-overview-tile,.services-overview-tile.featured{animation:none!important;translate:none!important}}
+.services-overview-tile:nth-child(n){animation-delay:var(--tile-entry,.05s),var(--tile-float,1s)}

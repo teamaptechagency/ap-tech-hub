@@ -522,3 +522,9 @@ main .cta-band.cta-centered,main:has(>.home-top)>.cta-band.cta-centered{backgrou
 @keyframes workflow-rise{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}@keyframes workflow-float{50%{translate:0 -6px}}@keyframes workflow-breathe{50%{opacity:.4;scale:.94}}
 @media(max-width:600px){.ai-service-hero .service-hero-art.ai-workflow-art{padding-top:38px}.ai-workflow-card{padding:24px 18px}.ai-workflow-badge{right:8px}.ai-workflow-card p{font-size:13px}.ai-workflow-over{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.ai-workflow-art *{animation:none!important;transition:none!important}.ai-workflow-art:hover .ai-workflow-card{transform:none}}
+/* All six services hero cards float, with staggered timing. */
+.services-overview-tile,.services-overview-tile.featured{animation:aps-rise .6s cubic-bezier(.2,.8,.2,1) var(--tile-entry,.05s) both,aps-float 6s ease-in-out var(--tile-float,1s) infinite}
+.services-overview-tile:nth-child(2){--tile-entry:.12s;--tile-float:1.7s}.services-overview-tile:nth-child(3){--tile-entry:.19s;--tile-float:2.4s}.services-overview-tile:nth-child(4){--tile-entry:.26s;--tile-float:3.1s}.services-overview-tile:nth-child(5){--tile-entry:.33s;--tile-float:3.8s}.services-overview-tile:nth-child(6){--tile-entry:.4s;--tile-float:4.5s}
+.services-overview-tile:is(:hover,:focus-visible){animation-play-state:running,paused}
+@media(prefers-reduced-motion:reduce){.services-overview-tile,.services-overview-tile.featured{animation:none!important;translate:none!important}}
+.services-overview-tile:nth-child(n){animation-delay:var(--tile-entry,.05s),var(--tile-float,1s)}
