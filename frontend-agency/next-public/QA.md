@@ -66,3 +66,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 MonLegs: client screenshot matched existing Version 4 (131:138566). Promoted to cover and first gallery screen while retaining prior cover and all 28 screens. Live browser checked primary and first gallery image loaded, full-screen link correct, and Work card uses selected cover. Webpack build passed. Source catalog and saved/published editor project metadata updated.
 
 2026-11-26 shared title badges: hero overlines share Olive pill/pulse styling; visible Breadcrumb navigation hidden. Section overlines unchanged (0px radius verified). Live checked Services, About, AI Automation, Work and Insights; 999px badge radius and 8px dot verified. Dark theme uses dark Olive surface and light Olive text. Webpack build passed; shared CSS version bumped for static and migrated pages.
+
+2026-11-26 Reviews migration: webpack build passed; live HTTP 200 with Next prerender headers. Browser confirmed 69 review cards, 3 initially visible and 6 after one Show more click; no horizontal overflow on desktop. Existing design and profile links retained.

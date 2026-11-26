@@ -117,3 +117,5 @@ Work card footer update (2026-11-26): all 58 cards now render the metadata foote
 2026-11-26: Work hero now includes a live layered showcase of three existing portfolio screenshots (DNA Digital, DenisTek, Footstep), with project links, responsive layout and reduced-motion support. Existing typography, Olive theme, totals and project grid retained.
 
 2026-11-26: Updated all 58 Work cards: business type below project name; work delivered and technology in the footer. Existing screenshots, statuses, totals and filtering retained.
+
+2026-11-26: Reviews converted to Next.js React at /reviews/ without UI redesign, per owner request to convert first. Existing 69 reviews and source links retained. Show more verified 3 to 6 visible reviews. Screenshot hero changes remain the next step after this conversion is shown.
