@@ -504,3 +504,11 @@ html[data-theme=dark] .services-overview-tile:is(:hover,:focus-visible){box-shad
 @media(max-width:760px){.reviews-preview-grid{grid-template-columns:1fr}.reviews-rating,.reviews-preview-quote{padding:24px}.reviews-preview-head .button-row{flex-shrink:1}.reviews-preview-quote blockquote p{-webkit-line-clamp:unset;display:block}}
 .faq-question-button{display:flex;width:100%;justify-content:flex-start;gap:10px;margin-top:22px;border-color:var(--action)!important;color:var(--action)!important}
 .faq-question-button:hover{background:var(--action)!important;color:var(--action-ink)!important}
+/* Centered project invitation in the existing typography and Olive palette. */
+main .cta-band.cta-centered,main:has(>.home-top)>.cta-band.cta-centered{background:var(--surface);border:0;padding-block:70px}
+.cta-centered>.wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;border-radius:24px;padding:70px 40px;background:radial-gradient(ellipse at 100% 0,#455727,transparent 55%),radial-gradient(ellipse at 0 100%,#455727,transparent 45%),#283218;color:#f1f3ec}
+.cta-centered>.wrap h2{max-width:1000px;margin-inline:auto}.cta-centered>.wrap p{max-width:660px;margin:22px auto 0;color:#d1dbb5}
+.cta-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.cta-centered .button.gold{background:#b3c38a;color:#12150d;gap:10px}.cta-centered .button.gold:hover{background:#d1dbb5;color:#12150d}
+.cta-centered .button.outline{border-color:#b3c38a;color:#f1f3ec;background:transparent}.cta-centered .button.outline:hover{background:#455727;color:#fff}
+@media(max-width:760px){.cta-centered>.wrap{padding:45px 24px;gap:24px}.cta-centered>.wrap h2{font-size:clamp(30px,6vw,44px)}.cta-centered>.wrap p{font-size:15px}.cta-actions{width:100%}.cta-actions .button{flex:1;min-width:150px}}
