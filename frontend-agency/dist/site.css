@@ -461,3 +461,18 @@ html[data-theme=dark] .services-overview-tile:is(:hover,:focus-visible){box-shad
 .services-overview-arrow{color:var(--action);opacity:0;transform:translateX(-6px);transition:opacity .25s,transform .25s}
 .services-overview-tile:is(:hover,:focus-visible) .services-overview-arrow{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.services-overview-tile,.services-overview-icon,.services-overview-arrow{animation:none!important;transition:none!important;translate:none!important;transform:none!important}.services-overview-arrow{opacity:1}}
+/* Service catalog reference: quiet 3-by-2 cards with existing typography. */
+.services-catalog-heading{margin-bottom:46px}.services-catalog-heading h2{max-width:780px}
+.service-grid{gap:20px}
+.service-card{position:relative;padding:30px;border-radius:17px;background:var(--card);border-color:var(--line);transition:transform .3s,border-color .3s,box-shadow .3s}
+.service-card.primary-service{background:var(--soft);border-color:var(--line)}
+.service-card .service-icon{width:52px;height:52px;margin-bottom:18px;border:0;border-radius:13px;background:var(--soft);color:var(--accent);transition:transform .3s}
+.service-card.primary-service .service-icon{background:transparent}
+.service-card .service-badge{position:absolute;right:30px;top:30px;padding:7px 11px;border-radius:30px;background:#e8a317;color:#181e0e;font-size:10px;line-height:1.5;font-weight:700;letter-spacing:.04em}
+.service-card h3{font-size:24px;margin-bottom:12px}.service-card p{margin-bottom:18px;line-height:1.65}
+.service-card .text-link{border:0;min-height:0;padding:0;gap:9px;color:var(--action)}
+.service-card:is(:hover,:focus-visible){transform:translateY(-5px);border-color:var(--accent);box-shadow:0 14px 30px #28321812}
+.service-card:is(:hover,:focus-visible) .service-icon{transform:rotate(-5deg)}
+@media(max-width:760px){.services-catalog-heading h2 br{display:none}.service-card{padding:24px}.service-card .service-badge{top:24px;right:24px}}
+@media(prefers-reduced-motion:reduce){.service-card,.service-card .service-icon{transition:none!important;transform:none!important}}
+.service-card.primary-service{color:var(--ink)}.service-card.primary-service p{color:var(--muted)}.service-card.primary-service .service-icon{color:var(--accent)}.service-card.primary-service .service-badge{background:#e8a317;color:#181e0e;border:0;right:30px;top:30px;padding:7px 11px}.service-card.primary-service .text-link:hover{color:var(--accent)}
