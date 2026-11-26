@@ -415,3 +415,21 @@ main .work-preview{background:#272a23;color:#f1f3ec}
 html[data-theme=dark] main .work-preview{background:var(--surface);color:var(--ink)}
 html[data-theme=dark] .work-card.featured{background:var(--card);border-color:var(--line)}
 .cta-band .button.gold{background:var(--action);color:var(--action-ink)}
+/* Services overview hero, using the site's existing typography. */
+.services-overview-hero{padding:80px 0;border-bottom:1px solid var(--line);background:radial-gradient(ellipse at 90% 15%,var(--section-tint),transparent 50%),var(--surface)}
+.services-overview-layout{display:grid;grid-template-columns:1fr 1fr;gap:65px;align-items:center}
+.services-overview-layout h1{font-size:clamp(40px,4.8vw,70px);line-height:1.08;letter-spacing:-.055em}
+.services-overview-layout h1 em{color:var(--action)}
+.services-overview-layout .lead{margin-top:26px;max-width:560px}
+.services-overview-layout .button-row{gap:12px}.services-overview-layout .button.gold{gap:12px}
+.services-overview-layout .button.outline{border-color:var(--action);color:var(--action)}
+.services-overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.services-overview-tile{display:flex;flex-direction:column;align-items:flex-start;gap:18px;padding:22px 20px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:18px;text-decoration:none;transition:transform .25s,box-shadow .25s,border-color .25s}
+.services-overview-tile.featured{background:var(--soft)}
+.services-overview-icon{width:40px;height:40px;display:grid;place-items:center;background:var(--soft);color:var(--accent);border-radius:12px}
+.services-overview-icon svg{width:22px;height:22px}
+.services-overview-tile strong{font-size:15px;line-height:1.4;font-weight:650}
+.services-overview-tile:hover,.services-overview-tile:focus-visible{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 12px 24px #28321812}
+@media(max-width:900px){.services-overview-layout{grid-template-columns:1fr;gap:40px}.services-overview-hero{padding:50px 0}.services-overview-layout h1{font-size:clamp(40px,7vw,64px)}}
+@media(max-width:480px){.services-overview-grid{gap:10px}.services-overview-tile{padding:18px 14px;gap:14px}.services-overview-tile strong{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.services-overview-tile{transition:none;transform:none!important}}
