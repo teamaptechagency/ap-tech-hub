@@ -1,0 +1,10 @@
+#main>section.about-decisions{background:#283218!important;color:#f1f3ec;border-block:1px solid #46592a}
+.about-decisions .eyebrow{color:#aecb7a}.about-decisions .eyebrow::before{background:#aecb7a}
+.about-decisions h2,.about-decisions h3{color:inherit}
+.about-decision-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.about-decision-card{display:flex;flex-direction:column;align-items:flex-start;min-width:0;padding:28px;border:1px solid #46592a;border-radius:18px;background:#37451f}
+.about-decision-number{display:block;color:#aecb7a;margin-bottom:18px}
+.about-decision-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:12px;background:#455727;color:#aecb7a;margin-bottom:18px}
+.about-decision-card h3{margin:0 0 14px}.about-decision-card p{margin:0;color:#d8dfca}
+@media(max-width:1100px){.about-decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.about-decision-grid{grid-template-columns:1fr}.about-decision-card{padding:26px}}

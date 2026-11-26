@@ -92,3 +92,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 founder portrait: located owner-selected portrait at wpnazmul.com/owner/assets/nazmul-portrait.webp, inspected it and copied unchanged into AP Tech assets. Placeholder replaced; build passed, live local image loaded at 1039px natural width and portrait framing checked.
 
 2026-11-26 Founder website link: existing outline button added below skills, Visit my website with external arrow. Build passed; live verified https://wpnazmul.com/, target=_blank and noopener noreferrer. Theme/type unchanged.
+
+2026-11-26 About decisions: existing four principles presented as numbered icon cards on solid #283218, retaining global Manrope/Georgia typography and original text. Scoped ID selector overrides legacy important section alternation. Build passed; final live fill rgb(40,50,24) verified in light/dark, desktop four columns, mobile one column and zero horizontal overflow.

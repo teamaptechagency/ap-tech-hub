@@ -59,3 +59,5 @@ Current release /opt/aptech-public-next/releases/20261126-founder-19. Founder se
 Current release /opt/aptech-public-next/releases/20261126-portrait-20. Founder portrait now uses /assets/nazmul-portrait.webp sourced from owner's WP Nazmul website. Rollback /root/aptech-before-founder-portrait-1795700745.
 
 Current release /opt/aptech-public-next/releases/20261126-founder-link-21. Founder personal website CTA added. Rollback /root/aptech-before-founder-link-1795700863.
+
+Current release /opt/aptech-public-next/releases/20261126-decisions-24. About How we decide card section. Rollback before section /root/aptech-before-decisions-1795701149. Prior static chunks retained.
