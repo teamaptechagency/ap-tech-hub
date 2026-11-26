@@ -111,3 +111,5 @@ Work card information refinement (2026-11-26): compact 20px title, 24px body pad
 - Prior five preview URL prefixes now 308 to production; six preview services stopped. Dependency files and rollback snapshots kept.
 - Rollback: /root/aptech-before-next-live-20261126-092437. Original static documents remain untouched.
 - Other public routes are not claimed as converted. Migrate further pages only when the owner chooses them.
+
+Work card footer update (2026-11-26): all 58 cards now render the metadata footer and 1px divider. Absent technology is displayed as an en dash; missing screen counts remain absent without invented values. Lena, Hudson and HertsPlumb footer top positions matched exactly in the desktop row. 390px overflow zero; browser console errors empty. Production release /opt/aptech-public-next/releases/20261126-cards-2 via card-footer-release.conf override; prior static chunks retained for clients/rollback. Rollback /root/aptech-before-card-footers-1795685564.

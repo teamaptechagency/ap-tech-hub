@@ -33,7 +33,7 @@ def project_card(m):
  if 'PHP' in stacks and 'Laravel' in stacks:stacks=[x for x in stacks if x not in ('PHP','Laravel')]+['PHP/Laravel']
  screen_label=re.sub(r'\s*&amp;\s*variations$','',screens[0]) if screens else ''
  description_text='International storefront' if '/work/footstep-online/' in opening else (description[1] if description else '')
- footer='<div class="work-card-footer"><span class="work-card-technologies">'+' · '.join(stacks)+'</span>'+('' if not screens else '<span class="work-card-screens">'+screen_label+'</span>')+'</div>' if stacks or screens else ''
+ footer='<div class="work-card-footer"><span class="work-card-technologies">'+(' · '.join(stacks) if stacks else '–')+'</span>'+('' if not screens else '<span class="work-card-screens">'+screen_label+'</span>')+'</div>'
  return opening+image+'<div class="work-card-body"><p class="work-card-kicker">'+kicker+'</p><h3>'+title[1]+'</h3><p class="work-card-description">'+description_text+'</p>'+footer+'</div>'+closing
 html=re.sub(r'(<a class="work-card[^>]*>)([\s\S]*?)(</a>)',project_card,html)
 

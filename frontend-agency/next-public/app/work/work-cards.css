@@ -19,3 +19,5 @@
 @media(prefers-reduced-motion:reduce){.portfolio-grid>a.work-card,.portfolio-grid .work-cover img{transition:none;transform:none!important}}
 /* Compact reference card information and a distinct metadata row. */
 .work-card-body{padding:24px}.work-card-body .work-card-kicker{font-size:11px;margin-bottom:12px}.work-card-body h3{font-size:20px;margin-bottom:6px}.work-card-body .work-card-description{font-size:15px;line-height:1.5;margin-bottom:12px}.work-card-footer{padding-top:15px;min-height:38px;font-size:12px}.work-card-screens{white-space:nowrap}
+/* Every card has the same metadata row, including missing values. */
+.work-card-body{min-height:180px}.work-card-footer{width:100%;min-height:40px;align-items:center}.work-card-technologies:empty:before{content:'–'}
