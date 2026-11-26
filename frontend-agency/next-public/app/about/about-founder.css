@@ -1,6 +1,6 @@
 .about-founder-layout{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.1fr);gap:clamp(48px,8vw,160px);align-items:center}
 .about-founder-portrait{position:relative;display:grid;place-items:center;aspect-ratio:4/5;min-width:0;background:var(--soft);border:1px solid var(--line);border-radius:24px;color:var(--accent)}
-.about-founder-portrait>svg{width:112px;height:128px;opacity:.55}
+.about-founder-portrait>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;border-radius:inherit}
 .about-founder-name{position:absolute;left:18px;bottom:18px;display:flex;flex-direction:column;gap:4px;padding:16px 18px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);box-shadow:0 10px 24px #28321814}
 .about-founder-name>span{color:var(--muted)}
 .about-founder-copy h2{margin-bottom:24px}.about-founder-copy .lead{max-width:660px}

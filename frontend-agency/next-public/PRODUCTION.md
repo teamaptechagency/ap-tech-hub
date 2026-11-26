@@ -55,3 +55,5 @@ Current release /opt/aptech-public-next/releases/20261126-about-17. Seventh migr
 Current release /opt/aptech-public-next/releases/20261126-about-hero-18. Owner About hero reference implemented after conversion preview. Rollback /root/aptech-before-about-hero-1795700043.
 
 Current release /opt/aptech-public-next/releases/20261126-founder-19. Founder section updated; actual portrait remains unsupplied and is honestly represented by a profile icon. Rollback /root/aptech-before-founder-1795700552.
+
+Current release /opt/aptech-public-next/releases/20261126-portrait-20. Founder portrait now uses /assets/nazmul-portrait.webp sourced from owner's WP Nazmul website. Rollback /root/aptech-before-founder-portrait-1795700745.
