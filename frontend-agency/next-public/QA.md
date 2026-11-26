@@ -38,3 +38,11 @@ Website Development detail checks (2026-11-26):
 - FAQ settles to one open item; mobile 390px has zero horizontal overflow.
 - Dark/light theme, Manrope and canonical preserved; console errors empty.
 - Isolated port 3325; prior previews and production page unchanged.
+
+Work index checks (2026-11-26):
+- Build passed. Requested second line displays as block in Olive: #556b2f light / #b3c38a dark.
+- Totals derived from source: 58 projects, 6 services, 69 reviews.
+- 58 project cards; initially 12 visible; Show more reveals 24.
+- WordPress filter returns 17 matching projects; Footstep search returns one.
+- At 390px, no horizontal overflow; all three totals visible; dark/light mode works.
+- Browser console errors empty. Prior previews and production page unchanged.

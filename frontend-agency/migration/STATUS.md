@@ -74,3 +74,15 @@ Do not regenerate production from older local content. Use the captured live bas
 - FAQ settles to one open item. At 390px, no horizontal overflow; dark/light switch and Manrope preserved; browser console errors empty.
 - Canonical remains https://aptechagency.com/services/website-development/; preview noindex.
 - Owner preview opened. Pause before another page.
+
+## Step 6 — Work index review preview (2026-11-26)
+
+- Work index migrated with only the requested hero changes: second-line Olive “The same care.” and totals.
+- Totals derive from imported source identifiers via a React WorkStatistics component: 58 projects, 6 services, 69 reviews. Re-run prepare-work.py when source content changes.
+- Independent aptech-next-work-preview service on port 3326; /opt/aptech-next-work-preview.
+- Review URL: https://aptechagency.com/__next-work-preview/work
+- Production Work and prior review previews unchanged.
+- Next production build passed. Project grid contains 58 cards; starts with 12 and Show more reveals 24. WordPress filter reports 17 matches; Footstep search returns one project.
+- Hero second line is block, color #556b2f light / #b3c38a dark. At 390px zero horizontal overflow, totals all present. Console errors empty.
+- Existing images, links and project descriptions retained; project detail routes still open production until migrated separately.
+- Owner preview opened; pause before further pages.

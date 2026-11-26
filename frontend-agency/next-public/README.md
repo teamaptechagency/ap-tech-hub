@@ -24,3 +24,7 @@ Build this independent preview with `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-ai-pr
 Website Development detail review: https://aptechagency.com/__next-web-preview/services/website-development
 
 Build an isolated review release with `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-web-preview`. Prior review deployments remain unchanged.
+
+Work index review: https://aptechagency.com/__next-work-preview/work
+
+Use `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-work-preview` for an isolated release. `scripts/prepare-work.py PUBLIC_ROOT APP_DIR CONTENT_SOURCE_DIR` imports the existing project grid and regenerates the totals source identifiers. WorkStatistics derives totals from these arrays at build time.
