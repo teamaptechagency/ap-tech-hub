@@ -54,3 +54,5 @@ Work card layout checks (2026-11-26):
 - Show more reveals 24; WordPress filter and Footstep search still work.
 - Dark card background #1b1f14; console error list empty.
 - Production Work page unchanged; updated Work preview release retains a rollback.
+
+Production deployment (2026-11-26): the five reviewed pages are now live at normal URLs. HTTP 200, Next.js response header, canonical/robots/OG metadata and compiled asset responses passed. Browser tests passed for Work search/pagination/dark mobile, homepage demo/packages, Services finder/packages and service-detail FAQ/sections. Preserved blog/about/reviews/contact HTTP checks passed. Old preview URLs redirect to production; preview processes stopped after all five production routes remained healthy.

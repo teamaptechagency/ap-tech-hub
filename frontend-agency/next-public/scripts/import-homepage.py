@@ -3,7 +3,7 @@ Only generates the homepage; never modifies the original public directory.
 """
 from html.parser import HTMLParser
 from pathlib import Path
-import json,re,sys,hashlib
+import json,re,sys,hashlib,os
 class Node:
  def __init__(self,tag='',attrs=None):self.tag=tag;self.attrs=dict(attrs or []);self.children=[]
 class Parser(HTMLParser):
@@ -54,8 +54,13 @@ scripts=[n.attrs['src'] for n in body.children if isinstance(n,Node) and n.tag==
 styles=[n for n in head.children if isinstance(n,Node) and n.tag=='link' and n.attrs.get('rel') in ('stylesheet','preload','icon')]
 title=''.join(find(head,'title').children);desc=next(n.attrs['content'] for n in head.children if isinstance(n,Node) and n.tag=='meta' and n.attrs.get('name')=='description')
 meta={'title':title,'description':desc,'robots':{'index':False,'follow':False},'alternates':{'canonical':'https://aptechagency.com/'}}
+production=os.environ.get('AP_PUBLIC_PRODUCTION')=='1'
+meta['robots']={'index':production,'follow':production}
+head_meta={n.attrs.get('property',n.attrs.get('name')):n.attrs.get('content') for n in head.children if isinstance(n,Node) and n.tag=='meta'}
+meta['openGraph']={k:v for k,v in {'title':head_meta.get('og:title',title),'description':head_meta.get('og:description',desc),'url':head_meta.get('og:url'),'siteName':head_meta.get('og:site_name','AP Tech Agency'),'type':head_meta.get('og:type','website'),'images':[head_meta['og:image']] if head_meta.get('og:image') else None}.items() if v is not None}
+meta['twitter']={'card':head_meta.get('twitter:card','summary'),'title':head_meta.get('og:title',title),'description':desc}
 init="(()=>{let t='light';try{if(localStorage.getItem('ap-tech-theme')==='dark')t='dark'}catch{}document.documentElement.dataset.theme=t})();"
-layout='export const metadata='+json.dumps(meta)+';\nexport default function Layout({children}){return <html lang="en" suppressHydrationWarning><head>'+''.join(jsx(n) for n in styles)+'<script dangerouslySetInnerHTML={{__html:'+json.dumps(init)+'}} /></head><body'+''.join(attr(k,v) for k,v in body.attrs.items())+' suppressHydrationWarning>{children}</body></html>;}\n'
+layout='export const viewport={width:"device-width",initialScale:1,viewportFit:"cover",themeColor:"#556b2f"};\nexport const metadata='+json.dumps(meta)+';\nexport default function Layout({children}){return <html lang="en" suppressHydrationWarning><head>'+''.join(jsx(n) for n in styles)+'<script dangerouslySetInnerHTML={{__html:'+json.dumps(init)+'}} /></head><body'+''.join(attr(k,v) for k,v in body.attrs.items())+' suppressHydrationWarning>{children}</body></html>;}\n'
 if len(sys.argv)<4:(out/'layout.jsx').write_text(layout)
 interaction_import=sys.argv[3] if len(sys.argv)>3 else './interactions'
 page_meta=dict(meta)

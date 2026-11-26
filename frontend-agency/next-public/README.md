@@ -28,3 +28,5 @@ Build an isolated review release with `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-web
 Work index review: https://aptechagency.com/__next-work-preview/work
 
 Use `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-work-preview` for an isolated release. `scripts/prepare-work.py PUBLIC_ROOT APP_DIR CONTENT_SOURCE_DIR` imports the existing project grid and regenerates the totals source identifiers. WorkStatistics derives totals from these arrays at build time.
+
+Production is now published for the five reviewed pages. See PRODUCTION.md for routing, rollback and build details. Old preview URLs redirect to their live pages.

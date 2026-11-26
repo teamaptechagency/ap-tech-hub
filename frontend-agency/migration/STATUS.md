@@ -98,3 +98,16 @@ Do not regenerate production from older local content. Use the captured live bas
 - At 390px: 1 card column, zero horizontal overflow; dark background #1b1f14; browser console errors empty.
 
 Work card information refinement (2026-11-26): compact 20px title, 24px body padding, clear 1px footer separator. Footstep description is International storefront; PHP/Laravel combined for display; screen counts abbreviated without changing numeric values. All 58 cards retained. At 390px one column, zero overflow; console errors empty. Same Work preview URL, new built release /opt/aptech-next-work-info-preview behind the existing Work card preview service; other preview services remain active. Original static Work page unchanged.
+
+## Production release — 2026-11-26
+
+- Owner authorized publishing the reviewed Next.js designs.
+- Home, Services index, AI Automation, Website Development and Work now run at their real URLs from Next.js 16.2.12.
+- Production release /opt/aptech-public-next/releases/20261126-live-1, service aptech-public-next, port 3330.
+- Production build passed. All five public routes returned 200 with X-AP-Frontend nextjs; compiled assets returned 200. Robots index/follow, canonical and Open Graph checked.
+- Browser verified Work title second line/Olive, 58/6/69 totals, 58 cards, search, Show more 24, dark mobile 390px with zero horizontal overflow. Home Calls/package tabs, Services finder/package tabs, AI workflow/Scope/Safeguards/FAQ, Website Development packages/FAQ checked on production Next assets.
+- Browser console errors empty on checked production pages. No real email/message or voice call submitted.
+- /blog, /about/, /reviews/, /contact/ remain 200 on their existing implementations. Manage and agency backend services active.
+- Prior five preview URL prefixes now 308 to production; six preview services stopped. Dependency files and rollback snapshots kept.
+- Rollback: /root/aptech-before-next-live-20261126-092437. Original static documents remain untouched.
+- Other public routes are not claimed as converted. Migrate further pages only when the owner chooses them.
