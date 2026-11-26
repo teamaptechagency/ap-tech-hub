@@ -13,3 +13,12 @@
 - Browser console error list empty.
 
 Public assets and existing browser interaction scripts are retained during the first migration stage. This is a homepage preview, not a claim that other public pages or integrations have been migrated or fully re-tested.
+
+Services index checks (2026-11-26):
+- Next production build passed with homepage and /services routes.
+- All headings, six hero links and six main section heights/backgrounds match production at desktop.
+- Finder chooses Ecommerce; WordPress package tab selects; FAQ settles to one open item.
+- AI and UI/UX tiles use continuous floating motion; other four use entry animation.
+- At 390px, tiles use one column and horizontal overflow is zero.
+- Dark/light theme switch works; Manrope retained; console error list empty.
+- Original homepage preview service preserved; Services runs on its own preview service.

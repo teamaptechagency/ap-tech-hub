@@ -35,3 +35,16 @@ Do not regenerate production from older local content. Use the captured live bas
 - At 390px: no horizontal overflow. Console error check returned none.
 - Existing interaction scripts retained through a client effect after hydration; CSS/assets retain their original paths.
 - Remaining page links intentionally open existing live pages. Other pages are not yet migrated. Stop for owner to inspect homepage before continuing.
+
+## Step 3 — Services index review preview (2026-11-26)
+
+- Only Services index added as Next.js React page; six service-detail pages not migrated yet.
+- Separate service aptech-next-services-preview on port 3323, release /opt/aptech-next-services-preview.
+- URL: https://aptechagency.com/__next-services-preview/services
+- Existing homepage preview service on port 3322 remains running unchanged.
+- Build with NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-services-preview for a separate review release.
+- Production Services page and original public routing unchanged.
+- Compared all headings, six hero links, six main section heights/backgrounds to original: exact matches at tested desktop viewport.
+- Verified finder Ecommerce result, WordPress package tab, FAQ single-open after transition, two floating accent animations.
+- Verified 390px single-column tiles and zero horizontal overflow, Manrope, dark/light switch; browser console errors empty.
+- Pause after showing Services preview for owner review.

@@ -54,7 +54,11 @@ title=''.join(find(head,'title').children);desc=next(n.attrs['content'] for n in
 meta={'title':title,'description':desc,'robots':{'index':False,'follow':False},'alternates':{'canonical':'https://aptechagency.com/'}}
 init="(()=>{let t='light';try{if(localStorage.getItem('ap-tech-theme')==='dark')t='dark'}catch{}document.documentElement.dataset.theme=t})();"
 layout='export const metadata='+json.dumps(meta)+';\nexport default function Layout({children}){return <html lang="en" suppressHydrationWarning><head>'+''.join(jsx(n) for n in styles)+'<script dangerouslySetInnerHTML={{__html:'+json.dumps(init)+'}} /></head><body'+''.join(attr(k,v) for k,v in body.attrs.items())+' suppressHydrationWarning>{children}</body></html>;}\n'
-(out/'layout.jsx').write_text(layout)
-(out/'page.jsx').write_text("import ExistingInteractions from './interactions';\nexport default function HomePage(){return <>"+''.join(jsx(c) for c in body.children)+"<ExistingInteractions /></>;}\n")
+if len(sys.argv)<4:(out/'layout.jsx').write_text(layout)
+interaction_import=sys.argv[3] if len(sys.argv)>3 else './interactions'
+page_meta=dict(meta)
+canonical=next((n.attrs.get('href') for n in head.children if isinstance(n,Node) and n.tag=='link' and n.attrs.get('rel')=='canonical'),'https://aptechagency.com/')
+page_meta['alternates']={'canonical':canonical}
+(out/'page.jsx').write_text("import ExistingInteractions from "+json.dumps(interaction_import)+";\nimport routeScripts from './scripts.json';\nexport const metadata="+json.dumps(page_meta)+";\nexport default function PublicPage(){return <>"+''.join(jsx(c) for c in body.children)+"<ExistingInteractions scripts={routeScripts} /></>;}\n")
 (out/'baseline.json').write_text(json.dumps({'sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'source':'captured live homepage','scripts':len(scripts),'title':title},indent=2))
 print('Generated Next.js homepage JSX from live DOM; scripts:',len(scripts))

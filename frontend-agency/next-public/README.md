@@ -12,3 +12,7 @@ Regenerate the page only from a reviewed live snapshot:
 `python scripts/import-homepage.py /path/to/captured/index.html app`
 
 Migration preview is noindex. Current forms/chat still use the existing public API; do not submit test messages to real clients.
+
+Services index preview: https://aptechagency.com/__next-services-preview/services
+
+Use `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-services-preview` at build time for an independent Services review deployment. The existing homepage review release remains unchanged.
