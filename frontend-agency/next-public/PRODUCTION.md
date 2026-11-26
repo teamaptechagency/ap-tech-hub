@@ -43,3 +43,5 @@ Current release: /opt/aptech-public-next/releases/20261126-reviews-type-10. Hero
 Current release: /opt/aptech-public-next/releases/20261126-profiles-11. Added Ratings by service section after hero. Rollback /root/aptech-before-profile-cards-1795698364. Profile snapshot is sourced from reviews.json; update snapshot alongside profile ratings/count changes.
 
 Current release: /opt/aptech-public-next/releases/20261126-review-theme-12. Native theme tokens restored on Reviews rating card; typography unchanged. Rollback /root/aptech-before-review-theme-1795698542.
+
+Current release /opt/aptech-public-next/releases/20261126-solid-13. Exact owner-selected solid Olive rating card. Rollback /root/aptech-before-solid-card-1795698994.

@@ -8,10 +8,11 @@
 .reviews-hero h1>span,.reviews-hero h1>em{display:block}.reviews-hero h1 .reviews-hero-accent{color:var(--action)}
 .reviews-hero .lead{font-size:16px;max-width:560px;margin:0}
 .reviews-hero .button-row{gap:12px;margin-top:26px}.reviews-hero .button{gap:12px}
-.reviews-rating-card{padding:38px 40px;border:1px solid var(--line);border-radius:24px;background:var(--card);color:var(--ink)}
+.reviews-rating-card{padding:38px 40px;border:1px solid #556b2f;border-radius:24px;background:#283218;color:#f1f3ec}
 .reviews-rating-value{display:block;font-size:70px;font-weight:500;line-height:1;letter-spacing:-.065em;color:var(--action);margin-bottom:14px}
 .reviews-rating-stars{display:block;color:var(--action);font-size:26px;letter-spacing:2px;line-height:1.5;margin-bottom:5px}
 .reviews-rating-card p{font-size:16px;line-height:1.5;margin:0 0 14px}.reviews-rating-card small{font-size:12px;line-height:1.65;color:var(--muted);display:block}
+.reviews-rating-card .reviews-rating-value{color:#b3c38a}.reviews-rating-card small{color:#c6cfb2}
 @keyframes reviews-badge-pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}100%{box-shadow:0 0 0 8px transparent}}
 @keyframes reviews-badge-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(max-width:900px){.reviews-hero{gap:30px}.reviews-rating-card{padding:30px}.reviews-hero .lead{font-size:16px}}

@@ -76,3 +76,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 Ratings by service: two profile cards use source data (Nahida 4.9/34, Nazmul 4.9/35), real Fiverr links, initials and accessible 98% rating bars. Existing Manrope heading/body and rating scale reused. Hero unchanged. Build passed; live data and links checked, white avatar text verified in light theme; mobile one-column/zero overflow and dark card contrast checked. All 69 review cards retained.
 
 2026-11-26 theme correction: Reviews hero rating card uses existing --card/--line/--ink/--muted/--action tokens, with no fixed dark gradient. Build passed. Live verified white card in light mode, #1b1f14 card in dark mode, no background image in either mode, and unchanged Manrope heading font.
+
+2026-11-26 owner clarified exact solid fill: Reviews hero rating card now uses the existing CTA solid #283218 in both light/dark modes, no gradient, with original typography unchanged. Build passed; live computed background rgb(40,50,24), background-image none verified in both themes and screenshot checked.
