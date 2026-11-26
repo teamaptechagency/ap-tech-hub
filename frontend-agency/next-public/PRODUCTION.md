@@ -53,3 +53,5 @@ Current release /opt/aptech-public-next/releases/20261126-cta-color-16. Shared C
 Current release /opt/aptech-public-next/releases/20261126-about-17. Seventh migrated route /about/ and slashless equivalent added to shared nginx snippet. Rollback /root/aptech-before-about-next-1795699829. Existing design preserved; owner's new About hero screenshot remains the next design step after conversion preview.
 
 Current release /opt/aptech-public-next/releases/20261126-about-hero-18. Owner About hero reference implemented after conversion preview. Rollback /root/aptech-before-about-hero-1795700043.
+
+Current release /opt/aptech-public-next/releases/20261126-founder-19. Founder section updated; actual portrait remains unsupplied and is honestly represented by a profile icon. Rollback /root/aptech-before-founder-1795700552.
