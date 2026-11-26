@@ -71,3 +71,5 @@ Current release /opt/aptech-public-next/releases/20261126-founder-button-27. Fou
 Current release /opt/aptech-public-next/releases/20261126-approach-28. Eighth migrated route /approach/ and slashless equivalent added to shared nginx snippet. Rollback /root/aptech-before-approach-next-1795702081. Existing design/content preserved; prior static chunks retained.
 
 Current release /opt/aptech-public-next/releases/20261126-approach-hero-29. Approach hero reference implemented; rollback /root/aptech-before-approach-hero-1795702412. Prior static chunks retained.
+
+Current release /opt/aptech-public-next/releases/20261126-approach-process-30. How we work card section updated. Rollback /root/aptech-before-approach-process-1795702622. Prior static chunks retained.

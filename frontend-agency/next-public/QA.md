@@ -104,3 +104,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 Our approach React conversion: existing DOM/content converted to JSX without redesign. Production webpack build passed; live HTTP200 and Next prerender headers verified. Canonical /approach/, single-open animated FAQ, 390px menu opening/closing, zero horizontal overflow and light/dark toggle verified in browser.
 
 2026-11-26 Approach hero: reference two-column copy/actions and four-step example progress card, preserving Manrope/Georgia typography and native Olive light/dark tokens. Production webpack build passed; live four steps, two desktop columns, brief anchor target, light card and 390px single column/zero overflow verified.
+
+2026-11-26 Approach process: four numbered icon cards with deliverable badges and contact CTA. Existing Manrope/Georgia type and native Olive tokens retained. Production build passed; live desktop four columns/four badges, mobile one column/zero overflow, contact link and dark card/text contrast verified.
