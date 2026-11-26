@@ -7,7 +7,7 @@ import {
   type BlogInline,
 } from "@/lib/blog-content";
 
-function Inline({ parts }: { parts: BlogInline[] }) {
+export function Inline({ parts }: { parts: BlogInline[] }) {
   return (
     <>
       {parts.map((part, index) => {
