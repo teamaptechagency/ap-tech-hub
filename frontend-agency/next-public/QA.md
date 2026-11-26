@@ -100,3 +100,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 team-block motion: added entry/floating motion, staggered service entries, lift/shadow and icon rotate/scale feedback; preserved solid Olive fill and existing fonts/content. Entry uses translate so it cannot override hover transform. Build passed. Live animation names/delays and keyboard-focus lift -6px/icon matrix verified; 390px stacked layout and zero overflow checked. Reduced-motion CSS disables motion.
 
 2026-11-26 Founder button UI: native Olive filled button with globe icon, distinct external-arrow circle, 56px click height and hover/focus lift; existing typography and URL retained. Build passed; live link/target/font/fill and icon checked, mobile full-width 339px with zero overflow and dark theme contrast verified.
+
+2026-11-26 Our approach React conversion: existing DOM/content converted to JSX without redesign. Production webpack build passed; live HTTP200 and Next prerender headers verified. Canonical /approach/, single-open animated FAQ, 390px menu opening/closing, zero horizontal overflow and light/dark toggle verified in browser.
