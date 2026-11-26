@@ -436,3 +436,12 @@ html[data-theme=dark] .work-card.featured{background:var(--card);border-color:va
 @media(max-width:900px){.services-overview-layout{grid-template-columns:1fr;gap:40px}.services-overview-hero{padding:50px 0}.services-overview-layout h1{font-size:clamp(40px,7vw,64px)}}
 @media(max-width:480px){.services-overview-grid{gap:10px}.services-overview-tile{padding:18px 14px;gap:14px}.services-overview-tile strong{font-size:13px}}
 @media(prefers-reduced-motion:reduce){.services-overview-tile{transition:none;transform:none!important}}
+/* Landing rhythm: neutral canvas, white content, soft proof, one dark showcase. */
+:root{--landing-content:#ffffff;--landing-proof:#eef1e5;--landing-cta:#e8edda}
+html[data-theme=dark]{--landing-content:#181e0e;--landing-proof:#1b1f14;--landing-cta:#232918}
+main:has(>.home-top)>.ai-spotlight,main:has(>.home-top)>#services,main:has(>.home-top)>#about{background:var(--landing-content);color:var(--ink)}
+main:has(>.home-top)>.reviews-section{background:var(--landing-proof)}
+main:has(>.home-top)>.service-packages,main:has(>.home-top)>.process-band{background:var(--surface)}
+main:has(>.home-top)>.cta-band{background:var(--landing-cta);border-top:1px solid var(--line);color:var(--ink)}
+main:has(>.home-top)>.work-preview{background:#272a23;color:#f1f3ec}
+html[data-theme=dark] main:has(>.home-top)>.work-preview{background:#1b1f14;color:#f1f3ec}
