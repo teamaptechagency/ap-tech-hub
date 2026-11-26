@@ -348,13 +348,17 @@
       improve: {title:'Website care', description:'Plan updates, fix issues and keep your website running smoothly.', href:'/services/website-care/'}
     };
     const output = finder.querySelector('[data-finder-result]');
+    finder.querySelectorAll('[data-finder-goal]').forEach(button=>button.addEventListener('click',()=>{const select=finder.querySelector('select');select.value=button.dataset.finderGoal;select.dispatchEvent(new Event('change',{bubbles:true}));}));
     finder.addEventListener('change', () => {
       const choice = suggestions[finder.querySelector('select').value];
-      output.hidden = !choice;
+      output.hidden = false;
       if (!choice) return;
       output.querySelector('h3').textContent = choice.title;
       output.querySelector('p').textContent = choice.description;
       output.querySelector('a').href = choice.href;
+      output.querySelector('a').hidden = false;
+      finder.querySelectorAll('[data-finder-goal]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.finderGoal===finder.querySelector('select').value)));
+      if(!matchMedia('(prefers-reduced-motion: reduce)').matches)output.animate([{opacity:.3,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{duration:260,easing:'ease-out'});
     });
   }
 

@@ -476,3 +476,16 @@ html[data-theme=dark] .services-overview-tile:is(:hover,:focus-visible){box-shad
 @media(max-width:760px){.services-catalog-heading h2 br{display:none}.service-card{padding:24px}.service-card .service-badge{top:24px;right:24px}}
 @media(prefers-reduced-motion:reduce){.service-card,.service-card .service-icon{transition:none!important;transform:none!important}}
 .service-card.primary-service{color:var(--ink)}.service-card.primary-service p{color:var(--muted)}.service-card.primary-service .service-icon{color:var(--accent)}.service-card.primary-service .service-badge{background:#e8a317;color:#181e0e;border:0;right:30px;top:30px;padding:7px 11px}.service-card.primary-service .text-link:hover{color:var(--accent)}
+/* Goal picker uses the existing Olive and editorial typography system. */
+.service-finder.finder-choices{background:var(--section-tint);border:0;padding:48px 40px;align-items:stretch}
+.finder-goals{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.finder-goals button{border:1px solid var(--line);border-radius:30px;background:var(--card);color:var(--ink);padding:11px 15px;font-size:13px;line-height:1.5;font-weight:600;transition:background .2s,color .2s,border-color .2s,transform .2s}
+.finder-goals button:hover{border-color:var(--action);transform:translateY(-2px)}
+.finder-goals button[aria-pressed=true]{background:var(--action);border-color:var(--action);color:var(--action-ink)}
+.finder-choices .finder-result{margin:0;border:1px solid #343b29;padding:34px;border-radius:23px;min-height:300px;background:radial-gradient(ellipse at 100% 0,#455727,transparent 70%),#283218;color:#f1f3ec;display:flex;flex-direction:column;align-items:flex-start;gap:16px}
+.finder-match-label{text-transform:uppercase;font-size:12px;letter-spacing:.1em;color:#b3c38a;font-weight:700}
+.finder-choices .finder-result h3{font-size:26px;line-height:1.4;margin:0}
+.finder-choices .finder-result p{color:#d1dbb5;line-height:1.7;margin:0}
+.finder-choices .finder-result .text-link{margin-top:auto;color:#d1dbb5;border-color:#b3c38a}
+@media(max-width:760px){.service-finder.finder-choices{padding:26px 22px}.finder-choices .finder-result{padding:26px;min-height:250px}.finder-choices .finder-result h3{font-size:23px}.finder-goals button{font-size:12px;padding:10px 12px}}
+@media(prefers-reduced-motion:reduce){.finder-goals button{transition:none;transform:none!important}}
