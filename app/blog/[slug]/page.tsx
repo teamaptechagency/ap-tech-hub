@@ -1,5 +1,9 @@
+import { createHash } from "node:crypto";
+import { CalendarDays, Clock3, FileText } from "lucide-react";
+import { ArticleToc } from "@/components/blog/article-toc";
+import { CareCover, WebsiteCareStory, careStorySlug, careStoryFingerprint, careStoryHeadings } from "@/components/blog/website-care-story";
+import "@/components/blog/single-insight.css";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isAutomatedBlogPost, AI_BLOG_DISCLOSURE } from "@/lib/blog-automation";
 
@@ -134,230 +138,24 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
   ]);
 
   const origin = publicOrigin(data.seo.siteUrl);
-  const headings = blogHeadings(post.content);
+  const carePresentation = post.slug === careStorySlug && createHash("sha256").update(post.content).digest("hex") === careStoryFingerprint;
+  const headings = carePresentation ? careStoryHeadings : blogHeadings(post.content);
   const publishedAt = post.publishedAt ?? post.createdAt;
-
-  return (
-    <BlogShell compactFooter
-      portalHref={session?.user ? homeFor(session.user.role) : null}
-      publicLogoUrl={branding.publicLogoUrl}
-      copyright={data.footer.copyright}
-      topBar={data.topBar}
-      stats={stats}
-    >
-      <JsonLd
-        data={[
-          organizationJsonLd(data),
-          blogPostingJsonLd(post, data),
-          breadcrumbJsonLd(origin, [
-            { name: "Home", path: "/" },
-            { name: "Insights", path: "/blog" },
-            { name: post.title, path: `/blog/${post.slug}` },
-          ]),
-        ]}
-      />
-
-      <section className="journal-hero journal-article-hero">
-
-        <div className="journal-article-head"><div className="journal-article-intro">
-          <nav
-            aria-label="Breadcrumb"
-            className="mb-3 flex flex-wrap items-center gap-2 text-xs text-[#9aa3b3]"
-          >
-            <Link href="/" className="hover:text-white">
-              Home
-            </Link>
-            <span>/</span>
-            <Link href="/blog" className="hover:text-white">
-              Insights
-            </Link>
-            {post.category ? (
-              <>
-                <span>/</span>
-                <Link
-                  href={`/blog?category=${post.category.slug}`}
-                  className="hover:text-white"
-                >
-                  {post.category.name}
-                </Link>
-              </>
-            ) : null}
-          </nav>
-          <p className="journal-eyebrow">{post.category?.name || "AP Tech Journal"}</p>
-          <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight md:text-[40px]">
-            {post.title}
-          </h1>
-          <p className="journal-article-deck">{post.excerpt}</p>
-          <div className="journal-meta mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            <span className="font-semibold text-white">{post.authorName}</span>
-            <time dateTime={publishedAt.toISOString()}>
-              {formatDate(publishedAt)}
-            </time>
-            <span>{post.readingMinutes} min read</span>
-            {/* Off by default (showViewCount), and only shown once a post has
-                real traffic — "1 view" on a fresh post reads worse than no
-                number at all. */}
-            {post.showViewCount && post.viewCount > 0 ? (
-              <span>
-                {post.viewCount.toLocaleString()}{" "}
-                {post.viewCount === 1 ? "view" : "views"}
-              </span>
-            ) : null}
-          </div>
-        </div>{post.coverImageUrl&&<figure className="journal-article-art"><img src={post.coverImageUrl} alt={post.coverImageAlt||post.title} loading="eager" fetchPriority="high" decoding="async"/><figcaption>Ideas for a better digital experience.</figcaption></figure>}</div>
-      </section>
-
-      <BlogViewCounter postId={post.id} />
-
-      <article className="py-12">
-        <div className="mx-auto max-w-[860px] px-4">
-
-
-
-
-          {headings.length > 2 && (
-            <nav
-              aria-label="Table of contents"
-              className="mt-8 rounded-2xl border border-[#e8e3dc] bg-[#faf8f5] p-5"
-            >
-              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#557236]">
-                In this article
-              </p>
-              <ol className="mt-3 space-y-2 text-sm">
-                {headings.map((heading) => (
-                  <li key={heading.id}>
-                    <a
-                      href={`#${heading.id}`}
-                      className="text-[#3a4152] underline-offset-2 hover:text-[#557236] hover:underline"
-                    >
-                      {heading.text}
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          )}
-
-          <BlogContent content={post.content.endsWith(AI_BLOG_DISCLOSURE) ? post.content.slice(0, -AI_BLOG_DISCLOSURE.length) : post.content} />
-          {automated && <aside aria-label="AI publishing disclosure" className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-relaxed text-emerald-950"><span className="mb-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold">✦ Automated by Aptee</span><p>This article and its thumbnail were generated automatically using AI. This site uses automated publishing; human review is not implied. Please verify important information independently.</p></aside>}
-
-          {/* Author-picked links to the pages this article should feed. Real
-              anchors, so crawlers follow them as internal links. */}
-          {post.internalLinks.length > 0 && (
-            <nav
-              aria-label="Related pages"
-              className="mt-10 rounded-2xl border border-[#e8e3dc] bg-[#faf8f5] p-6"
-            >
-              <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#557236]">
-                Related pages
-              </p>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {post.internalLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="inline-flex rounded-full border border-[#e8e3dc] bg-white px-4 py-2 text-sm font-semibold text-[#14261c] transition hover:border-[#557236] hover:text-[#557236]"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
-
-          {post.tags.length > 0 && (
-            <div className="mt-10 flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-[#e8e3dc] px-3 py-1.5 text-xs font-semibold text-[#6b7280]"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <aside className="journal-cta mt-12 rounded-2xl bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)] p-8 text-white">
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b8cf85]">
-              Work with us
-            </p>
-            <h2 className="mt-2 text-2xl font-extrabold tracking-tight">
-              Need help putting this into practice?
-            </h2>
-            <p className="mt-2 text-sm leading-7 text-[#cbd2df]">
-              Our team builds AI automation, websites and practical digital experiences for businesses.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                href="/contact"
-                className="rounded-[10px] bg-[#557236] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#39522a]"
-              >
-                Start a project
-              </Link>
-              <Link
-                href="/services"
-                className="rounded-[10px] border border-white/25 px-5 py-2.5 text-sm font-bold text-white transition hover:border-white"
-              >
-                View services
-              </Link>
-            </div>
-          </aside>
-        </div>
-      </article>
-
-      {related.length > 0 && (
-        <section className="border-t border-[#e8e3dc] bg-[#faf8f5] py-14">
-          <BlogImpressionTracker
-            postIds={related.map((item) => item.id)}
-            path={`/blog/${post.slug}`}
-          />
-          <div className="mx-auto max-w-[1140px] px-4">
-            <h2 className="mb-7 text-2xl font-extrabold tracking-tight text-[#14261c]">
-              Keep reading
-            </h2>
-            <div className="grid gap-6 md:grid-cols-3">
-              {related.map((item) => (
-                <article
-                  key={item.id}
-                  className="flex flex-col overflow-hidden rounded-2xl border border-[#e8e3dc] bg-white transition hover:border-[#557236]"
-                >
-                  <Link href={`/blog/${item.slug}`} className="block">
-                    {item.coverImageUrl ? (
-                      <img
-                        src={item.coverImageUrl}
-                        alt={item.coverImageAlt || item.title}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-40 w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-40 w-full bg-[linear-gradient(130deg,#14261c_0%,#213c2a_58%,#37482b_100%)]" />
-                    )}
-                  </Link>
-                  <div className="flex flex-1 flex-col p-5">
-                    <h3 className="text-base font-extrabold leading-snug tracking-tight text-[#14261c]">
-                      <Link
-                        href={`/blog/${item.slug}`}
-                        className="transition hover:text-[#557236]"
-                      >
-                        {item.title}
-                      </Link>
-                    </h3>
-                    <p className="mt-2 flex-1 text-sm leading-7 text-[#6b7280]">
-                      {item.excerpt}
-                    </p>
-                    <span className="mt-3 text-xs text-[#9aa3b3]">
-                      {item.readingMinutes} min read
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-    </BlogShell>
-  );
+  const content = post.content.endsWith(AI_BLOG_DISCLOSURE) ? post.content.slice(0, -AI_BLOG_DISCLOSURE.length) : post.content;
+  return <BlogShell compactFooter portalHref={session?.user ? homeFor(session.user.role) : null} publicLogoUrl={branding.publicLogoUrl} copyright={data.footer.copyright} topBar={data.topBar} stats={stats}>
+    <JsonLd data={[organizationJsonLd(data),blogPostingJsonLd(post,data),breadcrumbJsonLd(origin,[{name:"Home",path:"/"},{name:"Insights",path:"/blog"},{name:post.title,path:`/blog/${post.slug}`}])]} />
+    <section className="journal-hero insight-single-hero"><div className="wrap">
+      <p className="journal-eyebrow insight-category">{post.category?.name || "AP Tech Journal"}</p><h1>{post.title}</h1>
+      <div className="insight-byline"><span className="insight-avatar" aria-hidden="true">{post.authorName.charAt(0)}</span><div><strong>{post.authorName}</strong><span>AP Tech Agency</span></div><time dateTime={publishedAt.toISOString()}><CalendarDays aria-hidden="true"/>{formatDate(publishedAt)}</time><span><Clock3 aria-hidden="true"/>{post.readingMinutes} min read</span>{post.showViewCount && post.viewCount > 0 && <span>{post.viewCount.toLocaleString()} views</span>}</div>
+      {carePresentation ? <CareCover/> : post.coverImageUrl ? <figure className="insight-single-cover"><img src={post.coverImageUrl} alt={post.coverImageAlt || post.title} loading="eager" fetchPriority="high" decoding="async"/></figure> : null}
+    </div></section><BlogViewCounter postId={post.id}/>
+    <div className="wrap insight-reading-layout"><article className="insight-article">
+      <p className="insight-deck">{carePresentation ? "Regular website care is often overlooked until a problem disrupts business operations. Here are the warning signs, the usual causes, the trade-offs — and what neglect really costs." : post.excerpt}</p>
+      {carePresentation ? <WebsiteCareStory/> : <div className="insight-prose"><BlogContent content={content}/></div>}
+      {automated && <aside className="insight-disclosure" aria-label="AI publishing disclosure"><strong>✦ Automated by Aptee</strong><p>This article was generated automatically using AI. This site uses automated publishing; human review is not implied. Please verify important information independently.</p></aside>}
+      {post.internalLinks.length > 0 && <nav className="insight-internal-links" aria-label="Related pages">{post.internalLinks.map(link=><a key={link.href} href={link.href}>{link.label} →</a>)}</nav>}
+      {post.tags.length > 0 && <div className="insight-tags">{post.tags.map(tag=><span key={tag}>#{tag}</span>)}</div>}
+    </article><aside className="insight-sidebar"><div className="insight-sidebar-sticky"><ArticleToc headings={headings}/><div className="insight-sidebar-cta"><h2>{carePresentation ? "Website upkeep on your mind?" : "Have a project in mind?"}</h2><p>{carePresentation ? "Talk to us about a care plan that fits your site and budget." : "Tell us what you want to build or improve. We’ll help plan the next step."}</p><a className="button" href="/contact/">Start a project <span aria-hidden="true">→</span></a></div></div></aside></div>
+    {related.length > 0 && <section className="insight-related"><BlogImpressionTracker postIds={related.map(item=>item.id)} path={`/blog/${post.slug}`}/><div className="wrap"><div className="insight-related-head"><div><p className="journal-eyebrow">Insights</p><h2>Keep reading</h2></div><a className="button outline" href="/blog">All articles <span aria-hidden="true">→</span></a></div><div className="insight-related-grid">{related.map(item=><article key={item.id} className="insight-related-card"><a className="insight-related-image" href={`/blog/${item.slug}`} aria-label={item.title}>{item.coverImageUrl ? <img src={item.coverImageUrl} alt={item.coverImageAlt || item.title} loading="lazy" decoding="async"/> : <span className="insight-related-fallback"><FileText aria-hidden="true"/></span>}</a><div className="insight-related-copy"><p className="insight-related-meta">{item.readingMinutes} min read{item.publishedAt ? ` · ${formatDate(item.publishedAt)}` : ""}</p><h3><a href={`/blog/${item.slug}`}>{item.title}</a></h3><p className="insight-related-excerpt">{item.excerpt}</p><a className="insight-read-link" href={`/blog/${item.slug}`}>Read article <span aria-hidden="true">→</span></a></div></article>)}</div></div></section>}
+  </BlogShell>;
 }
