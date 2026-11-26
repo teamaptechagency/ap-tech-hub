@@ -47,6 +47,8 @@ def jsx(n):
  return '<'+n.tag+attrs+'>'+''.join(jsx(c) for c in n.children)+'</'+n.tag+'>'
 source=Path(sys.argv[1]);out=Path(sys.argv[2]);out.mkdir(parents=True,exist_ok=True)
 raw=source.read_text();p=Parser();p.feed(raw);head=find(p.root,'head');body=find(p.root,'body')
+structured=[n for n in head.children+body.children if isinstance(n,Node) and n.tag=='script' and n.attrs.get('type')=='application/ld+json']
+structured_jsx=''.join('<script type="application/ld+json" dangerouslySetInnerHTML={{__html:'+json.dumps(''.join(n.children))+'}} />' for n in structured)
 scripts=[n.attrs['src'] for n in body.children if isinstance(n,Node) and n.tag=='script' and 'src' in n.attrs]
 (out/'scripts.json').write_text(json.dumps(scripts,indent=2))
 styles=[n for n in head.children if isinstance(n,Node) and n.tag=='link' and n.attrs.get('rel') in ('stylesheet','preload','icon')]
@@ -59,6 +61,6 @@ interaction_import=sys.argv[3] if len(sys.argv)>3 else './interactions'
 page_meta=dict(meta)
 canonical=next((n.attrs.get('href') for n in head.children if isinstance(n,Node) and n.tag=='link' and n.attrs.get('rel')=='canonical'),'https://aptechagency.com/')
 page_meta['alternates']={'canonical':canonical}
-(out/'page.jsx').write_text("import ExistingInteractions from "+json.dumps(interaction_import)+";\nimport routeScripts from './scripts.json';\nexport const metadata="+json.dumps(page_meta)+";\nexport default function PublicPage(){return <>"+''.join(jsx(c) for c in body.children)+"<ExistingInteractions scripts={routeScripts} /></>;}\n")
-(out/'baseline.json').write_text(json.dumps({'sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'source':'captured live homepage','scripts':len(scripts),'title':title},indent=2))
-print('Generated Next.js homepage JSX from live DOM; scripts:',len(scripts))
+(out/'page.jsx').write_text("import ExistingInteractions from "+json.dumps(interaction_import)+";\nimport routeScripts from './scripts.json';\nexport const metadata="+json.dumps(page_meta)+";\nexport default function PublicPage(){return <>"+structured_jsx+''.join(jsx(c) for c in body.children)+"<ExistingInteractions scripts={routeScripts} /></>;}\n")
+(out/'baseline.json').write_text(json.dumps({'sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'source':'captured live public page','scripts':len(scripts),'title':title},indent=2))
+print('Generated Next.js page JSX from live DOM; scripts:',len(scripts))

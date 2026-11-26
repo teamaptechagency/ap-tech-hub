@@ -22,3 +22,11 @@ Services index checks (2026-11-26):
 - At 390px, tiles use one column and horizontal overflow is zero.
 - Dark/light theme switch works; Manrope retained; console error list empty.
 - Original homepage preview service preserved; Services runs on its own preview service.
+
+AI Automation detail checks (2026-11-26):
+- Build passed. All main headings, all 11 section heights/backgrounds, package/related links and JSON-LD count matched production.
+- Hero has four animated steps. Review rotation observed with genuine reviewer names changing.
+- Single-open FAQ verified after transition.
+- At 390px, Scope is one column and horizontal overflow is zero.
+- Dark/light theme switch works. Console errors empty.
+- Independent port 3324 preview; homepage and Services preview services unchanged.

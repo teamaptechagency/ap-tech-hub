@@ -16,3 +16,7 @@ Migration preview is noindex. Current forms/chat still use the existing public A
 Services index preview: https://aptechagency.com/__next-services-preview/services
 
 Use `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-services-preview` at build time for an independent Services review deployment. The existing homepage review release remains unchanged.
+
+AI Automation detail review: https://aptechagency.com/__next-ai-preview/services/ai-automation
+
+Build this independent preview with `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-ai-preview`. Prior homepage and Services review deployments remain running.

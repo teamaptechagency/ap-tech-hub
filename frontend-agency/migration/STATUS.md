@@ -48,3 +48,16 @@ Do not regenerate production from older local content. Use the captured live bas
 - Verified finder Ecommerce result, WordPress package tab, FAQ single-open after transition, two floating accent animations.
 - Verified 390px single-column tiles and zero horizontal overflow, Manrope, dark/light switch; browser console errors empty.
 - Pause after showing Services preview for owner review.
+
+## Step 4 — AI Automation detail review preview (2026-11-26)
+
+- Only AI Automation detail added as React App Router page; remaining service details unchanged.
+- Independent service aptech-next-ai-preview on port 3324, release /opt/aptech-next-ai-preview.
+- Review URL: https://aptechagency.com/__next-ai-preview/services/ai-automation
+- Existing homepage and Services preview services remain unchanged.
+- Production root/page unchanged; preview noindex.
+- Production build passed with /, /services and /services/ai-automation routes.
+- At desktop: all main headings, all 11 section heights/backgrounds, package/related links and JSON-LD count matched production.
+- Four-step hero entrance animation preserved. Genuine review rotation observed (reviewer names changed).
+- FAQ settles to one open item. At 390px, Scope stacks to one column, horizontal overflow is zero; dark/light switch works; console errors empty.
+- Owner preview opened. Pause before migrating another page.
