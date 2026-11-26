@@ -68,3 +68,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 shared title badges: hero overlines share Olive pill/pulse styling; visible Breadcrumb navigation hidden. Section overlines unchanged (0px radius verified). Live checked Services, About, AI Automation, Work and Insights; 999px badge radius and 8px dot verified. Dark theme uses dark Olive surface and light Olive text. Webpack build passed; shared CSS version bumped for static and migrated pages.
 
 2026-11-26 Reviews migration: webpack build passed; live HTTP 200 with Next prerender headers. Browser confirmed 69 review cards, 3 initially visible and 6 after one Show more click; no horizontal overflow on desktop. Existing design and profile links retained.
+
+2026-11-26 Reviews hero: added React ReviewsHero component with explicit two-line heading, Olive second line, pulsing badge, profile-derived 4.9 rating/69 reviews, Upwork and contact CTAs. Webpack build passed. Live desktop screenshot checked; 390px light/dark inspected with zero overflow. All 69 cards retained; Show more verified 3 to 6.

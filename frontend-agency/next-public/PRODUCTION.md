@@ -35,3 +35,5 @@ Current release: /opt/aptech-public-next/releases/20261126-monlegs-6. MonLegs se
 Current release: /opt/aptech-public-next/releases/20261126-titles-7. Public shared site.css includes design-system/page-titles.css; migrated layout and static pages use v=page-titles-1. Source generator retains version. Rollback: /root/aptech-before-title-badges-1795696764.
 
 Current release: /opt/aptech-public-next/releases/20261126-reviews-8. Sixth migrated route /reviews/ (and slashless equivalent) added to existing shared nginx snippet. Rollback /root/aptech-before-reviews-next-1795697532. Prior chunks retained. Reviews imported from live HTML to JSX with route scripts; UI redesign deliberately deferred until after conversion preview.
+
+Current release: /opt/aptech-public-next/releases/20261126-reviews-hero-9. Reviews hero updated after React migration. Rollback: /root/aptech-before-reviews-hero-1795697828. Rating summary snapshot comes from the existing reviews source; rebuild summary when review/profile totals change.
