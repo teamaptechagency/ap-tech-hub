@@ -98,3 +98,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 Pricing promise: reference two-column layout with existing typography, explanation and four check points on native themed card. Existing approach link retained. Build passed; live four items/two columns/font checked; mobile one column/zero overflow and dark card text/surface verified.
 
 2026-11-26 team-block motion: added entry/floating motion, staggered service entries, lift/shadow and icon rotate/scale feedback; preserved solid Olive fill and existing fonts/content. Entry uses translate so it cannot override hover transform. Build passed. Live animation names/delays and keyboard-focus lift -6px/icon matrix verified; 390px stacked layout and zero overflow checked. Reduced-motion CSS disables motion.
+
+2026-11-26 Founder button UI: native Olive filled button with globe icon, distinct external-arrow circle, 56px click height and hover/focus lift; existing typography and URL retained. Build passed; live link/target/font/fill and icon checked, mobile full-width 339px with zero overflow and dark theme contrast verified.

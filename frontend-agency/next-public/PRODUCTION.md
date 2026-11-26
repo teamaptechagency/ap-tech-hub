@@ -65,3 +65,5 @@ Current release /opt/aptech-public-next/releases/20261126-decisions-24. About Ho
 Current release /opt/aptech-public-next/releases/20261126-promise-25. About Pricing promise layout updated. Rollback /root/aptech-before-pricing-promise-1795701445.
 
 Current release /opt/aptech-public-next/releases/20261126-team-motion-26. About hero team/service block motion only, plus supplied small-screen stacking. Rollback /root/aptech-before-team-motion-1795701583.
+
+Current release /opt/aptech-public-next/releases/20261126-founder-button-27. Founder website button UI improved. Rollback /root/aptech-before-founder-button-1795701804.

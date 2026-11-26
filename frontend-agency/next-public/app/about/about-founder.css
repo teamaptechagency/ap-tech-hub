@@ -6,4 +6,11 @@
 .about-founder-copy h2{margin-bottom:24px}.about-founder-copy .lead{max-width:660px}
 .about-founder-skills{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:26px 0 0}
 .about-founder-skills li{padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--action)}
+.about-founder-copy .founder-website-button{gap:14px;min-height:56px;padding:12px 16px 12px 20px;border:1px solid var(--action);border-radius:12px;background:var(--action);color:var(--action-ink);transition:transform .25s,box-shadow .25s}
+.founder-website-icon{width:20px;height:20px;flex:none}
+.founder-website-arrow{display:grid;place-items:center;width:30px;height:30px;margin-left:8px;border:1px solid color-mix(in srgb,currentColor 35%,transparent);border-radius:50%;transition:transform .25s}
+.founder-website-button:hover,.founder-website-button:focus-visible{transform:translateY(-2px);box-shadow:0 10px 24px #28321826}
+.founder-website-button:hover .founder-website-arrow,.founder-website-button:focus-visible .founder-website-arrow{transform:translate(2px,-2px)}
+@media(max-width:480px){.about-founder-copy .founder-website-button{width:100%;justify-content:flex-start}.founder-website-arrow{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){.founder-website-button,.founder-website-arrow{transition:none!important;transform:none!important}}
 @media(max-width:800px){.about-founder-layout{grid-template-columns:1fr;gap:36px}.about-founder-portrait{width:min(100%,440px);justify-self:center}}
