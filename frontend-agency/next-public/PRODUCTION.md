@@ -73,3 +73,5 @@ Current release /opt/aptech-public-next/releases/20261126-approach-28. Eighth mi
 Current release /opt/aptech-public-next/releases/20261126-approach-hero-29. Approach hero reference implemented; rollback /root/aptech-before-approach-hero-1795702412. Prior static chunks retained.
 
 Current release /opt/aptech-public-next/releases/20261126-approach-process-30. How we work card section updated. Rollback /root/aptech-before-approach-process-1795702622. Prior static chunks retained.
+
+Current release /opt/aptech-public-next/releases/20261126-approach-details-31. Three Approach detail sections updated. Rollback /root/aptech-before-approach-details-1795702829. Prior static chunks retained.

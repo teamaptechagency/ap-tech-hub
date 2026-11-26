@@ -1,0 +1,19 @@
+.approach-detail-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px;align-items:center}
+.approach-wide-button{display:flex;width:100%;justify-content:flex-start;gap:12px;margin-top:24px}
+.approach-checklist-card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:32px}
+.approach-checklist-card h3{display:flex;align-items:center;gap:12px;margin:0 0 20px}
+.approach-detail-icon{display:grid;place-items:center;flex:none;width:48px;height:48px;background:var(--soft);color:var(--accent);border-radius:12px}
+.approach-detail-icon.is-brief{width:40px;height:40px;background:#fcf1d6;color:#9a6a06}
+html[data-theme=dark] .approach-detail-icon.is-brief{background:#3a2f12;color:#e8a317}
+.approach-checklist-card ul,.approach-handover-list{list-style:none;padding:0;margin:0;display:grid;gap:16px}
+.approach-checklist-card li{display:flex;align-items:flex-start;gap:12px}.approach-check{display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:var(--soft);color:var(--accent);line-height:1}
+.approach-expectation-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.approach-expectation-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;min-width:0}
+.approach-expectation-card .approach-detail-icon{margin-bottom:16px}.approach-expectation-card h3{margin:0 0 12px}.approach-expectation-card p{margin:0;color:var(--muted)}
+#main>section.approach-handover{background:#283218!important;color:#f1f3ec;border-block:1px solid #46592a}
+.approach-handover h2{color:inherit}.approach-handover .eyebrow{color:#aecb7a}.approach-handover .eyebrow::before{background:#aecb7a}
+.approach-handover .button{background:#aecb7a;color:#12150d;border-color:#aecb7a}
+.approach-handover-list li{display:flex;align-items:center;gap:16px;padding:20px 22px;border:1px solid #46592a;border-radius:16px;background:#37451f}
+.approach-handover .approach-detail-icon{background:#455727;color:#aecb7a;width:44px;height:44px}
+@media(max-width:900px){.approach-detail-layout{gap:28px}.approach-checklist-card{padding:24px}.approach-expectation-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.approach-detail-layout{grid-template-columns:1fr;gap:32px}.approach-handover-list li{padding:18px}.approach-expectation-card{padding:24px}}
