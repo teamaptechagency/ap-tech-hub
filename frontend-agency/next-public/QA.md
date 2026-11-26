@@ -84,3 +84,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 CTA color only: sampled owner screenshot pixels at three positions, all #aecb7a. Applied shared primary project CTA background with #12150d text; no typography/layout changes. Build passed. Live Reviews, Work and About computed rgb(174,203,122) and unchanged Manrope font.
 
 2026-11-26 About React conversion: original public DOM converted to JSX without UI redesign. Build passed, live HTTP200/Next prerender headers. Browser verified existing heading/content, Manrope font, canonical /about/, light/dark toggle, 390px mobile menu opens and closes, zero horizontal overflow.
+
+2026-11-26 About hero: two-column React hero with existing Manrope/Georgia type treatment and Services heading scale, Olive emphasis, five-person solid #283218 team card, two linked icon service cards and contact/approach CTAs. Build passed; desktop screenshot and source links checked. 390px single-column light/dark inspected with zero overflow. Remaining About sections unchanged.

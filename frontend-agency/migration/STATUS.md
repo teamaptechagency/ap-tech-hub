@@ -127,3 +127,5 @@ Work card footer update (2026-11-26): all 58 cards now render the metadata foote
 2026-11-26: Recent reviews heading, 9-card initial grid, +3 Show more and Upwork CTA banner complete. Existing theme/typography kept.
 
 2026-11-26: About migrated to Next.js/React preserving current page. Conversion shown first per owner workflow; reference hero redesign pending next step.
+
+2026-11-26: About hero reference implemented in React; existing theme/type preserved, team/service cards added, lower page content retained.
