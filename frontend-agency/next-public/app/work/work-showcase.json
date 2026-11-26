@@ -1,0 +1,20 @@
+[
+  {
+    "href": "/work/dna-digital-consultancy/",
+    "title": "DNA Digital Consultancy",
+    "image": "/assets/portfolio/dna-desktop-website.webp",
+    "alt": "DNA Digital Consultancy desktop website on a laptop, with a mobile preview and Astro and AI CRM integration highlights."
+  },
+  {
+    "href": "/work/denistek-product-ui/",
+    "title": "DenisTek",
+    "image": "/assets/portfolio/figma-190-39762-cover.webp",
+    "alt": "DenisTek \u2014 Dashboard \u00b7 Version 1"
+  },
+  {
+    "href": "/work/footstep-online/",
+    "title": "Footstep Online",
+    "image": "/assets/portfolio/footstep-international-cover.webp",
+    "alt": "Footstep Online \u2014 International storefront website UI"
+  }
+]

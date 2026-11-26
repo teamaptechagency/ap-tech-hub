@@ -37,9 +37,22 @@ def project_card(m):
  return opening+image+'<div class="work-card-body"><p class="work-card-kicker">'+kicker+'</p><h3>'+title[1]+'</h3><p class="work-card-description">'+description_text+'</p>'+footer+'</div>'+closing
 html=re.sub(r'(<a class="work-card[^>]*>)([\s\S]*?)(</a>)',project_card,html)
 
+
+from html import unescape
+chosen=['dna-digital-consultancy','denistek-product-ui','footstep-online']
+showcase=[]
+for slug in chosen:
+ card=next(m[0] for m in re.finditer(r'<a class="work-card[^>]*>[\s\S]*?</a>',html) if 'href="/work/'+slug+'/' in m[0])
+ showcase.append({'href':'/work/'+slug+'/','title':unescape(re.search(r'<h3>([\s\S]*?)</h3>',card)[1]),'image':re.search(r'<img[^>]*src="([^\"]+)"',card)[1],'alt':unescape(re.search(r'<img[^>]*alt="([^\"]*)"',card)[1])})
+(out/'work-showcase.json').write_text(json.dumps(showcase,indent=2))
+def split_hero(m):
+ section=m[0].replace('</nav>','</nav><div class="work-hero-layout"><div class="work-hero-copy">',1)
+ return section.rsplit('</div></section>',1)[0]+'</div><div data-work-showcase></div></div></div></section>'
+html=re.sub(r'<section class="page-hero work-page-hero">[\s\S]*?</section>',split_hero,html,count=1)
+
 with tempfile.TemporaryDirectory() as d:
  p=Path(d)/'index.html';p.write_text(html)
  subprocess.run([sys.executable,str(app.parent/'scripts/import-homepage.py'),str(p),str(out),'../interactions'],check=True)
-p=out/'page.jsx';jsx=p.read_text();jsx="import './work-cards.css';\nimport './work-hero.css';\nimport WorkStatistics from '../../components/work-statistics';\n"+jsx
-jsx,n=re.subn(r'<div data-work-statistics=""></div>','<WorkStatistics />',jsx,count=1);assert n==1;p.write_text(jsx)
+p=out/'page.jsx';jsx=p.read_text();jsx="import WorkShowcase from '../../components/work-showcase';\nimport './work-cards.css';\nimport './work-hero.css';\nimport WorkStatistics from '../../components/work-statistics';\n"+jsx
+jsx,n=re.subn(r'<div data-work-statistics=""></div>','<WorkStatistics />',jsx,count=1);assert n==1;jsx,n=re.subn(r'<div data-work-showcase=""></div>','<WorkShowcase />',jsx,count=1);assert n==1;p.write_text(jsx)
 print('Work totals:',{k:len(v) for k,v in summary.items()})

@@ -56,3 +56,5 @@ Work card layout checks (2026-11-26):
 - Production Work page unchanged; updated Work preview release retains a rollback.
 
 Production deployment (2026-11-26): the five reviewed pages are now live at normal URLs. HTTP 200, Next.js response header, canonical/robots/OG metadata and compiled asset responses passed. Browser tests passed for Work search/pagination/dark mobile, homepage demo/packages, Services finder/packages and service-detail FAQ/sections. Preserved blog/about/reviews/contact HTTP checks passed. Old preview URLs redirect to production; preview processes stopped after all five production routes remained healthy.
+
+2026-11-26 Work hero showcase: production build passed; DNA Digital, DenisTek and Footstep images loaded and project hrefs checked. Desktop visual inspection and 390px mobile light/dark inspection passed, with no horizontal overflow. Reduced-motion CSS disables floating and transitions.

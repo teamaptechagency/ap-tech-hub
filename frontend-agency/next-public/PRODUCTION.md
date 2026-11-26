@@ -23,3 +23,5 @@ The five former preview URL prefixes now redirect (308) to the corresponding rea
 To build fresh source from the reviewed existing content, run the importer with `AP_PUBLIC_PRODUCTION=1` for each approved page and `prepare-work.py` for the Work presentation, then run the Next production build. Publish through a new release and verify it before changing production routing. Website content edits require rebuilding the migrated Next pages; the retained legacy HTML publisher alone does not rebuild this app.
 
 Current release override: `card-footer-release.conf` sets WorkingDirectory to `/opt/aptech-public-next/releases/20261126-cards-2`. The asset alias points to this release, including prior content-hashed assets for open clients. Rollback for the footer-only change: `/root/aptech-before-card-footers-1795685564`.
+
+Current Work hero release: /opt/aptech-public-next/releases/20261126-showcase-3. The existing service override and asset alias point here. Prior hashed assets retained. Rollback snapshot: /root/aptech-before-work-showcase-1795685805. Adds a layered real-project showcase only.
