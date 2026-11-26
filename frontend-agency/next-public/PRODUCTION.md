@@ -69,3 +69,5 @@ Current release /opt/aptech-public-next/releases/20261126-team-motion-26. About 
 Current release /opt/aptech-public-next/releases/20261126-founder-button-27. Founder website button UI improved. Rollback /root/aptech-before-founder-button-1795701804.
 
 Current release /opt/aptech-public-next/releases/20261126-approach-28. Eighth migrated route /approach/ and slashless equivalent added to shared nginx snippet. Rollback /root/aptech-before-approach-next-1795702081. Existing design/content preserved; prior static chunks retained.
+
+Current release /opt/aptech-public-next/releases/20261126-approach-hero-29. Approach hero reference implemented; rollback /root/aptech-before-approach-hero-1795702412. Prior static chunks retained.

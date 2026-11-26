@@ -102,3 +102,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 Founder button UI: native Olive filled button with globe icon, distinct external-arrow circle, 56px click height and hover/focus lift; existing typography and URL retained. Build passed; live link/target/font/fill and icon checked, mobile full-width 339px with zero overflow and dark theme contrast verified.
 
 2026-11-26 Our approach React conversion: existing DOM/content converted to JSX without redesign. Production webpack build passed; live HTTP200 and Next prerender headers verified. Canonical /approach/, single-open animated FAQ, 390px menu opening/closing, zero horizontal overflow and light/dark toggle verified in browser.
+
+2026-11-26 Approach hero: reference two-column copy/actions and four-step example progress card, preserving Manrope/Georgia typography and native Olive light/dark tokens. Production webpack build passed; live four steps, two desktop columns, brief anchor target, light card and 390px single column/zero overflow verified.
