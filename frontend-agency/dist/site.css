@@ -531,3 +531,13 @@ main .cta-band.cta-centered,main:has(>.home-top)>.cta-band.cta-centered{backgrou
 
 /* Center catalog icons inside their olive tiles. */
 .service-card .service-icon{display:inline-flex;align-items:center;justify-content:center;flex:none;line-height:1;padding:0}.service-card .service-icon svg{display:block;position:static;width:24px;height:24px;flex:none;margin:0;transform:none}
+/* Public page section rhythm: neutral, white and a restrained olive tint. */
+:root{--section-base:#f7f8f5;--section-white:#ffffff;--section-tint:#eef1e5;--section-divider:#dde0d6}
+html[data-theme=dark]{--section-base:#12150d;--section-white:#181d13;--section-tint:#202718;--section-divider:#343b29}
+main>section{border-block-start:1px solid var(--section-divider)}
+main>section:first-child{border-block-start:0}
+main>section:nth-of-type(odd):not(.work-preview):not(.home-top):not(.page-hero):not(.journal-hero){background:var(--section-white)!important}
+main>section:nth-of-type(even):not(.work-preview):not(.home-top):not(.page-hero):not(.journal-hero){background:var(--section-base)!important}
+main>section:is(.reviews-section,.service-packages,.surface-alt,.process-band,.journal-explore){background:var(--section-tint)!important}
+main>section.cta-band.cta-centered{background:var(--section-white)!important;border-block-start:1px solid var(--section-divider)}
+main>section.cta-centered>.wrap{border:1px solid #56663c}
