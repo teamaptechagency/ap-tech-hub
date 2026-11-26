@@ -528,3 +528,6 @@ main .cta-band.cta-centered,main:has(>.home-top)>.cta-band.cta-centered{backgrou
 .services-overview-tile:is(:hover,:focus-visible){animation-play-state:running,paused}
 @media(prefers-reduced-motion:reduce){.services-overview-tile,.services-overview-tile.featured{animation:none!important;translate:none!important}}
 .services-overview-tile:nth-child(n){animation-delay:var(--tile-entry,.05s),var(--tile-float,1s)}
+
+/* Center catalog icons inside their olive tiles. */
+.service-card .service-icon{display:inline-flex;align-items:center;justify-content:center;flex:none;line-height:1;padding:0}.service-card .service-icon svg{display:block;position:static;width:24px;height:24px;flex:none;margin:0;transform:none}
