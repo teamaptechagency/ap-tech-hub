@@ -20,3 +20,7 @@ Use `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-services-preview` at build time for a
 AI Automation detail review: https://aptechagency.com/__next-ai-preview/services/ai-automation
 
 Build this independent preview with `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-ai-preview`. Prior homepage and Services review deployments remain running.
+
+Website Development detail review: https://aptechagency.com/__next-web-preview/services/website-development
+
+Build an isolated review release with `NEXT_PUBLIC_PREVIEW_BASE_PATH=/__next-web-preview`. Prior review deployments remain unchanged.

@@ -61,3 +61,16 @@ Do not regenerate production from older local content. Use the captured live bas
 - Four-step hero entrance animation preserved. Genuine review rotation observed (reviewer names changed).
 - FAQ settles to one open item. At 390px, Scope stacks to one column, horizontal overflow is zero; dark/light switch works; console errors empty.
 - Owner preview opened. Pause before migrating another page.
+
+## Step 5 — Website Development detail review preview (2026-11-26)
+
+- Only Website Development detail added; other remaining public pages not migrated in this step.
+- Independent service aptech-next-web-preview, port 3325, /opt/aptech-next-web-preview.
+- Review URL: https://aptechagency.com/__next-web-preview/services/website-development
+- Prior homepage, Services and AI Automation previews remain unchanged; production static page unchanged.
+- Next.js production build passed.
+- Desktop: headings, all nine section heights/backgrounds, package/related links and full JSON-LD text match production.
+- All three package contact links retain website-development and their tier query parameters.
+- FAQ settles to one open item. At 390px, no horizontal overflow; dark/light switch and Manrope preserved; browser console errors empty.
+- Canonical remains https://aptechagency.com/services/website-development/; preview noindex.
+- Owner preview opened. Pause before another page.

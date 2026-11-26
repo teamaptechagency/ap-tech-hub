@@ -30,3 +30,11 @@ AI Automation detail checks (2026-11-26):
 - At 390px, Scope is one column and horizontal overflow is zero.
 - Dark/light theme switch works. Console errors empty.
 - Independent port 3324 preview; homepage and Services preview services unchanged.
+
+Website Development detail checks (2026-11-26):
+- Production build passed.
+- All headings, nine section heights/backgrounds, package/related links and complete JSON-LD text match production.
+- All three package links preserve service and package query parameters.
+- FAQ settles to one open item; mobile 390px has zero horizontal overflow.
+- Dark/light theme, Manrope and canonical preserved; console errors empty.
+- Isolated port 3325; prior previews and production page unchanged.
