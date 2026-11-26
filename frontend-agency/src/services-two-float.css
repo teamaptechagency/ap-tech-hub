@@ -1,0 +1,8 @@
+/* Services tiles: two floating accents, shared hover motion. */
+.services-overview-tile:nth-child(n),.services-overview-tile.featured{animation:aps-rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--tile-entry,.05s)}
+.services-overview-tile:nth-child(1),.services-overview-tile:nth-child(4){animation:aps-rise .6s cubic-bezier(.2,.8,.2,1) var(--tile-entry,.05s) both,apt-tile-float 6s ease-in-out var(--accent-delay,.6s) infinite}
+.services-overview-tile:nth-child(4){--accent-delay:-2.4s}
+.services-overview-tile:is(:hover,:focus-visible){animation-play-state:running,paused;transform:translateY(-6px)}
+@keyframes apt-tile-float{0%,100%{translate:0 0}50%{translate:0 -10px}}
+@media(max-width:420px){.services-overview-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.services-overview-tile:nth-child(n){animation:none!important;translate:none!important;transform:none!important}}
