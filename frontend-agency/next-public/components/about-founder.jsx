@@ -7,6 +7,7 @@ export default function AboutFounder(){
   <div className="about-founder-copy"><p className="eyebrow">Founder</p><h2 id="about-founder-title">About Nazmul Hasan</h2>
    <p className="lead">Nazmul leads the technical work. He brings experience in WordPress, Elementor, PHP and Laravel, turns business needs into practical build plans, and guides development and launch preparation.</p>
    <ul className="about-founder-skills" aria-label="Technical focus">{['WordPress','Elementor','PHP','Laravel','AI automation'].map(skill=><li key={skill}>{skill}</li>)}</ul>
+   <div className="button-row"><a className="button outline" href="https://wpnazmul.com/" target="_blank" rel="noopener noreferrer" aria-label="Visit Nazmul Hasan’s website (opens in a new tab)">Visit my website <span aria-hidden="true">↗</span></a></div>
   </div>
  </div></section>;
 }

@@ -90,3 +90,5 @@ Production deployment (2026-11-26): the five reviewed pages are now live at norm
 2026-11-26 Founder section: reference layout with portrait placeholder (no real founder portrait found in repository), name/role card, existing biography and technical focus tags. Global typography retained. Build passed; live layout/content/font checked, mobile one-column zero overflow and native dark surfaces verified.
 
 2026-11-26 founder portrait: located owner-selected portrait at wpnazmul.com/owner/assets/nazmul-portrait.webp, inspected it and copied unchanged into AP Tech assets. Placeholder replaced; build passed, live local image loaded at 1039px natural width and portrait framing checked.
+
+2026-11-26 Founder website link: existing outline button added below skills, Visit my website with external arrow. Build passed; live verified https://wpnazmul.com/, target=_blank and noopener noreferrer. Theme/type unchanged.
