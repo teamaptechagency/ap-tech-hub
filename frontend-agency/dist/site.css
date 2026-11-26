@@ -489,3 +489,16 @@ html[data-theme=dark] .services-overview-tile:is(:hover,:focus-visible){box-shad
 .finder-choices .finder-result .text-link{margin-top:auto;color:#d1dbb5;border-color:#b3c38a}
 @media(max-width:760px){.service-finder.finder-choices{padding:26px 22px}.finder-choices .finder-result{padding:26px;min-height:250px}.finder-choices .finder-result h3{font-size:23px}.finder-goals button{font-size:12px;padding:10px 12px}}
 @media(prefers-reduced-motion:reduce){.finder-goals button{transition:none;transform:none!important}}
+/* Compact service-page proof, with the existing Manrope/editorial heading system. */
+.reviews-preview-head{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;margin-bottom:46px}
+.reviews-preview-head .lead{margin-top:20px;max-width:650px;font-size:16px}.reviews-preview-head .button-row{gap:12px;flex-shrink:0}
+.reviews-preview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.reviews-rating,.reviews-preview-quote{border:1px solid var(--line);border-radius:18px;padding:28px;min-width:0}
+.reviews-rating{background:#283218;color:#f1f3ec}.reviews-rating>p:first-child{line-height:1.1;margin-bottom:12px}.reviews-rating strong{font-size:56px;letter-spacing:-2px;font-weight:700;color:#b3c38a}.reviews-rating>p:first-child>span{font-size:20px}.reviews-rating-stars{color:#e8a317;letter-spacing:2px}.reviews-rating>p:last-child{font-size:15px;line-height:1.65;margin-top:12px}
+.reviews-preview-quote{background:var(--card);display:flex;flex-direction:column;gap:20px}
+.reviews-quote-mark{font-size:38px;line-height:1;color:var(--accent);font-weight:700}
+.reviews-preview-quote blockquote{margin:0;flex:1}.reviews-preview-quote blockquote p{font-size:18px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.reviews-preview-person{font-size:12px;color:var(--muted);line-height:1.7}.reviews-preview-person strong{color:var(--ink)}
+.reviews-preview-source{font-size:11px;color:var(--accent);align-self:flex-start}
+@media(max-width:1100px){.reviews-preview-head{align-items:flex-start;flex-direction:column;gap:0}.reviews-preview-head .button-row{margin-top:24px}}
+@media(max-width:760px){.reviews-preview-grid{grid-template-columns:1fr}.reviews-rating,.reviews-preview-quote{padding:24px}.reviews-preview-head .button-row{flex-shrink:1}.reviews-preview-quote blockquote p{-webkit-line-clamp:unset;display:block}}
