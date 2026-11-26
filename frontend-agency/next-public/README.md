@@ -1,0 +1,14 @@
+# Next.js public homepage preview
+
+This isolated Next.js 16 App Router app contains only the homepage. It uses actual React JSX generated from the captured live homepage DOM, not an iframe or an HTML response proxy. The existing CSS, fonts, images and interaction scripts are retained to protect the design baseline.
+
+Preview base path: `/__next-preview`.
+
+The public assets are currently served by the existing site at their original URLs. The homepage links intentionally continue to point to existing live pages until each page is migrated. The production homepage and admin/client portal are unchanged.
+
+Build: install the pinned package dependencies, then `npm run build`. Run with `npm start -- --hostname 127.0.0.1 --port 3322`.
+
+Regenerate the page only from a reviewed live snapshot:
+`python scripts/import-homepage.py /path/to/captured/index.html app`
+
+Migration preview is noindex. Current forms/chat still use the existing public API; do not submit test messages to real clients.
